@@ -103,17 +103,62 @@ Caveat found: this covers the **creative paste** path (`PlaceStructureOperation`
 survival/builder placement uses `ISurvivalBlueprintHandler` and would NOT go through this operation —
 out of scope for now; revisit if builder-driven substitution is wanted.
 
-## 5. GUI (`client.gui` via BlockUI)
+## 5. GUI (`client.gui` via BlockUI) — recon done
 
-- Add an entry point in `WindowExtendedBuildTool` — a button or a section in the existing
-  `settingsList` — opening our picker (mixin into `onOpened`/`initSettings`, or a new BlockUI window
-  loaded from our XML).
-- Build rows by scanning the loaded `Blueprint` (`getBlockInfoAsList()`) for distinct blocks matching
-  a candidate rule; for each, a dropdown/list of the `to_tag` members (label by block name + maybe a
-  small icon). Show affected-block counts.
-- On change: write picks into the active `BlueprintPreviewData` (client) so the preview re-renders
-  (our `MixinBlueprintRenderer` consults the override); persist per blueprint for the session.
-- On confirm/place: ensure picks are synced before/with `BuildToolPlacementMessage`.
+Building blocks found:
+- **Reuse `WindowSelectRes`** instead of writing a picker: public ctor
+  `WindowSelectRes(BOWindow origin, Component title, ItemStack current, List<ItemStack> pool,
+  BiConsumer<ItemStack,Integer> onSelect)` — a searchable list with icons. Pass our candidate-tag
+  members as the `pool`; `onSelect` records the choice. (`WindowReplaceBlock` is exactly this pattern.)
+- Loaded blueprint client-side: `RenderingCache.getBlueprintsToRender()` →
+  `BlueprintPreviewData.getBlueprint()` → `Blueprint.getBlockInfoAsList()` for distinct blocks.
+- Candidate lookup: `BlockSubstitutions.candidateFor(Block)` → `CandidateRule.toTag()`; resolve members
+  via `ForgeRegistries.BLOCKS.tags().getTag(toTag)`.
+- Window base: `AbstractWindowSkeleton` (Structurize) with `registerButton(id, Runnable)`; BlockUI
+  `View.addChild(Pane)` / `findPaneOfTypeByID`. Open with `BOWindow.open()`.
+- Build-tool buttons are registered via `registerButton(...)` in `onOpened`; add ours by mixing
+  `WindowExtendedBuildTool.onOpened` (create + `addChild` a Button, `registerButton` its handler).
+
+Apply/refresh:
+- On pick → `ClientPlacementChoices.set(map)` (already syncs to server). Preview refresh: the render
+  cache is keyed by `RenderingCacheKey`; need to invalidate/re-queue so `MixinBlueprintRenderer`
+  re-bakes with the new choice (TODO: find the refresh call — `RenderingCache.queue(...)` or dirtying
+  the preview data).
+
+### STATUS: Phase 2 functionally COMPLETE (verified in single-player)
+
+All slices done and verified in-world: candidate rules parse, the build-tool button opens the
+multi-row picker window, each row opens the reused `WindowSelectRes` (candidate-tag pool), picks sync
+client→server and apply at placement, and the preview re-bakes live on each pick. Key pieces:
+- Engine: [CandidateRule](../replacements/src/main/java/com/structurizereplacements/substitution/CandidateRule.java),
+  `BlockSubstitutions.candidateFor` + the override layer in `applyState(state, overrides)`.
+- Choices: [ClientPlacementChoices](../replacements/src/main/java/com/structurizereplacements/placement/ClientPlacementChoices.java)
+  / [ServerPlacementChoices](../replacements/src/main/java/com/structurizereplacements/placement/ServerPlacementChoices.java)
+  + [Network](../replacements/src/main/java/com/structurizereplacements/network/Network.java) sync.
+- GUI: [WindowReplacements](../replacements/src/main/java/com/structurizereplacements/client/gui/WindowReplacements.java)
+  (+ `gui/windowreplacements.xml`), button via
+  [MixinAbstractBlueprintManipulationWindow](../replacements/src/main/java/com/structurizereplacements/mixin/MixinAbstractBlueprintManipulationWindow.java).
+- Live preview refresh: `BlueprintHandler.getInstance().clearCache()` after a pick.
+- Labels localized via existing translations (Structurize `gui.scan.replace.title`/`scantool.replace`/
+  `scantool.select`; vanilla `gui.done`).
+
+**Remaining (optional / follow-up):**
+- Per-blueprint session memory (today `ClientPlacementChoices` is one global map; picks could bleed
+  across blueprints sharing block types).
+- Row polish: affected-block counts, nicer empty state.
+- **Dedicated-server rule sync** — candidate rules (and datapack rules generally) load server-side
+  only, so on a dedicated server the client GUI has no candidate rules to show and the preview can't
+  substitute. Single-player works (shared JVM). Syncing the loaded ruleset to clients fixes both this
+  and the earlier preview caveat.
+
+### 2C build slices (historical)
+1. Add a candidate rule to the example datapack so the picker has something to show
+   (vanilla-only: `{ "from_tag": "minecraft:planks", "to_tag": "minecraft:planks" }`).
+2. Entry point + picker: open `WindowSelectRes(pool = candidate members)` for a source block; `onSelect`
+   updates `ClientPlacementChoices`. Remove `DebugChoiceSeed`.
+3. Multi-row list window (one row per distinct matching source block) — the full decided UX — using a
+   `ScrollingList`; each row's "change" button opens the `WindowSelectRes` picker.
+4. Preview refresh on pick; per-blueprint session memory; counts/labels.
 
 ## 6. Phased implementation
 

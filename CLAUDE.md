@@ -183,24 +183,25 @@ In `:replacements` (generic):
   keeps the tint/light context consistent). Works in single-player (integrated server shares the JVM,
   so client sees the rules). **Dedicated servers:** rules load server-side only, so the client preview
   won't substitute until rules are synced to clients — a follow-up (network packet on join / on reload).
-- **GUI per-placement picker** — DESIGNED + reconned (feasible), not yet built. Full plan, Structurize
-  class references, and the phased build order are in
-  [docs/gui-replacement-picker-plan.md](docs/gui-replacement-picker-plan.md). In short: add `to_tag`
-  candidate rules (interactive — apply nothing until the player picks); a picker in
-  `WindowExtendedBuildTool` (one row per distinct matching source block, options = target-tag members),
-  explicit + remembered per blueprint/session; choices ride the per-placement state to the server by
-  mirroring Structurize's `solidSubstitutionOverride` flow (`BlueprintPreviewData` +
-  `SyncPreviewCacheToServer`).
-  **Phase 1 plumbing — DONE & verified:** the feasibility gate is cleared. Per-placement choices reach
-  server placement by attaching a `Map<source,target>` to the `StructurePlacer` instance at
-  `PlaceStructureOperation` creation (which has the player); `handleBlockPlacement` reads it off `this`.
-  Engine has an override layer (`BlockSubstitutions.applyState(state, overrides)`, override beats
-  datapack rules); preview consults it too. See [PlacementChoiceHolder](replacements/src/main/java/com/structurizereplacements/placement/PlacementChoiceHolder.java),
-  [PlacementChoices](replacements/src/main/java/com/structurizereplacements/placement/PlacementChoices.java)
-  (currently HARD-CODED `oak_planks→dark_oak_planks`), [MixinPlaceStructureOperation](replacements/src/main/java/com/structurizereplacements/mixin/MixinPlaceStructureOperation.java).
-  **Phase 2 (TODO):** the BlockUI picker window, `to_tag` candidate rules, and replacing the hard-coded
-  `PlacementChoices` with a real per-player store + client→server sync. Covers creative paste only
-  (MineColonies builder placement bypasses `PlaceStructureOperation`).
+- **GUI per-placement picker — DONE & verified (single-player).** Full design/recon/status in
+  [docs/gui-replacement-picker-plan.md](docs/gui-replacement-picker-plan.md). Players open a "Replace"
+  button on Structurize's build-tool window → a multi-row picker (one row per distinct source block in
+  the schematic matching a `to_tag` candidate rule) → each row opens the reused `WindowSelectRes`
+  (candidate-tag pool). Picks sync client→server and apply at placement; the preview re-bakes live.
+  Pieces: `to_tag` [CandidateRule](replacements/src/main/java/com/structurizereplacements/substitution/CandidateRule.java)
+  + `BlockSubstitutions.candidateFor`; override layer `applyState(state, overrides)` (override beats
+  datapack rules); choices in [ClientPlacementChoices](replacements/src/main/java/com/structurizereplacements/placement/ClientPlacementChoices.java)/[ServerPlacementChoices](replacements/src/main/java/com/structurizereplacements/placement/ServerPlacementChoices.java)
+  synced via [Network](replacements/src/main/java/com/structurizereplacements/network/Network.java);
+  reach placement by attaching the choice map to the `StructurePlacer` at `PlaceStructureOperation`
+  creation ([MixinPlaceStructureOperation](replacements/src/main/java/com/structurizereplacements/mixin/MixinPlaceStructureOperation.java)
+  → read in `handleBlockPlacement`); GUI in [WindowReplacements](replacements/src/main/java/com/structurizereplacements/client/gui/WindowReplacements.java)
+  + button [MixinAbstractBlueprintManipulationWindow](replacements/src/main/java/com/structurizereplacements/mixin/MixinAbstractBlueprintManipulationWindow.java);
+  live refresh via `BlueprintHandler.getInstance().clearCache()`. Labels reuse existing translations
+  (Structurize + vanilla `gui.done`).
+  **Caveats / follow-ups:** creative-paste placement only (MineColonies builder bypasses
+  `PlaceStructureOperation`); per-blueprint session memory + row counts are unpolished; and **dedicated
+  servers need rule sync** — candidate/datapack rules load server-side only, so on a dedicated server
+  the client GUI shows no rows and the preview can't substitute (single-player works, shared JVM).
 - **GUI toggle** in `WindowExtendedBuildTool` for per-placement opt-in.
 
 In `:compat`:

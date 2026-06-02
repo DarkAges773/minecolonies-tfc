@@ -2,6 +2,7 @@
   "__comment": "EXAMPLE/DEV rules (vanilla-only, so they work in the standalone run). The first is a FAMILY rule: oak_planks -> spruce_planks automatically cascades the oak->spruce material swap to oak_stairs/slab/fence/fence_gate/door/log/stripped_oak_log/etc. -> spruce_* wherever the target block exists. The second is exact - 'cobblestone' and 'mossy_cobblestone' differ by more than one path token, so no cascade is derived. Use \"family\": false on a from/to rule to force exact-only. NOTE: a published library normally ships NO active rules (these would rewrite everyone's blueprints); delete this file for a clean library, and let consumers supply rules under data/<their_namespace>/block_substitutions/.",
   "replacements": [
     { "from": "minecraft:oak_planks", "to": "minecraft:spruce_planks" },
-    { "from": "minecraft:cobblestone", "to": "minecraft:mossy_cobblestone" }
+    { "from": "minecraft:cobblestone", "to": "minecraft:mossy_cobblestone" },
+    { "from_tag": "minecraft:planks", "to_tag": "minecraft:planks" }
   ]
 }

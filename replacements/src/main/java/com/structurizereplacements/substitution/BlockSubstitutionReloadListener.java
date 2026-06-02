@@ -52,6 +52,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
     {
         final List<SubstitutionRule> rules = new ArrayList<>();
         final List<FamilyRule> families = new ArrayList<>();
+        final List<CandidateRule> candidates = new ArrayList<>();
 
         for (final Map.Entry<ResourceLocation, JsonElement> entry : files.entrySet())
         {
@@ -60,7 +61,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 final JsonObject root = GsonHelper.convertToJsonObject(entry.getValue(), "top element");
                 for (final JsonElement element : GsonHelper.getAsJsonArray(root, "replacements"))
                 {
-                    parseInto(element.getAsJsonObject(), entry.getKey(), rules, families);
+                    parseInto(element.getAsJsonObject(), entry.getKey(), rules, families, candidates);
                 }
             }
             catch (final Exception ex)
@@ -69,45 +70,35 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
             }
         }
 
-        BlockSubstitutions.setRules(rules, families);
-        StructurizeReplacements.LOGGER.info("Loaded {} substitution rule(s) and {} family cascade(s) from {} file(s).",
-                rules.size(), families.size(), files.size());
+        BlockSubstitutions.setRules(rules, families, candidates);
+        StructurizeReplacements.LOGGER.info("Loaded {} fixed rule(s), {} family cascade(s), {} candidate rule(s) from {} file(s).",
+                rules.size(), families.size(), candidates.size(), files.size());
     }
 
+    /**
+     * Parse one entry. Source is {@code "from"} (block) or {@code "from_tag"} (block tag). Target is
+     * either {@code "to_tag"} (interactive candidate pool → {@link CandidateRule}) or {@code "to"}
+     * (fixed block → {@link SubstitutionRule}, with optional family cascade for block→block).
+     */
     private static void parseInto(final JsonObject obj, final ResourceLocation file,
-                                  final List<SubstitutionRule> rules, final List<FamilyRule> families)
+                                  final List<SubstitutionRule> rules, final List<FamilyRule> families,
+                                  final List<CandidateRule> candidates)
     {
-        final ResourceLocation toId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "to"));
-        final Block to = block(toId);
-        if (to == null)
-        {
-            StructurizeReplacements.LOGGER.warn("Substitution in {} has an unknown 'to' block; skipping.", file);
-            return;
-        }
-
+        // --- source matcher ---
+        Block fromBlock = null;
+        TagKey<Block> fromTag = null;
+        ResourceLocation fromId = null;
         if (obj.has("from"))
         {
-            final ResourceLocation fromId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "from"));
-            final Block from = block(fromId);
-            if (from == null)
+            fromId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "from"));
+            fromBlock = block(fromId);
+            if (fromBlock == null)
             {
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has an unknown 'from' block; skipping.", file);
                 return;
             }
-            rules.add(new SubstitutionRule(from, null, to));
-
-            // Family cascade is on by default for from->to rules; "family": false forces exact-only.
-            if (GsonHelper.getAsBoolean(obj, "family", true))
-            {
-                FamilyRule.derive(fromId, toId).ifPresentOrElse(
-                        families::add,
-                        () -> StructurizeReplacements.LOGGER.debug(
-                                "No family cascade for {} -> {} (needs exactly one differing path token).", fromId, toId));
-            }
-            return;
         }
-
-        if (obj.has("from_tag"))
+        else if (obj.has("from_tag"))
         {
             final ResourceLocation tagId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "from_tag"));
             if (tagId == null)
@@ -115,11 +106,52 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has a malformed 'from_tag'; skipping.", file);
                 return;
             }
-            rules.add(new SubstitutionRule(null, TagKey.create(Registries.BLOCK, tagId), to));
+            fromTag = TagKey.create(Registries.BLOCK, tagId);
+        }
+        else
+        {
+            StructurizeReplacements.LOGGER.warn("Substitution in {} has neither 'from' nor 'from_tag'; skipping.", file);
             return;
         }
 
-        StructurizeReplacements.LOGGER.warn("Substitution in {} has neither 'from' nor 'from_tag'; skipping.", file);
+        // --- target: candidate pool (interactive) ---
+        if (obj.has("to_tag"))
+        {
+            final ResourceLocation toTagId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "to_tag"));
+            if (toTagId == null)
+            {
+                StructurizeReplacements.LOGGER.warn("Substitution in {} has a malformed 'to_tag'; skipping.", file);
+                return;
+            }
+            candidates.add(new CandidateRule(fromBlock, fromTag, TagKey.create(Registries.BLOCK, toTagId)));
+            return;
+        }
+
+        // --- target: fixed block ---
+        if (obj.has("to"))
+        {
+            final ResourceLocation toId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "to"));
+            final Block to = block(toId);
+            if (to == null)
+            {
+                StructurizeReplacements.LOGGER.warn("Substitution in {} has an unknown 'to' block; skipping.", file);
+                return;
+            }
+            rules.add(new SubstitutionRule(fromBlock, fromTag, to));
+
+            // Family cascade only for block->block rules; "family": false forces exact-only.
+            if (fromBlock != null && GsonHelper.getAsBoolean(obj, "family", true))
+            {
+                final ResourceLocation derivedFrom = fromId;
+                FamilyRule.derive(fromId, toId).ifPresentOrElse(
+                        families::add,
+                        () -> StructurizeReplacements.LOGGER.debug(
+                                "No family cascade for {} -> {} (needs exactly one differing path token).", derivedFrom, toId));
+            }
+            return;
+        }
+
+        StructurizeReplacements.LOGGER.warn("Substitution in {} has neither 'to' nor 'to_tag'; skipping.", file);
     }
 
     @Nullable

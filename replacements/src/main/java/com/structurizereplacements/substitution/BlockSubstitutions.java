@@ -31,15 +31,33 @@ public final class BlockSubstitutions
 
     private static volatile List<SubstitutionRule> rules = List.of();
     private static volatile List<FamilyRule> families = List.of();
+    private static volatile List<CandidateRule> candidateRules = List.of();
 
     /** Memoized source-block -> replacement-block (empty Optional = no substitution). */
     private static final Map<Block, Optional<Block>> cache = new ConcurrentHashMap<>();
 
-    public static void setRules(final List<SubstitutionRule> newRules, final List<FamilyRule> newFamilies)
+    public static void setRules(final List<SubstitutionRule> newRules,
+                                final List<FamilyRule> newFamilies,
+                                final List<CandidateRule> newCandidates)
     {
         rules = List.copyOf(newRules);
         families = List.copyOf(newFamilies);
+        candidateRules = List.copyOf(newCandidates);
         cache.clear();
+    }
+
+    /** The interactive candidate rule (if any) whose source matches this block — for the GUI. */
+    public static Optional<CandidateRule> candidateFor(final Block source)
+    {
+        final BlockState probe = source.defaultBlockState();
+        for (final CandidateRule rule : candidateRules)
+        {
+            if (rule.matches(probe))
+            {
+                return Optional.of(rule);
+            }
+        }
+        return Optional.empty();
     }
 
     /**

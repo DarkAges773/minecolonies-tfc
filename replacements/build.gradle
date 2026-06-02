@@ -79,9 +79,10 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    // Structurize is the only real mod dependency. blockui is Structurize's own runtime dependency.
+    // Structurize is the only real mod dependency. BlockUI is Structurize's GUI library — needed at
+    // compile time too now that we build a BlockUI window / button.
     implementation fg.deobf("com.ldtteam:structurize:${structurize_version}")
-    runtimeOnly fg.deobf("com.ldtteam:blockui:${blockui_version}")
+    implementation fg.deobf("com.ldtteam:blockui:${blockui_version}")
 
     // --- Dev-run-only test mods. NOT real dependencies (mods.toml is unchanged); these only enrich
     //     the standalone runClient so substitution can be exercised against MineColonies' build tool

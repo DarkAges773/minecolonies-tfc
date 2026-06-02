@@ -10,7 +10,8 @@
   ],
   "client": [
     "MixinBlueprintRenderer",
-    "MixinBlueprintBlockAccess"
+    "MixinBlueprintBlockAccess",
+    "MixinAbstractBlueprintManipulationWindow"
   ],
   "injectors": {
     "defaultRequire": 1
