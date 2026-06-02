@@ -1,0 +1,7 @@
+{
+  "__comment": "TFC-oriented block substitutions, consumed by the structurizereplacements engine. The examples below are vanilla-only so they work/test without verifying exact TFC block ids; replace the 'to' values with TFC ids (e.g. tfc:wood/planks/oak, tfc:rock/cobble/granite). Edit/reload with /reload.",
+  "replacements": [
+    { "from_tag": "minecraft:planks", "to": "minecraft:spruce_planks" },
+    { "from": "minecraft:cobblestone", "to": "minecraft:mossy_cobblestone" }
+  ]
+}

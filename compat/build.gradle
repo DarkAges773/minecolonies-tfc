@@ -1,0 +1,141 @@
+// MineColonies x TerraFirmaCraft compatibility bridge. Depends on :replacements for the
+// block-substitution engine and ships TFC-specific substitution rules as a datapack.
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7.+'
+    }
+}
+
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle'
+}
+
+// :compat has NO mixins of its own. We apply MixinGradle anyway because the dev run configurations
+// live in this project, and applying it here is what makes ForgeGradle inject the runtime refmap
+// remapping (mixin.env.remapRefMap / refMapRemappingFile) into those runs. Without it, OTHER mods'
+// SRG-named mixins (e.g. Patchouli's AccessorScreen) fail to apply in the official-mapped dev env.
+apply plugin: 'org.spongepowered.mixin'
+
+// Needed so the run config below can reference project(':replacements').sourceSets.main.
+evaluationDependsOn(':replacements')
+
+def mod_id = 'mctfc'
+def mod_name = 'MineColonies x TerraFirmaCraft'
+def mod_license = 'All Rights Reserved'
+def mod_version = '0.1.0'
+def mod_group_id = 'com.mctfc'
+def mod_authors = 'chkomov'
+def mod_description = 'Compatibility bridge between MineColonies and TerraFirmaCraft for Forge 1.20.1.'
+
+version = mod_version
+group = mod_group_id
+base { archivesName = mod_id }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            // Load BOTH our mods from their source sets. All third-party mods come from the
+            // deobf dependencies on the runtime classpath.
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+                structurizereplacements {
+                    source project(':replacements').sourceSets.main
+                }
+            }
+        }
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+        server {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        name = 'LDTTeam - Modding'
+        url = 'https://ldtteam.jfrog.io/ldtteam/modding/'
+    }
+    maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // The substitution engine (our standalone mod).
+    implementation project(':replacements')
+
+    // Full mod stack for the dev runtime. Declared explicitly so FML reliably finds every mod jar.
+    runtimeOnly fg.deobf("com.ldtteam:structurize:${structurize_version}")
+    runtimeOnly fg.deobf("com.ldtteam:blockui:${blockui_version}")
+    implementation fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
+    runtimeOnly fg.deobf("com.ldtteam:domum_ornamentum:${domum_ornamentum_version}")
+    implementation fg.deobf("curse.maven:terrafirmacraft-302973:${tfc_file_id}")
+    runtimeOnly fg.deobf("curse.maven:patchouli-306770:${patchouli_file_id}")
+    // Dev-run-only: recipe/item viewer for testing (not a real dependency).
+    runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")
+}
+
+// Engages MixinGradle (see the apply note above). No 'config' — :compat has no mixin config of its
+// own; this only registers the AP (producing an empty refmap) and the run-time remap environment.
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+            forge_version: forge_version, forge_version_range: forge_version_range,
+            loader_version_range: loader_version_range,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+            mod_authors: mod_authors, mod_description: mod_description,
+    ]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_id,
+                'Specification-Vendor'  : mod_authors,
+                'Specification-Version' : '1',
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor' : mod_authors,
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

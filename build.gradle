@@ -1,0 +1,6 @@
+// Root build for the multi-project. Heavy per-mod configuration lives in each subproject's
+// build.gradle (replacements/build.gradle, compat/build.gradle). The ForgeGradle plugin version
+// is declared here once and applied (without version) inside each subproject.
+plugins {
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)' apply false
+}

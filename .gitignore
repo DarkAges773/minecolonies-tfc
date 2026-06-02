@@ -1,0 +1,36 @@
+# eclipse
+bin
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
+
+# gradle (matches root and both subprojects)
+build
+.gradle
+
+# run directories
+run
+run-data
+mcmodsrepo
+src/generated/resources/.cache
+
+# logs
+*.log
+
+# Claude Code (local agent state/settings). CLAUDE.md is intentionally NOT ignored - it is
+# tracked project documentation.
+.claude/
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Files from Forge MDK
+forge*changelog.txt

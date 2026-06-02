@@ -1,0 +1,131 @@
+// Standalone Structurize block-substitution mod. Depends ONLY on Structurize — no MineColonies, no TFC.
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7.+'
+    }
+}
+
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle'
+}
+
+apply plugin: 'org.spongepowered.mixin'
+
+def mod_id = 'structurizereplacements'
+def mod_name = 'Structurize Replacements'
+def mod_license = 'All Rights Reserved'
+def mod_version = '0.1.0'
+def mod_group_id = 'com.structurizereplacements'
+def mod_authors = 'chkomov'
+def mod_description = 'Tag- and family-based block substitution for Structurize blueprints. Standalone; only requires Structurize.'
+
+version = mod_version
+group = mod_group_id
+base { archivesName = mod_id }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+    // Standalone runs: load ONLY this mod (+ Structurize/BlockUI from the deobf deps below).
+    // No MineColonies/TFC here - this proves the mod works independently and is faster to launch.
+    // The full stack (both our mods + MC/TFC) is run from :compat instead.
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+        server {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        name = 'LDTTeam - Modding'
+        url = 'https://ldtteam.jfrog.io/ldtteam/modding/'
+    }
+    maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    // Structurize is the only real mod dependency. blockui is Structurize's own runtime dependency.
+    implementation fg.deobf("com.ldtteam:structurize:${structurize_version}")
+    runtimeOnly fg.deobf("com.ldtteam:blockui:${blockui_version}")
+
+    // --- Dev-run-only test mods. NOT real dependencies (mods.toml is unchanged); these only enrich
+    //     the standalone runClient so substitution can be exercised against MineColonies' build tool
+    //     with a recipe viewer. MineColonies requires Domum Ornamentum (BlockUI/Structurize already
+    //     present above), so it is added too. ---
+    runtimeOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
+    runtimeOnly fg.deobf("com.ldtteam:domum_ornamentum:${domum_ornamentum_version}")
+    runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+            forge_version: forge_version, forge_version_range: forge_version_range,
+            loader_version_range: loader_version_range,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+            mod_authors: mod_authors, mod_description: mod_description,
+    ]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_id,
+                'Specification-Vendor'  : mod_authors,
+                'Specification-Version' : '1',
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor' : mod_authors,
+                'MixinConfigs'          : "${mod_id}.mixins.json"
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
