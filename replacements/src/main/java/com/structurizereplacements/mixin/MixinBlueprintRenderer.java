@@ -2,6 +2,7 @@ package com.structurizereplacements.mixin;
 
 import com.ldtteam.structurize.client.BlueprintRenderer;
 import com.ldtteam.structurize.util.BlockInfo;
+import com.structurizereplacements.placement.PlacementChoices;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,6 +33,6 @@ public class MixinBlueprintRenderer
             remap = false)
     private BlockState structurizereplacements$substituteRenderedBlock(final BlockInfo blockInfo)
     {
-        return BlockSubstitutions.applyState(blockInfo.getState());
+        return BlockSubstitutions.applyState(blockInfo.getState(), PlacementChoices.client());
     }
 }

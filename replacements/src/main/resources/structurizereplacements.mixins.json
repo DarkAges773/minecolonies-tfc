@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "structurizereplacements.refmap.json",
   "mixins": [
-    "MixinStructurePlacer"
+    "MixinStructurePlacer",
+    "MixinPlaceStructureOperation"
   ],
   "client": [
     "MixinBlueprintRenderer",

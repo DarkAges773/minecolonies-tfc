@@ -178,10 +178,29 @@ In `:replacements` (generic):
   logs/wood/leaves/saplings). Not yet manually verified in-game — place a blueprint with oak
   stairs/slabs/fences AND oak logs/leaves; the shapes should become spruce while logs/leaves stay oak.
   Possible follow-ups: cross-namespace family mapping (vanilla→TFC); add signs/plain-Block variants.
-- ~~**Client preview mixin**~~ — DONE ([MixinBlueprintBlockAccess](replacements/src/main/java/com/structurizereplacements/mixin/MixinBlueprintBlockAccess.java)).
-  Works in single-player (integrated server shares the JVM, so client sees the rules). **Dedicated
-  servers:** rules load server-side only, so the client preview won't substitute until rules are
-  synced to clients — a follow-up (network packet on join / on reload).
+- ~~**Client preview mixin**~~ — DONE ([MixinBlueprintRenderer](replacements/src/main/java/com/structurizereplacements/mixin/MixinBlueprintRenderer.java)
+  redirects the render-loop `BlockInfo.getState()`; [MixinBlueprintBlockAccess](replacements/src/main/java/com/structurizereplacements/mixin/MixinBlueprintBlockAccess.java)
+  keeps the tint/light context consistent). Works in single-player (integrated server shares the JVM,
+  so client sees the rules). **Dedicated servers:** rules load server-side only, so the client preview
+  won't substitute until rules are synced to clients — a follow-up (network packet on join / on reload).
+- **GUI per-placement picker** — DESIGNED + reconned (feasible), not yet built. Full plan, Structurize
+  class references, and the phased build order are in
+  [docs/gui-replacement-picker-plan.md](docs/gui-replacement-picker-plan.md). In short: add `to_tag`
+  candidate rules (interactive — apply nothing until the player picks); a picker in
+  `WindowExtendedBuildTool` (one row per distinct matching source block, options = target-tag members),
+  explicit + remembered per blueprint/session; choices ride the per-placement state to the server by
+  mirroring Structurize's `solidSubstitutionOverride` flow (`BlueprintPreviewData` +
+  `SyncPreviewCacheToServer`).
+  **Phase 1 plumbing — DONE & verified:** the feasibility gate is cleared. Per-placement choices reach
+  server placement by attaching a `Map<source,target>` to the `StructurePlacer` instance at
+  `PlaceStructureOperation` creation (which has the player); `handleBlockPlacement` reads it off `this`.
+  Engine has an override layer (`BlockSubstitutions.applyState(state, overrides)`, override beats
+  datapack rules); preview consults it too. See [PlacementChoiceHolder](replacements/src/main/java/com/structurizereplacements/placement/PlacementChoiceHolder.java),
+  [PlacementChoices](replacements/src/main/java/com/structurizereplacements/placement/PlacementChoices.java)
+  (currently HARD-CODED `oak_planks→dark_oak_planks`), [MixinPlaceStructureOperation](replacements/src/main/java/com/structurizereplacements/mixin/MixinPlaceStructureOperation.java).
+  **Phase 2 (TODO):** the BlockUI picker window, `to_tag` candidate rules, and replacing the hard-coded
+  `PlacementChoices` with a real per-player store + client→server sync. Covers creative paste only
+  (MineColonies builder placement bypasses `PlaceStructureOperation`).
 - **GUI toggle** in `WindowExtendedBuildTool` for per-placement opt-in.
 
 In `:compat`:

@@ -49,12 +49,26 @@ public final class BlockSubstitutions
      */
     public static BlockInfo apply(final BlockInfo info)
     {
+        return apply(info, null);
+    }
+
+    public static BlockState applyState(final BlockState state)
+    {
+        return applyState(state, null);
+    }
+
+    /**
+     * As {@link #apply(BlockInfo)} but with a per-placement override map (player choices). Overrides
+     * take precedence over datapack rules; {@code null}/empty means "datapack rules only".
+     */
+    public static BlockInfo apply(final BlockInfo info, final Map<Block, Block> overrides)
+    {
         if (info == null)
         {
             return info;
         }
         final BlockState src = info.getState();
-        final BlockState newState = applyState(src);
+        final BlockState newState = applyState(src, overrides);
         if (newState == src)
         {
             return info; // applyState returns the same reference when nothing changed
@@ -63,13 +77,31 @@ public final class BlockSubstitutions
     }
 
     /**
-     * Substitute a single block state (used by both server placement, via {@link #apply(BlockInfo)},
-     * and the client placement-preview mixin). Returns the same {@code state} reference unchanged when
-     * substitution is disabled, no rule matches, or it would be a no-op.
+     * Substitute a single block state, used by server placement and the client preview mixins.
+     *
+     * <p>Resolution order: (1) per-placement {@code overrides} (explicit player choices), then
+     * (2) datapack rules + their family cascades. Returns the same {@code state} reference unchanged
+     * when substitution is disabled or nothing applies.
      */
-    public static BlockState applyState(final BlockState state)
+    public static BlockState applyState(final BlockState state, final Map<Block, Block> overrides)
     {
-        if (!Config.enableSubstitution || state == null || (rules.isEmpty() && families.isEmpty()))
+        if (!Config.enableSubstitution || state == null)
+        {
+            return state;
+        }
+
+        // (1) Per-placement player choice wins over datapack rules.
+        if (overrides != null && !overrides.isEmpty())
+        {
+            final Block chosen = overrides.get(state.getBlock());
+            if (chosen != null && chosen != state.getBlock())
+            {
+                return copyProperties(state, chosen.defaultBlockState());
+            }
+        }
+
+        // (2) Datapack rules + family cascades.
+        if (rules.isEmpty() && families.isEmpty())
         {
             return state;
         }

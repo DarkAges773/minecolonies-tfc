@@ -1,6 +1,7 @@
 package com.structurizereplacements.mixin;
 
 import com.ldtteam.structurize.client.fakelevel.BlueprintBlockAccess;
+import com.structurizereplacements.placement.PlacementChoices;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,6 +32,6 @@ public class MixinBlueprintBlockAccess
     @Inject(method = "getBlockState", at = @At("RETURN"), cancellable = true)
     private void structurizereplacements$substitutePreview(final BlockPos pos, final CallbackInfoReturnable<BlockState> cir)
     {
-        cir.setReturnValue(BlockSubstitutions.applyState(cir.getReturnValue()));
+        cir.setReturnValue(BlockSubstitutions.applyState(cir.getReturnValue(), PlacementChoices.client()));
     }
 }

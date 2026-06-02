@@ -2,29 +2,47 @@ package com.structurizereplacements.mixin;
 
 import com.ldtteam.structurize.placement.StructurePlacer;
 import com.ldtteam.structurize.util.BlockInfo;
+import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
+import net.minecraft.world.level.block.Block;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
+import java.util.Map;
+
 /**
- * Applies datapack-driven block substitution at the single point where Structurize turns a
- * blueprint's stored {@link BlockInfo} into a placed block.
+ * Applies block substitution at the single point where Structurize turns a blueprint's stored
+ * {@link BlockInfo} into a placed block, and carries the placing player's per-placement choices.
  *
- * <p>{@code handleBlockPlacement(Level, BlockPos, ChangeStorage, BlockInfo)} reads the state via
- * {@code blockInfo.getState()} immediately, so rewriting the {@link BlockInfo} argument at HEAD
- * feeds the rest of the method (handler selection + placement) our substituted state, fully
- * non-destructively. {@link BlockSubstitutions#apply} returns the argument unchanged when
- * substitution is disabled or no rule matches.
+ * <p>The choice map is attached by {@link MixinPlaceStructureOperation} when the placement operation
+ * is created (it has both the placer and the player). It lives on this placer instance for the whole
+ * ticked placement, so {@code handleBlockPlacement} can read it without needing a player reference.
+ *
+ * <p>{@code remap = false}: handleBlockPlacement is Structurize's own (non-Minecraft) method.
  */
 @Mixin(StructurePlacer.class)
-public class MixinStructurePlacer
+public class MixinStructurePlacer implements PlacementChoiceHolder
 {
-    // remap = false: handleBlockPlacement is Structurize's own (non-Minecraft) method, so its name
-    // is stable across dev/production and must NOT be remapped to an SRG name.
+    @Unique
+    private Map<Block, Block> structurizereplacements$choices;
+
+    @Override
+    public void setReplacementChoices(final Map<Block, Block> choices)
+    {
+        this.structurizereplacements$choices = choices;
+    }
+
+    @Override
+    public Map<Block, Block> getReplacementChoices()
+    {
+        return this.structurizereplacements$choices;
+    }
+
     @ModifyVariable(method = "handleBlockPlacement", at = @At("HEAD"), argsOnly = true, remap = false)
     private BlockInfo structurizereplacements$substituteBlueprintBlock(final BlockInfo blockInfo)
     {
-        return BlockSubstitutions.apply(blockInfo);
+        return BlockSubstitutions.apply(blockInfo, this.structurizereplacements$choices);
     }
 }
