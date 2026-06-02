@@ -5,6 +5,7 @@ import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -44,5 +45,15 @@ public class MixinStructurePlacer implements PlacementChoiceHolder
     private BlockInfo structurizereplacements$substituteBlueprintBlock(final BlockInfo blockInfo)
     {
         return BlockSubstitutions.apply(blockInfo, this.structurizereplacements$choices);
+    }
+
+    /**
+     * The builder/quarrier compute what materials to request through {@code getResourceRequirements};
+     * substitute the blueprint state here too so they request the block that will actually be placed.
+     */
+    @ModifyVariable(method = "getResourceRequirements", at = @At("HEAD"), argsOnly = true, remap = false)
+    private BlockState structurizereplacements$substituteRequirement(final BlockState state)
+    {
+        return BlockSubstitutions.applyState(state, this.structurizereplacements$choices);
     }
 }

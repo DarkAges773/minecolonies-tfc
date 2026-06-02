@@ -6,7 +6,8 @@
   "refmap": "structurizereplacements.refmap.json",
   "mixins": [
     "MixinStructurePlacer",
-    "MixinPlaceStructureOperation"
+    "MixinPlaceStructureOperation",
+    "MixinAbstractBlueprintIterator"
   ],
   "client": [
     "MixinBlueprintRenderer",

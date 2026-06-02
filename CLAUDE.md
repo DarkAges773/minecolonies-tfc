@@ -198,10 +198,21 @@ In `:replacements` (generic):
   + button [MixinAbstractBlueprintManipulationWindow](replacements/src/main/java/com/structurizereplacements/mixin/MixinAbstractBlueprintManipulationWindow.java);
   live refresh via `BlueprintHandler.getInstance().clearCache()`. Labels reuse existing translations
   (Structurize + vanilla `gui.done`).
-  **Caveats / follow-ups:** creative-paste placement only (MineColonies builder bypasses
-  `PlaceStructureOperation`); per-blueprint session memory + row counts are unpolished; and **dedicated
-  servers need rule sync** — candidate/datapack rules load server-side only, so on a dedicated server
-  the client GUI shows no rows and the preview can't substitute (single-player works, shared JVM).
+  **Caveats / follow-ups:** the per-placement GUI choice applies to creative-paste placement; per-blueprint
+  session memory + row counts are unpolished; and **dedicated servers need rule sync** — candidate/datapack
+  rules load server-side only, so on a dedicated server the client GUI shows no rows and the preview can't
+  substitute (single-player works, shared JVM).
+- **Builder placement — DONE & verified (datapack rules).** MineColonies builder/quarrier use Structurize's
+  `StructurePlacer`, so datapack substitution applies to builder-built structures across all three
+  phases, kept consistent: **place** (`handleBlockPlacement`, already), **request materials**
+  (`getResourceRequirements` arg — so the builder requests what it'll place), and **build-progress match**
+  (`AbstractBlueprintIterator#iterateWithCondition` redirects the static
+  `IPlacementHandler.doesWorldStateMatchBlueprintState(BlockInfo,…)` so a placed substituted block counts
+  as built and the builder completes). All three use datapack rules only (the builder has no per-placement
+  GUI choice; `StructurePlacer.choices` is null there). See
+  [MixinStructurePlacer](replacements/src/main/java/com/structurizereplacements/mixin/MixinStructurePlacer.java)
+  + [MixinAbstractBlueprintIterator](replacements/src/main/java/com/structurizereplacements/mixin/MixinAbstractBlueprintIterator.java).
+  Per-building player choices (carry GUI picks into a builder work order) = future.
 - **GUI toggle** in `WindowExtendedBuildTool` for per-placement opt-in.
 
 In `:compat`:
