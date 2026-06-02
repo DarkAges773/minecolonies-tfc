@@ -121,16 +121,38 @@ default on) — applies to every Structurize placement, not opt-in per build (a 
 
 - [SubstitutionRule](replacements/src/main/java/com/structurizereplacements/substitution/SubstitutionRule.java) —
   match by exact block or block tag → replacement block.
+- [FamilyRule](replacements/src/main/java/com/structurizereplacements/substitution/FamilyRule.java) —
+  **material-token cascade.** A `from → to` block rule whose ids differ by exactly one path token
+  (split on `_` and `/`) derives a material swap (`oak_planks→spruce_planks` ⇒ `oak→spruce`), also
+  TFC's `wood/planks/oak→wood/planks/spruce`. On by default; `"family": false` forces exact-only.
+  Rules differing by more than one token (e.g. `cobblestone→mossy_cobblestone`) derive no cascade;
+  tag rules never cascade.
+- [CascadeShapes](replacements/src/main/java/com/structurizereplacements/substitution/CascadeShapes.java) —
+  **the cascade is gated by block FORM, not name.** A swap only applies when the candidate and its
+  token-swapped target are the same building shape — `instanceof` one of `StairBlock, SlabBlock,
+  WallBlock, FenceBlock, FenceGateBlock, DoorBlock, TrapDoorBlock, ButtonBlock, PressurePlateBlock`.
+  Modded blocks extend these (TFC `TFCStairBlock extends StairBlock`), so it works for vanilla + TFC,
+  and it EXCLUDES logs/wood (`RotatedPillarBlock`), leaves (`LeavesBlock` and TFC's plain-`Block`
+  leaves), saplings, and the plank base — fixing the earlier name-only over-matching. Decision record:
+  `BlockFamily` (vanilla datagen) was evaluated and rejected — verified TFC has zero `BlockFamily`
+  references, so it can't drive TFC cascades; plain-`Block` variants (stone polished/bricks) are
+  intentionally out of scope (use explicit rules). Signs are easy to add to the allowlist if wanted.
 - [BlockSubstitutions](replacements/src/main/java/com/structurizereplacements/substitution/BlockSubstitutions.java) —
-  `apply(BlockInfo)` swaps state, **copies shared properties** (facing/axis/half…), memoized, cleared on reload.
+  `apply(BlockInfo)` swaps state, **copies shared properties** (facing/axis/half…), memoized, cleared on
+  reload. Resolution order: exact/tag rules first, then family cascades.
 - [BlockSubstitutionReloadListener](replacements/src/main/java/com/structurizereplacements/substitution/BlockSubstitutionReloadListener.java) —
   loads `data/<namespace>/block_substitutions/*.json` across **all** datapacks/namespaces; registered on
   `AddReloadListenerEvent` in [event/ModEvents](replacements/src/main/java/com/structurizereplacements/event/ModEvents.java).
 
 **Rule JSON** — each entry has `"to"` (block id) + exactly one of `"from"` (block id) or `"from_tag"`
-(block tag id); first match wins; unknown ids are logged and skipped. TFC rules ship in
+(block tag id), plus optional `"family"` (bool, default true) on `from→to` rules; first match wins;
+unknown ids are logged and skipped. Example/dev rules (vanilla, demonstrate the cascade) ship in
+[replacements .../block_substitutions/examples.json](replacements/src/main/resources/data/structurizereplacements/block_substitutions/examples.json)
+— **delete that for a clean published library** (active rules would rewrite any consumer's blueprints).
+TFC rules ship in
 [compat .../block_substitutions/defaults.json](compat/src/main/resources/data/mctfc/block_substitutions/defaults.json)
-(currently vanilla example values for testing — swap to `tfc:…` ids).
+(vanilla example values for now — swap to `tfc:…` ids; note cross-namespace vanilla→TFC pairs won't
+auto-cascade, so TFC needs per-form rules or same-namespace `tfc:…→tfc:…` family rules).
 
 ## Verified
 
@@ -144,9 +166,11 @@ and `/reload`-ing edited JSON.
 ## Roadmap / not yet done
 
 In `:replacements` (generic):
-- **Family substitution** — deriving `oak_planks→spruce_planks` to also cover `oak_stairs/slab/fence/
-  wall/door/…`. Approach: reduce a rule to a shared-suffix prefix map (`oak_ → spruce_`) and apply when
-  the target variant exists; must be naming-scheme-aware (vanilla `material_type` vs TFC `wood/type/material`).
+- ~~**Family substitution**~~ — DONE, now **form-gated** by [CascadeShapes](replacements/src/main/java/com/structurizereplacements/substitution/CascadeShapes.java)
+  (cascades to stairs/slabs/walls/fences/gates/doors/trapdoors/buttons/pressure-plates; excludes
+  logs/wood/leaves/saplings). Not yet manually verified in-game — place a blueprint with oak
+  stairs/slabs/fences AND oak logs/leaves; the shapes should become spruce while logs/leaves stay oak.
+  Possible follow-ups: cross-namespace family mapping (vanilla→TFC); add signs/plain-Block variants.
 - **Client preview mixin** — so the placement hologram shows replacements (client-side render path).
 - **GUI toggle** in `WindowExtendedBuildTool` for per-placement opt-in.
 

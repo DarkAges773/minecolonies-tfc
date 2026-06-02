@@ -2,9 +2,11 @@ package com.structurizereplacements.substitution;
 
 import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.Config;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
 import java.util.Map;
@@ -14,23 +16,29 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Holds the active block-substitution ruleset and applies it during blueprint placement.
  *
- * <p>Rules are loaded server-side from datapacks by {@link BlockSubstitutionReloadListener} and
- * swapped in via {@link #setRules(List)}. The per-source-block resolution is memoized in
- * {@link #cache} and cleared on every reload.
+ * <p>Two kinds of rules, loaded server-side from datapacks by {@link BlockSubstitutionReloadListener}:
+ * <ul>
+ *   <li>{@link SubstitutionRule} — exact block or block-tag → replacement block (checked first).</li>
+ *   <li>{@link FamilyRule} — a material-token cascade derived from a {@code from → to} rule (e.g.
+ *       {@code oak → spruce}), applied to sibling forms (stairs/slabs/fences/…) when the target
+ *       block exists.</li>
+ * </ul>
+ * Per-source-block resolution is memoized in {@link #cache} and cleared on every reload.
  */
 public final class BlockSubstitutions
 {
     private BlockSubstitutions() {}
 
-    /** Active rules; replaced wholesale on datapack reload. */
     private static volatile List<SubstitutionRule> rules = List.of();
+    private static volatile List<FamilyRule> families = List.of();
 
     /** Memoized source-block -> replacement-block (empty Optional = no substitution). */
     private static final Map<Block, Optional<Block>> cache = new ConcurrentHashMap<>();
 
-    public static void setRules(final List<SubstitutionRule> newRules)
+    public static void setRules(final List<SubstitutionRule> newRules, final List<FamilyRule> newFamilies)
     {
         rules = List.copyOf(newRules);
+        families = List.copyOf(newFamilies);
         cache.clear();
     }
 
@@ -41,7 +49,7 @@ public final class BlockSubstitutions
      */
     public static BlockInfo apply(final BlockInfo info)
     {
-        if (!Config.enableSubstitution || rules.isEmpty() || info == null)
+        if (!Config.enableSubstitution || info == null || (rules.isEmpty() && families.isEmpty()))
         {
             return info;
         }
@@ -69,12 +77,32 @@ public final class BlockSubstitutions
 
     private static Optional<Block> resolve(final Block source)
     {
+        // Exact-block and tag rules take priority over derived family cascades.
         final BlockState probe = source.defaultBlockState();
         for (final SubstitutionRule rule : rules)
         {
             if (rule.matches(probe))
             {
                 return Optional.of(rule.to());
+            }
+        }
+
+        final ResourceLocation sourceId = ForgeRegistries.BLOCKS.getKey(source);
+        if (sourceId != null)
+        {
+            for (final FamilyRule family : families)
+            {
+                final Optional<ResourceLocation> targetId = family.apply(sourceId);
+                if (targetId.isPresent() && ForgeRegistries.BLOCKS.containsKey(targetId.get()))
+                {
+                    final Block target = ForgeRegistries.BLOCKS.getValue(targetId.get());
+                    // Only cascade between matching building shapes (stairs->stairs, slab->slab, ...).
+                    // This excludes logs/wood/leaves/saplings even though their names share the token.
+                    if (target != null && target != source && CascadeShapes.shareShape(source, target))
+                    {
+                        return Optional.of(target);
+                    }
+                }
             }
         }
         return Optional.empty();
