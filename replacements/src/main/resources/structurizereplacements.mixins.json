@@ -7,7 +7,10 @@
   "mixins": [
     "MixinStructurePlacer"
   ],
-  "client": [],
+  "client": [
+    "MixinBlueprintRenderer",
+    "MixinBlueprintBlockAccess"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

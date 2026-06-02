@@ -110,9 +110,16 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
 - **`com.ldtteam.structurize.util.BlockInfo`** — immutable record `(BlockPos, BlockState, CompoundTag)`.
 - For builder material requests (future): also apply substitution in
   `IPlacementHandler#getRequiredItems` / `StructurePlacer#getResourceRequirements`.
-- GUI/preview (future): `client.gui.WindowExtendedBuildTool` (placement window),
-  `storage/rendering` + `BlueprintPreviewData` (the placement hologram — client-side, which is why the
-  current server-side mixin doesn't change the preview).
+- Preview (DONE): the hologram is baked in `client.BlueprintRenderer#init`, which iterates
+  `Blueprint#getBlockInfoAsList()` and renders each `BlockInfo.getState()` via `renderBatched(...)` —
+  the fake level (`BlueprintBlockAccess`) is passed only as the tint/light context, NOT the rendered
+  block source. So the preview hook is a **`@Redirect` of that `BlockInfo.getState()` read in
+  `init`** (MixinBlueprintRenderer); substituting `BlueprintBlockAccess#getBlockState` alone does
+  nothing visible (that was the first wrong attempt — it only changes context). Dead ends ruled out:
+  `Blueprint#buildBlockInfoCaches` is shared with server placement (can't substitute there without
+  double-applying), and `BlueprintBlockInfoTransformHandler` only runs during tile-entity
+  instantiation (`BlueprintUtils`), not the block-state bake.
+- GUI toggle (future): `client.gui.WindowExtendedBuildTool` (placement window).
 
 ## The substitution feature (in :replacements)
 
@@ -171,7 +178,10 @@ In `:replacements` (generic):
   logs/wood/leaves/saplings). Not yet manually verified in-game — place a blueprint with oak
   stairs/slabs/fences AND oak logs/leaves; the shapes should become spruce while logs/leaves stay oak.
   Possible follow-ups: cross-namespace family mapping (vanilla→TFC); add signs/plain-Block variants.
-- **Client preview mixin** — so the placement hologram shows replacements (client-side render path).
+- ~~**Client preview mixin**~~ — DONE ([MixinBlueprintBlockAccess](replacements/src/main/java/com/structurizereplacements/mixin/MixinBlueprintBlockAccess.java)).
+  Works in single-player (integrated server shares the JVM, so client sees the rules). **Dedicated
+  servers:** rules load server-side only, so the client preview won't substitute until rules are
+  synced to clients — a follow-up (network packet on join / on reload).
 - **GUI toggle** in `WindowExtendedBuildTool` for per-placement opt-in.
 
 In `:compat`:

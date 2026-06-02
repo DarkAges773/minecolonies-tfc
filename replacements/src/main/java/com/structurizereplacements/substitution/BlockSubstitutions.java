@@ -49,25 +49,36 @@ public final class BlockSubstitutions
      */
     public static BlockInfo apply(final BlockInfo info)
     {
-        if (!Config.enableSubstitution || info == null || (rules.isEmpty() && families.isEmpty()))
+        if (info == null)
         {
             return info;
         }
-
         final BlockState src = info.getState();
-        if (src == null)
+        final BlockState newState = applyState(src);
+        if (newState == src)
         {
-            return info;
+            return info; // applyState returns the same reference when nothing changed
         }
-
-        final Optional<Block> target = targetFor(src.getBlock());
-        if (target.isEmpty() || target.get() == src.getBlock())
-        {
-            return info;
-        }
-
-        final BlockState newState = copyProperties(src, target.get().defaultBlockState());
         return new BlockInfo(info.getPos(), newState, info.getTileEntityData());
+    }
+
+    /**
+     * Substitute a single block state (used by both server placement, via {@link #apply(BlockInfo)},
+     * and the client placement-preview mixin). Returns the same {@code state} reference unchanged when
+     * substitution is disabled, no rule matches, or it would be a no-op.
+     */
+    public static BlockState applyState(final BlockState state)
+    {
+        if (!Config.enableSubstitution || state == null || (rules.isEmpty() && families.isEmpty()))
+        {
+            return state;
+        }
+        final Optional<Block> target = targetFor(state.getBlock());
+        if (target.isEmpty() || target.get() == state.getBlock())
+        {
+            return state;
+        }
+        return copyProperties(state, target.get().defaultBlockState());
     }
 
     private static Optional<Block> targetFor(final Block source)
