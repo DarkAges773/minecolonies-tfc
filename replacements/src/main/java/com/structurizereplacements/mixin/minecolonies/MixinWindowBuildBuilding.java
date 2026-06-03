@@ -1,11 +1,11 @@
 package com.structurizereplacements.mixin.minecolonies;
 
 import com.ldtteam.blockui.PaneBuilders;
-import com.ldtteam.blockui.controls.ButtonImage;
 import com.ldtteam.blockui.views.BOWindow;
 import com.ldtteam.blockui.views.View;
 import com.minecolonies.api.colony.buildings.views.IBuildingView;
 import com.minecolonies.core.client.gui.WindowBuildBuilding;
+import com.structurizereplacements.client.gui.ButtonImageWithIcon;
 import com.structurizereplacements.client.gui.WindowReplacements;
 import com.structurizereplacements.integration.minecolonies.BuildingChoiceContext;
 import net.minecraft.network.chat.Component;
@@ -23,8 +23,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  *
  * <p>The window (420×240) is full — top row (style nav / builder dropdown / cancel), the resource list,
  * and the bottom action row (Repair/Build/Deconstruct) leave no room for a labeled button. So this is a
- * small 15×15 icon button in the empty top-left corner (left of the style {@code <} arrow at x=40), using
- * MineColonies' own {@code edit.png} glyph with a "Replace" tooltip.
+ * small 16×16 icon button in the empty top-left corner (left of the style {@code <} arrow at x=40): a
+ * {@link ButtonImageWithIcon} that draws MineColonies' own {@code builder_button_mini} frame and overlays
+ * our dark {@code replace_button.png} icon (at full 32×32 source res, so it reads on the light GUI and
+ * stays crisp at high GUI scale) with a "Replace" tooltip; it brightens on hover like MC's mini buttons.
  *
  * <p>Injected at the constructor TAIL (the window has a single ctor and builds its panes from XML in
  * {@code super(...)}, so children exist by TAIL). {@code remap = false}: {@code building}/
@@ -43,14 +45,16 @@ public abstract class MixinWindowBuildBuilding
     private void structurizereplacements$addReplaceButton(final CallbackInfo ci)
     {
         final View window = (View) (Object) this;
-        final int size = 15;
-        final ButtonImage button = new ButtonImage();
+        final int size = 16;
+        // 2px frame visible on each side; the 32×32 icon fills the inner 12×12, overlaid at draw time.
+        final ButtonImageWithIcon button = new ButtonImageWithIcon(
+                new ResourceLocation("structurizereplacements", "textures/gui/replace_button.png"), 2);
         button.setID("structurizereplacements:replace");
         button.setSize(size, size);
         // Empty top-left corner, left of the style "<" arrow (which begins at x=40).
         button.setPosition(4, 1);
-        // edit.png IS the icon (15×15, the same scale as the style arrows); it brightens on hover.
-        button.setImage(new ResourceLocation("minecolonies", "textures/gui/builderhut/edit.png"), false);
+        // MineColonies' own mini-button frame as the (light) background; the icon is overlaid over it.
+        button.setImage(new ResourceLocation("minecolonies", "textures/gui/builderhut/builder_button_mini.png"), false);
         button.setHandler(b -> new WindowReplacements(
                 new BuildingChoiceContext(this.building, this::updateResources), (BOWindow) (Object) this).open());
         window.addChild(button);
