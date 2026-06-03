@@ -1,5 +1,6 @@
 package com.mctfc.mixin;
 
+import com.minecolonies.core.colony.buildingextensions.FarmField;
 import com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer;
 import com.mctfc.farming.TfcFarmlandHelper;
 import net.minecraft.core.BlockPos;
@@ -10,7 +11,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Teaches the MineColonies farmer to till TFC soil into TFC farmland.
@@ -74,5 +77,25 @@ public abstract class MixinEntityAIWorkFarmer
             return level.setBlockAndUpdate(pos, tfc);
         }
         return level.setBlockAndUpdate(pos, intended);
+    }
+
+    /**
+     * Plantable gate. {@code isRightFarmLandForCrop} only treats a vanilla {@code FarmBlock} as valid for
+     * non-MineColonies seeds, so the farmer never plants on the {@code tfc:farmland/<soil>} it just tilled.
+     * Accept TFC farmland when the field's seed plants a {@link net.minecraft.world.level.block.CropBlock}
+     * (TFC crops extend it). The AI's downstream {@code plantCrop} still runs the crop's own
+     * {@code canSurvive} check, so an incompatible crop simply isn't placed. Returning {@code true} here also
+     * makes {@code findHoeableSurface} correctly stop re-hoeing land that's already TFC farmland.
+     */
+    @Inject(
+            method = "isRightFarmLandForCrop(Lcom/minecolonies/core/colony/buildingextensions/FarmField;Lnet/minecraft/world/level/block/state/BlockState;)Z",
+            at = @At("HEAD"),
+            cancellable = true)
+    private void mctfc$tfcFarmlandIsRight(final FarmField farmField, final BlockState state, final CallbackInfoReturnable<Boolean> cir)
+    {
+        if (state.is(TfcFarmlandHelper.TFC_FARMLAND) && TfcFarmlandHelper.plantsCrop(farmField.getSeed()))
+        {
+            cir.setReturnValue(true);
+        }
     }
 }
