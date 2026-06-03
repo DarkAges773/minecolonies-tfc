@@ -289,6 +289,49 @@ In `:compat`:
 - Real TFC rule sets (verified `tfc:` ids), then the broader MC↔TFC bridging (food/nutrition,
   requests/progression, farming/animals).
 
+### Non-falling ("mortared") cobble — DONE & verified
+
+TFC makes cobble collapse (gravity), which wrecks MineColonies cobble builds. `:compat` registers a
+**non-falling twin** of every cobble block and substitutes builds onto it.
+
+- **Why a twin block, not a property/mixin:** TFC's falling is **tag-gated** — `tfc:can_landslide` lists
+  `minecraft:cobblestone`/`mossy_cobblestone` and every `tfc:rock/cobble|mossy_cobble/<rock>`, checked per
+  *block* (not per state). You can't add a blockstate property to an existing block (its `StateDefinition`
+  is frozen at construction), and even if you could, TFC reads the tag, not a property. So the surgical
+  fix is a separate block that simply isn't in `can_landslide`. (Same technique as MehVahdJukaar's
+  StoneZone/Moonlight: registry scan + naming detection + runtime-generated assets.)
+- **Scan + register** ([MortaredCobbleRegistry](compat/src/main/java/com/mctfc/block/MortaredCobbleRegistry.java)):
+  on `RegisterEvent`, iterate `ForgeRegistries.BLOCKS` and register a
+  [MortaredCobbleBlock](compat/src/main/java/com/mctfc/block/MortaredCobbleBlock.java) (`extends Block`,
+  `Properties.copy(source)`, drops self, name "Mortared &lt;source&gt;") + a
+  [MortaredCobbleBlockItem](compat/src/main/java/com/mctfc/block/MortaredCobbleBlockItem.java) per cobble,
+  id `mctfc:mortared/<source-ns>/<source-path>`. **Detection is a name heuristic** (`isCobble`: path ends
+  `cobblestone` or contains a `cobble/` segment, minus `_stairs/_slab/_wall/_button/_pressure_plate` and
+  `infested`) — tags are unavailable at registration; the heuristic is anchored to reproduce
+  `forge:cobblestone/normal`. **Only sees blocks registered before `mctfc`** (mods.toml orders it AFTER
+  tfc) — a cobble mod loading after us isn't covered.
+- **Client model delegation** ([MortaredCobbleClient](compat/src/main/java/com/mctfc/client/MortaredCobbleClient.java)):
+  twins ship no blockstate/model JSON, so `ModelEvent.ModifyBakingResult` repoints each twin's baked block
+  + item model at its source's. The bakery logs a benign "missing model" per twin during load — expected,
+  overwritten here. (`getModels()` is keyed by `ResourceLocation`, not `ModelResourceLocation`.)
+- **Runtime data pack** ([GeneratedDataPack](compat/src/main/java/com/mctfc/data/GeneratedDataPack.java) +
+  [MortaredCobbleData](compat/src/main/java/com/mctfc/data/MortaredCobbleData.java)): the twins are dynamic
+  so the tag/recipes can't be static JSON. At `AddPackFindersEvent` (twins already registered) we serve an
+  in-memory **forced built-in** `SERVER_DATA` pack with `mctfc:mortared_cobblestone` (all twins) + a
+  **shaped** recipe per twin (the cobble surrounded by 4 `#tfc:mortar`, cross pattern). The pack also makes
+  twins behave/identify like normal cobble by adding `#mctfc:mortared_cobblestone` (tag-of-tags) to the
+  block tags real cobble sits in — `minecraft:mineable/pickaxe`, `forge:cobblestone/normal`,
+  `tfc:can_carve`, `tfc:toughness_2` — but deliberately **not** `tfc:can_landslide` (that's the gravity
+  we're escaping).
+- **In-world conversion** ([MortaredCobbleInteraction](compat/src/main/java/com/mctfc/block/MortaredCobbleInteraction.java),
+  Forge bus): right-click a cobble holding `#tfc:mortar` → swap to its twin, consume 4 mortar (free in
+  creative). Cancels the interaction; server-authoritative.
+- **Substitution** is plain datapack: [defaults.json](compat/src/main/resources/data/mctfc/block_substitutions/defaults.json)
+  ships `minecraft:cobblestone → to_tag #mctfc:mortared_cobblestone` (player picks the rock type via the
+  Replace GUI). **Gotcha:** a fixed `to` rule on the same source (e.g. a leftover `cobblestone→mossy`
+  example) converts first under converted-block semantics and shadows this candidate pool — keep sources
+  unique across rules.
+
 ## Conventions
 
 - Prefer public APIs / events; when reaching another mod's internals use a mixin (with `remap=false`

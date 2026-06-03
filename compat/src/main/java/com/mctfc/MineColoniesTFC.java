@@ -1,6 +1,9 @@
 package com.mctfc;
 
+import com.mctfc.block.MortaredCobbleRegistry;
+import com.mctfc.data.MortaredCobbleData;
 import com.mojang.logging.LogUtils;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
@@ -22,6 +25,13 @@ public class MineColoniesTFC
 
     public MineColoniesTFC(FMLJavaModLoadingContext context)
     {
+        final IEventBus modBus = context.getModEventBus();
+        // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
+        // collapsing cobble doesn't wreck MineColonies builds). Substitution targets these via the
+        // mctfc:mortared_cobblestone tag.
+        modBus.addListener(MortaredCobbleRegistry::onRegister);
+        // Runtime data pack: the mctfc:mortared_cobblestone tag (every twin) + a mortar recipe per twin.
+        modBus.addListener(MortaredCobbleData::onAddPackFinders);
         LOGGER.info("MineColonies x TerraFirmaCraft bridge loaded.");
     }
 }

@@ -1,7 +1,7 @@
 {
-  "__comment": "TFC-oriented block substitutions, consumed by the structurizereplacements engine. The examples below are vanilla-only so they work/test without verifying exact TFC block ids; replace the 'to' values with TFC ids (e.g. tfc:wood/planks/oak, tfc:rock/cobble/granite). Edit/reload with /reload.",
+  "__comment": "TFC-oriented block substitutions, consumed by the structurizereplacements engine. The planks line is still a vanilla placeholder (swap to a tfc id e.g. tfc:wood/planks/oak). The cobblestone rule offers a candidate pool of mctfc 'mortared' (non-falling) cobble twins so MineColonies cobble builds survive TFC gravity - the player picks the rock type; the mctfc:mortared_cobblestone tag + mortar recipes are generated at runtime. Edit/reload with /reload.",
   "replacements": [
     { "from_tag": "minecraft:planks", "to": "minecraft:spruce_planks" },
-    { "from": "minecraft:cobblestone", "to": "minecraft:mossy_cobblestone" }
+    { "from": "minecraft:cobblestone", "to_tag": "mctfc:mortared_cobblestone" }
   ]
 }
