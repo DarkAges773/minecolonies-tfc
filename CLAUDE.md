@@ -298,7 +298,57 @@ In `:compat`:
 - Real TFC rule sets (verified `tfc:` ids), then the broader MC↔TFC bridging (food/nutrition,
   requests/progression, farming/animals).
 
-### Farmer tills TFC soil → TFC farmland — DONE & verified
+### Farmer farms TFC crops (till → plant → harvest) — DONE & verified
+
+The MineColonies farmer (`com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer`)
+now tills TFC soil, plants TFC crops on the resulting TFC farmland, and harvests them. All four hooks live in
+[MixinEntityAIWorkFarmer](compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkFarmer.java) +
+[TfcFarmlandHelper](compat/src/main/java/com/mctfc/farming/TfcFarmlandHelper.java) (`@Mixin(remap = false)` —
+MineColonies' own class/methods; only the inner MC calls are remapped per their `@At`).
+
+Why each piece works (recon, MC 1.20.1-1.1.1231 / TFC):
+- TFC seeds (`tfc:seeds/*`) are `ItemNameBlockItem` (a `BlockItem`) pointing at the crop block, and TFC's
+  `CropBlock extends` **vanilla** `net.minecraft.world.level.block.CropBlock`; its `canSurvive` only needs the
+  block below to be in `tfc:farmland`. So the AI's `plantCrop` (BlockItem + `instanceof CropBlock` + canSurvive)
+  and the ripe-harvest path (`instanceof CropBlock` + `isMaxAge`) already work for live TFC crops once the
+  farmland is recognized. The seed assigns to the scarecrow with no extra work (no plantable filter).
+- TFC crop lifecycle: a live crop grows to `growth==1.0` (**fruiting**, age==max → harvest gives produce + 1
+  seed); if left unharvested it `die(...)`s into a `DeadCropBlock` (the **seeding** stage; `MATURE=true` →
+  drops extra seeds, no produce). `DeadCropBlock extends TFCBushBlock` (not a `CropBlock`), so the base AI is
+  blind to it.
+
+**The TILL hooks** (see the old recon below): both `@Redirect`, no `@Shadow` of the inherited `world` field.
+- **Recognition** — redirect `BlockState.is(BlockTags.DIRT)` in `findHoeableSurface` to also accept
+  `#mctfc:farmer_tillable`
+  ([farmer_tillable.json](compat/src/main/resources/data/mctfc/tags/blocks/farmer_tillable.json): the 8 TFC
+  grass variants with a farmland twin; `peat_grass`/`kaolin_clay_grass` excluded). TFC bare dirt already passes
+  via `minecraft:dirt` (TFC ships `#tfc:dirt` into it).
+- **Farmland type** — redirect the `Level.setBlockAndUpdate` call in `createCorrectFarmlandForSeed`: place what
+  a hoe would make of the soil (`getToolModifiedState(HOE_TILL)` → `tfc:farmland/<soil>`) when that's a
+  non-vanilla farmland, else place exactly what MineColonies intended (vanilla soil + MC crop-preferred farmland
+  untouched). The block above is already cleared by the AI before this call, so TFC's air-above check passes.
+
+**The PLANT hook** — `@Inject(HEAD, cancellable)` on `isRightFarmLandForCrop`: the AI only treats a vanilla
+`FarmBlock` as valid for non-MC seeds, so it never planted on `tfc:farmland`. Return `true` when the block is in
+`tfc:farmland` (`TFC_FARMLAND` tag) and the field's seed plants a `CropBlock`. The AI's own `plantCrop` still
+runs `canSurvive`, so an incompatible crop simply isn't placed. (This also stops the AI re-hoeing land that's
+already TFC farmland.)
+
+**The HARVEST hook** — `@Inject(HEAD, cancellable)` on `findHarvestableSurface`: also return the position when
+the block above is a **mature** `DeadCropBlock`, so the farmer collects the seeding stage (seeds) and frees the
+cell. Non-dead-crop cases fall through to the base AI (it already harvests ripe TFC crops via `isMaxAge`). This
+hook needs the level + crop position; rather than shadow the inherited `world`, it shadows two methods declared
+on `EntityAIWorkFarmer` itself — `getCitizen()` (→ `getCitizen().level()`) and the private `getSurfacePos(...)`
+— which resolve reliably. **Verified in-game: farmer collects both ripe and dead crops.**
+
+**Pending follow-up — per-field harvest mode (Fruiting/Seeding) chosen in the field GUI:** *Fruiting* (default,
+= current behaviour: harvest ripe for produce + any dead for seeds); *Seeding* (skip ripe crops, let them die,
+harvest only the dead/mature stage for max seeds). Needs a mode stored on `FarmField` (it has public
+`serializeNBT`/`deserializeNBT` + `serialize`/`deserialize(FriendlyByteBuf)` for save + client sync — same class
+both sides), a toggle in the field window, a network message, and the harvest hook reading that mode (skip the
+ripe-crop branch in Seeding). Not built yet.
+
+<details><summary>Original tilling recon (kept for reference)</summary>
 
 The MineColonies farmer (`com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer`)
 was written for vanilla soil. Recon of the AI:
@@ -329,10 +379,10 @@ was written for vanilla soil. Recon of the AI:
   what MineColonies intended (so vanilla soil + MineColonies-crop preferred farmland are untouched). The
   block-above is already cleared by the AI before this call, so TFC's air-above check passes.
 
-After tilling, the farmer **won't plant** on the TFC farmland (it isn't a vanilla `FarmBlock` and the AI
-doesn't know TFC crops) — no crash, no re-till loop (tilled TFC farmland is no longer recognized as
-hoeable). Planting/harvesting TFC crops on TFC farmland is the next step (separate, larger: TFC seeds in
-`FarmField`, plant `tfc` `CropBlock`, harvest mature TFC crops).
+(At the tilling-only stage the farmer then couldn't plant on TFC farmland — that's what the PLANT/HARVEST
+hooks above added.)
+
+</details>
 
 ### Non-falling ("mortared") cobble — DONE & verified
 

@@ -1,8 +1,10 @@
 package com.mctfc.mixin;
 
+import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import com.minecolonies.core.colony.buildingextensions.FarmField;
 import com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer;
 import com.mctfc.farming.TfcFarmlandHelper;
+import net.dries007.tfc.common.blocks.crop.DeadCropBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
@@ -10,6 +12,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -18,27 +21,48 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * Teaches the MineColonies farmer to till TFC soil into TFC farmland.
  *
- * <p>The vanilla-oriented farmer only recognizes {@code minecraft:dirt} blocks as hoeable and always
- * hoes them into vanilla {@code Blocks.FARMLAND}. In a TFC world the surface is TFC grass (not in
- * {@code minecraft:dirt}) and crops want {@code tfc:farmland/<soil>}. Two surgical changes:
+ * <p>The vanilla-oriented farmer only recognizes {@code minecraft:dirt} blocks as hoeable, hoes them
+ * into vanilla {@code Blocks.FARMLAND}, only plants on a vanilla {@code FarmBlock}, and only harvests
+ * vanilla/MC crops. In a TFC world the surface is TFC grass and crops live on {@code tfc:farmland/<soil>}.
+ * Hooks:
  * <ol>
- *   <li>{@link #mctfc$alsoTfcTillable} widens the recognition gate to also accept our
- *       {@code #mctfc:farmer_tillable} tag (the TFC grass variants).</li>
- *   <li>{@link #mctfc$tfcFarmland} replaces the placed farmland with what a hoe would actually make of
- *       the soil — {@code tfc:farmland/<soil>} — leaving vanilla soil (and MineColonies' crop-preferred
- *       farmland) untouched.</li>
+ *   <li>{@link #mctfc$alsoTfcTillable} — widen the hoe-recognition gate to our {@code #mctfc:farmer_tillable}
+ *       tag (the TFC grass variants).</li>
+ *   <li>{@link #mctfc$placeTfcFarmland} — place {@code tfc:farmland/<soil>} (what a hoe would make of the
+ *       soil) instead of vanilla farmland, leaving vanilla soil / MC crop-preferred farmland untouched.</li>
+ *   <li>{@link #mctfc$tfcFarmlandIsRight} — accept TFC farmland as plantable when the field's seed grows a
+ *       {@link net.minecraft.world.level.block.CropBlock} (TFC crops extend it).</li>
+ *   <li>{@link #mctfc$harvestDeadCrop} — also harvest TFC crops that have gone to seed (a mature
+ *       {@link DeadCropBlock}) for their seeds, on top of the ripe-crop harvesting the base AI already does.</li>
  * </ol>
  *
- * <p>Scope: tilling only. Planting/harvesting TFC crops on the resulting TFC farmland is a separate
- * follow-up (the farmer's plant logic doesn't know TFC crops, and TFC farmland isn't a vanilla
- * {@code FarmBlock}). All members use {@code remap = false} — this targets MineColonies' own class
- * and methods; only the inner Minecraft calls are remapped (see each {@code @At}). Both hooks are
- * {@code @Redirect}s so no {@code @Shadow} of MineColonies' inherited {@code world} field is needed
- * (it lives several superclasses up and doesn't resolve as a shadow at runtime).
+ * <p>Most members use {@code remap = false} — this targets MineColonies' own class and methods; only the
+ * inner Minecraft calls are remapped (see each {@code @At}). The till/plant hooks are {@code @Redirect}s so
+ * no {@code @Shadow} of MineColonies' inherited {@code world} field is needed (it lives several superclasses
+ * up and does not resolve as a shadow at runtime); the harvest hook instead shadows two methods declared on
+ * {@code EntityAIWorkFarmer} itself ({@code getCitizen()} for the level, {@code getSurfacePos()} for the
+ * crop position), which resolve reliably.
+ *
+ * <p>Per-field harvest modes (Fruiting vs. Seeding, chosen in the field GUI) are a follow-up; this is the
+ * default Fruiting behaviour (harvest ripe crops for produce + seed, and mature dead crops for seeds).
  */
 @Mixin(value = EntityAIWorkFarmer.class, remap = false)
 public abstract class MixinEntityAIWorkFarmer
 {
+    /** The working citizen — declared on {@code EntityAIWorkFarmer}, so it shadows reliably (unlike the
+     *  inherited {@code world}/{@code worker} fields). Used to reach the {@link Level}. */
+    @Shadow
+    public abstract AbstractEntityCitizen getCitizen();
+
+    /** Walks down/up from a field cell to the actual surface block — the same resolution the harvest
+     *  scan uses, so our dead-crop check looks at the right position. Private on the target, shadowed
+     *  via a stub body. */
+    @Shadow
+    private BlockPos getSurfacePos(final BlockPos position)
+    {
+        throw new AssertionError("shadow");
+    }
+
     /**
      * Recognition gate. {@code findHoeableSurface} bails unless the surface block is in
      * {@code minecraft:dirt} (or is vanilla/MC farmland). OR-in {@code #mctfc:farmer_tillable} so TFC
@@ -96,6 +120,33 @@ public abstract class MixinEntityAIWorkFarmer
         if (state.is(TfcFarmlandHelper.TFC_FARMLAND) && TfcFarmlandHelper.plantsCrop(farmField.getSeed()))
         {
             cir.setReturnValue(true);
+        }
+    }
+
+    /**
+     * Harvest gate for TFC crops that have gone to seed. {@code findHarvestableSurface} returns a position
+     * when there's something to harvest above it; the base AI handles ripe vanilla-style crops (TFC's live
+     * {@code CropBlock} included, via {@code isMaxAge}) but is blind to a {@link DeadCropBlock} — TFC's
+     * seeding stage, which extends a bush block and drops extra seeds. When the block above is a <i>mature</i>
+     * dead crop, return its position so the farmer harvests it (collecting the seeds and clearing the cell
+     * for replanting). Non-dead-crop cases fall through to the base AI untouched (vanilla/MC crops, ripe TFC
+     * crops). Immature dead crops are skipped — they carry no worthwhile drops.
+     */
+    @Inject(
+            method = "findHarvestableSurface(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;",
+            at = @At("HEAD"),
+            cancellable = true)
+    private void mctfc$harvestDeadCrop(final BlockPos position, final CallbackInfoReturnable<BlockPos> cir)
+    {
+        final BlockPos surface = getSurfacePos(position);
+        if (surface == null)
+        {
+            return;
+        }
+        final BlockState above = getCitizen().level().getBlockState(surface.above());
+        if (above.getBlock() instanceof DeadCropBlock && above.getValue(DeadCropBlock.MATURE))
+        {
+            cir.setReturnValue(surface);
         }
     }
 }
