@@ -94,7 +94,15 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
 - Mixins targeting **another mod's own methods** (Structurize, not Minecraft) need **`remap = false`**
   on the injector — those names are stable and have no SRG mapping. See
   [MixinStructurePlacer](replacements/src/main/java/com/structurizereplacements/mixin/MixinStructurePlacer.java).
-- **`:compat` also applies MixinGradle even though it has no mixins.** The dev runs live in `:compat`,
+- **Cross-project mixin registration in dev:** `:compat`'s `runClient` must explicitly register
+  `:replacements`'s mixin config — its run config passes `args '--mixin.config',
+  'structurizereplacements.mixins.json'`. In dev, `:replacements` is loaded from a source set (no jar
+  `MixinConfigs` manifest), and MixinGradle only auto-registers a project's OWN config into its OWN
+  runs. Without this, NONE of the replacements mixins (button, substitution, preview, the
+  `AbstractStructureHandler` choice-holder that `:compat`'s builder mixins depend on) apply when running
+  the full stack from `:compat` — the symptom is "no Replace button / nothing substitutes in the
+  `:compat` run". (Production is fine: each mod's jar carries its own `MixinConfigs` manifest.)
+- **`:compat` also applies MixinGradle even though it (originally) had no mixins.** The dev runs live in `:compat`,
   and applying the plugin in the run-owning project is what injects the runtime refmap remapping
   (`mixin.env.remapRefMap`). Without it, *other* mods' SRG-named mixins (e.g. Patchouli's
   `AccessorScreen`) fail to apply in the official-mapped dev env (`InvalidAccessorException`).
@@ -212,7 +220,32 @@ In `:replacements` (generic):
   GUI choice; `StructurePlacer.choices` is null there). See
   [MixinStructurePlacer](replacements/src/main/java/com/structurizereplacements/mixin/MixinStructurePlacer.java)
   + [MixinAbstractBlueprintIterator](replacements/src/main/java/com/structurizereplacements/mixin/MixinAbstractBlueprintIterator.java).
-  Per-building player choices (carry GUI picks into a builder work order) = future.
+  Per-building player choices (carry GUI picks into the builder) — **DONE & verified in-game** (builder
+  requests + places + completes with the player's GUI picks; Build Options material list reflects them too).
+  - **Part A** (in `:replacements`, Structurize-only): the choice map lives on the shared
+    `AbstractStructureHandler` ([MixinAbstractStructureHandler](replacements/src/main/java/com/structurizereplacements/mixin/MixinAbstractStructureHandler.java)),
+    so place/request/match all read `handler.getReplacementChoices()`. Resolution is **lazy in the getter**
+    (NOT a constructor inject — `@Inject(method="<init>")` into these Structurize handlers silently never
+    fires, even though the mixin applies and the `PlacementChoiceHolder` interface works; debugging-confirmed,
+    do not re-attempt ctor injection here): (1) explicit choices set on the handler win (build-tool attaches
+    the player's picks via `placer.getHandler()` at `PlaceStructureOperation`); else (2) **client-side**
+    default to `ClientPlacementChoices.current()` — this is what makes the **Build Options** material list
+    (a client `LoadOnlyStructureHandler` running `GET_RES_REQUIREMENTS` in `WindowBuildBuilding`, world
+    `isClientSide`) match the picks/preview; else (3) **server-side**, ask the pluggable
+    [ServerChoiceResolver](replacements/src/main/java/com/structurizereplacements/placement/ServerChoiceResolver.java)
+    once (cached per handler via `worldPos`) — keeps `:replacements` MineColonies-free.
+  - **Part B** (in `:compat`, MineColonies-only): persist the choice map on `AbstractBuilding` NBT
+    (key `mctfc_choices`, in colony save — NOT the hut block-entity NBT)
+    ([MixinAbstractBuilding](compat/src/main/java/com/mctfc/mixin/MixinAbstractBuilding.java)); capture the
+    placing player's choices at hut placement via `BlueprintPlacementHandling#process`
+    ([MixinBlueprintPlacementHandling](compat/src/main/java/com/mctfc/mixin/MixinBlueprintPlacementHandling.java)
+    → [StagedChoices](compat/src/main/java/com/mctfc/builder/StagedChoices.java) keyed by `msg.pos`); and
+    register a `ServerChoiceResolver` ([BuildingChoiceResolver](compat/src/main/java/com/mctfc/builder/BuildingChoiceResolver.java),
+    registered in `MineColoniesTFC` ctor) that looks up the building at the handler's `worldPos`, adopts any
+    staged choices onto it (persist + `markDirty`), and returns the building's choices. `:compat`'s own mixin
+    config is `mctfc.mixins.json`. Caveat: a restart between placement and the first build loses *unadopted*
+    staged choices (that build uses datapack rules); once adopted they persist across upgrades/rebuilds.
+    Not yet covered: creative-anchor hut placement (`ISpecialCreativeHandlerAnchorBlock.setup`).
 - **GUI toggle** in `WindowExtendedBuildTool` for per-placement opt-in.
 
 In `:compat`:

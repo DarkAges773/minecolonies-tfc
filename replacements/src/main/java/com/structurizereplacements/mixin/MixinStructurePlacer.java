@@ -1,6 +1,7 @@
 package com.structurizereplacements.mixin;
 
 import com.ldtteam.structurize.placement.StructurePlacer;
+import com.ldtteam.structurize.placement.structure.IStructureHandler;
 import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
@@ -14,37 +15,22 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import java.util.Map;
 
 /**
- * Applies block substitution at the single point where Structurize turns a blueprint's stored
- * {@link BlockInfo} into a placed block, and carries the placing player's per-placement choices.
+ * Applies block substitution where Structurize turns a blueprint into placed blocks and requested
+ * materials. The per-placement choice map lives on the structure handler (see
+ * {@link MixinAbstractStructureHandler}); here we read it off {@code this.getHandler()} so the same
+ * choices drive placement and material requests (and {@link MixinAbstractBlueprintIterator} drives the
+ * match). For the build tool the handler carries the player's GUI picks; for the builder it carries the
+ * building's choices (or null → datapack rules only).
  *
- * <p>The choice map is attached by {@link MixinPlaceStructureOperation} when the placement operation
- * is created (it has both the placer and the player). It lives on this placer instance for the whole
- * ticked placement, so {@code handleBlockPlacement} can read it without needing a player reference.
- *
- * <p>{@code remap = false}: handleBlockPlacement is Structurize's own (non-Minecraft) method.
+ * <p>{@code remap = false}: these are Structurize's own methods.
  */
 @Mixin(StructurePlacer.class)
-public class MixinStructurePlacer implements PlacementChoiceHolder
+public class MixinStructurePlacer
 {
-    @Unique
-    private Map<Block, Block> structurizereplacements$choices;
-
-    @Override
-    public void setReplacementChoices(final Map<Block, Block> choices)
-    {
-        this.structurizereplacements$choices = choices;
-    }
-
-    @Override
-    public Map<Block, Block> getReplacementChoices()
-    {
-        return this.structurizereplacements$choices;
-    }
-
     @ModifyVariable(method = "handleBlockPlacement", at = @At("HEAD"), argsOnly = true, remap = false)
     private BlockInfo structurizereplacements$substituteBlueprintBlock(final BlockInfo blockInfo)
     {
-        return BlockSubstitutions.apply(blockInfo, this.structurizereplacements$choices);
+        return BlockSubstitutions.apply(blockInfo, structurizereplacements$choices());
     }
 
     /**
@@ -54,6 +40,13 @@ public class MixinStructurePlacer implements PlacementChoiceHolder
     @ModifyVariable(method = "getResourceRequirements", at = @At("HEAD"), argsOnly = true, remap = false)
     private BlockState structurizereplacements$substituteRequirement(final BlockState state)
     {
-        return BlockSubstitutions.applyState(state, this.structurizereplacements$choices);
+        return BlockSubstitutions.applyState(state, structurizereplacements$choices());
+    }
+
+    @Unique
+    private Map<Block, Block> structurizereplacements$choices()
+    {
+        final IStructureHandler handler = ((StructurePlacer) (Object) this).getHandler();
+        return (handler instanceof PlacementChoiceHolder holder) ? holder.getReplacementChoices() : null;
     }
 }

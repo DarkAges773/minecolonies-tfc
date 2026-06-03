@@ -46,6 +46,11 @@ minecraft {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
+            // Register the :replacements mixin config in this run too. In dev it is loaded from a
+            // source set (no jar MixinConfigs manifest), and MixinGradle only auto-registers THIS
+            // project's own config — so without this the replacements mixins (button, substitution,
+            // preview, handler choice-holder) never apply when running the full stack from :compat.
+            args '--mixin.config', 'structurizereplacements.mixins.json'
             // Load BOTH our mods from their source sets. All third-party mods come from the
             // deobf dependencies on the runtime classpath.
             mods {
@@ -87,12 +92,14 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     // The substitution engine (our standalone mod).
     implementation project(':replacements')
 
     // Full mod stack for the dev runtime. Declared explicitly so FML reliably finds every mod jar.
-    runtimeOnly fg.deobf("com.ldtteam:structurize:${structurize_version}")
+    // Structurize is compile-scope: the builder mixins reference Structurize types (Blueprint, etc.).
+    implementation fg.deobf("com.ldtteam:structurize:${structurize_version}")
     runtimeOnly fg.deobf("com.ldtteam:blockui:${blockui_version}")
     implementation fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
     runtimeOnly fg.deobf("com.ldtteam:domum_ornamentum:${domum_ornamentum_version}")
@@ -102,10 +109,11 @@ dependencies {
     runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")
 }
 
-// Engages MixinGradle (see the apply note above). No 'config' — :compat has no mixin config of its
-// own; this only registers the AP (producing an empty refmap) and the run-time remap environment.
+// :compat mixins target MineColonies (per-building substitution choices for the builder). MineColonies
+// integration belongs here, not in the standalone :replacements mod.
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -131,6 +139,7 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Title'  : project.name,
                 'Implementation-Version': project.jar.archiveVersion,
                 'Implementation-Vendor' : mod_authors,
+                'MixinConfigs'          : "${mod_id}.mixins.json"
         ])
     }
     finalizedBy 'reobfJar'

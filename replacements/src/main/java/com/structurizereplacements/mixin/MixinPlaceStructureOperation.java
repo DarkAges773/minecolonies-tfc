@@ -2,6 +2,7 @@ package com.structurizereplacements.mixin;
 
 import com.ldtteam.structurize.operations.PlaceStructureOperation;
 import com.ldtteam.structurize.placement.StructurePlacer;
+import com.ldtteam.structurize.placement.structure.IStructureHandler;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoices;
 import net.minecraft.world.entity.player.Player;
@@ -23,7 +24,12 @@ public class MixinPlaceStructureOperation
     @Inject(method = "<init>", at = @At("TAIL"), remap = false)
     private void structurizereplacements$attachChoices(final StructurePlacer placer, final Player player, final CallbackInfo ci)
     {
-        // The mixin adds PlacementChoiceHolder to StructurePlacer at runtime; cast via Object.
-        ((PlacementChoiceHolder) (Object) placer).setReplacementChoices(PlacementChoices.forPlayer(player));
+        // Choices live on the structure handler (shared by placer + iterator). The mixin adds
+        // PlacementChoiceHolder to AbstractStructureHandler at runtime; cast via Object.
+        final IStructureHandler handler = placer.getHandler();
+        if (handler instanceof PlacementChoiceHolder holder)
+        {
+            holder.setReplacementChoices(PlacementChoices.forPlayer(player));
+        }
     }
 }

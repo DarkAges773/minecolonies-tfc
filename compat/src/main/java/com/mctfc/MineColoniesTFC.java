@@ -1,5 +1,6 @@
 package com.mctfc;
 
+import com.mctfc.builder.BuildingChoiceResolver;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -22,5 +23,7 @@ public class MineColoniesTFC
     public MineColoniesTFC(FMLJavaModLoadingContext context)
     {
         LOGGER.info("MineColonies x TerraFirmaCraft bridge loaded.");
+        // Let the builder's Structurize handlers resolve the player's choices off the MineColonies building.
+        BuildingChoiceResolver.register();
     }
 }

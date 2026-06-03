@@ -4,8 +4,12 @@ import com.ldtteam.structurize.placement.AbstractBlueprintIterator;
 import com.ldtteam.structurize.placement.handlers.placement.IPlacementHandler;
 import com.ldtteam.structurize.placement.structure.IStructureHandler;
 import com.ldtteam.structurize.util.BlockInfo;
+import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Block;
+
+import java.util.Map;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -35,6 +39,8 @@ public class MixinAbstractBlueprintIterator
             remap = false)
     private boolean structurizereplacements$substituteForMatch(final BlockInfo info, final BlockPos pos, final IStructureHandler handler)
     {
-        return IPlacementHandler.doesWorldStateMatchBlueprintState(BlockSubstitutions.apply(info, null), pos, handler);
+        // The handler (shared with the placer) carries this placement's choices; null -> datapack rules.
+        final Map<Block, Block> choices = (handler instanceof PlacementChoiceHolder holder) ? holder.getReplacementChoices() : null;
+        return IPlacementHandler.doesWorldStateMatchBlueprintState(BlockSubstitutions.apply(info, choices), pos, handler);
     }
 }

@@ -7,7 +7,8 @@
   "mixins": [
     "MixinStructurePlacer",
     "MixinPlaceStructureOperation",
-    "MixinAbstractBlueprintIterator"
+    "MixinAbstractBlueprintIterator",
+    "MixinAbstractStructureHandler"
   ],
   "client": [
     "MixinBlueprintRenderer",

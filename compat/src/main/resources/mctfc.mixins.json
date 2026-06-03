@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.mctfc.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "mctfc.refmap.json",
+  "mixins": [
+    "MixinAbstractBuilding",
+    "MixinBlueprintPlacementHandling"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

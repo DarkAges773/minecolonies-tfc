@@ -172,6 +172,58 @@ client→server and apply at placement, and the preview re-bakes live on each pi
   separate rule-sync follow-up), edge cases (rotation/mirror interplay, multiple candidate rules per
   block).
 
+## 8. Builder follows GUI choices (per-building substitutions)
+
+Goal: when a player places a **hut** with GUI substitution picks, the **builder** builds it with those
+picks (not just datapack rules), and the picks persist for upgrades/rebuilds.
+
+Key recon: builder/quarrier use Structurize's `StructurePlacer` + a `BuildingStructureHandler` (created
+in `AbstractEntityAIStructure.loadStructure(IBuilderWorkOrder, …)`). Both `CreativeStructureHandler`
+(build tool) and `BuildingStructureHandler` (builder) extend `AbstractStructureHandler`, and the
+`AbstractBlueprintIterator` holds the same handler — so the **handler is the shared place to store the
+choice map** for all three phases (place / request / match).
+
+### Part A — DONE (handler refactor, behavior-neutral, verified loads)
+Choice map moved from `StructurePlacer` to the handler:
+[MixinAbstractStructureHandler](../replacements/src/main/java/com/structurizereplacements/mixin/MixinAbstractStructureHandler.java)
+implements `PlacementChoiceHolder` on `AbstractStructureHandler`; `MixinStructurePlacer`
+(place + `getResourceRequirements`) and `MixinAbstractBlueprintIterator` (match) read
+`handler.getReplacementChoices()`; `MixinPlaceStructureOperation` attaches the player's choices to
+`placer.getHandler()`. Builder handler choices are still null → datapack rules (until Part B).
+
+### Part B — TODO. **Lives in `:compat`, NOT `:replacements`** (it targets MineColonies classes; keep
+the standalone mod MineColonies-free). `:compat` already compiles against MineColonies and depends on
+`project(':replacements')`, so it reuses `PlacementChoiceHolder` + `ServerPlacementChoices`. `:compat`
+currently has no real mixins → add a `mctfc.mixins.json` + the mixin AP to its build.
+
+Decision: **persist on the building** (`AbstractBuilding` colony NBT) — survives restarts, outlives a
+single work order (upgrades/rebuilds). **DONE & verified in-game.** As-built design (differs from the
+original sketch — see the dead end below):
+- `MixinAbstractBuilding` — @Unique field + `implements PlacementChoiceHolder` + serialize/deserialize the
+  `Map<Block,Block>` under key `mctfc_choices` in `serializeNBT()/deserializeNBT(CompoundTag)` (colony NBT,
+  **not** the hut block-entity NBT).
+- **Capture:** `MixinBlueprintPlacementHandling#process` (HEAD) — the single server entry for build-tool
+  placement (survival build / delegate-to-builder / creative-anchor / paste). Stage the placing player's
+  choices (`ServerPlacementChoices.forPlayer(msg.player)`) in `StagedChoices`, keyed by `msg.pos`. (The
+  building is created asynchronously, so we can't write it directly here.)
+- **Apply:** a pluggable `ServerChoiceResolver` (in `:replacements`) that `AbstractStructureHandler`'s
+  getter calls lazily server-side. `:compat` registers `BuildingChoiceResolver`: look up the building at
+  the handler's `worldPos`, adopt any staged choices onto it (set + `markDirty`, so they persist), and
+  return the building's choices. This covers BOTH builder handlers (`WorkerLoadOnlyStructureHandler` for the
+  material request, `BuildingStructureHandler` for placement) with one hook.
+
+**Dead end (do not retry):** the original plan was to copy choices onto the handler in
+`BuildingStructureHandler#<init>` / a shared `AbstractStructureHandler#<init>` inject. `@Inject(method="<init>")`
+into these Structurize handlers **silently never fires** (the mixin applies and the `PlacementChoiceHolder`
+interface works, but no ctor callback runs — no error, just zero invocations). Resolution was moved into the
+**getter** (`MixinAbstractStructureHandler#getReplacementChoices`, lazy + cached) instead — see CLAUDE.md
+Part A. The client "Build Options" material-list preview is handled by the same getter defaulting to
+`ClientPlacementChoices` on `isClientSide`.
+
+Caveat: a server restart between placement and the *first* build loses the staged (not-yet-adopted)
+choices → that build falls back to datapack rules (acceptable; once adopted onto the building it
+persists). Creative-anchor hut placement (`ISpecialCreativeHandlerAnchorBlock.setup`) = later.
+
 ## 7. Open questions / to confirm during impl
 - Exact `solidSubstitutionOverride` set→sync→apply call path (lock the mechanism before copying it).
 - Whether `handleBlockPlacement` (or the surrounding `StructurePlacer`/`IStructureHandler`) exposes the
