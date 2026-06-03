@@ -108,13 +108,7 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
         final Set<Block> distinct = new LinkedHashSet<>();
         for (final BlockInfo info : blueprint.getBlockInfoAsList())
         {
-            for (final Block source : BlockSubstitutions.sourceBlocksOf(info))
-            {
-                if (BlockSubstitutions.candidateFor(source).isPresent())
-                {
-                    distinct.add(source);
-                }
-            }
+            BlockSubstitutions.collectCandidateSources(info, distinct);
         }
         this.sources = new ArrayList<>(distinct);
         this.reloader.run();

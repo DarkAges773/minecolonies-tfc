@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -74,8 +75,9 @@ public final class BlockSubstitutions
     }
 
     /**
-     * As {@link #apply(BlockInfo)} but with a per-placement override map (player choices). Overrides
-     * take precedence over datapack rules; {@code null}/empty means "datapack rules only".
+     * As {@link #apply(BlockInfo)} but with a per-placement override map (player choices). See
+     * {@link #resolveBlock} for the resolution order (datapack conversion first, then player pick on top);
+     * {@code null}/empty {@code overrides} means "datapack rules only".
      */
     public static BlockInfo apply(final BlockInfo info, final Map<Block, Block> overrides)
     {
@@ -123,11 +125,32 @@ public final class BlockSubstitutions
     }
 
     /**
+     * Collect the candidate-eligible source blocks of one blueprint entry, <i>as the GUI shows them</i>:
+     * each raw block (the placed block plus any Domum Ornamentum materials) is first mapped through
+     * datapack fixed rules ({@link #datapackTarget}), and kept only if a candidate pool matches the
+     * <b>resolved</b> block. So a {@code minecraft:oak_planks -> tfc:oak_planks} conversion surfaces as a
+     * {@code tfc:oak_planks} row, and the player's pick (stored against the resolved block) applies on top
+     * of the conversion.
+     */
+    public static void collectCandidateSources(final BlockInfo info, final Collection<Block> out)
+    {
+        for (final Block raw : sourceBlocksOf(info))
+        {
+            final Block resolved = datapackTarget(raw);
+            if (candidateFor(resolved).isPresent())
+            {
+                out.add(resolved);
+            }
+        }
+    }
+
+    /**
      * Substitute a single block state, used by server placement and the client preview mixins.
      *
-     * <p>Resolution order: (1) per-placement {@code overrides} (explicit player choices), then
-     * (2) datapack rules (exact block / block-tag). Returns the same {@code state} reference unchanged
-     * when substitution is disabled or nothing applies.
+     * <p>Resolution order (see {@link #resolveBlock}): (1) datapack fixed rules convert the block (an
+     * implicit, GUI-invisible swap, e.g. {@code minecraft:oak_planks -> tfc:oak_planks}); then (2) the
+     * player's interactive pick applies on top, keyed by the converted block. Returns the same
+     * {@code state} reference when substitution is disabled or nothing applies.
      */
     public static BlockState applyState(final BlockState state, final Map<Block, Block> overrides)
     {
@@ -144,10 +167,15 @@ public final class BlockSubstitutions
     }
 
     /**
-     * Resolve a single block to its replacement, applying the same precedence as {@link #applyState}:
-     * (1) per-placement {@code overrides} (explicit player choices) win, then (2) datapack rules
-     * (exact block / block-tag). Returns the same {@code source} when substitution is disabled or nothing
-     * applies. Shared by state substitution and the Domum Ornamentum NBT-material rewrite.
+     * Resolve a single block to its replacement. Resolution order:
+     * <ol>
+     *   <li><b>Datapack fixed rules</b> ({@link #datapackTarget}) convert the block first — an implicit
+     *       conversion (e.g. {@code minecraft:oak_planks -> tfc:oak_planks}) that is never shown in the GUI.</li>
+     *   <li>The <b>player's interactive pick</b> applies on top, keyed by the <i>converted</i> block, so
+     *       the picker operates on what is actually placed (e.g. a {@code tfc:oak_planks} row).</li>
+     * </ol>
+     * Returns the same {@code source} when substitution is disabled or nothing applies. Shared by state
+     * substitution and the Domum Ornamentum NBT-material rewrite.
      */
     public static Block resolveBlock(final Block source, final Map<Block, Block> overrides)
     {
@@ -155,17 +183,28 @@ public final class BlockSubstitutions
         {
             return source;
         }
-        // (1) Per-placement player choice wins over datapack rules.
+        // (1) Datapack fixed rules first (implicit conversion).
+        final Block base = datapackTarget(source);
+        // (2) Player pick on top, keyed by the converted block.
         if (overrides != null && !overrides.isEmpty())
         {
-            final Block chosen = overrides.get(source);
+            final Block chosen = overrides.get(base);
             if (chosen != null)
             {
                 return chosen;
             }
         }
-        // (2) Datapack rules.
-        if (rules.isEmpty())
+        return base;
+    }
+
+    /**
+     * The block a source resolves to under datapack fixed rules alone (no player overrides) — the
+     * implicit conversion target. Returns the {@code source} itself when no rule matches or substitution
+     * is disabled.
+     */
+    public static Block datapackTarget(final Block source)
+    {
+        if (!Config.enableSubstitution || source == null || rules.isEmpty())
         {
             return source;
         }

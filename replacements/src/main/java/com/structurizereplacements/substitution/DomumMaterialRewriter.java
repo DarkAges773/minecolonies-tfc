@@ -2,11 +2,13 @@ package com.structurizereplacements.substitution;
 
 import com.ldtteam.domumornamentum.block.IMateriallyTexturedBlock;
 import com.ldtteam.domumornamentum.block.IMateriallyTexturedBlockComponent;
+import com.ldtteam.structurize.util.BlockInfo;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +37,20 @@ public final class DomumMaterialRewriter
 
     /** Block-entity NBT key under which DO stores its component -> contained-block map. */
     private static final String TEXTURE_DATA_KEY = "textureData";
+
+    /**
+     * Whether this blueprint entry is a Domum Ornamentum "materialized" block carrying texture data — i.e.
+     * one whose preview material lives in tile-entity NBT. Used as the predicate for the preview-render
+     * blueprint transform (so it only touches DO blocks, leaving the host state untouched).
+     */
+    public static boolean isMaterialized(@Nullable final BlockInfo info)
+    {
+        final BlockState state = info == null ? null : info.getState();
+        return state != null
+                && state.getBlock() instanceof IMateriallyTexturedBlock
+                && info.hasTileEntityData()
+                && info.getTileEntityData().contains(TEXTURE_DATA_KEY, Tag.TAG_COMPOUND);
+    }
 
     /**
      * Add every block a DO host carries inside its {@code textureData} to {@code out} (for GUI source
