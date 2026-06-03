@@ -1,8 +1,16 @@
 {
-  "__comment": "EXAMPLE/DEV rules (vanilla-only, so they work in the standalone run). The first is a FAMILY rule: oak_planks -> spruce_planks automatically cascades the oak->spruce material swap to oak_stairs/slab/fence/fence_gate/door/log/stripped_oak_log/etc. -> spruce_* wherever the target block exists. The second is exact - 'cobblestone' and 'mossy_cobblestone' differ by more than one path token, so no cascade is derived. Use \"family\": false on a from/to rule to force exact-only. NOTE: a published library normally ships NO active rules (these would rewrite everyone's blueprints); delete this file for a clean library, and let consumers supply rules under data/<their_namespace>/block_substitutions/.",
+  "__comment": "EXAMPLE/DEV rules (vanilla-only, so they work in the standalone run). A 'to' rule is an automatic swap applied at placement to the exact block/tag it names (oak_planks->spruce_planks, cobblestone->mossy_cobblestone). A 'to_tag' rule is an INTERACTIVE candidate pool: the GUI 'Replace' picker shows a row per matching source block and lets the player pick a replacement from that tag. NOTE: a published library normally ships NO active rules (these would rewrite everyone's blueprints); delete this file for a clean library and let consumers supply rules under data/<their_namespace>/block_substitutions/.",
   "replacements": [
     { "from": "minecraft:oak_planks", "to": "minecraft:spruce_planks" },
     { "from": "minecraft:cobblestone", "to": "minecraft:mossy_cobblestone" },
-    { "from_tag": "minecraft:planks", "to_tag": "minecraft:planks" }
+
+    { "from_tag": "minecraft:planks", "to_tag": "minecraft:planks" },
+    { "from_tag": "minecraft:wooden_stairs", "to_tag": "minecraft:wooden_stairs" },
+    { "from_tag": "minecraft:wooden_slabs", "to_tag": "minecraft:wooden_slabs" },
+    { "from_tag": "minecraft:wooden_fences", "to_tag": "minecraft:wooden_fences" },
+    { "from_tag": "minecraft:fence_gates", "to_tag": "minecraft:fence_gates" },
+    { "from_tag": "minecraft:wooden_doors", "to_tag": "minecraft:wooden_doors" },
+    { "from_tag": "minecraft:wooden_trapdoors", "to_tag": "minecraft:wooden_trapdoors" },
+    { "from_tag": "minecraft:logs", "to_tag": "minecraft:logs" }
   ]
 }

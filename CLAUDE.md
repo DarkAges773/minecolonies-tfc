@@ -8,7 +8,7 @@ A Gradle **multi-project** repo containing **two Forge 1.20.1 mods**:
 
 | Subproject | Mod id | Package | Purpose |
 |---|---|---|---|
-| `:replacements` | `structurizereplacements` | `com.structurizereplacements` | **Standalone** Structurize add-on: datapack-driven, tag/family block substitution when placing blueprints. **MineColonies is an OPTIONAL dependency** — when present, the builder/Build-Options per-building integration activates (`com.structurizereplacements.integration.minecolonies.*` + the optional `structurizereplacements.minecolonies.mixins.json` config); when absent, it's a pure Structurize substitution mod. No TFC dependency. |
+| `:replacements` | `structurizereplacements` | `com.structurizereplacements` | **Standalone** Structurize add-on: datapack-driven, explicit block/tag substitution (+ interactive GUI pools) when placing blueprints. **MineColonies is an OPTIONAL dependency** — when present, the builder/Build-Options per-building integration activates (`com.structurizereplacements.integration.minecolonies.*` + the optional `structurizereplacements.minecolonies.mixins.json` config); when absent, it's a pure Structurize substitution mod. No TFC dependency. |
 | `:compat` | `mctfc` | `com.mctfc` | **MineColonies × TerraFirmaCraft** bridge. Depends on `:replacements`; ships TFC substitution rules as a datapack and will house the MC↔TFC bridging (food/nutrition, farming, smithing, …) — including its own mixins (MixinGradle + `mctfc.mixins.json` are kept though currently empty). |
 
 The split exists so the substitution engine (and its optional MineColonies builder integration) is
@@ -81,9 +81,11 @@ the dev run loads everything.
 **Dev-run-only test mods** (`runtimeOnly` — NOT real mandatory deps): `:replacements` adds MineColonies
 (also `compileOnly`) + Domum Ornamentum + EMI so its standalone `runClient` exercises the **optional
 MineColonies integration** (Domum is MineColonies' mandatory dep). **To dev-test the MineColonies-absent
-path, comment out `:replacements`' `runtimeOnly minecolonies`/`domum` lines** — the game should load, do
-substitution + the build-wand GUI, log the `minecolonies` mixin config skipping its targets, and not
-crash. `:compat` adds EMI.
+path, comment out ONLY `:replacements`' `runtimeOnly minecolonies` line** (keep `domum_ornamentum` — it's a
+*mandatory dep of Structurize itself*, so removing it crashes Structurize with the misleading "mixin config
+could not be read" error). The game then loads, does substitution + the build-wand GUI, logs the
+`minecolonies` mixin config skipping its targets (`@Mixin target … was not found`), and does not crash —
+**verified**. `:compat` adds EMI.
 
 **Bumping versions:** edit the `*_version` / `*_file_id` properties. Verify LDTTeam versions against
 `<artifact>/maven-metadata.xml`; TFC/Patchouli use CurseForge **file ids** (from the file URL).
@@ -146,39 +148,33 @@ Placement-time, non-destructive, datapack-driven. **Global** while enabled (`Con
 default on) — applies to every Structurize placement, not opt-in per build (a GUI toggle is planned).
 
 - [SubstitutionRule](replacements/src/main/java/com/structurizereplacements/substitution/SubstitutionRule.java) —
-  match by exact block or block tag → replacement block.
-- [FamilyRule](replacements/src/main/java/com/structurizereplacements/substitution/FamilyRule.java) —
-  **material-token cascade.** A `from → to` block rule whose ids differ by exactly one path token
-  (split on `_` and `/`) derives a material swap (`oak_planks→spruce_planks` ⇒ `oak→spruce`), also
-  TFC's `wood/planks/oak→wood/planks/spruce`. On by default; `"family": false` forces exact-only.
-  Rules differing by more than one token (e.g. `cobblestone→mossy_cobblestone`) derive no cascade;
-  tag rules never cascade.
-- [CascadeShapes](replacements/src/main/java/com/structurizereplacements/substitution/CascadeShapes.java) —
-  **the cascade is gated by block FORM, not name.** A swap only applies when the candidate and its
-  token-swapped target are the same building shape — `instanceof` one of `StairBlock, SlabBlock,
-  WallBlock, FenceBlock, FenceGateBlock, DoorBlock, TrapDoorBlock, ButtonBlock, PressurePlateBlock`.
-  Modded blocks extend these (TFC `TFCStairBlock extends StairBlock`), so it works for vanilla + TFC,
-  and it EXCLUDES logs/wood (`RotatedPillarBlock`), leaves (`LeavesBlock` and TFC's plain-`Block`
-  leaves), saplings, and the plank base — fixing the earlier name-only over-matching. Decision record:
-  `BlockFamily` (vanilla datagen) was evaluated and rejected — verified TFC has zero `BlockFamily`
-  references, so it can't drive TFC cascades; plain-`Block` variants (stone polished/bricks) are
-  intentionally out of scope (use explicit rules). Signs are easy to add to the allowlist if wanted.
+  match by exact block or block tag → replacement block. **Explicit only:** a rule applies solely to the
+  block(s) it names — there is **no** implicit cascade to sibling forms. To swap a whole wood set, write a
+  rule per form (planks/stairs/slabs/…), or offer a `to_tag` candidate pool and let the player pick.
+  (The old `FamilyRule`/`CascadeShapes` material-token cascade — `oak_planks→spruce_planks` auto-applying
+  to oak stairs/slabs/etc. — was **removed** in favour of explicit control; do not re-add it without
+  explicit instruction.)
+- [CandidateRule](replacements/src/main/java/com/structurizereplacements/substitution/CandidateRule.java) —
+  an interactive `to_tag` pool (source block/tag → a tag of candidates) that drives the GUI "Replace"
+  picker; substitutes nothing on its own.
 - [BlockSubstitutions](replacements/src/main/java/com/structurizereplacements/substitution/BlockSubstitutions.java) —
-  `apply(BlockInfo)` swaps state, **copies shared properties** (facing/axis/half…), memoized, cleared on
-  reload. Resolution order: exact/tag rules first, then family cascades.
+  `apply(BlockInfo)`/`applyState(state, overrides)` swaps state, **copies shared properties**
+  (facing/axis/half…), memoized, cleared on reload. Resolution order: per-placement override (player pick)
+  → datapack exact/tag rules.
 - [BlockSubstitutionReloadListener](replacements/src/main/java/com/structurizereplacements/substitution/BlockSubstitutionReloadListener.java) —
   loads `data/<namespace>/block_substitutions/*.json` across **all** datapacks/namespaces; registered on
   `AddReloadListenerEvent` in [event/ModEvents](replacements/src/main/java/com/structurizereplacements/event/ModEvents.java).
 
-**Rule JSON** — each entry has `"to"` (block id) + exactly one of `"from"` (block id) or `"from_tag"`
-(block tag id), plus optional `"family"` (bool, default true) on `from→to` rules; first match wins;
-unknown ids are logged and skipped. Example/dev rules (vanilla, demonstrate the cascade) ship in
+**Rule JSON** — each entry has exactly one source (`"from"` block id or `"from_tag"` block tag id) and one
+target (`"to"` block id → auto-substitution, or `"to_tag"` block tag id → interactive GUI pool); first
+match wins; unknown ids are logged and skipped. Example/dev rules (vanilla) ship in
 [replacements .../block_substitutions/examples.json](replacements/src/main/resources/data/structurizereplacements/block_substitutions/examples.json)
-— **delete that for a clean published library** (active rules would rewrite any consumer's blueprints).
-TFC rules ship in
+— two exact `to` swaps plus `to_tag` candidate pools for the wooden families (planks/stairs/slabs/fences/
+gates/doors/trapdoors/logs); **delete that file for a clean published library** (active rules would rewrite
+any consumer's blueprints). TFC rules ship in
 [compat .../block_substitutions/defaults.json](compat/src/main/resources/data/mctfc/block_substitutions/defaults.json)
-(vanilla example values for now — swap to `tfc:…` ids; note cross-namespace vanilla→TFC pairs won't
-auto-cascade, so TFC needs per-form rules or same-namespace `tfc:…→tfc:…` family rules).
+(vanilla example values for now — swap to `tfc:…` ids; with no cascade, list each form explicitly or use
+`to_tag` pools).
 
 ## Verified
 
@@ -192,11 +188,9 @@ and `/reload`-ing edited JSON.
 ## Roadmap / not yet done
 
 In `:replacements` (generic):
-- ~~**Family substitution**~~ — DONE, now **form-gated** by [CascadeShapes](replacements/src/main/java/com/structurizereplacements/substitution/CascadeShapes.java)
-  (cascades to stairs/slabs/walls/fences/gates/doors/trapdoors/buttons/pressure-plates; excludes
-  logs/wood/leaves/saplings). Not yet manually verified in-game — place a blueprint with oak
-  stairs/slabs/fences AND oak logs/leaves; the shapes should become spruce while logs/leaves stay oak.
-  Possible follow-ups: cross-namespace family mapping (vanilla→TFC); add signs/plain-Block variants.
+- ~~**Family/material-token cascade**~~ — **REMOVED** (was form-gated via `CascadeShapes`). Dropped in
+  favour of explicit per-form rules + the GUI candidate pools, for predictable, explicit control. Don't
+  reintroduce implicit cascading without explicit instruction.
 - ~~**Client preview mixin**~~ — DONE ([MixinBlueprintRenderer](replacements/src/main/java/com/structurizereplacements/mixin/MixinBlueprintRenderer.java)
   redirects the render-loop `BlockInfo.getState()`; [MixinBlueprintBlockAccess](replacements/src/main/java/com/structurizereplacements/mixin/MixinBlueprintBlockAccess.java)
   keeps the tint/light context consistent). Works in single-player (integrated server shares the JVM,

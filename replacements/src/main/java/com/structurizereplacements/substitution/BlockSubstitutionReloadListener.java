@@ -23,16 +23,18 @@ import java.util.Map;
  * Loads block-substitution rules from {@code data/<namespace>/block_substitutions/*.json} across all
  * datapacks and namespaces, so any mod (or pack) can contribute rules.
  *
- * <p>Each file is a JSON object with a {@code "replacements"} array. Every entry has a {@code "to"}
- * block id and exactly one of {@code "from"} (block id) or {@code "from_tag"} (block tag id). A
- * {@code "from" → "to"} entry also yields a family cascade by default (see {@link FamilyRule}); set
- * {@code "family": false} to make it an exact-only swap.
+ * <p>Each file is a JSON object with a {@code "replacements"} array. Every entry has exactly one source
+ * — {@code "from"} (block id) or {@code "from_tag"} (block tag id) — and one target: {@code "to"} (a
+ * fixed replacement block → {@link SubstitutionRule}) or {@code "to_tag"} (an interactive GUI candidate
+ * pool → {@link CandidateRule}). Substitution is <b>explicit</b>: a rule applies only to the block(s) it
+ * names — there is no implicit cascade to sibling forms, so list each form (planks/stairs/slabs/…) you
+ * want swapped, or offer a {@code to_tag} pool and let the player pick.
  * <pre>{@code
  * {
  *   "replacements": [
- *     { "from": "minecraft:oak_planks", "to": "minecraft:spruce_planks" },     // + cascade oak->spruce
- *     { "from": "minecraft:cobblestone", "to": "minecraft:mossy_cobblestone" },// exact (no clean material token)
- *     { "from_tag": "minecraft:planks", "to": "tfc:wood/planks/oak" }          // tag rule (no cascade)
+ *     { "from": "minecraft:oak_planks", "to": "minecraft:spruce_planks" },     // exact block -> block
+ *     { "from_tag": "minecraft:planks", "to": "tfc:wood/planks/oak" },         // tag -> block
+ *     { "from_tag": "minecraft:wooden_stairs", "to_tag": "minecraft:wooden_stairs" } // GUI candidate pool
  *   ]
  * }
  * }</pre>
@@ -51,7 +53,6 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
     protected void apply(final Map<ResourceLocation, JsonElement> files, final ResourceManager manager, final ProfilerFiller profiler)
     {
         final List<SubstitutionRule> rules = new ArrayList<>();
-        final List<FamilyRule> families = new ArrayList<>();
         final List<CandidateRule> candidates = new ArrayList<>();
 
         for (final Map.Entry<ResourceLocation, JsonElement> entry : files.entrySet())
@@ -61,7 +62,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 final JsonObject root = GsonHelper.convertToJsonObject(entry.getValue(), "top element");
                 for (final JsonElement element : GsonHelper.getAsJsonArray(root, "replacements"))
                 {
-                    parseInto(element.getAsJsonObject(), entry.getKey(), rules, families, candidates);
+                    parseInto(element.getAsJsonObject(), entry.getKey(), rules, candidates);
                 }
             }
             catch (final Exception ex)
@@ -70,27 +71,26 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
             }
         }
 
-        BlockSubstitutions.setRules(rules, families, candidates);
-        StructurizeReplacements.LOGGER.info("Loaded {} fixed rule(s), {} family cascade(s), {} candidate rule(s) from {} file(s).",
-                rules.size(), families.size(), candidates.size(), files.size());
+        BlockSubstitutions.setRules(rules, candidates);
+        StructurizeReplacements.LOGGER.info("Loaded {} fixed rule(s), {} candidate rule(s) from {} file(s).",
+                rules.size(), candidates.size(), files.size());
     }
 
     /**
      * Parse one entry. Source is {@code "from"} (block) or {@code "from_tag"} (block tag). Target is
      * either {@code "to_tag"} (interactive candidate pool → {@link CandidateRule}) or {@code "to"}
-     * (fixed block → {@link SubstitutionRule}, with optional family cascade for block→block).
+     * (fixed block → {@link SubstitutionRule}).
      */
     private static void parseInto(final JsonObject obj, final ResourceLocation file,
-                                  final List<SubstitutionRule> rules, final List<FamilyRule> families,
+                                  final List<SubstitutionRule> rules,
                                   final List<CandidateRule> candidates)
     {
         // --- source matcher ---
         Block fromBlock = null;
         TagKey<Block> fromTag = null;
-        ResourceLocation fromId = null;
         if (obj.has("from"))
         {
-            fromId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "from"));
+            final ResourceLocation fromId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "from"));
             fromBlock = block(fromId);
             if (fromBlock == null)
             {
@@ -138,16 +138,6 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 return;
             }
             rules.add(new SubstitutionRule(fromBlock, fromTag, to));
-
-            // Family cascade only for block->block rules; "family": false forces exact-only.
-            if (fromBlock != null && GsonHelper.getAsBoolean(obj, "family", true))
-            {
-                final ResourceLocation derivedFrom = fromId;
-                FamilyRule.derive(fromId, toId).ifPresentOrElse(
-                        families::add,
-                        () -> StructurizeReplacements.LOGGER.debug(
-                                "No family cascade for {} -> {} (needs exactly one differing path token).", derivedFrom, toId));
-            }
             return;
         }
 
