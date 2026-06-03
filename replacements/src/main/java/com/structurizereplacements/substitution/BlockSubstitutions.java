@@ -149,7 +149,8 @@ public final class BlockSubstitutions
      *
      * <p>Resolution order (see {@link #resolveBlock}): (1) datapack fixed rules convert the block (an
      * implicit, GUI-invisible swap, e.g. {@code minecraft:oak_planks -> tfc:oak_planks}); then (2) the
-     * player's interactive pick applies on top, keyed by the converted block. Returns the same
+     * player's interactive pick applies on top, keyed by the converted block. Finally any
+     * {@code apply_properties} declared by the matched rule are stamped onto the result. Returns the same
      * {@code state} reference when substitution is disabled or nothing applies.
      */
     public static BlockState applyState(final BlockState state, final Map<Block, Block> overrides)
@@ -158,12 +159,64 @@ public final class BlockSubstitutions
         {
             return state;
         }
-        final Block target = resolveBlock(state.getBlock(), overrides);
-        if (target == state.getBlock())
+        final Block source = state.getBlock();
+        final Block base = datapackTarget(source);
+
+        // Determine the final target block and which rule's apply_properties go with it.
+        Block target = base;
+        Map<String, String> properties = Map.of();
+        if (overrides != null && !overrides.isEmpty() && overrides.get(base) != null)
+        {
+            // Player pick on the converted block — properties come from the candidate rule.
+            target = overrides.get(base);
+            properties = candidateFor(base).map(CandidateRule::properties).orElse(Map.of());
+        }
+        else
+        {
+            // Datapack only — properties come from the matched fixed rule (if any).
+            properties = fixedRuleFor(source).map(SubstitutionRule::properties).orElse(Map.of());
+        }
+
+        if (target == source && properties.isEmpty())
         {
             return state;
         }
-        return copyProperties(state, target.defaultBlockState());
+        BlockState result = (target == source) ? state : copyProperties(state, target.defaultBlockState());
+        return properties.isEmpty() ? result : applyProperties(result, properties);
+    }
+
+    /** The fixed (non-interactive) rule whose source matches this block, if any — for its properties. */
+    private static Optional<SubstitutionRule> fixedRuleFor(final Block source)
+    {
+        final BlockState probe = source.defaultBlockState();
+        for (final SubstitutionRule rule : rules)
+        {
+            if (rule.matches(probe))
+            {
+                return Optional.of(rule);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Stamp blockstate property assignments (name → value) onto a state; skips properties it lacks. */
+    private static BlockState applyProperties(final BlockState state, final Map<String, String> properties)
+    {
+        BlockState result = state;
+        for (final Map.Entry<String, String> entry : properties.entrySet())
+        {
+            final Property<?> property = result.getBlock().getStateDefinition().getProperty(entry.getKey());
+            if (property != null)
+            {
+                result = setFromString(result, property, entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    private static <T extends Comparable<T>> BlockState setFromString(final BlockState state, final Property<T> property, final String value)
+    {
+        return property.getValue(value).map(v -> state.setValue(property, v)).orElse(state);
     }
 
     /**

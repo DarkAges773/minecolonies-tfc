@@ -16,6 +16,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,12 +30,17 @@ import java.util.Map;
  * pool → {@link CandidateRule}). Substitution is <b>explicit</b>: a rule applies only to the block(s) it
  * names — there is no implicit cascade to sibling forms, so list each form (planks/stairs/slabs/…) you
  * want swapped, or offer a {@code to_tag} pool and let the player pick.
+ * <p>An optional {@code "apply_properties"} object (name → value) stamps blockstate properties onto the
+ * result after the swap — e.g. {@code {"no_gravity":"true"}} so a substituted TFC cobble is placed
+ * non-falling. Properties the target block doesn't define are skipped.
  * <pre>{@code
  * {
  *   "replacements": [
  *     { "from": "minecraft:oak_planks", "to": "minecraft:spruce_planks" },     // exact block -> block
  *     { "from_tag": "minecraft:planks", "to": "tfc:wood/planks/oak" },         // tag -> block
- *     { "from_tag": "minecraft:wooden_stairs", "to_tag": "minecraft:wooden_stairs" } // GUI candidate pool
+ *     { "from_tag": "minecraft:wooden_stairs", "to_tag": "minecraft:wooden_stairs" }, // GUI candidate pool
+ *     { "from": "minecraft:cobblestone", "to_tag": "tfc:rock/cobble",          // pool + stamped property
+ *       "apply_properties": { "no_gravity": "true" } }
  *   ]
  * }
  * }</pre>
@@ -114,6 +120,9 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
             return;
         }
 
+        // --- optional blockstate properties to stamp onto the result (e.g. no_gravity:true) ---
+        final Map<String, String> properties = parseProperties(obj);
+
         // --- target: candidate pool (interactive) ---
         if (obj.has("to_tag"))
         {
@@ -123,7 +132,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has a malformed 'to_tag'; skipping.", file);
                 return;
             }
-            candidates.add(new CandidateRule(fromBlock, fromTag, TagKey.create(Registries.BLOCK, toTagId)));
+            candidates.add(new CandidateRule(fromBlock, fromTag, TagKey.create(Registries.BLOCK, toTagId), properties));
             return;
         }
 
@@ -137,11 +146,31 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has an unknown 'to' block; skipping.", file);
                 return;
             }
-            rules.add(new SubstitutionRule(fromBlock, fromTag, to));
+            rules.add(new SubstitutionRule(fromBlock, fromTag, to, properties));
             return;
         }
 
         StructurizeReplacements.LOGGER.warn("Substitution in {} has neither 'to' nor 'to_tag'; skipping.", file);
+    }
+
+    /**
+     * Parse the optional {@code "apply_properties"} object — blockstate property name → value, stamped
+     * onto the substituted block. Values are read as strings ({@code true}/{@code 1}/{@code "x"} all work,
+     * since JSON primitives stringify). Returns an empty map when absent or malformed.
+     */
+    private static Map<String, String> parseProperties(final JsonObject obj)
+    {
+        if (!obj.has("apply_properties"))
+        {
+            return Map.of();
+        }
+        final Map<String, String> out = new HashMap<>();
+        final JsonObject props = GsonHelper.getAsJsonObject(obj, "apply_properties");
+        for (final String key : props.keySet())
+        {
+            out.put(key, props.get(key).getAsString());
+        }
+        return out;
     }
 
     @Nullable
