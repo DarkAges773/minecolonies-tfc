@@ -47,10 +47,13 @@ public abstract class MixinWindowBuildBuilding
         button.setSize(width, height);
         // Bottom-left corner, relative to the window height (robust across layouts).
         button.setPosition(5, window.getHeight() - height - 5);
-        button.setImage(new ResourceLocation("structurize", "textures/gui/buildtool/button_medium.png"), false);
+        // Match the surrounding Build Options buttons: same MineColonies button texture, and the same
+        // toned-down text styling (their XML uses color="black", which BlockUI applies to normal AND hover
+        // alike — the texture brightens on hover, the text color stays put).
+        button.setImage(new ResourceLocation("minecolonies", "textures/gui/builderhut/builder_button_medium_large.png"), false);
         button.setText(List.of(Component.translatable("com.ldtteam.structurize.gui.scantool.replace")));
         button.setTextColor(0x000000);
-        button.setTextHoverColor(0x808080);
+        button.setTextHoverColor(0x000000);
         button.setTextRenderBox(width, 17);
         button.setTextAlignment(Alignment.MIDDLE);
         button.setHandler(b -> new WindowReplacements(
