@@ -114,9 +114,10 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
   auto-registers a project's OWN config into its OWN runs. Without this, NONE of the replacements mixins
   (button, substitution, preview, the per-building MineColonies integration) apply in the `:compat` run.
   (Production is fine: each mod's jar carries its own `MixinConfigs` manifest.)
-- **`:compat` owns `mctfc.mixins.json`** (package `com.mctfc.mixin`) — currently one mixin,
-  [MixinEntityAIWorkFarmer](compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkFarmer.java) (the
-  farmer-tills-TFC-soil bridge, below). Applying MixinGradle here ALSO injects the runtime refmap
+- **`:compat` owns `mctfc.mixins.json`** (package `com.mctfc.mixin`) — the TFC-farming bridge mixins:
+  `MixinEntityAIWorkFarmer` (till/plant/harvest), `MixinFarmField` (per-field harvest-mode state + sync),
+  and the client `MixinWindowField` (the field-GUI mode toggle) — all under the "Farmer farms TFC crops"
+  section below. Applying MixinGradle here ALSO injects the runtime refmap
   remapping (`mixin.env.remapRefMap`) into `:compat`'s dev runs — needed even when this config was empty,
   because without it *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in
   the official-mapped dev env (`InvalidAccessorException`). MixinGradle auto-registers `:compat`'s own
@@ -301,7 +302,8 @@ In `:compat`:
 ### Farmer farms TFC crops (till → plant → harvest) — DONE & verified
 
 The MineColonies farmer (`com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer`)
-now tills TFC soil, plants TFC crops on the resulting TFC farmland, and harvests them. All four hooks live in
+now tills TFC soil, plants TFC crops on the resulting TFC farmland, and harvests them (with a per-field
+Fruiting/Seeding mode — see the end of this section). The till/plant/harvest hooks live in
 [MixinEntityAIWorkFarmer](compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkFarmer.java) +
 [TfcFarmlandHelper](compat/src/main/java/com/mctfc/farming/TfcFarmlandHelper.java) (`@Mixin(remap = false)` —
 MineColonies' own class/methods; only the inner MC calls are remapped per their `@At`).
@@ -341,12 +343,34 @@ hook needs the level + crop position; rather than shadow the inherited `world`, 
 on `EntityAIWorkFarmer` itself — `getCitizen()` (→ `getCitizen().level()`) and the private `getSurfacePos(...)`
 — which resolve reliably. **Verified in-game: farmer collects both ripe and dead crops.**
 
-**Pending follow-up — per-field harvest mode (Fruiting/Seeding) chosen in the field GUI:** *Fruiting* (default,
-= current behaviour: harvest ripe for produce + any dead for seeds); *Seeding* (skip ripe crops, let them die,
-harvest only the dead/mature stage for max seeds). Needs a mode stored on `FarmField` (it has public
-`serializeNBT`/`deserializeNBT` + `serialize`/`deserialize(FriendlyByteBuf)` for save + client sync — same class
-both sides), a toggle in the field window, a network message, and the harvest hook reading that mode (skip the
-ripe-crop branch in Seeding). Not built yet.
+**Per-field harvest mode (Fruiting / Seeding), chosen in the field GUI — DONE & verified.**
+[HarvestMode](compat/src/main/java/com/mctfc/farming/HarvestMode.java): *Fruiting* (default — harvest ripe
+crops for produce + any dead crop for seeds); *Seeding* (leave ripe crops to die, then harvest only the
+mature dead stage for max seeds). Pieces:
+- **State on `FarmField`** — [MixinFarmField](compat/src/main/java/com/mctfc/mixin/MixinFarmField.java) adds a
+  `HarvestMode` field + the [FarmFieldHarvestMode](compat/src/main/java/com/mctfc/farming/FarmFieldHarvestMode.java)
+  duck-type interface, and carries it through both of `FarmField`'s existing serialization paths: NBT
+  (`serializeNBT`@RETURN / `deserializeNBT`@TAIL, colony save) and the buffer (`serialize`/`deserialize`@TAIL,
+  client sync). The buffer hooks append/consume the enum **last** on both sides so the stream stays aligned
+  with the base seed/radii/stage payload. Same class both sides, so the client GUI reads the synced mode.
+- **GUI toggle** — [MixinWindowField](compat/src/main/java/com/mctfc/mixin/MixinWindowField.java) (client) adds
+  a `ButtonImage` below the seed icon (shadows the window's own private `farmField`/`getCurrentColony()` — both
+  declared on `WindowField`, so they resolve). Mirrors the seed selector: optimistic client update + a server
+  message; the label (current mode) refreshes each `onUpdate` (the client `farmField` resolves a tick after
+  ctor). **`ButtonImage` gotcha:** a programmatic `ButtonImage()` won't draw its label — its `setSize` rescales
+  the text-render box *proportionally from the previous value*, and the no-arg ctor leaves that at 0, so the box
+  stays 0 and the text is clipped to nothing; also the default text colour is white (invisible on the light
+  button). Fix: `setTextRenderBox(w, h)` after `setSize`, and `setColors(0x000000)`.
+- **Network** — own channel [McFarmingNetwork](compat/src/main/java/com/mctfc/network/McFarmingNetwork.java) +
+  [SetHarvestModeMessage](compat/src/main/java/com/mctfc/network/SetHarvestModeMessage.java) (client→server;
+  resolves the colony via `getColonyByDimension(id, dim)`, finds the field via
+  `getServerBuildingManager().getMatchingBuildingExtension(pos)`, sets the mode, `markBuildingExtensionsDirty()`
+  to persist + re-sync). Registered from the mod ctor.
+- **Harvest reads the mode** — [MixinEntityAIWorkFarmer](compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkFarmer.java)
+  captures the worked field's mode into a `@Unique` field via two `@Redirect`s on the extension module's
+  `getExtensionToWorkOn()` (in `prepareForFarming`) / `getCurrentExtension()` (in `workAtField`) — fetched right
+  before the harvest dispatch on each side. The `findHarvestableSurface` hook then: harvests mature dead crops
+  (both modes); and in *Seeding*, returns `null` for live `CropBlock`s so ripe crops are left to go to seed.
 
 <details><summary>Original tilling recon (kept for reference)</summary>
 

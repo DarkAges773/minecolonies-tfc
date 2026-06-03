@@ -1,8 +1,12 @@
 package com.mctfc.mixin;
 
+import com.minecolonies.api.colony.buildingextensions.IBuildingExtension;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import com.minecolonies.core.colony.buildingextensions.FarmField;
+import com.minecolonies.core.colony.buildings.modules.BuildingExtensionsModule;
 import com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer;
+import com.mctfc.farming.FarmFieldHarvestMode;
+import com.mctfc.farming.HarvestMode;
 import com.mctfc.farming.TfcFarmlandHelper;
 import net.dries007.tfc.common.blocks.crop.DeadCropBlock;
 import net.minecraft.core.BlockPos;
@@ -10,9 +14,11 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -32,8 +38,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *       soil) instead of vanilla farmland, leaving vanilla soil / MC crop-preferred farmland untouched.</li>
  *   <li>{@link #mctfc$tfcFarmlandIsRight} — accept TFC farmland as plantable when the field's seed grows a
  *       {@link net.minecraft.world.level.block.CropBlock} (TFC crops extend it).</li>
- *   <li>{@link #mctfc$harvestDeadCrop} — also harvest TFC crops that have gone to seed (a mature
- *       {@link DeadCropBlock}) for their seeds, on top of the ripe-crop harvesting the base AI already does.</li>
+ *   <li>{@link #mctfc$harvestDeadCrop} — harvest TFC crops that have gone to seed (a mature
+ *       {@link DeadCropBlock}) for their seeds, on top of the ripe-crop harvesting the base AI already does;
+ *       and, in {@code SEEDING} mode, suppress the ripe-crop harvest so crops are left to go to seed.</li>
  * </ol>
  *
  * <p>Most members use {@code remap = false} — this targets MineColonies' own class and methods; only the
@@ -43,8 +50,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * {@code EntityAIWorkFarmer} itself ({@code getCitizen()} for the level, {@code getSurfacePos()} for the
  * crop position), which resolve reliably.
  *
- * <p>Per-field harvest modes (Fruiting vs. Seeding, chosen in the field GUI) are a follow-up; this is the
- * default Fruiting behaviour (harvest ripe crops for produce + seed, and mature dead crops for seeds).
+ * <p>Harvest behaviour follows the field's per-field {@link HarvestMode} (set in the field GUI, stored on the
+ * {@code FarmField} — see {@code MixinFarmField}/{@code MixinWindowField}). The mode is captured into
+ * {@link #mctfc$activeHarvestMode} whenever the AI fetches the field it's working (the two {@code @Redirect}s
+ * on the extension module), then read by the harvest hook. {@code FRUITING} (default) harvests ripe crops +
+ * mature dead crops; {@code SEEDING} harvests only mature dead crops.
  */
 @Mixin(value = EntityAIWorkFarmer.class, remap = false)
 public abstract class MixinEntityAIWorkFarmer
@@ -61,6 +71,44 @@ public abstract class MixinEntityAIWorkFarmer
     private BlockPos getSurfacePos(final BlockPos position)
     {
         throw new AssertionError("shadow");
+    }
+
+    /** The harvest mode of the field the AI is currently working — captured whenever the AI fetches that
+     *  field (the two redirects below), then read by the harvest hook. Defaults to Fruiting. */
+    @Unique
+    private HarvestMode mctfc$activeHarvestMode = HarvestMode.FRUITING;
+
+    @Unique
+    private void mctfc$captureMode(final IBuildingExtension extension)
+    {
+        mctfc$activeHarvestMode = extension instanceof FarmFieldHarvestMode holder
+                ? holder.mctfc$getHarvestMode() : HarvestMode.FRUITING;
+    }
+
+    /** Capture the mode before the planting/hoeing/harvest dispatch in {@code prepareForFarming}. */
+    @Redirect(
+            method = "prepareForFarming()Lcom/minecolonies/api/entity/ai/statemachine/states/IAIState;",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/minecolonies/core/colony/buildings/modules/BuildingExtensionsModule;getExtensionToWorkOn()Lcom/minecolonies/api/colony/buildingextensions/IBuildingExtension;"))
+    private IBuildingExtension mctfc$captureWorkExtension(final BuildingExtensionsModule module)
+    {
+        final IBuildingExtension extension = module.getExtensionToWorkOn();
+        mctfc$captureMode(extension);
+        return extension;
+    }
+
+    /** Capture the mode before the per-cell work (incl. harvest) in {@code workAtField}. */
+    @Redirect(
+            method = "workAtField()Lcom/minecolonies/api/entity/ai/statemachine/states/IAIState;",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/minecolonies/core/colony/buildings/modules/BuildingExtensionsModule;getCurrentExtension()Lcom/minecolonies/api/colony/buildingextensions/IBuildingExtension;"))
+    private IBuildingExtension mctfc$captureCurrentExtension(final BuildingExtensionsModule module)
+    {
+        final IBuildingExtension extension = module.getCurrentExtension();
+        mctfc$captureMode(extension);
+        return extension;
     }
 
     /**
@@ -144,9 +192,16 @@ public abstract class MixinEntityAIWorkFarmer
             return;
         }
         final BlockState above = getCitizen().level().getBlockState(surface.above());
-        if (above.getBlock() instanceof DeadCropBlock && above.getValue(DeadCropBlock.MATURE))
+        final Block block = above.getBlock();
+        if (block instanceof DeadCropBlock && above.getValue(DeadCropBlock.MATURE))
         {
+            // Both modes collect the seeding stage.
             cir.setReturnValue(surface);
+        }
+        else if (mctfc$activeHarvestMode == HarvestMode.SEEDING && block instanceof CropBlock)
+        {
+            // Seeding mode: leave live crops alone so they ripen and die into the seeding stage.
+            cir.setReturnValue(null);
         }
     }
 }
