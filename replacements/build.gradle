@@ -95,6 +95,9 @@ dependencies {
     // NOTE: Domum Ornamentum is a MANDATORY dependency of Structurize itself (not just MineColonies), so it
     // must stay even in a MineColonies-absent run — removing it crashes Structurize at load. (To dev-test
     // the MineColonies-absent path, comment out only the runtimeOnly minecolonies line above.)
+    // compileOnly too: DomumMaterialRewriter substitutes the material(s) stored in DO "materialized" blocks'
+    // textureData NBT (panel/brick/framed/...). DO is always present at runtime, so no load guard is needed.
+    compileOnly fg.deobf("com.ldtteam:domum_ornamentum:${domum_ornamentum_version}")
     runtimeOnly fg.deobf("com.ldtteam:domum_ornamentum:${domum_ornamentum_version}")
     // Dev-run-only recipe viewer.
     runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")

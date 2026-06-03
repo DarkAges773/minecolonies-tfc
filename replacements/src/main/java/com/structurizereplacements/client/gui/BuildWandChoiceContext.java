@@ -9,7 +9,6 @@ import com.structurizereplacements.placement.ClientPlacementChoices;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,10 +36,12 @@ public class BuildWandChoiceContext implements ReplacementChoiceContext
         final Set<Block> distinct = new LinkedHashSet<>();
         for (final BlockInfo info : blueprint.getBlockInfoAsList())
         {
-            final BlockState state = info.getState();
-            if (state != null && BlockSubstitutions.candidateFor(state.getBlock()).isPresent())
+            for (final Block source : BlockSubstitutions.sourceBlocksOf(info))
             {
-                distinct.add(state.getBlock());
+                if (BlockSubstitutions.candidateFor(source).isPresent())
+                {
+                    distinct.add(source);
+                }
             }
         }
         return new ArrayList<>(distinct);

@@ -2,10 +2,12 @@ package com.structurizereplacements.substitution;
 
 import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.Config;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -83,11 +85,41 @@ public final class BlockSubstitutions
         }
         final BlockState src = info.getState();
         final BlockState newState = applyState(src, overrides);
-        if (newState == src)
+
+        // Domum Ornamentum "materialized" blocks keep their material(s) in tile-entity NBT, not the state;
+        // rewrite those contained blocks through the same per-block resolution.
+        final CompoundTag tileData = info.getTileEntityData();
+        final CompoundTag newTileData = (src == null)
+                ? tileData
+                : DomumMaterialRewriter.rewrite(src.getBlock(), tileData, block -> resolveBlock(block, overrides));
+
+        if (newState == src && newTileData == tileData)
         {
-            return info; // applyState returns the same reference when nothing changed
+            return info; // nothing changed (applyState / rewrite return the same reference when no-op)
         }
-        return new BlockInfo(info.getPos(), newState, info.getTileEntityData());
+        return new BlockInfo(info.getPos(), newState, newTileData);
+    }
+
+    /**
+     * All blocks in a single blueprint entry that could be a substitution source: the placed block plus
+     * any material(s) a Domum Ornamentum block carries in its {@code textureData} NBT. Used by the GUI to
+     * enumerate pickable rows (so a DO panel's contained oak surfaces alongside bare oak).
+     */
+    public static List<Block> sourceBlocksOf(final BlockInfo info)
+    {
+        final List<Block> out = new ArrayList<>();
+        if (info == null)
+        {
+            return out;
+        }
+        final BlockState state = info.getState();
+        final Block host = state == null ? null : state.getBlock();
+        if (host != null)
+        {
+            out.add(host);
+        }
+        DomumMaterialRewriter.collectContainedBlocks(host, info.getTileEntityData(), out);
+        return out;
     }
 
     /**
@@ -103,28 +135,41 @@ public final class BlockSubstitutions
         {
             return state;
         }
+        final Block target = resolveBlock(state.getBlock(), overrides);
+        if (target == state.getBlock())
+        {
+            return state;
+        }
+        return copyProperties(state, target.defaultBlockState());
+    }
 
+    /**
+     * Resolve a single block to its replacement, applying the same precedence as {@link #applyState}:
+     * (1) per-placement {@code overrides} (explicit player choices) win, then (2) datapack rules
+     * (exact block / block-tag). Returns the same {@code source} when substitution is disabled or nothing
+     * applies. Shared by state substitution and the Domum Ornamentum NBT-material rewrite.
+     */
+    public static Block resolveBlock(final Block source, final Map<Block, Block> overrides)
+    {
+        if (!Config.enableSubstitution || source == null)
+        {
+            return source;
+        }
         // (1) Per-placement player choice wins over datapack rules.
         if (overrides != null && !overrides.isEmpty())
         {
-            final Block chosen = overrides.get(state.getBlock());
-            if (chosen != null && chosen != state.getBlock())
+            final Block chosen = overrides.get(source);
+            if (chosen != null)
             {
-                return copyProperties(state, chosen.defaultBlockState());
+                return chosen;
             }
         }
-
         // (2) Datapack rules.
         if (rules.isEmpty())
         {
-            return state;
+            return source;
         }
-        final Optional<Block> target = targetFor(state.getBlock());
-        if (target.isEmpty() || target.get() == state.getBlock())
-        {
-            return state;
-        }
-        return copyProperties(state, target.get().defaultBlockState());
+        return targetFor(source).orElse(source);
     }
 
     private static Optional<Block> targetFor(final Block source)
