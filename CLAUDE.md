@@ -9,7 +9,7 @@ A Gradle **multi-project** repo containing **two Forge 1.20.1 mods**:
 | Subproject | Mod id | Package | Purpose |
 |---|---|---|---|
 | `:replacements` | `structurizereplacements` | `com.structurizereplacements` | **Standalone** Structurize add-on: datapack-driven, explicit block/tag substitution (+ interactive GUI pools) when placing blueprints. **MineColonies is an OPTIONAL dependency** — when present, the builder/Build-Options per-building integration activates (`com.structurizereplacements.integration.minecolonies.*` + the optional `structurizereplacements.minecolonies.mixins.json` config); when absent, it's a pure Structurize substitution mod. No TFC dependency. |
-| `:compat` | `mctfc` | `com.mctfc` | **MineColonies × TerraFirmaCraft** bridge. Depends on `:replacements`; ships TFC substitution rules as a datapack and will house the MC↔TFC bridging (food/nutrition, farming, smithing, …) — including its own mixins (MixinGradle + `mctfc.mixins.json` are kept though currently empty). |
+| `:compat` | `mctfc` | `com.mctfc` | **MineColonies × TerraFirmaCraft** bridge. Depends on `:replacements`; ships TFC substitution rules as a datapack and houses the MC↔TFC bridging (food/nutrition, farming, smithing, …) — including its own mixins (`mctfc.mixins.json`, currently the farmer-tilling bridge). |
 
 The split exists so the substitution engine (and its optional MineColonies builder integration) is
 reusable by anyone, independent of TFC. **`:replacements` may reference MineColonies, but only as an
@@ -114,11 +114,20 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
   auto-registers a project's OWN config into its OWN runs. Without this, NONE of the replacements mixins
   (button, substitution, preview, the per-building MineColonies integration) apply in the `:compat` run.
   (Production is fine: each mod's jar carries its own `MixinConfigs` manifest.)
-- **`:compat` also applies MixinGradle even though it currently has no mixins** (`mctfc.mixins.json` is
-  empty, kept for the coming MC↔TFC bridging mixins). The dev runs live in `:compat`, and applying the
-  plugin in the run-owning project is what injects the runtime refmap remapping (`mixin.env.remapRefMap`).
-  Without it, *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in the
-  official-mapped dev env (`InvalidAccessorException`).
+- **`:compat` owns `mctfc.mixins.json`** (package `com.mctfc.mixin`) — currently one mixin,
+  [MixinEntityAIWorkFarmer](compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkFarmer.java) (the
+  farmer-tills-TFC-soil bridge, below). Applying MixinGradle here ALSO injects the runtime refmap
+  remapping (`mixin.env.remapRefMap`) into `:compat`'s dev runs — needed even when this config was empty,
+  because without it *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in
+  the official-mapped dev env (`InvalidAccessorException`). MixinGradle auto-registers `:compat`'s own
+  config into its own runs (the `:replacements` configs are registered explicitly via `--mixin.config`
+  args; see [compat/build.gradle](compat/build.gradle)).
+- **Don't `@Shadow` a deeply-inherited field of another mod's class.** `MixinEntityAIWorkFarmer` first
+  tried `@Shadow protected Level world;` — `world` is declared ~4 superclasses up in `AbstractAISkeleton`,
+  and at APPLY time Mixin threw `@Shadow field world was not located in the target class` (crash the moment
+  the first farmer AI loaded; the AP only warns at compile). Fix: don't shadow — use a `@Redirect` whose
+  redirected call hands you the object you need. We redirect the `Level#setBlockAndUpdate` call inside the
+  target method, so the handler receives the `Level` as its receiver. No shadow required.
 - The runtime Mixin logs `Compatibility level JAVA_17 ... higher than max supported (JAVA_13)` as
   DEBUG — benign (config still selected).
 
@@ -288,6 +297,42 @@ In `:replacements` (generic):
 In `:compat`:
 - Real TFC rule sets (verified `tfc:` ids), then the broader MC↔TFC bridging (food/nutrition,
   requests/progression, farming/animals).
+
+### Farmer tills TFC soil → TFC farmland — DONE & verified
+
+The MineColonies farmer (`com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer`)
+was written for vanilla soil. Recon of the AI:
+- `findHoeableSurface` only treats a surface block as hoeable if it's in `BlockTags.DIRT` (or is
+  `MinecoloniesFarmland`/vanilla `FarmBlock`). TFC bare dirt **is** in `minecraft:dirt` (TFC ships
+  `data/minecraft/tags/blocks/dirt.json` = `#tfc:dirt`), but TFC **grass** (`tfc:grass/<soil>`,
+  `tfc:clay_grass/<soil>` — the actual surface in a TFC world) is only in `tfc:grass`, so the farmer
+  ignored it.
+- `createCorrectFarmlandForSeed` hardcodes vanilla `Blocks.FARMLAND` (or a MineColonies crop's preferred
+  farmland) — never `tfc:farmland/<soil>`.
+- Both TFC `DirtBlock` and `ConnectedGrassBlock` implement `getToolModifiedState(…, ToolActions.HOE_TILL, …)`
+  → the matching `tfc:farmland/<soil>` (config-gated on `enableFarmlandCreation`, needs empty block above).
+  This is the clean API to drive tilling. (TFC `FarmlandBlock extends Block`, **not** vanilla `FarmBlock`.)
+
+**Scope: tilling only.** Two surgical hooks in
+[MixinEntityAIWorkFarmer](compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkFarmer.java)
+(`@Mixin(remap = false)` — MineColonies' own class/methods; only the inner MC calls are remapped per their
+`@At`), both `@Redirect` (no `@Shadow` — see the Mixins note about the inherited `world` field):
+- **Recognition** — redirect the `BlockState.is(BlockTags.DIRT)` call in `findHoeableSurface` to also accept
+  `#mctfc:farmer_tillable`
+  ([data/mctfc/tags/blocks/farmer_tillable.json](compat/src/main/resources/data/mctfc/tags/blocks/farmer_tillable.json):
+  the 8 TFC grass variants that have a farmland twin; `peat_grass`/`kaolin_clay_grass` excluded — no
+  farmland). TFC bare dirt already passes via `minecraft:dirt`.
+- **Farmland type** — redirect the `Level.setBlockAndUpdate` call in `createCorrectFarmlandForSeed`. Ask
+  the soil what a hoe would make of it (`getToolModifiedState(HOE_TILL)`,
+  [TfcFarmlandHelper](compat/src/main/java/com/mctfc/farming/TfcFarmlandHelper.java) — builds a throwaway
+  `UseOnContext` with an iron hoe); if that's a **non-vanilla** farmland (TFC), place it, else place exactly
+  what MineColonies intended (so vanilla soil + MineColonies-crop preferred farmland are untouched). The
+  block-above is already cleared by the AI before this call, so TFC's air-above check passes.
+
+After tilling, the farmer **won't plant** on the TFC farmland (it isn't a vanilla `FarmBlock` and the AI
+doesn't know TFC crops) — no crash, no re-till loop (tilled TFC farmland is no longer recognized as
+hoeable). Planting/harvesting TFC crops on TFC farmland is the next step (separate, larger: TFC seeds in
+`FarmField`, plant `tfc` `CropBlock`, harvest mature TFC crops).
 
 ### Non-falling ("mortared") cobble — DONE & verified
 

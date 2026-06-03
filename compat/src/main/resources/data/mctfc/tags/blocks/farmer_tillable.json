@@ -1,0 +1,14 @@
+{
+  "__comment": "Extra surface blocks the MineColonies farmer may till (OR'd onto minecraft:dirt by MixinEntityAIWorkFarmer). The TFC grass variants that have a tfc:farmland twin - the real surface blocks in a TFC world. TFC bare dirt is already in minecraft:dirt via #tfc:dirt, so it isn't repeated here. peat_grass / kaolin_clay_grass are intentionally excluded (no farmland twin).",
+  "replace": false,
+  "values": [
+    "tfc:grass/silt",
+    "tfc:grass/loam",
+    "tfc:grass/sandy_loam",
+    "tfc:grass/silty_loam",
+    "tfc:clay_grass/silt",
+    "tfc:clay_grass/loam",
+    "tfc:clay_grass/sandy_loam",
+    "tfc:clay_grass/silty_loam"
+  ]
+}
