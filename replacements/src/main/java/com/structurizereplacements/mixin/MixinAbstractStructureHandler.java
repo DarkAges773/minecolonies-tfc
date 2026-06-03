@@ -1,9 +1,9 @@
 package com.structurizereplacements.mixin;
 
 import com.ldtteam.structurize.placement.structure.AbstractStructureHandler;
+import com.structurizereplacements.placement.ChoiceResolver;
 import com.structurizereplacements.placement.ClientPlacementChoices;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
-import com.structurizereplacements.placement.ServerChoiceResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -39,17 +39,17 @@ public class MixinAbstractStructureHandler implements PlacementChoiceHolder
     }
 
     /**
-     * Resolution order:
+     * Resolution order (no constructor injection — {@code @Inject(method="<init>")} silently never fires
+     * for these Structurize handlers, so resolution is lazy here):
      * <ol>
-     *   <li>explicit choices set on this handler (build-tool placement attaches the player's GUI picks;
-     *       the builder hooks attach the building's persisted choices) — win;</li>
-     *   <li>otherwise, on the <b>client</b>, default to the player's current GUI picks
-     *       ({@code ClientPlacementChoices}). The "Build Options" window builds a client-side
-     *       {@code LoadOnlyStructureHandler} and runs {@code GET_RES_REQUIREMENTS} to populate its
-     *       required-materials list — defaulting here makes that list match the preview hologram (which
-     *       reads the same source) without relying on constructor injection (which doesn't fire for these
-     *       Structurize handlers);</li>
-     *   <li>otherwise {@code null} → datapack rules only (server build with no per-building choice).</li>
+     *   <li>explicit choices set on this handler (build-tool placement attaches the player's GUI picks) — win;</li>
+     *   <li>{@link ChoiceResolver} — a building's choices at this position. On the <b>client</b> the
+     *       building <i>view</i>'s synced choices (so the "Build Options" list/preview reflect that
+     *       building); on the <b>server</b> the building's persisted choices (so the builder uses them),
+     *       cached on the handler since a full build queries per block;</li>
+     *   <li>otherwise, on the <b>client</b>, the build-wand session picks ({@code ClientPlacementChoices})
+     *       — the preview path, where no building exists at the position;</li>
+     *   <li>otherwise {@code null} → datapack rules only.</li>
      * </ol>
      */
     @Override
@@ -67,7 +67,16 @@ public class MixinAbstractStructureHandler implements PlacementChoiceHolder
         }
         if (world.isClientSide)
         {
-            // Not cached: the player can re-pick between previews.
+            // A building at this position is authoritative: use ITS choices and never bleed in the global
+            // session picks. The resolver returns non-null when a building exists here (an empty map means
+            // "building, but no per-building override" → datapack rules), and null when there is no
+            // building — only then (the build-wand preview) do we fall back to the session picks. Not
+            // cached: the building view / session picks can change between previews.
+            final Map<Block, Block> resolved = ChoiceResolver.resolve(world, this.worldPos);
+            if (resolved != null)
+            {
+                return resolved.isEmpty() ? null : resolved;
+            }
             final Map<Block, Block> client = ClientPlacementChoices.current();
             return (client != null && !client.isEmpty()) ? client : null;
         }
@@ -76,7 +85,7 @@ public class MixinAbstractStructureHandler implements PlacementChoiceHolder
         if (!this.structurizereplacements$serverResolved)
         {
             this.structurizereplacements$serverResolved = true;
-            final Map<Block, Block> server = ServerChoiceResolver.resolve(world, this.worldPos);
+            final Map<Block, Block> server = ChoiceResolver.resolve(world, this.worldPos);
             if (server != null && !server.isEmpty())
             {
                 this.structurizereplacements$choices = server;

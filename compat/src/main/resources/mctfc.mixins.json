@@ -6,9 +6,13 @@
   "refmap": "mctfc.refmap.json",
   "mixins": [
     "MixinAbstractBuilding",
-    "MixinBlueprintPlacementHandling"
+    "MixinBlueprintPlacementHandling",
+    "MixinRegisteredStructureManager"
   ],
-  "client": [],
+  "client": [
+    "MixinAbstractBuildingView",
+    "MixinWindowBuildBuilding"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

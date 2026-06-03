@@ -2,6 +2,7 @@ package com.structurizereplacements.mixin;
 
 import com.ldtteam.blockui.Alignment;
 import com.ldtteam.blockui.controls.ButtonImage;
+import com.ldtteam.blockui.views.BOWindow;
 import com.ldtteam.blockui.views.View;
 import com.ldtteam.structurize.client.gui.AbstractBlueprintManipulationWindow;
 import com.structurizereplacements.client.gui.WindowReplacements;
@@ -45,7 +46,7 @@ public class MixinAbstractBlueprintManipulationWindow
         // label wouldn't draw without this.
         button.setTextRenderBox(width, 17);
         button.setTextAlignment(Alignment.MIDDLE);
-        button.setHandler(b -> new WindowReplacements().open());
+        button.setHandler(b -> new WindowReplacements((BOWindow) (Object) this).open());
         window.addChild(button);
     }
 }

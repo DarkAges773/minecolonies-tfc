@@ -1,10 +1,12 @@
 package com.mctfc.mixin;
 
+import com.mctfc.builder.ChoiceCodec;
 import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -22,7 +24,9 @@ import java.util.Map;
  * Persists per-building replacement choices on the MineColonies building (colony NBT), so the builder
  * uses the player's GUI picks and they survive restarts and upgrades/rebuilds. The building implements
  * {@link PlacementChoiceHolder}; {@code BuildingChoiceResolver} (registered as a
- * {@code ServerChoiceResolver}) reads these and feeds them to the builder's structure handler on demand.
+ * {@code ChoiceResolver}) reads these and feeds them to the builder's structure handler on demand. The
+ * map is also synced to the client building view ({@code serializeToView} → {@code MixinAbstractBuildingView})
+ * so the Build Options GUI can show/edit it.
  *
  * <p>{@code remap = false}: {@code serializeNBT}/{@code deserializeNBT} are Forge {@code INBTSerializable}
  * methods (stable names), and we target the {@code CompoundTag} overloads explicitly.
@@ -44,6 +48,18 @@ public class MixinAbstractBuilding implements PlacementChoiceHolder
     public Map<Block, Block> getReplacementChoices()
     {
         return this.mctfc$choices;
+    }
+
+    /**
+     * Append the choice map to the building's client-sync buffer so the client view can display it (and
+     * the Build Options list/preview can reflect it). Symmetric with
+     * {@code MixinAbstractBuildingView#deserialize}; always writes a count (self-describing) so it stays
+     * aligned with whatever MineColonies wrote before us. {@code remap = false}: MineColonies' own method.
+     */
+    @Inject(method = "serializeToView", at = @At("TAIL"), remap = false)
+    private void mctfc$writeChoicesToView(final FriendlyByteBuf buf, final boolean fullSync, final CallbackInfo ci)
+    {
+        ChoiceCodec.write(buf, mctfc$choices);
     }
 
     @Inject(method = "serializeNBT()Lnet/minecraft/nbt/CompoundTag;", at = @At("RETURN"), remap = false)

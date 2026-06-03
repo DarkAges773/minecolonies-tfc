@@ -206,11 +206,20 @@ original sketch — see the dead end below):
   placement (survival build / delegate-to-builder / creative-anchor / paste). Stage the placing player's
   choices (`ServerPlacementChoices.forPlayer(msg.player)`) in `StagedChoices`, keyed by `msg.pos`. (The
   building is created asynchronously, so we can't write it directly here.)
-- **Apply:** a pluggable `ServerChoiceResolver` (in `:replacements`) that `AbstractStructureHandler`'s
-  getter calls lazily server-side. `:compat` registers `BuildingChoiceResolver`: look up the building at
-  the handler's `worldPos`, adopt any staged choices onto it (set + `markDirty`, so they persist), and
-  return the building's choices. This covers BOTH builder handlers (`WorkerLoadOnlyStructureHandler` for the
-  material request, `BuildingStructureHandler` for placement) with one hook.
+- **Adopt at creation:** `MixinRegisteredStructureManager#addNewBuilding` (RETURN) takes the staged
+  choices for the new building's position and sets them on the building (+ `markDirty`), so they persist
+  and sync to the client view immediately at placement (not first build).
+- **Apply:** a pluggable `ChoiceResolver` (in `:replacements`) that `AbstractStructureHandler`'s getter
+  calls lazily on **both** sides. `:compat` registers `BuildingChoiceResolver`: **server** looks up the
+  building at the handler's `worldPos` (adopt-staged fallback) and returns its choices; **client** uses
+  `IColonyManager.getBuildingView(dim, pos)` (the chunk owning-colony cap is not reliably synced
+  client-side). Covers BOTH builder handlers (`WorkerLoadOnlyStructureHandler` for the material request,
+  `BuildingStructureHandler` for placement) and the client Build Options list/preview with one hook.
+- **Sync + edit:** the building's choice map is appended to its view buffer
+  (`MixinAbstractBuilding#serializeToView` ↔ `MixinAbstractBuildingView#deserialize`, shared `ChoiceCodec`),
+  and a "Replace" button on `WindowBuildBuilding` opens the generalized `WindowReplacements`
+  (`ReplacementChoiceContext`: `BuildWandChoiceContext` vs `BuildingChoiceContext`) to edit per-building
+  choices, persisted via `SetBuildingChoicesMessage` on `:compat`'s own network channel.
 
 **Dead end (do not retry):** the original plan was to copy choices onto the handler in
 `BuildingStructureHandler#<init>` / a shared `AbstractStructureHandler#<init>` inject. `@Inject(method="<init>")`

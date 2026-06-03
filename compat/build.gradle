@@ -100,7 +100,8 @@ dependencies {
     // Full mod stack for the dev runtime. Declared explicitly so FML reliably finds every mod jar.
     // Structurize is compile-scope: the builder mixins reference Structurize types (Blueprint, etc.).
     implementation fg.deobf("com.ldtteam:structurize:${structurize_version}")
-    runtimeOnly fg.deobf("com.ldtteam:blockui:${blockui_version}")
+    // Compile-scope: the Build Options "Replace" button mixin references BlockUI types (ButtonImage, …).
+    implementation fg.deobf("com.ldtteam:blockui:${blockui_version}")
     implementation fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
     runtimeOnly fg.deobf("com.ldtteam:domum_ornamentum:${domum_ornamentum_version}")
     implementation fg.deobf("curse.maven:terrafirmacraft-302973:${tfc_file_id}")

@@ -228,24 +228,48 @@ In `:replacements` (generic):
     (NOT a constructor inject — `@Inject(method="<init>")` into these Structurize handlers silently never
     fires, even though the mixin applies and the `PlacementChoiceHolder` interface works; debugging-confirmed,
     do not re-attempt ctor injection here): (1) explicit choices set on the handler win (build-tool attaches
-    the player's picks via `placer.getHandler()` at `PlaceStructureOperation`); else (2) **client-side**
-    default to `ClientPlacementChoices.current()` — this is what makes the **Build Options** material list
-    (a client `LoadOnlyStructureHandler` running `GET_RES_REQUIREMENTS` in `WindowBuildBuilding`, world
-    `isClientSide`) match the picks/preview; else (3) **server-side**, ask the pluggable
-    [ServerChoiceResolver](replacements/src/main/java/com/structurizereplacements/placement/ServerChoiceResolver.java)
-    once (cached per handler via `worldPos`) — keeps `:replacements` MineColonies-free.
+    the player's picks via `placer.getHandler()` at `PlaceStructureOperation`); else (2) the pluggable
+    [ChoiceResolver](replacements/src/main/java/com/structurizereplacements/placement/ChoiceResolver.java)
+    (consulted on **both** sides — keeps `:replacements` MineColonies-free) returns the choices of whatever
+    is at `worldPos`. A **non-null** result (even empty) means "a building is here" → use it (empty ⇒ no
+    override ⇒ datapack rules) and DON'T fall back; `null` means "no building here". Cached per handler on
+    the server only. Else (3) **client-only** fall back to `ClientPlacementChoices.current()` — the
+    build-wand preview path, where no building exists at the position.
   - **Part B** (in `:compat`, MineColonies-only): persist the choice map on `AbstractBuilding` NBT
-    (key `mctfc_choices`, in colony save — NOT the hut block-entity NBT)
-    ([MixinAbstractBuilding](compat/src/main/java/com/mctfc/mixin/MixinAbstractBuilding.java)); capture the
-    placing player's choices at hut placement via `BlueprintPlacementHandling#process`
+    (key `mctfc_choices`, in colony save — NOT the hut block-entity NBT) and sync it to the client building
+    **view** ([MixinAbstractBuilding](compat/src/main/java/com/mctfc/mixin/MixinAbstractBuilding.java):
+    `serializeNBT`/`deserializeNBT` + a self-describing trailer on `serializeToView`;
+    [MixinAbstractBuildingView](compat/src/main/java/com/mctfc/mixin/MixinAbstractBuildingView.java) reads
+    the trailer; shared buffer codec [ChoiceCodec](compat/src/main/java/com/mctfc/builder/ChoiceCodec.java)).
+    Capture the placing player's choices at hut placement via `BlueprintPlacementHandling#process`
     ([MixinBlueprintPlacementHandling](compat/src/main/java/com/mctfc/mixin/MixinBlueprintPlacementHandling.java)
-    → [StagedChoices](compat/src/main/java/com/mctfc/builder/StagedChoices.java) keyed by `msg.pos`); and
-    register a `ServerChoiceResolver` ([BuildingChoiceResolver](compat/src/main/java/com/mctfc/builder/BuildingChoiceResolver.java),
-    registered in `MineColoniesTFC` ctor) that looks up the building at the handler's `worldPos`, adopts any
-    staged choices onto it (persist + `markDirty`), and returns the building's choices. `:compat`'s own mixin
-    config is `mctfc.mixins.json`. Caveat: a restart between placement and the first build loses *unadopted*
-    staged choices (that build uses datapack rules); once adopted they persist across upgrades/rebuilds.
-    Not yet covered: creative-anchor hut placement (`ISpecialCreativeHandlerAnchorBlock.setup`).
+    → [StagedChoices](compat/src/main/java/com/mctfc/builder/StagedChoices.java) keyed by `msg.pos`); **adopt
+    staged onto the building at creation** (`RegisteredStructureManager#addNewBuilding`,
+    [MixinRegisteredStructureManager](compat/src/main/java/com/mctfc/mixin/MixinRegisteredStructureManager.java))
+    so it persists + syncs immediately at placement (not first build). The
+    [BuildingChoiceResolver](compat/src/main/java/com/mctfc/builder/BuildingChoiceResolver.java) (registered
+    as the `ChoiceResolver` in `MineColoniesTFC` ctor) resolves the building's choices: **server** via
+    `getColonyByPosFromWorld→getCommonBuildingManager().getBuilding(pos)` (+ adopt-staged fallback);
+    **client** via `IColonyManager.getBuildingView(dimension, pos)` (the chunk owning-colony cap that
+    `getColonyByPosFromWorld` relies on is NOT reliably synced client-side — use `getBuildingView`).
+    `:compat`'s own mixin config is `mctfc.mixins.json`. Caveat: a restart between placement and building
+    creation could lose unadopted staged choices, but adoption is now at creation (same tick), so in
+    practice they persist from placement onward. Not yet covered: creative-anchor hut placement
+    (`ISpecialCreativeHandlerAnchorBlock.setup`).
+  - **Per-building editing in Build Options — DONE & verified.** A bottom-left "Replace" button on
+    MineColonies' `WindowBuildBuilding` ([MixinWindowBuildBuilding](compat/src/main/java/com/mctfc/mixin/MixinWindowBuildBuilding.java),
+    ctor TAIL — note `onOpened` is inherited so can't be targeted; shadows `building` + `updateResources`)
+    opens the shared picker scoped to that building. The picker
+    ([WindowReplacements](replacements/src/main/java/com/structurizereplacements/client/gui/WindowReplacements.java))
+    is generalized over a [ReplacementChoiceContext](replacements/src/main/java/com/structurizereplacements/client/gui/ReplacementChoiceContext.java):
+    [BuildWandChoiceContext](replacements/src/main/java/com/structurizereplacements/client/gui/BuildWandChoiceContext.java)
+    (global session picks) vs [BuildingChoiceContext](compat/src/main/java/com/mctfc/client/BuildingChoiceContext.java)
+    (one building — sources from the building's blueprint loaded via `StructurePacks.getBlueprintFuture`;
+    current from the synced view; on pick: optimistic view update + `SetBuildingChoicesMessage`
+    ([network](compat/src/main/java/com/mctfc/network/)) → server sets+`markDirty` (persist + re-sync) →
+    `updateResources()` + `clearCache()` refresh). Picks are **per-building only** (don't touch the session
+    picks) and apply on the next build/upgrade. "Done" reopens the parent window (build tool / Build Options)
+    instead of closing to the game.
 - **GUI toggle** in `WindowExtendedBuildTool` for per-placement opt-in.
 
 In `:compat`:
