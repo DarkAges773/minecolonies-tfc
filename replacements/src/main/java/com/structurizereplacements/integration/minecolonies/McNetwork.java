@@ -1,6 +1,6 @@
-package com.mctfc.network;
+package com.structurizereplacements.integration.minecolonies;
 
-import com.mctfc.MineColoniesTFC;
+import com.structurizereplacements.StructurizeReplacements;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -10,17 +10,19 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.Map;
 
 /**
- * {@code :compat}'s network channel. Carries per-building replacement edits from the Build Options GUI to
- * the server. (The build wand's global session picks use {@code :replacements}' own channel.)
+ * Network channel for the optional MineColonies integration. Carries per-building replacement edits from
+ * the Build Options GUI to the server. Separate from the engine's core channel and registered only when
+ * MineColonies is present (see {@link MineColoniesIntegration}); the build wand's global session picks use
+ * the core channel.
  */
-public final class Network
+public final class McNetwork
 {
-    private Network() {}
+    private McNetwork() {}
 
     private static final String PROTOCOL = "1";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(MineColoniesTFC.MODID, "main"),
+            new ResourceLocation(StructurizeReplacements.MODID, "minecolonies"),
             () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
     public static void register()

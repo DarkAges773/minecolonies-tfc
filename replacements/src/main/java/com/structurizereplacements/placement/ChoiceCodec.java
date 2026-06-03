@@ -1,4 +1,4 @@
-package com.mctfc.builder;
+package com.structurizereplacements.placement;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -9,13 +9,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Buffer (de)serialization for a replacement choice map (source block → target block), shared by the
- * building-view sync ({@code MixinAbstractBuilding}/{@code MixinAbstractBuildingView}) and the
- * per-building edit packet ({@code SetBuildingChoicesMessage}).
+ * Buffer (de)serialization for a replacement choice map (source block → target block), shared by
+ * integrations that sync or send choice maps (e.g. the MineColonies building-view sync and the
+ * per-building edit packet).
  *
  * <p>Self-describing: always writes a count first (0 when empty), so read/write stay symmetric — needed
- * because the view-sync hooks append to a buffer MineColonies also writes. Unknown block ids are skipped
- * on read but their bytes are always consumed, keeping the buffer aligned.
+ * when appended to a buffer another mod also writes. Unknown block ids are skipped on read but their
+ * bytes are always consumed, keeping the buffer aligned. MC-free.
  */
 public final class ChoiceCodec
 {

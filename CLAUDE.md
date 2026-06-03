@@ -8,10 +8,15 @@ A Gradle **multi-project** repo containing **two Forge 1.20.1 mods**:
 
 | Subproject | Mod id | Package | Purpose |
 |---|---|---|---|
-| `:replacements` | `structurizereplacements` | `com.structurizereplacements` | **Standalone** Structurize add-on: datapack-driven, tag/family block substitution when placing blueprints. No MineColonies/TFC dependency. |
-| `:compat` | `mctfc` | `com.mctfc` | **MineColonies × TerraFirmaCraft** bridge. Depends on `:replacements`, ships TFC substitution rules as a datapack, and will house the rest of the MC↔TFC bridging. |
+| `:replacements` | `structurizereplacements` | `com.structurizereplacements` | **Standalone** Structurize add-on: datapack-driven, tag/family block substitution when placing blueprints. **MineColonies is an OPTIONAL dependency** — when present, the builder/Build-Options per-building integration activates (`com.structurizereplacements.integration.minecolonies.*` + the optional `structurizereplacements.minecolonies.mixins.json` config); when absent, it's a pure Structurize substitution mod. No TFC dependency. |
+| `:compat` | `mctfc` | `com.mctfc` | **MineColonies × TerraFirmaCraft** bridge. Depends on `:replacements`; ships TFC substitution rules as a datapack and will house the MC↔TFC bridging (food/nutrition, farming, smithing, …) — including its own mixins (MixinGradle + `mctfc.mixins.json` are kept though currently empty). |
 
-The split exists so the substitution engine is reusable by anyone, independent of TFC.
+The split exists so the substitution engine (and its optional MineColonies builder integration) is
+reusable by anyone, independent of TFC. **`:replacements` may reference MineColonies, but only as an
+optional dependency** — all MineColonies-referencing classes live under
+`integration.minecolonies`/`mixin.minecolonies` and load only when MineColonies is present (guarded by
+`ModList.isLoaded("minecolonies")` in the mod ctor; the MC mixins sit in a `required:false` config that
+Mixin skips when targets are absent). Never make MineColonies *mandatory* for `:replacements`.
 
 ### Hard constraints (do not change without explicit instruction)
 - **Loader:** Forge (FML). Not Fabric, not NeoForge.
@@ -68,14 +73,17 @@ Shared versions in [gradle.properties](gradle.properties). Sources:
 - **CurseMaven**: TerraFirmaCraft (`curse.maven:terrafirmacraft-302973:<tfc_file_id>`) and its
   **mandatory** dep Patchouli (`curse.maven:patchouli-306770:<patchouli_file_id>`).
 
-Who depends on what: `:replacements` → Structurize (+ blockui runtime) only. `:compat` →
+Who depends on what: `:replacements` → Structurize + blockui (`implementation`) + MineColonies
+(**`compileOnly`** — optional integration compiles against it but isn't bundled). `:compat` →
 `project(':replacements')` + the full stack (structurize/blockui/minecolonies/domum/tfc/patchouli) so
 the dev run loads everything.
 
-**Dev-run-only test mods** (`runtimeOnly` — they do NOT appear in any mods.toml and are not real
-dependencies, they only enrich `runClient`): `:replacements` adds MineColonies + Domum Ornamentum (so
-its standalone run can use the MineColonies build tool — Domum is MineColonies' mandatory dep) and EMI;
-`:compat` adds EMI. Remove these before shipping if you want lean dev runs.
+**Dev-run-only test mods** (`runtimeOnly` — NOT real mandatory deps): `:replacements` adds MineColonies
+(also `compileOnly`) + Domum Ornamentum + EMI so its standalone `runClient` exercises the **optional
+MineColonies integration** (Domum is MineColonies' mandatory dep). **To dev-test the MineColonies-absent
+path, comment out `:replacements`' `runtimeOnly minecolonies`/`domum` lines** — the game should load, do
+substitution + the build-wand GUI, log the `minecolonies` mixin config skipping its targets, and not
+crash. `:compat` adds EMI.
 
 **Bumping versions:** edit the `*_version` / `*_file_id` properties. Verify LDTTeam versions against
 `<artifact>/maven-metadata.xml`; TFC/Patchouli use CurseForge **file ids** (from the file URL).
@@ -87,25 +95,28 @@ dependencies` first.
 
 SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging crash:
 
-- **`:replacements`** owns the only mixin config,
-  [structurizereplacements.mixins.json](replacements/src/main/resources/structurizereplacements.mixins.json)
-  (package `com.structurizereplacements.mixin`). Registered via `MixinConfigs` jar manifest +
-  MixinGradle's `mixin { config }`.
-- Mixins targeting **another mod's own methods** (Structurize, not Minecraft) need **`remap = false`**
-  on the injector — those names are stable and have no SRG mapping. See
+- **`:replacements` owns TWO mixin configs**, both listed in its `MixinConfigs` jar manifest +
+  MixinGradle's `mixin { config }`:
+  - [structurizereplacements.mixins.json](replacements/src/main/resources/structurizereplacements.mixins.json)
+    (`required:true`, package `com.structurizereplacements.mixin`) — the core Structurize mixins (always apply).
+  - [structurizereplacements.minecolonies.mixins.json](replacements/src/main/resources/structurizereplacements.minecolonies.mixins.json)
+    (**`required:false`**, package `com.structurizereplacements.mixin.minecolonies`) — the optional
+    MineColonies-integration mixins. Mixin **skips** these when the MineColonies target classes are absent
+    (same graceful-skip TFC relies on for its JEI/Sodium mixins), so the standalone (MC-absent) case is fine.
+- Mixins targeting **another mod's own methods** (Structurize/MineColonies, not Minecraft) need
+  **`remap = false`** on the injector — those names are stable and have no SRG mapping. See
   [MixinStructurePlacer](replacements/src/main/java/com/structurizereplacements/mixin/MixinStructurePlacer.java).
-- **Cross-project mixin registration in dev:** `:compat`'s `runClient` must explicitly register
-  `:replacements`'s mixin config — its run config passes `args '--mixin.config',
-  'structurizereplacements.mixins.json'`. In dev, `:replacements` is loaded from a source set (no jar
-  `MixinConfigs` manifest), and MixinGradle only auto-registers a project's OWN config into its OWN
-  runs. Without this, NONE of the replacements mixins (button, substitution, preview, the
-  `AbstractStructureHandler` choice-holder that `:compat`'s builder mixins depend on) apply when running
-  the full stack from `:compat` — the symptom is "no Replace button / nothing substitutes in the
-  `:compat` run". (Production is fine: each mod's jar carries its own `MixinConfigs` manifest.)
-- **`:compat` also applies MixinGradle even though it (originally) had no mixins.** The dev runs live in `:compat`,
-  and applying the plugin in the run-owning project is what injects the runtime refmap remapping
-  (`mixin.env.remapRefMap`). Without it, *other* mods' SRG-named mixins (e.g. Patchouli's
-  `AccessorScreen`) fail to apply in the official-mapped dev env (`InvalidAccessorException`).
+- **Cross-project mixin registration in dev:** `:compat`'s `runClient` must explicitly register **both**
+  `:replacements` configs — its run config passes two `args '--mixin.config', '…'` lines. In dev,
+  `:replacements` is loaded from a source set (no jar `MixinConfigs` manifest), and MixinGradle only
+  auto-registers a project's OWN config into its OWN runs. Without this, NONE of the replacements mixins
+  (button, substitution, preview, the per-building MineColonies integration) apply in the `:compat` run.
+  (Production is fine: each mod's jar carries its own `MixinConfigs` manifest.)
+- **`:compat` also applies MixinGradle even though it currently has no mixins** (`mctfc.mixins.json` is
+  empty, kept for the coming MC↔TFC bridging mixins). The dev runs live in `:compat`, and applying the
+  plugin in the run-owning project is what injects the runtime refmap remapping (`mixin.env.remapRefMap`).
+  Without it, *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in the
+  official-mapped dev env (`InvalidAccessorException`).
 - The runtime Mixin logs `Compatibility level JAVA_17 ... higher than max supported (JAVA_13)` as
   DEBUG — benign (config still selected).
 
@@ -230,43 +241,51 @@ In `:replacements` (generic):
     do not re-attempt ctor injection here): (1) explicit choices set on the handler win (build-tool attaches
     the player's picks via `placer.getHandler()` at `PlaceStructureOperation`); else (2) the pluggable
     [ChoiceResolver](replacements/src/main/java/com/structurizereplacements/placement/ChoiceResolver.java)
-    (consulted on **both** sides — keeps `:replacements` MineColonies-free) returns the choices of whatever
+    (consulted on **both** sides — a generic hook so the engine core doesn't hard-reference MineColonies;
+    the MineColonies impl registers into it only when MC is loaded) returns the choices of whatever
     is at `worldPos`. A **non-null** result (even empty) means "a building is here" → use it (empty ⇒ no
     override ⇒ datapack rules) and DON'T fall back; `null` means "no building here". Cached per handler on
     the server only. Else (3) **client-only** fall back to `ClientPlacementChoices.current()` — the
     build-wand preview path, where no building exists at the position.
-  - **Part B** (in `:compat`, MineColonies-only): persist the choice map on `AbstractBuilding` NBT
-    (key `mctfc_choices`, in colony save — NOT the hut block-entity NBT) and sync it to the client building
-    **view** ([MixinAbstractBuilding](compat/src/main/java/com/mctfc/mixin/MixinAbstractBuilding.java):
+  - **Part B** (in `:replacements`, the **optional** MineColonies integration under
+    `com.structurizereplacements.integration.minecolonies` + `mixin.minecolonies` — loaded only when MC is
+    present): persist the choice map on `AbstractBuilding` NBT (key `structurizereplacements_choices`, in
+    colony save — NOT the hut block-entity NBT) and sync it to the client building **view**
+    ([MixinAbstractBuilding](replacements/src/main/java/com/structurizereplacements/mixin/minecolonies/MixinAbstractBuilding.java):
     `serializeNBT`/`deserializeNBT` + a self-describing trailer on `serializeToView`;
-    [MixinAbstractBuildingView](compat/src/main/java/com/mctfc/mixin/MixinAbstractBuildingView.java) reads
-    the trailer; shared buffer codec [ChoiceCodec](compat/src/main/java/com/mctfc/builder/ChoiceCodec.java)).
+    [MixinAbstractBuildingView](replacements/src/main/java/com/structurizereplacements/mixin/minecolonies/MixinAbstractBuildingView.java)
+    reads the trailer; shared MC-free buffer codec
+    [ChoiceCodec](replacements/src/main/java/com/structurizereplacements/placement/ChoiceCodec.java)).
     Capture the placing player's choices at hut placement via `BlueprintPlacementHandling#process`
-    ([MixinBlueprintPlacementHandling](compat/src/main/java/com/mctfc/mixin/MixinBlueprintPlacementHandling.java)
-    → [StagedChoices](compat/src/main/java/com/mctfc/builder/StagedChoices.java) keyed by `msg.pos`); **adopt
-    staged onto the building at creation** (`RegisteredStructureManager#addNewBuilding`,
-    [MixinRegisteredStructureManager](compat/src/main/java/com/mctfc/mixin/MixinRegisteredStructureManager.java))
+    ([MixinBlueprintPlacementHandling](replacements/src/main/java/com/structurizereplacements/mixin/MixinBlueprintPlacementHandling.java)
+    — in the **main** config since it targets Structurize, no-ops unless MC is loaded →
+    [StagedChoices](replacements/src/main/java/com/structurizereplacements/placement/StagedChoices.java)
+    keyed by `msg.pos`); **adopt staged onto the building at creation** (`RegisteredStructureManager#addNewBuilding`,
+    [MixinRegisteredStructureManager](replacements/src/main/java/com/structurizereplacements/mixin/minecolonies/MixinRegisteredStructureManager.java))
     so it persists + syncs immediately at placement (not first build). The
-    [BuildingChoiceResolver](compat/src/main/java/com/mctfc/builder/BuildingChoiceResolver.java) (registered
-    as the `ChoiceResolver` in `MineColoniesTFC` ctor) resolves the building's choices: **server** via
+    [BuildingChoiceResolver](replacements/src/main/java/com/structurizereplacements/integration/minecolonies/BuildingChoiceResolver.java)
+    (registered as the `ChoiceResolver` by
+    [MineColoniesIntegration](replacements/src/main/java/com/structurizereplacements/integration/minecolonies/MineColoniesIntegration.java)`#init`,
+    called from the guarded `StructurizeReplacements` ctor) resolves the building's choices: **server** via
     `getColonyByPosFromWorld→getCommonBuildingManager().getBuilding(pos)` (+ adopt-staged fallback);
     **client** via `IColonyManager.getBuildingView(dimension, pos)` (the chunk owning-colony cap that
     `getColonyByPosFromWorld` relies on is NOT reliably synced client-side — use `getBuildingView`).
-    `:compat`'s own mixin config is `mctfc.mixins.json`. Caveat: a restart between placement and building
-    creation could lose unadopted staged choices, but adoption is now at creation (same tick), so in
-    practice they persist from placement onward. Not yet covered: creative-anchor hut placement
-    (`ISpecialCreativeHandlerAnchorBlock.setup`).
+    The MC mixins live in `structurizereplacements.minecolonies.mixins.json` (`required:false`). Caveat: a
+    restart between placement and building creation could lose unadopted staged choices, but adoption is now
+    at creation (same tick), so in practice they persist from placement onward. Not yet covered:
+    creative-anchor hut placement (`ISpecialCreativeHandlerAnchorBlock.setup`).
   - **Per-building editing in Build Options — DONE & verified.** A bottom-left "Replace" button on
-    MineColonies' `WindowBuildBuilding` ([MixinWindowBuildBuilding](compat/src/main/java/com/mctfc/mixin/MixinWindowBuildBuilding.java),
+    MineColonies' `WindowBuildBuilding` ([MixinWindowBuildBuilding](replacements/src/main/java/com/structurizereplacements/mixin/minecolonies/MixinWindowBuildBuilding.java),
     ctor TAIL — note `onOpened` is inherited so can't be targeted; shadows `building` + `updateResources`)
     opens the shared picker scoped to that building. The picker
     ([WindowReplacements](replacements/src/main/java/com/structurizereplacements/client/gui/WindowReplacements.java))
     is generalized over a [ReplacementChoiceContext](replacements/src/main/java/com/structurizereplacements/client/gui/ReplacementChoiceContext.java):
     [BuildWandChoiceContext](replacements/src/main/java/com/structurizereplacements/client/gui/BuildWandChoiceContext.java)
-    (global session picks) vs [BuildingChoiceContext](compat/src/main/java/com/mctfc/client/BuildingChoiceContext.java)
+    (global session picks) vs [BuildingChoiceContext](replacements/src/main/java/com/structurizereplacements/integration/minecolonies/BuildingChoiceContext.java)
     (one building — sources from the building's blueprint loaded via `StructurePacks.getBlueprintFuture`;
     current from the synced view; on pick: optimistic view update + `SetBuildingChoicesMessage`
-    ([network](compat/src/main/java/com/mctfc/network/)) → server sets+`markDirty` (persist + re-sync) →
+    ([McNetwork](replacements/src/main/java/com/structurizereplacements/integration/minecolonies/McNetwork.java),
+    a separate channel registered only when MC is present) → server sets+`markDirty` (persist + re-sync) →
     `updateResources()` + `clearCache()` refresh). Picks are **per-building only** (don't touch the session
     picks) and apply on the next build/upgrade. "Done" reopens the parent window (build tool / Build Options)
     instead of closing to the game.

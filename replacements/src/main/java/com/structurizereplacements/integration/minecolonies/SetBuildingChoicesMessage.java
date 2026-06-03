@@ -1,11 +1,11 @@
-package com.mctfc.network;
+package com.structurizereplacements.integration.minecolonies;
 
-import com.mctfc.builder.ChoiceCodec;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.buildings.ICommonBuilding;
 import com.minecolonies.api.colony.permissions.Action;
+import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;

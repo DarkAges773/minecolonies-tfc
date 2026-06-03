@@ -46,11 +46,13 @@ minecraft {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            // Register the :replacements mixin config in this run too. In dev it is loaded from a
-            // source set (no jar MixinConfigs manifest), and MixinGradle only auto-registers THIS
-            // project's own config — so without this the replacements mixins (button, substitution,
-            // preview, handler choice-holder) never apply when running the full stack from :compat.
+            // Register BOTH :replacements mixin configs in this run. In dev :replacements is loaded from a
+            // source set (no jar MixinConfigs manifest), and MixinGradle only auto-registers THIS project's
+            // own config — so without these the replacements mixins never apply when running the full stack
+            // from :compat. The first is the core substitution config; the second is the optional
+            // MineColonies-integration config (per-building choices, Build Options button).
             args '--mixin.config', 'structurizereplacements.mixins.json'
+            args '--mixin.config', 'structurizereplacements.minecolonies.mixins.json'
             // Load BOTH our mods from their source sets. All third-party mods come from the
             // deobf dependencies on the runtime classpath.
             mods {

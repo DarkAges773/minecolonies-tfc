@@ -1,10 +1,10 @@
-package com.mctfc.mixin;
+package com.structurizereplacements.mixin.minecolonies;
 
-import com.mctfc.builder.StagedChoices;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.tileentities.AbstractTileEntityColonyBuilding;
 import com.minecolonies.core.colony.managers.RegisteredStructureManager;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
+import com.structurizereplacements.placement.StagedChoices;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,11 +27,11 @@ import java.util.Map;
 public class MixinRegisteredStructureManager
 {
     @Inject(method = "addNewBuilding", at = @At("RETURN"), remap = false)
-    private void mctfc$adoptStagedChoices(final AbstractTileEntityColonyBuilding tileEntity, final Level level,
-                                          final CallbackInfoReturnable<IBuilding> cir)
+    private void structurizereplacements$adoptStagedChoices(final AbstractTileEntityColonyBuilding tileEntity, final Level level,
+                                                            final CallbackInfoReturnable<IBuilding> cir)
     {
         final IBuilding building = cir.getReturnValue();
-        if (building == null || !(building instanceof PlacementChoiceHolder holder))
+        if (!(building instanceof PlacementChoiceHolder holder))
         {
             return;
         }

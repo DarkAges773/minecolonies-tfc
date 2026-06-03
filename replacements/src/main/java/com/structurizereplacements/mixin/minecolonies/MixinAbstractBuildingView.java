@@ -1,7 +1,7 @@
-package com.mctfc.mixin;
+package com.structurizereplacements.mixin.minecolonies;
 
-import com.mctfc.builder.ChoiceCodec;
 import com.minecolonies.core.colony.buildings.views.AbstractBuildingView;
+import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.block.Block;
@@ -25,24 +25,24 @@ import java.util.Map;
 public class MixinAbstractBuildingView implements PlacementChoiceHolder
 {
     @Unique
-    private Map<Block, Block> mctfc$choices;
+    private Map<Block, Block> structurizereplacements$choices;
 
     @Override
     public void setReplacementChoices(final Map<Block, Block> choices)
     {
-        this.mctfc$choices = choices;
+        this.structurizereplacements$choices = choices;
     }
 
     @Override
     public Map<Block, Block> getReplacementChoices()
     {
-        return this.mctfc$choices;
+        return this.structurizereplacements$choices;
     }
 
     @Inject(method = "deserialize", at = @At("TAIL"), remap = false)
-    private void mctfc$readChoicesFromBuffer(final FriendlyByteBuf buf, final CallbackInfo ci)
+    private void structurizereplacements$readChoicesFromBuffer(final FriendlyByteBuf buf, final CallbackInfo ci)
     {
         final Map<Block, Block> read = ChoiceCodec.read(buf);
-        this.mctfc$choices = read.isEmpty() ? null : read;
+        this.structurizereplacements$choices = read.isEmpty() ? null : read;
     }
 }

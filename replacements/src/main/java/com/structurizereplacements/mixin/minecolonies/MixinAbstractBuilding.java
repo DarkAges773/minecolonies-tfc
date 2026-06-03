@@ -1,7 +1,7 @@
-package com.mctfc.mixin;
+package com.structurizereplacements.mixin.minecolonies;
 
-import com.mctfc.builder.ChoiceCodec;
 import com.minecolonies.core.colony.buildings.AbstractBuilding;
+import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -23,54 +23,54 @@ import java.util.Map;
 /**
  * Persists per-building replacement choices on the MineColonies building (colony NBT), so the builder
  * uses the player's GUI picks and they survive restarts and upgrades/rebuilds. The building implements
- * {@link PlacementChoiceHolder}; {@code BuildingChoiceResolver} (registered as a
+ * {@link PlacementChoiceHolder}; {@code BuildingChoiceResolver} (registered as the engine's
  * {@code ChoiceResolver}) reads these and feeds them to the builder's structure handler on demand. The
  * map is also synced to the client building view ({@code serializeToView} → {@code MixinAbstractBuildingView})
- * so the Build Options GUI can show/edit it.
+ * so the Build Options GUI can show/edit it. Part of the optional MineColonies integration.
  *
  * <p>{@code remap = false}: {@code serializeNBT}/{@code deserializeNBT} are Forge {@code INBTSerializable}
- * methods (stable names), and we target the {@code CompoundTag} overloads explicitly.
+ * methods (stable names), {@code serializeToView} is MineColonies' own.
  */
 @Mixin(AbstractBuilding.class)
 public class MixinAbstractBuilding implements PlacementChoiceHolder
 {
-    @Unique private static final String MCTFC_KEY = "mctfc_choices";
+    @Unique private static final String SREP_KEY = "structurizereplacements_choices";
 
-    @Unique private Map<Block, Block> mctfc$choices;
+    @Unique private Map<Block, Block> structurizereplacements$choices;
 
     @Override
     public void setReplacementChoices(final Map<Block, Block> choices)
     {
-        this.mctfc$choices = choices;
+        this.structurizereplacements$choices = choices;
     }
 
     @Override
     public Map<Block, Block> getReplacementChoices()
     {
-        return this.mctfc$choices;
+        return this.structurizereplacements$choices;
     }
 
     /**
      * Append the choice map to the building's client-sync buffer so the client view can display it (and
      * the Build Options list/preview can reflect it). Symmetric with
      * {@code MixinAbstractBuildingView#deserialize}; always writes a count (self-describing) so it stays
-     * aligned with whatever MineColonies wrote before us. {@code remap = false}: MineColonies' own method.
+     * aligned with whatever MineColonies wrote before us.
      */
     @Inject(method = "serializeToView", at = @At("TAIL"), remap = false)
-    private void mctfc$writeChoicesToView(final FriendlyByteBuf buf, final boolean fullSync, final CallbackInfo ci)
+    private void structurizereplacements$writeChoicesToView(final FriendlyByteBuf buf, final boolean fullSync, final CallbackInfo ci)
     {
-        ChoiceCodec.write(buf, mctfc$choices);
+        ChoiceCodec.write(buf, structurizereplacements$choices);
     }
 
     @Inject(method = "serializeNBT()Lnet/minecraft/nbt/CompoundTag;", at = @At("RETURN"), remap = false)
-    private void mctfc$writeChoices(final CallbackInfoReturnable<CompoundTag> cir)
+    private void structurizereplacements$writeChoices(final CallbackInfoReturnable<CompoundTag> cir)
     {
-        if (mctfc$choices == null || mctfc$choices.isEmpty())
+        if (structurizereplacements$choices == null || structurizereplacements$choices.isEmpty())
         {
             return;
         }
         final ListTag list = new ListTag();
-        mctfc$choices.forEach((from, to) -> {
+        structurizereplacements$choices.forEach((from, to) -> {
             final ResourceLocation f = ForgeRegistries.BLOCKS.getKey(from);
             final ResourceLocation t = ForgeRegistries.BLOCKS.getKey(to);
             if (f != null && t != null)
@@ -83,34 +83,34 @@ public class MixinAbstractBuilding implements PlacementChoiceHolder
         });
         if (!list.isEmpty())
         {
-            cir.getReturnValue().put(MCTFC_KEY, list);
+            cir.getReturnValue().put(SREP_KEY, list);
         }
     }
 
     @Inject(method = "deserializeNBT(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"), remap = false)
-    private void mctfc$readChoices(final CompoundTag tag, final CallbackInfo ci)
+    private void structurizereplacements$readChoices(final CompoundTag tag, final CallbackInfo ci)
     {
-        if (!tag.contains(MCTFC_KEY, Tag.TAG_LIST))
+        if (!tag.contains(SREP_KEY, Tag.TAG_LIST))
         {
             return;
         }
         final Map<Block, Block> read = new HashMap<>();
-        final ListTag list = tag.getList(MCTFC_KEY, Tag.TAG_COMPOUND);
+        final ListTag list = tag.getList(SREP_KEY, Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++)
         {
             final CompoundTag entry = list.getCompound(i);
-            final Block from = mctfc$block(entry.getString("from"));
-            final Block to = mctfc$block(entry.getString("to"));
+            final Block from = structurizereplacements$block(entry.getString("from"));
+            final Block to = structurizereplacements$block(entry.getString("to"));
             if (from != null && to != null)
             {
                 read.put(from, to);
             }
         }
-        this.mctfc$choices = read.isEmpty() ? null : read;
+        this.structurizereplacements$choices = read.isEmpty() ? null : read;
     }
 
     @Unique
-    private static Block mctfc$block(final String id)
+    private static Block structurizereplacements$block(final String id)
     {
         final ResourceLocation rl = ResourceLocation.tryParse(id);
         return (rl != null && ForgeRegistries.BLOCKS.containsKey(rl)) ? ForgeRegistries.BLOCKS.getValue(rl) : null;

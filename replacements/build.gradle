@@ -79,23 +79,30 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    // Structurize is the only real mod dependency. BlockUI is Structurize's GUI library — needed at
-    // compile time too now that we build a BlockUI window / button.
+    // Structurize is the only mandatory mod dependency. BlockUI is Structurize's GUI library — needed at
+    // compile time too since we build BlockUI windows / buttons.
     implementation fg.deobf("com.ldtteam:structurize:${structurize_version}")
     implementation fg.deobf("com.ldtteam:blockui:${blockui_version}")
 
-    // --- Dev-run-only test mods. NOT real dependencies (mods.toml is unchanged); these only enrich
-    //     the standalone runClient so substitution can be exercised against MineColonies' build tool
-    //     with a recipe viewer. MineColonies requires Domum Ornamentum (BlockUI/Structurize already
-    //     present above), so it is added too. ---
+    // MineColonies is an OPTIONAL dependency (mods.toml: mandatory=false). The optional integration
+    // (com.structurizereplacements.integration.minecolonies.* + the .minecolonies.mixins.json config)
+    // compiles against it, but those classes/mixins only load when MineColonies is actually present.
+    // compileOnly so it isn't bundled; runtimeOnly so the dev runClient loads it and exercises the
+    // integration (Domum Ornamentum is MineColonies' mandatory dep). Remove the runtimeOnly lines to
+    // dev-test the MineColonies-absent (pure standalone) path.
+    compileOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
     runtimeOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
     runtimeOnly fg.deobf("com.ldtteam:domum_ornamentum:${domum_ornamentum_version}")
+    // Dev-run-only recipe viewer.
     runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")
 }
 
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
     config "${mod_id}.mixins.json"
+    // Optional MineColonies-integration mixins (config is required:false; Mixin skips them when the
+    // MineColonies target classes are absent).
+    config "${mod_id}.minecolonies.mixins.json"
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -121,7 +128,7 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Title'  : project.name,
                 'Implementation-Version': project.jar.archiveVersion,
                 'Implementation-Vendor' : mod_authors,
-                'MixinConfigs'          : "${mod_id}.mixins.json"
+                'MixinConfigs'          : "${mod_id}.mixins.json,${mod_id}.minecolonies.mixins.json"
         ])
     }
     finalizedBy 'reobfJar'

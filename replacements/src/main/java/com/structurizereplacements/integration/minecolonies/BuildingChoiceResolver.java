@@ -1,4 +1,4 @@
-package com.mctfc.builder;
+package com.structurizereplacements.integration.minecolonies;
 
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyManager;
@@ -7,6 +7,7 @@ import com.minecolonies.api.colony.buildings.ICommonBuilding;
 import com.minecolonies.api.colony.buildings.views.IBuildingView;
 import com.structurizereplacements.placement.ChoiceResolver;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
+import com.structurizereplacements.placement.StagedChoices;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -14,10 +15,10 @@ import net.minecraft.world.level.block.Block;
 import java.util.Map;
 
 /**
- * Bridges Structurize's structure handlers to the MineColonies building's replacement choices.
+ * Bridges the substitution engine's structure handlers to a MineColonies building's replacement choices.
  *
- * <p>The (Structurize-only) {@code structurizereplacements} mod can't look up a MineColonies building, so
- * its structure handler asks {@link ChoiceResolver} when it has no choices of its own — on both sides:
+ * <p>The engine can't look up a MineColonies building, so its structure handler asks {@link ChoiceResolver}
+ * when it has no choices of its own — on both sides:
  * <ul>
  *   <li><b>server</b>: find the building at the position and return its persisted choices. If it has none
  *       yet, adopt any choices the placing player staged at hut placement ({@link StagedChoices}, captured

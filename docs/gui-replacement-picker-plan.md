@@ -191,10 +191,19 @@ implements `PlacementChoiceHolder` on `AbstractStructureHandler`; `MixinStructur
 `handler.getReplacementChoices()`; `MixinPlaceStructureOperation` attaches the player's choices to
 `placer.getHandler()`. Builder handler choices are still null → datapack rules (until Part B).
 
-### Part B — TODO. **Lives in `:compat`, NOT `:replacements`** (it targets MineColonies classes; keep
-the standalone mod MineColonies-free). `:compat` already compiles against MineColonies and depends on
-`project(':replacements')`, so it reuses `PlacementChoiceHolder` + `ServerPlacementChoices`. `:compat`
-currently has no real mixins → add a `mctfc.mixins.json` + the mixin AP to its build.
+### Part B — DONE.
+> **Relocation note (supersedes the `:compat` wording below):** Part B was first built in `:compat`, then
+> **moved into `:replacements` as an *optional* MineColonies integration** — MineColonies is now an optional
+> (`compileOnly` + `mandatory=false`) dependency of `:replacements`. The MC-referencing code lives under
+> `com.structurizereplacements.integration.minecolonies` + `com.structurizereplacements.mixin.minecolonies`
+> (config `structurizereplacements.minecolonies.mixins.json`, `required:false`), registered only when
+> `ModList.isLoaded("minecolonies")`. The NBT/view key is `structurizereplacements_choices`. `:compat` keeps
+> only the TFC rule pack (+ future MC↔TFC bridging). See CLAUDE.md "Roadmap → Part B" for the current paths.
+> The original `:compat`-centric design notes below are kept for history.
+
+The original (pre-relocation) plan targeted `:compat` so the standalone mod stayed MineColonies-free; that
+constraint was later relaxed to "optional dependency". It reused `PlacementChoiceHolder` +
+`ServerPlacementChoices` from `:replacements`.
 
 Decision: **persist on the building** (`AbstractBuilding` colony NBT) — survives restarts, outlives a
 single work order (upgrades/rebuilds). **DONE & verified in-game.** As-built design (differs from the

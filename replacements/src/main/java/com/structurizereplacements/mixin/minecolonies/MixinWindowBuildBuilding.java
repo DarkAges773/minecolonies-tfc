@@ -1,13 +1,13 @@
-package com.mctfc.mixin;
+package com.structurizereplacements.mixin.minecolonies;
 
 import com.ldtteam.blockui.Alignment;
 import com.ldtteam.blockui.controls.ButtonImage;
 import com.ldtteam.blockui.views.BOWindow;
 import com.ldtteam.blockui.views.View;
-import com.mctfc.client.BuildingChoiceContext;
 import com.minecolonies.api.colony.buildings.views.IBuildingView;
 import com.minecolonies.core.client.gui.WindowBuildBuilding;
 import com.structurizereplacements.client.gui.WindowReplacements;
+import com.structurizereplacements.integration.minecolonies.BuildingChoiceContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,13 +37,13 @@ public abstract class MixinWindowBuildBuilding
     private IBuildingView building;
 
     @Inject(method = "<init>", at = @At("TAIL"), remap = false)
-    private void mctfc$addReplaceButton(final CallbackInfo ci)
+    private void structurizereplacements$addReplaceButton(final CallbackInfo ci)
     {
         final View window = (View) (Object) this;
         final int width = 60;
         final int height = 17;
         final ButtonImage button = new ButtonImage();
-        button.setID("mctfc:replace");
+        button.setID("structurizereplacements:replace");
         button.setSize(width, height);
         // Bottom-left corner, relative to the window height (robust across layouts).
         button.setPosition(5, window.getHeight() - height - 5);

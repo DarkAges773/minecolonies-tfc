@@ -1,11 +1,10 @@
-package com.mctfc.client;
+package com.structurizereplacements.integration.minecolonies;
 
 import com.ldtteam.structurize.blueprints.v1.Blueprint;
 import com.ldtteam.structurize.client.BlueprintHandler;
 import com.ldtteam.structurize.storage.ClientFutureProcessor;
 import com.ldtteam.structurize.storage.StructurePacks;
 import com.ldtteam.structurize.util.BlockInfo;
-import com.mctfc.network.Network;
 import com.minecolonies.api.colony.buildings.views.IBuildingView;
 import com.structurizereplacements.client.gui.ReplacementChoiceContext;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
@@ -84,7 +83,7 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
         {
             holder.setReplacementChoices(map.isEmpty() ? null : map);
         }
-        Network.sendBuildingChoices(view.getPosition(), map);
+        McNetwork.sendBuildingChoices(view.getPosition(), map);
         BlueprintHandler.getInstance().clearCache();
         refreshMaterials.run();
     }

@@ -1,4 +1,4 @@
-package com.mctfc.builder;
+package com.structurizereplacements.placement;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
@@ -7,13 +7,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Server-side staging for replacement choices made when a hut is placed, keyed by the hut/building
- * position. The building is created asynchronously (hut block → colony registers it), so we stash the
- * placing player's choices here at placement and the building adopts them when its
- * {@code BuildingStructureHandler} is first set up (then persists them on the building).
+ * Server-side staging for replacement choices made when a structure is placed, keyed by position. Used
+ * by integrations that attach choices to something created asynchronously from the placement (e.g. a
+ * MineColonies building, registered a tick or more after the hut block is placed): the placement hook
+ * stashes the placing player's choices here, and the integration adopts them once its target exists.
  *
- * <p>Transient: choices not yet adopted onto a building are lost on server restart (that first build
- * falls back to datapack rules). Once adopted, they persist via the building's NBT.
+ * <p>MC-free on purpose — lives in the standalone engine; only optional integrations consume it.
  */
 public final class StagedChoices
 {
