@@ -64,6 +64,10 @@ import java.util.function.Predicate;
  *       "request fertilizer" toggle.</li>
  *   <li>{@link #mctfc$fertilizeOnPlant} — at plant time, top up the soil's crop-specific nutrient (TFC's
  *       per-crop N/P/K) with the best matching fertilizer on hand. See {@link FertilizerHelper}.</li>
+ *   <li>{@link #mctfc$skipEmptyPlanting} — only enter {@code FARMER_PLANT} when a cell is actually plantable
+ *       (the base AI doesn't check), so a full field of growing crops doesn't make the farmer walk it pointlessly.</li>
+ *   <li>{@link #mctfc$keepMatureDeadCrops} — treat a mature {@link DeadCropBlock} as not-plantable so the farmer
+ *       doesn't overwrite (and destroy the seeds of) a crop gone to seed.</li>
  * </ol>
  *
  * <p>Most members use {@code remap = false} — this targets MineColonies' own class and methods; only the

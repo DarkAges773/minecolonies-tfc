@@ -299,13 +299,14 @@ In `:compat`:
 - Real TFC rule sets (verified `tfc:` ids), then the broader MC↔TFC bridging (food/nutrition,
   requests/progression, farming/animals).
 
-### Farmer farms TFC crops (till → plant → harvest) — DONE & verified
+### Farmer farms TFC crops (till → plant → fertilize → harvest) — DONE & verified
 
 The MineColonies farmer (`com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer`)
-now tills TFC soil, plants TFC crops on the resulting TFC farmland, and harvests them (with a per-field
-Fruiting/Seeding mode — see the end of this section). The till/plant/harvest hooks live in
+now tills TFC soil, plants TFC crops on the resulting TFC farmland, keeps the soil's nutrients up with TFC
+fertilizers, and harvests them (with a per-field Fruiting/Seeding mode). All hooks live in
 [MixinEntityAIWorkFarmer](compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkFarmer.java) +
-[TfcFarmlandHelper](compat/src/main/java/com/mctfc/farming/TfcFarmlandHelper.java) (`@Mixin(remap = false)` —
+[TfcFarmlandHelper](compat/src/main/java/com/mctfc/farming/TfcFarmlandHelper.java) +
+[FertilizerHelper](compat/src/main/java/com/mctfc/farming/FertilizerHelper.java) (`@Mixin(remap = false)` —
 MineColonies' own class/methods; only the inner MC calls are remapped per their `@At`).
 
 Why each piece works (recon, MC 1.20.1-1.1.1231 / TFC):
@@ -371,6 +372,54 @@ mature dead stage for max seeds). Pieces:
   `getExtensionToWorkOn()` (in `prepareForFarming`) / `getCurrentExtension()` (in `workAtField`) — fetched right
   before the harvest dispatch on each side. The `findHarvestableSurface` hook then: harvests mature dead crops
   (both modes); and in *Seeding*, returns `null` for live `CropBlock`s so ripe crops are left to go to seed.
+
+**Fertilizing (TFC soil nutrients), best-match auto-request — DONE & verified.** Vanilla MineColonies uses
+"fertilizer" (its compost / bone meal) as a **growth accelerator** (`findHarvestableSurface` → `crop.growCrops`).
+TFC is different: fertilizers don't speed growth, they top up the farmland's N/P/K nutrients (`IFarmland`); each
+crop drains its own `primaryNutrient` (`ICropBlock.getPrimaryNutrient`) and low nutrient → low yield/death.
+[FertilizerHelper](compat/src/main/java/com/mctfc/farming/FertilizerHelper.java) bridges this; the model is
+data-driven (`Fertilizer.MANAGER` maps items → N/P/K; `Fertilizer.get(stack)`):
+- **No more growth-cheat for TFC crops** — the `findHarvestableSurface` hook now fully *owns* the decision for a
+  live TFC `CropBlock` (harvest only when ripe + Fruiting; else `null`), so the base AI's `growCrops` compost
+  path never runs on them.
+- **Apply at plant + opportunistically on visit** — `fertilizeForSeed` (HEAD inject on `plantCrop`) and a
+  `fertilize(...)` call in the `findHarvestableSurface` hook (which the harvest scan runs for every cell of a
+  planted field) top up the crop's primary nutrient. `fertilize` re-picks the **best-matching** fertilizer the
+  farmer carries (most of the needed nutrient — so guano/compost beat a pure powder) and applies until the
+  nutrient reaches `Config.fertilizeTarget`, only kicking in below `Config.fertilizeBelow` (hysteresis). Config
+  in [Config](compat/src/main/java/com/mctfc/Config.java) (`config/mctfc-common.toml`: `fertilizeBelow` 0.4,
+  `fertilizeTarget` 0.9).
+- **Auto-request the *right* fertilizer, nutrient-specific** — the request must match the crop's nutrient, but
+  the base AI checks "do I have ANY fertilizer" *before* it fetches the field. Two hooks fix this:
+  - `mctfc$fertilizerCountsAsCompost` (`isCompost` HEAD inject) makes the count/gather/request-gate count **only
+    TFC fertilizer supplying the current crop's nutrient** — so a phosphorus field with only nitrogen in stock
+    (or a stray bone meal, which is a *phosphorus* fertilizer) doesn't read as "stocked" and block the right
+    request. Falls through to the base check when there's no TFC crop (`mctfc$neededNutrient == null`).
+  - The needed nutrient is captured **before** that count block by redirecting the *first* module call in
+    `prepareForFarming` (`getOwnedExtensions`, the advancement check) and reading `getExtensionToWorkOn()` there
+    (it's sticky, so reading it early doesn't change selection). The old getExtensionToWorkOn capture moved here.
+  - `mctfc$requestTfcFertilizer` redirects the base `createRequestAsync` to a `StackList` of the fertilizers that
+    supply the nutrient (`fertilizersFor`), so the farmer requests usable fertilizer, not MC compost. It sits
+    inside the AI's existing `building.requestFertilizer()` gate, so the **hut's "request fertilizer" toggle**
+    still governs it.
+
+**Planting correctness (avoid pointless/destructive planting) — DONE & verified.**
+- **Gate `FARMER_PLANT` on real work** (`mctfc$skipEmptyPlanting`, HEAD inject on `canGoPlanting`): unlike hoe/
+  harvest (gated by `checkIfShouldExecute`), the base AI enters planting whenever a seed exists — so a fully
+  planted field of still-growing crops makes the farmer pointlessly walk every cell each stage cycle (very
+  visible under TFC's slow growth). If no cell is plantable, advance the stage instead of entering the state.
+  Uses shadowed `checkIfShouldExecute` + `findPlantableSurface` (both declared on the target).
+- **Don't plant over a mature dead crop** (`mctfc$keepMatureDeadCrops`, HEAD inject on `findPlantableSurface`):
+  the base "is this cell occupied" test only matches vanilla `CropBlock`/`StemBlock`/`MinecoloniesCropBlock` — a
+  `DeadCropBlock` reads as empty, so the farmer would overwrite a **mature** dead crop and lose its seeds (which
+  Seeding mode exists to produce, and Fruiting also collects). Treat a mature dead crop as not-plantable so it
+  survives for the harvest pass; non-mature dead crops (no worthwhile drops) stay plantable so the cell is reused.
+
+**Known gap (next task):** harvested TFC food merges to the **oldest** creation date when it stacks, and
+MineColonies' stack comparison (`ItemStackUtils.compareItemStacksIgnoreStackSize`) is blind to TFC's
+capability-based freshness (it only checks the plain NBT tag), so fresh harvests merge into older/rotten stacks
+and age instantly. This is system-wide (also on dump to the warehouse), so it belongs to a separate
+**decay-aware item handling** task, not the farmer.
 
 <details><summary>Original tilling recon (kept for reference)</summary>
 
