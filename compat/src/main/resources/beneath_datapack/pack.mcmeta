@@ -1,0 +1,6 @@
+{
+  "pack": {
+    "description": "MineColonies x TFC — Beneath compat (auto-enabled only when the 'beneath' mod is installed)",
+    "pack_format": 15
+  }
+}

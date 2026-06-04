@@ -110,6 +110,8 @@ dependencies {
     runtimeOnly fg.deobf("curse.maven:patchouli-306770:${patchouli_file_id}")
     // Dev-run-only: recipe/item viewer for testing (not a real dependency).
     runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")
+    // Beneath — added to test in-game whether its blocks are accessible (e.g. as substitution targets).
+    implementation fg.deobf("curse.maven:beneath-1113980:7400831")
 }
 
 // :compat mixins target MineColonies (per-building substitution choices for the builder). MineColonies

@@ -1,6 +1,7 @@
 package com.mctfc;
 
 import com.mctfc.block.MortaredCobbleRegistry;
+import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.MortaredCobbleData;
 import com.mctfc.network.McFarmingNetwork;
 import com.mojang.logging.LogUtils;
@@ -35,6 +36,8 @@ public class MineColoniesTFC
         modBus.addListener(MortaredCobbleRegistry::onRegister);
         // Runtime data pack: the mctfc:mortared_cobblestone tag (every twin) + a mortar recipe per twin.
         modBus.addListener(MortaredCobbleData::onAddPackFinders);
+        // Optional built-in datapack: enabled only when the 'beneath' mod is present (Beneath-specific rules).
+        modBus.addListener(BeneathDataPack::onAddPackFinders);
         // Network channel for the farming bridge (per-field harvest-mode toggle from the field GUI).
         McFarmingNetwork.register();
         LOGGER.info("MineColonies x TerraFirmaCraft bridge loaded.");

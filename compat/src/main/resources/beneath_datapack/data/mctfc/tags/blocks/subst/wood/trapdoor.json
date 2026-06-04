@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "beneath:wood/planks/crimson_trapdoor",
+    "beneath:wood/planks/warped_trapdoor"
+  ]
+}
