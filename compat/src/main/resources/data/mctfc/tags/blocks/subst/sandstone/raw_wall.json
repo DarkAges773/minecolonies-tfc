@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:raw_sandstone/black_wall",
+    "tfc:raw_sandstone/brown_wall",
+    "tfc:raw_sandstone/green_wall",
+    "tfc:raw_sandstone/pink_wall",
+    "tfc:raw_sandstone/red_wall",
+    "tfc:raw_sandstone/white_wall",
+    "tfc:raw_sandstone/yellow_wall"
+  ]
+}

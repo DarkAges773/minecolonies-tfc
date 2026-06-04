@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/raw/andesite_slab",
+    "tfc:rock/raw/basalt_slab",
+    "tfc:rock/raw/chalk_slab",
+    "tfc:rock/raw/chert_slab",
+    "tfc:rock/raw/claystone_slab",
+    "tfc:rock/raw/conglomerate_slab",
+    "tfc:rock/raw/dacite_slab",
+    "tfc:rock/raw/diorite_slab",
+    "tfc:rock/raw/dolomite_slab",
+    "tfc:rock/raw/gabbro_slab",
+    "tfc:rock/raw/gneiss_slab",
+    "tfc:rock/raw/granite_slab",
+    "tfc:rock/raw/limestone_slab",
+    "tfc:rock/raw/marble_slab",
+    "tfc:rock/raw/phyllite_slab",
+    "tfc:rock/raw/quartzite_slab",
+    "tfc:rock/raw/rhyolite_slab",
+    "tfc:rock/raw/schist_slab",
+    "tfc:rock/raw/shale_slab",
+    "tfc:rock/raw/slate_slab"
+  ]
+}

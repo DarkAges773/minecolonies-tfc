@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/bricks/andesite_slab",
+    "tfc:rock/bricks/basalt_slab",
+    "tfc:rock/bricks/chalk_slab",
+    "tfc:rock/bricks/chert_slab",
+    "tfc:rock/bricks/claystone_slab",
+    "tfc:rock/bricks/conglomerate_slab",
+    "tfc:rock/bricks/dacite_slab",
+    "tfc:rock/bricks/diorite_slab",
+    "tfc:rock/bricks/dolomite_slab",
+    "tfc:rock/bricks/gabbro_slab",
+    "tfc:rock/bricks/gneiss_slab",
+    "tfc:rock/bricks/granite_slab",
+    "tfc:rock/bricks/limestone_slab",
+    "tfc:rock/bricks/marble_slab",
+    "tfc:rock/bricks/phyllite_slab",
+    "tfc:rock/bricks/quartzite_slab",
+    "tfc:rock/bricks/rhyolite_slab",
+    "tfc:rock/bricks/schist_slab",
+    "tfc:rock/bricks/shale_slab",
+    "tfc:rock/bricks/slate_slab"
+  ]
+}

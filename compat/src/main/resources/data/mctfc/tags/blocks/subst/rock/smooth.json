@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/smooth/andesite",
+    "tfc:rock/smooth/basalt",
+    "tfc:rock/smooth/chalk",
+    "tfc:rock/smooth/chert",
+    "tfc:rock/smooth/claystone",
+    "tfc:rock/smooth/conglomerate",
+    "tfc:rock/smooth/dacite",
+    "tfc:rock/smooth/diorite",
+    "tfc:rock/smooth/dolomite",
+    "tfc:rock/smooth/gabbro",
+    "tfc:rock/smooth/gneiss",
+    "tfc:rock/smooth/granite",
+    "tfc:rock/smooth/limestone",
+    "tfc:rock/smooth/marble",
+    "tfc:rock/smooth/phyllite",
+    "tfc:rock/smooth/quartzite",
+    "tfc:rock/smooth/rhyolite",
+    "tfc:rock/smooth/schist",
+    "tfc:rock/smooth/shale",
+    "tfc:rock/smooth/slate"
+  ]
+}

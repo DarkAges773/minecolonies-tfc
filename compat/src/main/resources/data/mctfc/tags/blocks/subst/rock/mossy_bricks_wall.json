@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/mossy_bricks/andesite_wall",
+    "tfc:rock/mossy_bricks/basalt_wall",
+    "tfc:rock/mossy_bricks/chalk_wall",
+    "tfc:rock/mossy_bricks/chert_wall",
+    "tfc:rock/mossy_bricks/claystone_wall",
+    "tfc:rock/mossy_bricks/conglomerate_wall",
+    "tfc:rock/mossy_bricks/dacite_wall",
+    "tfc:rock/mossy_bricks/diorite_wall",
+    "tfc:rock/mossy_bricks/dolomite_wall",
+    "tfc:rock/mossy_bricks/gabbro_wall",
+    "tfc:rock/mossy_bricks/gneiss_wall",
+    "tfc:rock/mossy_bricks/granite_wall",
+    "tfc:rock/mossy_bricks/limestone_wall",
+    "tfc:rock/mossy_bricks/marble_wall",
+    "tfc:rock/mossy_bricks/phyllite_wall",
+    "tfc:rock/mossy_bricks/quartzite_wall",
+    "tfc:rock/mossy_bricks/rhyolite_wall",
+    "tfc:rock/mossy_bricks/schist_wall",
+    "tfc:rock/mossy_bricks/shale_wall",
+    "tfc:rock/mossy_bricks/slate_wall"
+  ]
+}

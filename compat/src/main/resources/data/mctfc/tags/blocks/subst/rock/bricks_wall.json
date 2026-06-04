@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/bricks/andesite_wall",
+    "tfc:rock/bricks/basalt_wall",
+    "tfc:rock/bricks/chalk_wall",
+    "tfc:rock/bricks/chert_wall",
+    "tfc:rock/bricks/claystone_wall",
+    "tfc:rock/bricks/conglomerate_wall",
+    "tfc:rock/bricks/dacite_wall",
+    "tfc:rock/bricks/diorite_wall",
+    "tfc:rock/bricks/dolomite_wall",
+    "tfc:rock/bricks/gabbro_wall",
+    "tfc:rock/bricks/gneiss_wall",
+    "tfc:rock/bricks/granite_wall",
+    "tfc:rock/bricks/limestone_wall",
+    "tfc:rock/bricks/marble_wall",
+    "tfc:rock/bricks/phyllite_wall",
+    "tfc:rock/bricks/quartzite_wall",
+    "tfc:rock/bricks/rhyolite_wall",
+    "tfc:rock/bricks/schist_wall",
+    "tfc:rock/bricks/shale_wall",
+    "tfc:rock/bricks/slate_wall"
+  ]
+}

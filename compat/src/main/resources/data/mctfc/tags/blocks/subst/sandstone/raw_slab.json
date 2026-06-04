@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:raw_sandstone/black_slab",
+    "tfc:raw_sandstone/brown_slab",
+    "tfc:raw_sandstone/green_slab",
+    "tfc:raw_sandstone/pink_slab",
+    "tfc:raw_sandstone/red_slab",
+    "tfc:raw_sandstone/white_slab",
+    "tfc:raw_sandstone/yellow_slab"
+  ]
+}

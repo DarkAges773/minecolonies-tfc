@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/mossy_cobble/andesite_slab",
+    "tfc:rock/mossy_cobble/basalt_slab",
+    "tfc:rock/mossy_cobble/chalk_slab",
+    "tfc:rock/mossy_cobble/chert_slab",
+    "tfc:rock/mossy_cobble/claystone_slab",
+    "tfc:rock/mossy_cobble/conglomerate_slab",
+    "tfc:rock/mossy_cobble/dacite_slab",
+    "tfc:rock/mossy_cobble/diorite_slab",
+    "tfc:rock/mossy_cobble/dolomite_slab",
+    "tfc:rock/mossy_cobble/gabbro_slab",
+    "tfc:rock/mossy_cobble/gneiss_slab",
+    "tfc:rock/mossy_cobble/granite_slab",
+    "tfc:rock/mossy_cobble/limestone_slab",
+    "tfc:rock/mossy_cobble/marble_slab",
+    "tfc:rock/mossy_cobble/phyllite_slab",
+    "tfc:rock/mossy_cobble/quartzite_slab",
+    "tfc:rock/mossy_cobble/rhyolite_slab",
+    "tfc:rock/mossy_cobble/schist_slab",
+    "tfc:rock/mossy_cobble/shale_slab",
+    "tfc:rock/mossy_cobble/slate_slab"
+  ]
+}

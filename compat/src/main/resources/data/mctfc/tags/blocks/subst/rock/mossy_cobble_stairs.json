@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/mossy_cobble/andesite_stairs",
+    "tfc:rock/mossy_cobble/basalt_stairs",
+    "tfc:rock/mossy_cobble/chalk_stairs",
+    "tfc:rock/mossy_cobble/chert_stairs",
+    "tfc:rock/mossy_cobble/claystone_stairs",
+    "tfc:rock/mossy_cobble/conglomerate_stairs",
+    "tfc:rock/mossy_cobble/dacite_stairs",
+    "tfc:rock/mossy_cobble/diorite_stairs",
+    "tfc:rock/mossy_cobble/dolomite_stairs",
+    "tfc:rock/mossy_cobble/gabbro_stairs",
+    "tfc:rock/mossy_cobble/gneiss_stairs",
+    "tfc:rock/mossy_cobble/granite_stairs",
+    "tfc:rock/mossy_cobble/limestone_stairs",
+    "tfc:rock/mossy_cobble/marble_stairs",
+    "tfc:rock/mossy_cobble/phyllite_stairs",
+    "tfc:rock/mossy_cobble/quartzite_stairs",
+    "tfc:rock/mossy_cobble/rhyolite_stairs",
+    "tfc:rock/mossy_cobble/schist_stairs",
+    "tfc:rock/mossy_cobble/shale_stairs",
+    "tfc:rock/mossy_cobble/slate_stairs"
+  ]
+}

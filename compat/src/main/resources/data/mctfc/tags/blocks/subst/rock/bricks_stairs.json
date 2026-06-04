@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/bricks/andesite_stairs",
+    "tfc:rock/bricks/basalt_stairs",
+    "tfc:rock/bricks/chalk_stairs",
+    "tfc:rock/bricks/chert_stairs",
+    "tfc:rock/bricks/claystone_stairs",
+    "tfc:rock/bricks/conglomerate_stairs",
+    "tfc:rock/bricks/dacite_stairs",
+    "tfc:rock/bricks/diorite_stairs",
+    "tfc:rock/bricks/dolomite_stairs",
+    "tfc:rock/bricks/gabbro_stairs",
+    "tfc:rock/bricks/gneiss_stairs",
+    "tfc:rock/bricks/granite_stairs",
+    "tfc:rock/bricks/limestone_stairs",
+    "tfc:rock/bricks/marble_stairs",
+    "tfc:rock/bricks/phyllite_stairs",
+    "tfc:rock/bricks/quartzite_stairs",
+    "tfc:rock/bricks/rhyolite_stairs",
+    "tfc:rock/bricks/schist_stairs",
+    "tfc:rock/bricks/shale_stairs",
+    "tfc:rock/bricks/slate_stairs"
+  ]
+}

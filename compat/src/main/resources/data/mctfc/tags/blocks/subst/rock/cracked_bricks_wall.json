@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/cracked_bricks/andesite_wall",
+    "tfc:rock/cracked_bricks/basalt_wall",
+    "tfc:rock/cracked_bricks/chalk_wall",
+    "tfc:rock/cracked_bricks/chert_wall",
+    "tfc:rock/cracked_bricks/claystone_wall",
+    "tfc:rock/cracked_bricks/conglomerate_wall",
+    "tfc:rock/cracked_bricks/dacite_wall",
+    "tfc:rock/cracked_bricks/diorite_wall",
+    "tfc:rock/cracked_bricks/dolomite_wall",
+    "tfc:rock/cracked_bricks/gabbro_wall",
+    "tfc:rock/cracked_bricks/gneiss_wall",
+    "tfc:rock/cracked_bricks/granite_wall",
+    "tfc:rock/cracked_bricks/limestone_wall",
+    "tfc:rock/cracked_bricks/marble_wall",
+    "tfc:rock/cracked_bricks/phyllite_wall",
+    "tfc:rock/cracked_bricks/quartzite_wall",
+    "tfc:rock/cracked_bricks/rhyolite_wall",
+    "tfc:rock/cracked_bricks/schist_wall",
+    "tfc:rock/cracked_bricks/shale_wall",
+    "tfc:rock/cracked_bricks/slate_wall"
+  ]
+}

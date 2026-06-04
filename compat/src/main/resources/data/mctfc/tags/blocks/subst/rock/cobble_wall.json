@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/cobble/andesite_wall",
+    "tfc:rock/cobble/basalt_wall",
+    "tfc:rock/cobble/chalk_wall",
+    "tfc:rock/cobble/chert_wall",
+    "tfc:rock/cobble/claystone_wall",
+    "tfc:rock/cobble/conglomerate_wall",
+    "tfc:rock/cobble/dacite_wall",
+    "tfc:rock/cobble/diorite_wall",
+    "tfc:rock/cobble/dolomite_wall",
+    "tfc:rock/cobble/gabbro_wall",
+    "tfc:rock/cobble/gneiss_wall",
+    "tfc:rock/cobble/granite_wall",
+    "tfc:rock/cobble/limestone_wall",
+    "tfc:rock/cobble/marble_wall",
+    "tfc:rock/cobble/phyllite_wall",
+    "tfc:rock/cobble/quartzite_wall",
+    "tfc:rock/cobble/rhyolite_wall",
+    "tfc:rock/cobble/schist_wall",
+    "tfc:rock/cobble/shale_wall",
+    "tfc:rock/cobble/slate_wall"
+  ]
+}

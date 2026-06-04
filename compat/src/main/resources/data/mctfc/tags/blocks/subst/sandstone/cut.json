@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:cut_sandstone/black",
+    "tfc:cut_sandstone/brown",
+    "tfc:cut_sandstone/green",
+    "tfc:cut_sandstone/pink",
+    "tfc:cut_sandstone/red",
+    "tfc:cut_sandstone/white",
+    "tfc:cut_sandstone/yellow"
+  ]
+}

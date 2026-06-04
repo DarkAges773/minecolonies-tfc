@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:smooth_sandstone/black_wall",
+    "tfc:smooth_sandstone/brown_wall",
+    "tfc:smooth_sandstone/green_wall",
+    "tfc:smooth_sandstone/pink_wall",
+    "tfc:smooth_sandstone/red_wall",
+    "tfc:smooth_sandstone/white_wall",
+    "tfc:smooth_sandstone/yellow_wall"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/smooth/andesite_wall",
+    "tfc:rock/smooth/basalt_wall",
+    "tfc:rock/smooth/chalk_wall",
+    "tfc:rock/smooth/chert_wall",
+    "tfc:rock/smooth/claystone_wall",
+    "tfc:rock/smooth/conglomerate_wall",
+    "tfc:rock/smooth/dacite_wall",
+    "tfc:rock/smooth/diorite_wall",
+    "tfc:rock/smooth/dolomite_wall",
+    "tfc:rock/smooth/gabbro_wall",
+    "tfc:rock/smooth/gneiss_wall",
+    "tfc:rock/smooth/granite_wall",
+    "tfc:rock/smooth/limestone_wall",
+    "tfc:rock/smooth/marble_wall",
+    "tfc:rock/smooth/phyllite_wall",
+    "tfc:rock/smooth/quartzite_wall",
+    "tfc:rock/smooth/rhyolite_wall",
+    "tfc:rock/smooth/schist_wall",
+    "tfc:rock/smooth/shale_wall",
+    "tfc:rock/smooth/slate_wall"
+  ]
+}

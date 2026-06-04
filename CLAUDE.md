@@ -83,9 +83,11 @@ the dev run loads everything.
 MineColonies integration** (Domum is MineColonies' mandatory dep). **To dev-test the MineColonies-absent
 path, comment out ONLY `:replacements`' `runtimeOnly minecolonies` line** (keep `domum_ornamentum` — it's a
 *mandatory dep of Structurize itself*, so removing it crashes Structurize with the misleading "mixin config
-could not be read" error). The game then loads, does substitution + the build-wand GUI, logs the
+could not be read" error). The game then loads, opens the build-wand GUI, logs the
 `minecolonies` mixin config skipping its targets (`@Mixin target … was not found`), and does not crash —
-**verified**. `:compat` adds EMI.
+**verified**. `:compat` adds EMI. (Note: `:replacements` ships **no active substitution rules** — the old
+`examples.json` is now copy-paste documentation in [docs/substitution-rule-examples.md](docs/substitution-rule-examples.md);
+drop a snippet into a datapack to exercise substitution in the standalone run.)
 
 **Bumping versions:** edit the `*_version` / `*_file_id` properties. Verify LDTTeam versions against
 `<artifact>/maven-metadata.xml`; TFC/Patchouli use CurseForge **file ids** (from the file URL).
@@ -177,14 +179,15 @@ default on) — applies to every Structurize placement, not opt-in per build (a 
 
 **Rule JSON** — each entry has exactly one source (`"from"` block id or `"from_tag"` block tag id) and one
 target (`"to"` block id → auto-substitution, or `"to_tag"` block tag id → interactive GUI pool); first
-match wins; unknown ids are logged and skipped. Example/dev rules (vanilla) ship in
-[replacements .../block_substitutions/examples.json](replacements/src/main/resources/data/structurizereplacements/block_substitutions/examples.json)
-— two exact `to` swaps plus `to_tag` candidate pools for the wooden families (planks/stairs/slabs/fences/
-gates/doors/trapdoors/logs); **delete that file for a clean published library** (active rules would rewrite
-any consumer's blueprints). TFC rules ship in
-[compat .../block_substitutions/defaults.json](compat/src/main/resources/data/mctfc/block_substitutions/defaults.json)
-(vanilla example values for now — swap to `tfc:…` ids; with no cascade, list each form explicitly or use
-`to_tag` pools).
+match wins; unknown ids are logged and skipped. `:replacements` ships **no active rules** (a published
+library must not rewrite consumers' blueprints) — the old `examples.json` is now copy-paste reference in
+[docs/substitution-rule-examples.md](docs/substitution-rule-examples.md) (fixed `to` swaps, `to_tag` wooden
+candidate pools, an `apply_properties` example). TFC rules ship in `:compat` (see "TFC default substitutions" below):
+the bulk stone/wood rules + candidate-pool tags are in
+[tfc_stone.json](compat/src/main/resources/data/mctfc/block_substitutions/tfc_stone.json) /
+[tfc_wood.json](compat/src/main/resources/data/mctfc/block_substitutions/tfc_wood.json) (+ the pool tags under
+`data/mctfc/tags/blocks/subst/`); [defaults.json](compat/src/main/resources/data/mctfc/block_substitutions/defaults.json)
+is now just a (curated/empty) home for hand-picked overrides.
 
 ## Verified
 
@@ -296,8 +299,43 @@ In `:replacements` (generic):
 - **GUI toggle** in `WindowExtendedBuildTool` for per-placement opt-in.
 
 In `:compat`:
-- Real TFC rule sets (verified `tfc:` ids), then the broader MC↔TFC bridging (food/nutrition,
-  requests/progression, farming/animals).
+- ~~Real TFC rule sets~~ — **DONE** (see "TFC default substitutions" below). Next: the broader MC↔TFC
+  bridging (food/nutrition, requests/progression, animals).
+
+### TFC default substitutions (stone + wood families) — DONE
+
+Vanilla MineColonies blueprints are built from vanilla blocks; these rules retexture colony builds into TFC
+materials. The design uses the engine's two-stage resolution (fixed rule converts vanilla→TFC first, then a
+candidate pool keyed on the **converted** block lets the player re-pick — see
+[BlockSubstitutions](replacements/src/main/java/com/structurizereplacements/substitution/BlockSubstitutions.java)`#applyState`/`resolveBlock`).
+So every covered source gets **both** a fixed default **and** a pick pool, with unique sources (fixed on the
+vanilla block, pool on the TFC-result tag) — never a fixed `to` + `to_tag` on the same source (that shadows).
+
+- **Wood** ([tfc_wood.json](compat/src/main/resources/data/mctfc/block_substitutions/tfc_wood.json)): vanilla →
+  the **look-alike** TFC wood — oak/acacia/mangrove keep their name; spruce→chestnut, birch→douglas_fir,
+  jungle→spruce, dark_oak→hickory, cherry→kapok, bamboo→palm, and the nether woods crimson→rosewood,
+  warped→willow — across all forms (planks, log/wood + stripped, stairs, slab, fence, fence_gate, door, trapdoor,
+  button, pressure_plate). Nether woods use the `stem`/`hyphae` source naming; bamboo is special (`*_block` →
+  log, `*_mosaic*` → TFC palm mosaic). Singletons default to oak: `minecraft:chest`, `trapped_chest`,
+  `crafting_table` (→ `oak_workbench`). Plus a per-form candidate pool so the player can pick any TFC wood.
+- **Stone** ([tfc_stone.json](compat/src/main/resources/data/mctfc/block_substitutions/tfc_stone.json)): vanilla
+  stone family → **dacite** forms (closest look) — `stone→raw`, `stone_bricks→bricks`, `smooth_stone→smooth`,
+  mossy/cracked/chiseled likewise, all with stairs/slabs/walls. Cobble and mossy-cobble map to the **non-falling
+  mortared dacite twin** (`mctfc:mortared/tfc/rock/.../dacite`) so builds survive TFC gravity; their stairs/slabs/
+  walls (which don't landslide) use plain TFC. `minecraft:stone_button` → `tfc:rock/button/dacite`. Vanilla
+  **granite/diorite/andesite** (which are real TFC rock types) map to the **same** rock — plain → `tfc:rock/raw/<rock>`,
+  polished → `tfc:rock/smooth/<rock>` (+ stairs/slabs/walls). Per-form candidate pools let the player pick any
+  TFC rock — the cobble/mossy-cobble full-block pick reuses the runtime `mctfc:mortared_cobblestone` pool, and
+  granite/diorite/andesite reuse the existing `raw`/`smooth` pools.
+- **Sandstone** ([tfc_sandstone.json](compat/src/main/resources/data/mctfc/block_substitutions/tfc_sandstone.json)):
+  **pool-only, no implicit swap** — vanilla sandstone is accessible in TFC so it stays the default, but every
+  variant (normal + red, raw/cut/smooth + stairs/slabs/walls) offers a *Replace* pool of TFC colored sandstones
+  (`tfc:{raw,smooth,cut}_sandstone/<color>`, all 7 colors) of the matching form. This is the `from` → `to_tag`
+  pattern (pool keyed directly on the vanilla block, since nothing converts it first).
+- **Pool tags** live under `data/mctfc/tags/blocks/subst/{wood,rock}/*.json` (one per form, listing every TFC
+  variant). The rule files and tags are emitted by [gen_tfc_substitutions.sh](compat/gen_tfc_substitutions.sh)
+  (re-run if TFC's rock/wood set changes); they're plain static JSON, so `/reload`-able and editable. Validated:
+  every fixed-rule target and all pool-tag members (880) resolve to real TFC blocks.
 
 ### Farmer farms TFC crops (till → plant → fertilize → harvest) — DONE & verified
 
@@ -514,11 +552,13 @@ TFC makes cobble collapse (gravity), which wrecks MineColonies cobble builds. `:
 - **In-world conversion** ([MortaredCobbleInteraction](compat/src/main/java/com/mctfc/block/MortaredCobbleInteraction.java),
   Forge bus): right-click a cobble holding `#tfc:mortar` → swap to its twin, consume 4 mortar (free in
   creative). Cancels the interaction; server-authoritative.
-- **Substitution** is plain datapack: [defaults.json](compat/src/main/resources/data/mctfc/block_substitutions/defaults.json)
-  ships `minecraft:cobblestone → to_tag #mctfc:mortared_cobblestone` (player picks the rock type via the
-  Replace GUI). **Gotcha:** a fixed `to` rule on the same source (e.g. a leftover `cobblestone→mossy`
-  example) converts first under converted-block semantics and shadows this candidate pool — keep sources
-  unique across rules.
+- **Substitution** is plain datapack (see "TFC default substitutions" above):
+  [tfc_stone.json](compat/src/main/resources/data/mctfc/block_substitutions/tfc_stone.json) fixes
+  `minecraft:cobblestone → mctfc:mortared/tfc/rock/cobble/dacite` (the non-falling dacite twin) and offers the
+  `mctfc:mortared_cobblestone` pool keyed on that converted twin, so the player re-picks the rock via the Replace
+  GUI. **Gotcha:** the fixed default and the pool must have **distinct sources** (fixed on `minecraft:cobblestone`,
+  pool on the `mctfc:mortared_cobblestone` tag that matches the *converted* twin) — a fixed `to` and a `to_tag` on
+  the *same* source shadows the pool under converted-block semantics.
 
 ## Conventions
 

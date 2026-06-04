@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:rock/smooth/andesite_stairs",
+    "tfc:rock/smooth/basalt_stairs",
+    "tfc:rock/smooth/chalk_stairs",
+    "tfc:rock/smooth/chert_stairs",
+    "tfc:rock/smooth/claystone_stairs",
+    "tfc:rock/smooth/conglomerate_stairs",
+    "tfc:rock/smooth/dacite_stairs",
+    "tfc:rock/smooth/diorite_stairs",
+    "tfc:rock/smooth/dolomite_stairs",
+    "tfc:rock/smooth/gabbro_stairs",
+    "tfc:rock/smooth/gneiss_stairs",
+    "tfc:rock/smooth/granite_stairs",
+    "tfc:rock/smooth/limestone_stairs",
+    "tfc:rock/smooth/marble_stairs",
+    "tfc:rock/smooth/phyllite_stairs",
+    "tfc:rock/smooth/quartzite_stairs",
+    "tfc:rock/smooth/rhyolite_stairs",
+    "tfc:rock/smooth/schist_stairs",
+    "tfc:rock/smooth/shale_stairs",
+    "tfc:rock/smooth/slate_stairs"
+  ]
+}
