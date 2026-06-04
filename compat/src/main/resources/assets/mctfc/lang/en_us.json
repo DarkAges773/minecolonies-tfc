@@ -1,5 +1,5 @@
 {
-  "block.mctfc.mortared_cobblestone": "Mortared %s",
+  "block.mctfc.mortared_cobblestone": "Cemented %s",
   "gui.mctfc.field.harvestmode.fruiting": "Fruiting",
   "gui.mctfc.field.harvestmode.seeding": "Seeding",
   "gui.mctfc.field.harvestmode.tooltip": "Click to toggle. Fruiting: harvest ripe crops (produce) and any that went to seed. Seeding: let crops go to seed, then harvest for max seeds."
