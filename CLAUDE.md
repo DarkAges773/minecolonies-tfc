@@ -114,10 +114,10 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
   auto-registers a project's OWN config into its OWN runs. Without this, NONE of the replacements mixins
   (button, substitution, preview, the per-building MineColonies integration) apply in the `:compat` run.
   (Production is fine: each mod's jar carries its own `MixinConfigs` manifest.)
-- **`:compat` owns `mctfc.mixins.json`** (package `com.mctfc.mixin`) — the TFC-farming bridge mixins:
+- **`:compat` owns `mctfc.mixins.json`** (package `com.mctfc.mixin`) — the TFC bridge mixins:
   `MixinEntityAIWorkFarmer` (till/plant/harvest), `MixinFarmField` (per-field harvest-mode state + sync),
-  and the client `MixinWindowField` (the field-GUI mode toggle) — all under the "Farmer farms TFC crops"
-  section below. Applying MixinGradle here ALSO injects the runtime refmap
+  the client `MixinWindowField` (the field-GUI mode toggle) — all under the "Farmer farms TFC crops" section
+  below — and `MixinInventoryCitizen` (decay-aware food stacking; see "Decay-aware item stacking" below). Applying MixinGradle here ALSO injects the runtime refmap
   remapping (`mixin.env.remapRefMap`) into `:compat`'s dev runs — needed even when this config was empty,
   because without it *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in
   the official-mapped dev env (`InvalidAccessorException`). MixinGradle auto-registers `:compat`'s own
@@ -415,11 +415,31 @@ data-driven (`Fertilizer.MANAGER` maps items → N/P/K; `Fertilizer.get(stack)`)
   Seeding mode exists to produce, and Fruiting also collects). Treat a mature dead crop as not-plantable so it
   survives for the harvest pass; non-mature dead crops (no worthwhile drops) stay plantable so the cell is reused.
 
-**Known gap (next task):** harvested TFC food merges to the **oldest** creation date when it stacks, and
-MineColonies' stack comparison (`ItemStackUtils.compareItemStacksIgnoreStackSize`) is blind to TFC's
-capability-based freshness (it only checks the plain NBT tag), so fresh harvests merge into older/rotten stacks
-and age instantly. This is system-wide (also on dump to the warehouse), so it belongs to a separate
-**decay-aware item handling** task, not the farmer.
+### Decay-aware item stacking (TFC food freshness) — DONE & verified
+
+Harvested TFC food was merging to the **oldest** creation date when it stacked, so fresh harvests aged
+instantly onto older/rotten stacks. Recon pinned it to a **single chokepoint**, not a system-wide rewrite:
+
+- **Why MineColonies is blind:** TFC stores a food's `creationDate` + decay traits in a Forge **capability**
+  (serialized to the stack's `ForgeCaps`, synced separately via TFC's `ItemStackCapabilitySync`), **not** in the
+  vanilla item `tag`. MineColonies' `ItemStackUtils.compareItemStacksIgnoreStackSize` only inspects
+  `ItemStack#getTag()`, so two TFC crops of different freshness read as identical.
+- **Where the rot happens:** `InventoryCitizen#insertItem` (a *custom* `IItemHandlerModifiable`, not vanilla
+  `ItemStackHandler`) uses that comparison as its merge gate and then grows the **existing** slot — so a fresh
+  harvest poured onto an older stack inherits the older caps. This is the only caps-blind physical-merge site:
+  - **Racks/warehouse are already safe** — `AbstractTileEntityRack.RackInventory extends ItemStackHandler` and
+    its `insertItem` calls the vanilla `super.insertItem`, which is caps-aware (`ItemHandlerHelper.canItemStacksStack`).
+  - `InventoryUtils.mergeItemStackIntoNextBestSlotInItemHandlers` / `addItemStackToItemHandlerWithResult` and
+    `CombinedItemHandler.insertItem` use the comparison only to *pre-select* a candidate slot, then delegate the
+    real merge to `handler.insertItem` — so fixing the citizen handler covers the whole harvest → citizen → dump
+    flow. The other ~26 `compareItemStacksIgnoreStackSize` call sites are **request/storage/recipe matching** and
+    must stay freshness-agnostic (any wheat fulfils a wheat request) — deliberately untouched.
+- **The fix** ([MixinInventoryCitizen](compat/src/main/java/com/mctfc/mixin/MixinInventoryCitizen.java),
+  `@Mixin(remap = false)` — MC's own method): a `@Redirect` of the single `compareItemStacksIgnoreStackSize`
+  call in `insertItem` that AND-s in [FoodStackingHelper](compat/src/main/java/com/mctfc/food/FoodStackingHelper.java)`#canMerge`.
+  `canMerge` returns `true` for non-food (no behaviour change); for TFC food it defers to the vanilla caps-aware
+  `ItemHandlerHelper.canItemStacksStack`, i.e. the same rule TFC uses for slot stacking — foods sharing a rounded
+  decay window still stack, differently-aged ones don't. Nothing else (requests, storage keys, recipes) changes.
 
 <details><summary>Original tilling recon (kept for reference)</summary>
 

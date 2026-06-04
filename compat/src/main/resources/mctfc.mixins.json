@@ -6,7 +6,8 @@
   "refmap": "mctfc.refmap.json",
   "mixins": [
     "MixinEntityAIWorkFarmer",
-    "MixinFarmField"
+    "MixinFarmField",
+    "MixinInventoryCitizen"
   ],
   "client": [
     "MixinWindowField"
