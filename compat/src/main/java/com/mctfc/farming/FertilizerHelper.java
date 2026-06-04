@@ -7,10 +7,14 @@ import net.dries007.tfc.common.blocks.crop.ICropBlock;
 import net.dries007.tfc.util.Fertilizer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TFC soil-nutrient fertilizing for the colony farmer. Unlike vanilla (compost/bone meal = faster growth),
@@ -44,6 +48,36 @@ public final class FertilizerHelper
         return Fertilizer.get(stack) != null;
     }
 
+    /** Is {@code stack} a TFC fertilizer that supplies {@code nutrient}? Used so the farmer counts/requests
+     *  only fertilizer it can actually use for the current crop (a nitrogen fertilizer doesn't count toward a
+     *  phosphorus field, and stray bone meal — a phosphorus fertilizer — doesn't block a nitrogen field). */
+    public static boolean providesNutrient(final ItemStack stack, final NutrientType nutrient)
+    {
+        final Fertilizer fertilizer = Fertilizer.get(stack);
+        return fertilizer != null && fertilizer.getNutrient(nutrient) > 0.0f;
+    }
+
+    /**
+     * One representative stack per item of every {@link Fertilizer} that provides {@code nutrient} — the
+     * candidate list for a "request fertilizer" {@code StackList} (the farmer asks for any of them). Empty
+     * if no fertilizer supplies that nutrient.
+     */
+    public static List<ItemStack> fertilizersFor(final NutrientType nutrient)
+    {
+        final List<ItemStack> stacks = new ArrayList<>();
+        for (final Fertilizer fertilizer : Fertilizer.MANAGER.getValues())
+        {
+            if (fertilizer.getNutrient(nutrient) > 0.0f)
+            {
+                for (final Item item : fertilizer.getValidItems())
+                {
+                    stacks.add(new ItemStack(item));
+                }
+            }
+        }
+        return stacks;
+    }
+
     /**
      * If the soil at {@code farmlandPos} has run low on the crop's primary nutrient, top it back up by
      * applying matching fertilizer from {@code inventory} until the nutrient reaches {@link Config#fertilizeTarget}
@@ -54,11 +88,22 @@ public final class FertilizerHelper
     public static void fertilizeForSeed(final Level level, final BlockPos farmlandPos, final ItemStack seed, final IItemHandler inventory)
     {
         final NutrientType nutrient = neededNutrient(seed);
-        if (nutrient == null || !(level.getBlockEntity(farmlandPos) instanceof IFarmland farmland))
+        if (nutrient != null)
         {
-            return;
+            fertilize(level, farmlandPos, nutrient, inventory);
         }
-        if (farmland.getNutrient(nutrient) >= Config.fertilizeBelow)
+    }
+
+    /**
+     * Core top-up: if the farmland at {@code farmlandPos} has run low on {@code nutrient}, apply matching
+     * fertilizer from {@code inventory} until it reaches {@link Config#fertilizeTarget} (or the farmer runs
+     * out). Hysteresis at {@link Config#fertilizeBelow} so it isn't re-applied while the soil is still fine.
+     * Used both at plant time ({@link #fertilizeForSeed}) and opportunistically when the farmer visits a
+     * growing crop.
+     */
+    public static void fertilize(final Level level, final BlockPos farmlandPos, final NutrientType nutrient, final IItemHandler inventory)
+    {
+        if (!(level.getBlockEntity(farmlandPos) instanceof IFarmland farmland) || farmland.getNutrient(nutrient) >= Config.fertilizeBelow)
         {
             return;
         }

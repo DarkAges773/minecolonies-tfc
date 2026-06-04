@@ -1,6 +1,12 @@
 package com.mctfc.mixin;
 
+import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.buildingextensions.IBuildingExtension;
+import com.minecolonies.api.colony.requestsystem.requestable.IRequestable;
+import com.minecolonies.api.colony.requestsystem.requestable.StackList;
+import com.minecolonies.api.colony.requestsystem.token.IToken;
+import com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState;
+import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import com.minecolonies.core.colony.buildingextensions.FarmField;
 import com.minecolonies.core.colony.buildings.modules.BuildingExtensionsModule;
@@ -9,6 +15,7 @@ import com.mctfc.farming.FarmFieldHarvestMode;
 import com.mctfc.farming.FertilizerHelper;
 import com.mctfc.farming.HarvestMode;
 import com.mctfc.farming.TfcFarmlandHelper;
+import net.dries007.tfc.common.blockentities.FarmlandBlockEntity.NutrientType;
 import net.dries007.tfc.common.blocks.crop.CropBlock;
 import net.dries007.tfc.common.blocks.crop.DeadCropBlock;
 import net.minecraft.core.BlockPos;
@@ -27,6 +34,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.List;
+import java.util.function.Predicate;
+
 /**
  * Teaches the MineColonies farmer to till TFC soil into TFC farmland.
  *
@@ -44,9 +54,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *   <li>{@link #mctfc$harvestDeadCrop} — own the harvest decision for TFC crops: harvest ripe crops (Fruiting)
  *       and crops gone to seed (a mature {@link DeadCropBlock}); in {@code SEEDING} leave ripe crops to die
  *       first. By owning it, the base AI's compost/bone-meal growth-forcing never runs on TFC crops (TFC
- *       growth is climate/time-driven, not bone-meal).</li>
- *   <li>{@link #mctfc$fertilizerCountsAsCompost} — let TFC fertilizers ride the farmer's compost
- *       count/gather pipeline (the base AI only knows MC compost + bone meal), so it stocks them.</li>
+ *       growth is climate/time-driven, not bone-meal). Also opportunistically tops up a live crop's soil
+ *       nutrient here, since this scan visits every cell of a planted field.</li>
+ *   <li>{@link #mctfc$fertilizerCountsAsCompost} — make the farmer's "has fertilizer?" count/gather
+ *       nutrient-specific: only TFC fertilizer supplying the current crop's nutrient counts, so wrong-nutrient
+ *       stock (or stray bone meal) doesn't suppress the request for the fertilizer the field actually needs.</li>
+ *   <li>{@link #mctfc$requestTfcFertilizer} — redirect the farmer's fertilizer request to the TFC fertilizers
+ *       that supply the current crop's nutrient (not MC compost it can't use), still under the hut's
+ *       "request fertilizer" toggle.</li>
  *   <li>{@link #mctfc$fertilizeOnPlant} — at plant time, top up the soil's crop-specific nutrient (TFC's
  *       per-crop N/P/K) with the best matching fertilizer on hand. See {@link FertilizerHelper}.</li>
  * </ol>
@@ -81,32 +96,58 @@ public abstract class MixinEntityAIWorkFarmer
         throw new AssertionError("shadow");
     }
 
+    /** Scans the field's cells for one matching the predicate (sets the working offset to it), as the base
+     *  AI does to gate hoeing/harvesting. Private on the target, shadowed via a stub body. */
+    @Shadow
+    private boolean checkIfShouldExecute(final FarmField farmField, final Predicate<BlockPos> predicate)
+    {
+        throw new AssertionError("shadow");
+    }
+
+    /** The base AI's "is this cell plantable" test (part of field, empty above, right farmland, …). */
+    @Shadow
+    private BlockPos findPlantableSurface(final BlockPos position, final FarmField farmField)
+    {
+        throw new AssertionError("shadow");
+    }
+
     /** The harvest mode of the field the AI is currently working — captured whenever the AI fetches that
      *  field (the two redirects below), then read by the harvest hook. Defaults to Fruiting. */
     @Unique
     private HarvestMode mctfc$activeHarvestMode = HarvestMode.FRUITING;
 
+    /** The nutrient the current field's crop drains — captured alongside the mode, read by the fertilizer
+     *  request redirect. {@code null} when the field has no TFC crop seed. */
     @Unique
-    private void mctfc$captureMode(final IBuildingExtension extension)
+    private NutrientType mctfc$neededNutrient = null;
+
+    @Unique
+    private void mctfc$captureField(final IBuildingExtension extension)
     {
         mctfc$activeHarvestMode = extension instanceof FarmFieldHarvestMode holder
                 ? holder.mctfc$getHarvestMode() : HarvestMode.FRUITING;
+        mctfc$neededNutrient = extension instanceof FarmField field
+                ? FertilizerHelper.neededNutrient(field.getSeed()) : null;
     }
 
-    /** Capture the mode before the planting/hoeing/harvest dispatch in {@code prepareForFarming}. */
+    /**
+     * Capture the field (mode + crop nutrient) at the FIRST module call in {@code prepareForFarming}
+     * ({@code getOwnedExtensions}, the advancement check) — which is before the fertilizer count/request
+     * block, so the nutrient is known when {@link #mctfc$fertilizerCountsAsCompost} runs. The field is sticky
+     * ({@code getExtensionToWorkOn} returns the current one), so reading it early doesn't change selection.
+     */
     @Redirect(
             method = "prepareForFarming()Lcom/minecolonies/api/entity/ai/statemachine/states/IAIState;",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/minecolonies/core/colony/buildings/modules/BuildingExtensionsModule;getExtensionToWorkOn()Lcom/minecolonies/api/colony/buildingextensions/IBuildingExtension;"))
-    private IBuildingExtension mctfc$captureWorkExtension(final BuildingExtensionsModule module)
+                    target = "Lcom/minecolonies/core/colony/buildings/modules/BuildingExtensionsModule;getOwnedExtensions()Ljava/util/List;"))
+    private List<IBuildingExtension> mctfc$captureBeforeCount(final BuildingExtensionsModule module)
     {
-        final IBuildingExtension extension = module.getExtensionToWorkOn();
-        mctfc$captureMode(extension);
-        return extension;
+        mctfc$captureField(module.getExtensionToWorkOn());
+        return module.getOwnedExtensions();
     }
 
-    /** Capture the mode before the per-cell work (incl. harvest) in {@code workAtField}. */
+    /** Capture the field (mode + crop nutrient) before the per-cell work (incl. harvest) in {@code workAtField}. */
     @Redirect(
             method = "workAtField()Lcom/minecolonies/api/entity/ai/statemachine/states/IAIState;",
             at = @At(
@@ -115,8 +156,81 @@ public abstract class MixinEntityAIWorkFarmer
     private IBuildingExtension mctfc$captureCurrentExtension(final BuildingExtensionsModule module)
     {
         final IBuildingExtension extension = module.getCurrentExtension();
-        mctfc$captureMode(extension);
+        mctfc$captureField(extension);
         return extension;
+    }
+
+    /**
+     * Don't plant over a seed-bearing dead crop. {@code findPlantableSurface} only treats vanilla
+     * {@code CropBlock}/{@code StemBlock}/{@code MinecoloniesCropBlock} above a cell as "occupied" — a TFC
+     * {@link DeadCropBlock} (a bush block) reads as empty, so the farmer would overwrite it and lose its
+     * seeds (the seeding stage that the harvest pass collects, and that Seeding mode exists to produce). Treat
+     * a <i>mature</i> dead crop as not plantable so it survives for harvest; a non-mature dead crop (no
+     * worthwhile drops) is left plantable so the cell can be reclaimed.
+     */
+    @Inject(
+            method = "findPlantableSurface(Lnet/minecraft/core/BlockPos;Lcom/minecolonies/core/colony/buildingextensions/FarmField;)Lnet/minecraft/core/BlockPos;",
+            at = @At("HEAD"),
+            cancellable = true)
+    private void mctfc$keepMatureDeadCrops(final BlockPos position, final FarmField farmField, final CallbackInfoReturnable<BlockPos> cir)
+    {
+        final BlockPos surface = getSurfacePos(position);
+        if (surface == null)
+        {
+            return;
+        }
+        final BlockState above = getCitizen().level().getBlockState(surface.above());
+        if (above.getBlock() instanceof DeadCropBlock && above.getValue(DeadCropBlock.MATURE))
+        {
+            cir.setReturnValue(null);
+        }
+    }
+
+    /**
+     * Gate planting on actual work. The base AI enters {@code FARMER_PLANT} via {@code canGoPlanting} whenever
+     * a seed is available — unlike hoeing/harvesting, it never checks whether any cell is actually plantable.
+     * On a fully-planted field of still-growing crops that makes the farmer pointlessly walk every cell each
+     * stage cycle (worse under TFC's slow growth). So if no cell is plantable, skip planting and advance the
+     * field stage instead — mirroring how {@code findHoeableSurface}/{@code findHarvestableSurface} gate the
+     * other two states via {@code checkIfShouldExecute}.
+     */
+    @Inject(
+            method = "canGoPlanting(Lcom/minecolonies/core/colony/buildingextensions/FarmField;)Lcom/minecolonies/api/entity/ai/statemachine/states/IAIState;",
+            at = @At("HEAD"),
+            cancellable = true)
+    private void mctfc$skipEmptyPlanting(final FarmField farmField, final CallbackInfoReturnable<IAIState> cir)
+    {
+        if (!checkIfShouldExecute(farmField, pos -> findPlantableSurface(pos, farmField) != null))
+        {
+            farmField.nextState();
+            cir.setReturnValue(AIWorkerState.PREPARING);
+        }
+    }
+
+    /**
+     * Request the right fertilizer. The base AI requests its compost/bone-meal blend; we redirect that
+     * request to a {@code StackList} of TFC fertilizers that supply the current crop's primary nutrient, so
+     * the farmer asks for (and the player can supply) any matching fertilizer — not normal fertilizer it
+     * can't use. This sits inside the AI's existing {@code building.requestFertilizer()} gate, so the hut's
+     * "request fertilizer" toggle still governs it. Falls back to the original request for a non-TFC crop or
+     * if no fertilizer supplies the nutrient.
+     */
+    @Redirect(
+            method = "prepareForFarming()Lcom/minecolonies/api/entity/ai/statemachine/states/IAIState;",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/minecolonies/api/colony/ICitizenData;createRequestAsync(Lcom/minecolonies/api/colony/requestsystem/requestable/IRequestable;)Lcom/minecolonies/api/colony/requestsystem/token/IToken;"))
+    private IToken<?> mctfc$requestTfcFertilizer(final ICitizenData data, final IRequestable original)
+    {
+        if (mctfc$neededNutrient != null)
+        {
+            final List<ItemStack> fertilizers = FertilizerHelper.fertilizersFor(mctfc$neededNutrient);
+            if (!fertilizers.isEmpty())
+            {
+                return data.createRequestAsync(new StackList(fertilizers, "com.minecolonies.coremod.request.fertilizer", 64, 1));
+            }
+        }
+        return data.createRequestAsync(original);
     }
 
     /**
@@ -199,7 +313,8 @@ public abstract class MixinEntityAIWorkFarmer
         {
             return;
         }
-        final BlockState above = getCitizen().level().getBlockState(surface.above());
+        final Level level = getCitizen().level();
+        final BlockState above = level.getBlockState(surface.above());
         final Block block = above.getBlock();
         if (block instanceof DeadCropBlock && above.getValue(DeadCropBlock.MATURE))
         {
@@ -208,9 +323,13 @@ public abstract class MixinEntityAIWorkFarmer
         }
         else if (block instanceof CropBlock tfcCrop)
         {
-            // Live TFC crop: we own the decision so the base AI's compost/bone-meal growth-forcing never
-            // runs (TFC growth is climate/time-driven, not bone-meal). Harvest only when ripe, and only in
-            // Fruiting; otherwise leave it to grow/ripen naturally.
+            // Opportunistic: this harvest scan visits every cell of a planted field, so top up the live
+            // crop's soil nutrient here too (not just at plant) — mirrors how the base AI applied compost
+            // during this same scan.
+            FertilizerHelper.fertilize(level, surface, tfcCrop.getPrimaryNutrient(), (IItemHandler) getCitizen().getInventoryCitizen());
+            // We own the harvest decision so the base AI's compost/bone-meal growth-forcing never runs (TFC
+            // growth is climate/time-driven, not bone-meal). Harvest only when ripe, and only in Fruiting;
+            // otherwise leave it to grow/ripen naturally.
             cir.setReturnValue(mctfc$activeHarvestMode != HarvestMode.SEEDING && tfcCrop.isMaxAge(above) ? surface : null);
         }
         // Vanilla / MineColonies crops fall through to the base AI.
@@ -225,9 +344,12 @@ public abstract class MixinEntityAIWorkFarmer
     @Inject(method = "isCompost(Lnet/minecraft/world/item/ItemStack;)Z", at = @At("HEAD"), cancellable = true)
     private void mctfc$fertilizerCountsAsCompost(final ItemStack stack, final CallbackInfoReturnable<Boolean> cir)
     {
-        if (FertilizerHelper.isFertilizer(stack))
+        // When working a TFC-crop field, "fertilizer the farmer has" means fertilizer for THAT crop's nutrient
+        // — so wrong-nutrient stock doesn't satisfy the count and block the right request. (Non-TFC field:
+        // fall through to the base AI's compost/bone-meal check.)
+        if (mctfc$neededNutrient != null)
         {
-            cir.setReturnValue(true);
+            cir.setReturnValue(FertilizerHelper.providesNutrient(stack, mctfc$neededNutrient));
         }
     }
 
