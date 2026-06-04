@@ -6,16 +6,19 @@ import com.minecolonies.core.colony.buildingextensions.FarmField;
 import com.minecolonies.core.colony.buildings.modules.BuildingExtensionsModule;
 import com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer;
 import com.mctfc.farming.FarmFieldHarvestMode;
+import com.mctfc.farming.FertilizerHelper;
 import com.mctfc.farming.HarvestMode;
 import com.mctfc.farming.TfcFarmlandHelper;
+import net.dries007.tfc.common.blocks.crop.CropBlock;
 import net.dries007.tfc.common.blocks.crop.DeadCropBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.items.IItemHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -38,9 +41,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *       soil) instead of vanilla farmland, leaving vanilla soil / MC crop-preferred farmland untouched.</li>
  *   <li>{@link #mctfc$tfcFarmlandIsRight} — accept TFC farmland as plantable when the field's seed grows a
  *       {@link net.minecraft.world.level.block.CropBlock} (TFC crops extend it).</li>
- *   <li>{@link #mctfc$harvestDeadCrop} — harvest TFC crops that have gone to seed (a mature
- *       {@link DeadCropBlock}) for their seeds, on top of the ripe-crop harvesting the base AI already does;
- *       and, in {@code SEEDING} mode, suppress the ripe-crop harvest so crops are left to go to seed.</li>
+ *   <li>{@link #mctfc$harvestDeadCrop} — own the harvest decision for TFC crops: harvest ripe crops (Fruiting)
+ *       and crops gone to seed (a mature {@link DeadCropBlock}); in {@code SEEDING} leave ripe crops to die
+ *       first. By owning it, the base AI's compost/bone-meal growth-forcing never runs on TFC crops (TFC
+ *       growth is climate/time-driven, not bone-meal).</li>
+ *   <li>{@link #mctfc$fertilizerCountsAsCompost} — let TFC fertilizers ride the farmer's compost
+ *       count/gather pipeline (the base AI only knows MC compost + bone meal), so it stocks them.</li>
+ *   <li>{@link #mctfc$fertilizeOnPlant} — at plant time, top up the soil's crop-specific nutrient (TFC's
+ *       per-crop N/P/K) with the best matching fertilizer on hand. See {@link FertilizerHelper}.</li>
  * </ol>
  *
  * <p>Most members use {@code remap = false} — this targets MineColonies' own class and methods; only the
@@ -198,10 +206,39 @@ public abstract class MixinEntityAIWorkFarmer
             // Both modes collect the seeding stage.
             cir.setReturnValue(surface);
         }
-        else if (mctfc$activeHarvestMode == HarvestMode.SEEDING && block instanceof CropBlock)
+        else if (block instanceof CropBlock tfcCrop)
         {
-            // Seeding mode: leave live crops alone so they ripen and die into the seeding stage.
-            cir.setReturnValue(null);
+            // Live TFC crop: we own the decision so the base AI's compost/bone-meal growth-forcing never
+            // runs (TFC growth is climate/time-driven, not bone-meal). Harvest only when ripe, and only in
+            // Fruiting; otherwise leave it to grow/ripen naturally.
+            cir.setReturnValue(mctfc$activeHarvestMode != HarvestMode.SEEDING && tfcCrop.isMaxAge(above) ? surface : null);
         }
+        // Vanilla / MineColonies crops fall through to the base AI.
+    }
+
+    /**
+     * Treat TFC fertilizers as the farmer's "compost" so its count/gather pipeline stocks them (the base AI
+     * only recognizes MineColonies compost + bone meal). This is what lets the farmer carry TFC fertilizer to
+     * apply to soil. (The base AI's compost-for-growth use is already bypassed for TFC crops by the harvest
+     * hook above, so recognizing fertilizers here doesn't resurrect growth-forcing on them.)
+     */
+    @Inject(method = "isCompost(Lnet/minecraft/world/item/ItemStack;)Z", at = @At("HEAD"), cancellable = true)
+    private void mctfc$fertilizerCountsAsCompost(final ItemStack stack, final CallbackInfoReturnable<Boolean> cir)
+    {
+        if (FertilizerHelper.isFertilizer(stack))
+        {
+            cir.setReturnValue(true);
+        }
+    }
+
+    /**
+     * When planting, top up the soil's crop-specific nutrient if it's run low — applying the best matching
+     * TFC fertilizer the farmer carries. {@code position} is the farmland (the crop goes above it). No-op for
+     * non-TFC crops, well-stocked soil, or when no matching fertilizer is on hand.
+     */
+    @Inject(method = "plantCrop(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"))
+    private void mctfc$fertilizeOnPlant(final ItemStack seed, final BlockPos position, final CallbackInfoReturnable<Boolean> cir)
+    {
+        FertilizerHelper.fertilizeForSeed(getCitizen().level(), position, seed, (IItemHandler) getCitizen().getInventoryCitizen());
     }
 }

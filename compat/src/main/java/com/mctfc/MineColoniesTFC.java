@@ -6,6 +6,7 @@ import com.mctfc.network.McFarmingNetwork;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
@@ -26,6 +27,7 @@ public class MineColoniesTFC
 
     public MineColoniesTFC(FMLJavaModLoadingContext context)
     {
+        context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         final IEventBus modBus = context.getModEventBus();
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck MineColonies builds). Substitution targets these via the
