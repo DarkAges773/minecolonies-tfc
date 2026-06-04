@@ -3,6 +3,7 @@ package com.mctfc;
 import com.mctfc.block.MortaredCobbleRegistry;
 import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.MortaredCobbleData;
+import com.mctfc.food.FoodPreservation;
 import com.mctfc.network.McFarmingNetwork;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -38,6 +39,8 @@ public class MineColoniesTFC
         modBus.addListener(MortaredCobbleData::onAddPackFinders);
         // Optional built-in datapack: enabled only when the 'beneath' mod is present (Beneath-specific rules).
         modBus.addListener(BeneathDataPack::onAddPackFinders);
+        // Register the colony-storage food-preservation trait (TFC food decays slower in colony-owned racks).
+        modBus.addListener(FoodPreservation::onCommonSetup);
         // Network channel for the farming bridge (per-field harvest-mode toggle from the field GUI).
         McFarmingNetwork.register();
         LOGGER.info("MineColonies x TerraFirmaCraft bridge loaded.");

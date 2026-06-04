@@ -8,7 +8,10 @@
     "MixinEntityAIWorkFarmer",
     "MixinFarmField",
     "MixinInventoryCitizen",
-    "MixinBarrelBlockEntity"
+    "MixinBarrelBlockEntity",
+    "AbstractTileEntityRackAccessor",
+    "MixinRackInventory",
+    "MixinFoodUtils"
   ],
   "client": [
     "MixinWindowField"

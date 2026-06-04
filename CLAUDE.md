@@ -119,8 +119,10 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
 - **`:compat` owns `mctfc.mixins.json`** (package `com.mctfc.mixin`) — the TFC bridge mixins:
   `MixinEntityAIWorkFarmer` (till/plant/harvest), `MixinFarmField` (per-field harvest-mode state + sync),
   the client `MixinWindowField` (the field-GUI mode toggle) — all under the "Farmer farms TFC crops" section
-  below — `MixinInventoryCitizen` (decay-aware food stacking; see "Decay-aware item stacking" below), and
-  `MixinBarrelBlockEntity` (vanilla barrel → tfc:chest size/restrictions; see "Vanilla furnaces made decorative"). Applying MixinGradle here ALSO injects the runtime refmap
+  below — `MixinInventoryCitizen` (decay-aware food stacking; see "Decay-aware item stacking" below),
+  `MixinBarrelBlockEntity` (vanilla barrel → tfc:chest size/restrictions; see "Vanilla furnaces made decorative"),
+  and the food-spoilage trio `AbstractTileEntityRackAccessor` + `MixinRackInventory` + `MixinFoodUtils`
+  (colony-storage preservation + FIFO/skip-rotten eating; see "Food spoilage management" below). Applying MixinGradle here ALSO injects the runtime refmap
   remapping (`mixin.env.remapRefMap`) into `:compat`'s dev runs — needed even when this config was empty,
   because without it *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in
   the official-mapped dev env (`InvalidAccessorException`). MixinGradle auto-registers `:compat`'s own
@@ -480,6 +482,51 @@ instantly onto older/rotten stacks. Recon pinned it to a **single chokepoint**, 
   `canMerge` returns `true` for non-food (no behaviour change); for TFC food it defers to the vanilla caps-aware
   `ItemHandlerHelper.canItemStacksStack`, i.e. the same rule TFC uses for slot stacking — foods sharing a rounded
   decay window still stack, differently-aged ones don't. Nothing else (requests, storage keys, recipes) changes.
+
+### Food spoilage management (colony-storage preservation + freshness-aware eating) — DONE, in-world test pending
+
+TFC food spoils; MineColonies' food economy (bulk-request → hoard in racks → cook batches → citizens eat whenever)
+assumes food is inert, so untouched colonies rot their warehouses and citizens eat rot. Three surgical pieces fix
+the worst of it; all gate on the TFC food **capability** (`net.dries007.tfc.common.capabilities.food.FoodCapability`,
+caps-aware — same blindness story as the stacking fix above). Design choices (all the user's): **suppress decay in
+colony-owned storage only** (player racks inert), strength **live-configurable**; FIFO as a **tiebreaker** (keep MC's
+diet-variety scoring); rotten handling is **skip-only** (disposal will be a future composter-request path).
+
+- **A — colony-storage preservation** ([FoodPreservation](compat/src/main/java/com/mctfc/food/FoodPreservation.java)
+  + [MixinRackInventory](compat/src/main/java/com/mctfc/mixin/MixinRackInventory.java) +
+  [AbstractTileEntityRackAccessor](compat/src/main/java/com/mctfc/mixin/AbstractTileEntityRackAccessor.java)):
+  register **our own `FoodTrait`** `mctfc:colony_storage` (via `FoodTrait.register` + the `FoodTrait(Supplier<Float>,
+  String)` ctor — TFC's own config-driven traits work the same way) whose decay modifier reads `Config.foodColonyStorageDecay`
+  **live** (0 = frozen … 1 = normal, default 0.25; no restart needed). The trait is the TFC-idiomatic mechanism (same as
+  sealed vessels) and is correct **across chunk unload** — decay = `creationDate` + trait modifiers at read time — which a
+  tick-based clock nudge would not be. Registered from the mod ctor on `FMLCommonSetupEvent`.
+  - **Where applied:** `AbstractTileEntityRack.RackInventory` (MC's rack inventory). A rack is **colony-owned** iff the outer
+    `inWarehouse || !buildingPos.equals(BlockPos.ZERO)` (player-placed free-standing racks are both-false → untouched).
+    The inner-class mixin reaches the outer rack via a `@Shadow(aliases="this$0")` on the synthetic outer ref (the AP
+    *can't* see synthetic fields so it warns `Cannot find target for @Shadow field` at compile — **binds fine at
+    runtime**, verified), and reads `inWarehouse`/`buildingPos` through the `@Accessor` interface (they're protected).
+  - **Apply on entry / strip on exit:** `@Inject` HEAD of `insertItem` tags the incoming stack (so same-age food still
+    stacks); `@Inject` TAIL of `onContentsChanged` tags whatever ends up in the slot; and a **soft-override** of
+    `extractItem` (the mixin `extends ItemStackHandler` so `super.extractItem` resolves — `RackInventory` doesn't override
+    it) **strips** the trait from withdrawn food, so withdrawn / player-moved food reverts to normal decay → player shelves
+    stay honest. `markStored` mutates the live `IFood` cap in place (`FoodCapability.applyTrait(IFood,…)`, idempotent via
+    `hasTrait`); `clearStored` uses the `ItemStack` overload of `removeTrait`. All gated server-side (`level != null &&
+    !isClientSide`).
+- **B — FIFO tiebreaker** + **C — skip-rotten**, one mixin
+  ([MixinFoodUtils](compat/src/main/java/com/mctfc/mixin/MixinFoodUtils.java), `@Mixin(remap=false)`): both citizen eating
+  (`EntityAIEatTask`) and the cook (`EntityAIWorkCook`) funnel through `FoodUtils.canEat` + `FoodUtils.getBestFoodForCitizen`.
+  - **Skip-rotten:** `@Inject` HEAD of `canEat` → `false` when `FoodCapability.isRotten(stack)` — covers eating, cooking and
+    the building food scan at one choke (citizens just don't pick rot; if only rot exists they don't eat, same as no food).
+  - **FIFO:** `@Inject` RETURN of `getBestFoodForCitizen` → after MC picks a slot, scan for another slot holding the **same
+    `Item`** (hence identical desirability score — a *true* tiebreaker that never overrides MC's variety choice) and **not
+    rotten**, and swap to the one with the soonest `IFood#getRottenDate()`. Per-stack only (citizen/cook inventory); the
+    building rack scan aggregates by caps-blind `ItemStorage` so it can't see age — a known follow-up.
+- **Config** ([Config](compat/src/main/java/com/mctfc/Config.java)): `foodColonyStorageDecay` (`config/mctfc-common.toml`,
+  default 0.25). Lang: the trait tooltip key `mctfc.food_trait.colony_storage` (TFC's `FoodTrait#addTooltipInfo` calls
+  `Component.translatable(translationKey)` directly, so the key *is* the lang key).
+- **Verified to load:** compiles; all three mixins apply (`AbstractTileEntityRackAccessor`/`MixinRackInventory` into the
+  rack, `MixinFoodUtils` into `FoodUtils`); trait registers; runs in a live colony world without crash. **In-world
+  behaviour** (food actually preserving in racks, FIFO order, rotten skipped) still to be confirmed in gameplay.
 
 <details><summary>Original tilling recon (kept for reference)</summary>
 
