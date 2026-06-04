@@ -1,0 +1,14 @@
+{
+  "__comment": "TFC-flavored smoker: a furnace wrapped in TFC logs (#minecraft:logs, which TFC logs are part of).",
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " L ",
+    "LFL",
+    " L "
+  ],
+  "key": {
+    "L": { "tag": "minecraft:logs" },
+    "F": { "item": "minecraft:furnace" }
+  },
+  "result": { "item": "minecraft:smoker" }
+}

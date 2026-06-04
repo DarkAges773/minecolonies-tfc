@@ -22,6 +22,10 @@ public class Config
             .comment("When topping up, the farmer keeps applying fertilizer until the nutrient reaches at least this fraction (0..1).")
             .defineInRange("fertilizeTarget", 0.9, 0.0, 1.0);
 
+    private static final ForgeConfigSpec.BooleanValue DECORATIVE_VANILLA_FURNACES = BUILDER
+            .comment("Make the vanilla furnace, smoker and blast furnace decorative: block the player from opening their GUI so vanilla smelting/cooking can't bypass TFC's mechanics. The blocks stay placed (still breakable, and blocks can be placed against them while sneaking); MineColonies worker automation is unaffected. Set false to restore normal vanilla furnace use.")
+            .define("decorativeVanillaFurnaces", true);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     /** Fertilize once the crop's primary nutrient is below this (0..1). */
@@ -30,10 +34,14 @@ public class Config
     /** Top up until the nutrient reaches at least this (0..1). */
     public static float fertilizeTarget = 0.9f;
 
+    /** Block player interaction with vanilla furnace/smoker/blast furnace (TFC-smelting bypass fix). */
+    public static boolean decorativeVanillaFurnaces = true;
+
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event)
     {
         fertilizeBelow = FERTILIZE_BELOW.get().floatValue();
         fertilizeTarget = FERTILIZE_TARGET.get().floatValue();
+        decorativeVanillaFurnaces = DECORATIVE_VANILLA_FURNACES.get();
     }
 }

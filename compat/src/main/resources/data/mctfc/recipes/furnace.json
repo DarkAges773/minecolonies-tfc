@@ -1,0 +1,13 @@
+{
+  "__comment": "Vanilla furnace recipe, but the cobblestone ring accepts any cobblestone (#forge:cobblestone/normal includes both vanilla cobble and every TFC rock cobble), so TFC players can craft it. The furnace is decorative (see VanillaFurnaceHandler) but still placeable/craftable.",
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CCC",
+    "C C",
+    "CCC"
+  ],
+  "key": {
+    "C": { "tag": "forge:cobblestone/normal" }
+  },
+  "result": { "item": "minecraft:furnace" }
+}

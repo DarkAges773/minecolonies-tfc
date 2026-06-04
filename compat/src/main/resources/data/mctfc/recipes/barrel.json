@@ -1,0 +1,14 @@
+{
+  "__comment": "TFC-flavored vanilla barrel: vanilla recipe shape with #minecraft:planks + #minecraft:wooden_slabs (TFC planks/slabs are in both tags), so it's craftable in a TFC world. The barrel's inventory is shrunk to match tfc:chest (18 slots + item-size limit) by MixinBarrelBlockEntity.",
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PSP",
+    "P P",
+    "PSP"
+  ],
+  "key": {
+    "P": { "tag": "minecraft:planks" },
+    "S": { "tag": "minecraft:wooden_slabs" }
+  },
+  "result": { "item": "minecraft:barrel" }
+}

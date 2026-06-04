@@ -7,7 +7,8 @@
   "mixins": [
     "MixinEntityAIWorkFarmer",
     "MixinFarmField",
-    "MixinInventoryCitizen"
+    "MixinInventoryCitizen",
+    "MixinBarrelBlockEntity"
   ],
   "client": [
     "MixinWindowField"

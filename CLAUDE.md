@@ -119,7 +119,8 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
 - **`:compat` owns `mctfc.mixins.json`** (package `com.mctfc.mixin`) — the TFC bridge mixins:
   `MixinEntityAIWorkFarmer` (till/plant/harvest), `MixinFarmField` (per-field harvest-mode state + sync),
   the client `MixinWindowField` (the field-GUI mode toggle) — all under the "Farmer farms TFC crops" section
-  below — and `MixinInventoryCitizen` (decay-aware food stacking; see "Decay-aware item stacking" below). Applying MixinGradle here ALSO injects the runtime refmap
+  below — `MixinInventoryCitizen` (decay-aware food stacking; see "Decay-aware item stacking" below), and
+  `MixinBarrelBlockEntity` (vanilla barrel → tfc:chest size/restrictions; see "Vanilla furnaces made decorative"). Applying MixinGradle here ALSO injects the runtime refmap
   remapping (`mixin.env.remapRefMap`) into `:compat`'s dev runs — needed even when this config was empty,
   because without it *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in
   the official-mapped dev env (`InvalidAccessorException`). MixinGradle auto-registers `:compat`'s own
@@ -559,6 +560,44 @@ TFC makes cobble collapse (gravity), which wrecks MineColonies cobble builds. `:
   GUI. **Gotcha:** the fixed default and the pool must have **distinct sources** (fixed on `minecraft:cobblestone`,
   pool on the `mctfc:mortared_cobblestone` tag that matches the *converted* twin) — a fixed `to` and a `to_tag` on
   the *same* source shadows the pool under converted-block semantics.
+
+### Vanilla furnaces made decorative — DONE
+
+TFC overhauls smelting/cooking (firepit/forge/bloomery/…), so the vanilla furnace, smoker and blast furnace
+shouldn't be usable to bypass it — but MineColonies blueprints still place them.
+[VanillaFurnaceHandler](compat/src/main/java/com/mctfc/block/VanillaFurnaceHandler.java) (Forge bus,
+annotation-registered like [MortaredCobbleInteraction](compat/src/main/java/com/mctfc/block/MortaredCobbleInteraction.java))
+cancels `PlayerInteractEvent.RightClickBlock` for the **three exact vanilla blocks** (`Blocks.FURNACE/SMOKER/
+BLAST_FURNACE` — not `AbstractFurnaceBlock`, so modded furnaces are untouched) so their GUI never opens.
+**Two dead ends, both verified in-game:** (1) cancelling only when not sneaking leaks the GUI on a sneak-click
+with an empty hand (vanilla still calls `use()`); (2) `setUseBlock(DENY)` did **not** gate the menu in this
+interaction path (furnaces stayed fully openable). So we cancel the whole event for **every** right-click on
+these blocks. Cost: you can't place a block by aiming at a furnace face (place against a neighbour). The block
+stays placed and breakable, and MineColonies worker AI drives furnaces via the block entity (not this
+interaction) so automation is unaffected. Gated by `Config.decorativeVanillaFurnaces` (`config/mctfc-common.toml`, default **true**; set
+false to restore vanilla furnace use). Scope note: blocks the **player GUI** only — it doesn't stop a hopper
+from feeding a furnace or the block entity from ticking.
+
+**TFC-flavored crafting recipes** ([data/mctfc/recipes/](compat/src/main/resources/data/mctfc/recipes/)) so these
+blocks are still obtainable in a TFC world (vanilla recipes need `minecraft:cobblestone`/`minecraft:iron_ingot`
+that TFC players lack), all `mctfc:`-namespaced so they add to whatever TFC leaves: `furnace` = vanilla ring of
+`#forge:cobblestone/normal` (includes vanilla + every TFC rock cobble); `smoker` = furnace + 4 `#minecraft:logs`
+(TFC logs are in it); `blast_furnace` = furnace + 5 `#forge:ingots/wrought_iron` + 3 `tfc:ceramic/fire_brick`.
+Also `bookshelf` = the vanilla recipe (6 `#minecraft:planks` + 3 `minecraft:book`) restored — the bookshelf→TFC
+substitution was dropped, so vanilla bookshelves stay vanilla and need a recipe. `barrel` = vanilla shape with
+`#minecraft:planks` + `#minecraft:wooden_slabs`.
+
+**Vanilla barrel matches `tfc:chest`** ([MixinBarrelBlockEntity](compat/src/main/java/com/mctfc/mixin/MixinBarrelBlockEntity.java),
+targets a vanilla class so it's remapped): **18 slots** (two rows) instead of 27, and the same item-size limit
+(items at/below `TFCConfig.SERVER.chestMaximumItemSize`, default LARGE). **Gotcha (cost a wrong first attempt):**
+`Container#canPlaceItem` does **not** gate the chest GUI — vanilla `ChestMenu` slots use base `Slot#mayPlace`
+(always `true`) and never call it, so overriding `canPlaceItem` alone let oversized items in. The fix reuses
+TFC's own `RestrictedChestContainer` (its `RestrictedSlot#mayPlace` calls the static `TFCChestBlockEntity.isValid`)
+via the `TFCContainerTypes.CHEST_9x2` menu type, so opening the barrel shows TFC's 2-row chest screen with the
+size restriction. Pieces: backing list (`@ModifyConstant` 27→18 in `<init>`) + `getContainerSize` (→18) — both
+required since the `RestrictedChestContainer` ctor asserts an 18-slot container; `createMenu` → the TFC menu; and
+`canPlaceItem` → the same static `isValid` so hoppers / the Forge item-handler wrapper honour it too. No runtime
+config toggle: the list size is fixed at construction, so a live flip would desync.
 
 ## Conventions
 

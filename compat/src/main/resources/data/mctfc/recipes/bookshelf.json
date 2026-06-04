@@ -1,0 +1,14 @@
+{
+  "__comment": "Restores a craftable vanilla bookshelf in a TFC world: the vanilla recipe (6 planks + 3 books) with #minecraft:planks (TFC planks are in it). We dropped the bookshelf->TFC substitution, so vanilla bookshelves stay vanilla and need to be obtainable.",
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PPP",
+    "BBB",
+    "PPP"
+  ],
+  "key": {
+    "P": { "tag": "minecraft:planks" },
+    "B": { "item": "minecraft:book" }
+  },
+  "result": { "item": "minecraft:bookshelf" }
+}
