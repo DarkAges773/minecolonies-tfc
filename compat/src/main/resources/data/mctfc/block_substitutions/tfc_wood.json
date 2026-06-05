@@ -158,6 +158,7 @@
     { "from": "minecraft:chest", "to": "tfc:wood/chest/oak" },
     { "from": "minecraft:trapped_chest", "to": "tfc:wood/trapped_chest/oak" },
     { "from": "minecraft:crafting_table", "to": "tfc:wood/planks/oak_workbench" },
+    { "from": "minecraft:lectern", "to": "tfc:wood/lectern/oak" },
     { "from_tag": "mctfc:subst/wood/planks", "to_tag": "mctfc:subst/wood/planks" },
     { "from_tag": "mctfc:subst/wood/log", "to_tag": "mctfc:subst/wood/log" },
     { "from_tag": "mctfc:subst/wood/wood", "to_tag": "mctfc:subst/wood/wood" },
@@ -177,6 +178,7 @@
     { "from_tag": "mctfc:subst/wood/sign", "to_tag": "mctfc:subst/wood/sign" },
     { "from_tag": "mctfc:subst/wood/wall_sign", "to_tag": "mctfc:subst/wood/wall_sign" },
     { "from_tag": "mctfc:subst/wood/hanging_sign", "to_tag": "mctfc:subst/wood/hanging_sign" },
-    { "from_tag": "mctfc:subst/wood/wall_hanging_sign", "to_tag": "mctfc:subst/wood/wall_hanging_sign" }
+    { "from_tag": "mctfc:subst/wood/wall_hanging_sign", "to_tag": "mctfc:subst/wood/wall_hanging_sign" },
+    { "from_tag": "mctfc:subst/wood/lectern", "to_tag": "mctfc:subst/wood/lectern" }
   ]
 }
