@@ -215,6 +215,16 @@ In `:replacements` (generic):
   keeps the tint/light context consistent). Works in single-player (integrated server shares the JVM,
   so client sees the rules). **Dedicated servers:** rules load server-side only, so the client preview
   won't substitute until rules are synced to clients — a follow-up (network packet on join / on reload).
+  - **Block entities in preview (chests, etc.) — DONE.** The `getState` redirect only fixes the *static block model*
+    (`renderBatched`); block entities preview via their own `BlockEntityRenderer` from the BE **instance** built in
+    `BlueprintUtils.instantiateTileEntities`, which keys the BE type off the blueprint's stored TE-NBT id — so a
+    substituted chest still previewed as the original even though it *built* correctly. We can't touch the shared
+    `constructTileEntity` (also used by `Blueprint#getBlockEntity` on build paths), so a second `@Redirect` in
+    `MixinBlueprintRenderer#init` wraps the `instantiateTileEntities` call (its **only** caller is this client preview
+    renderer) and post-processes the returned BE map: where a block was substituted to a *different* `EntityBlock`, swap
+    in a fresh BE of the substituted type (`EntityBlock#newBlockEntity(pos, subState)` — state carries copied
+    facing/chest-type) so the correct renderer/model is used; if it became a non-BE block, drop the preview TE (the
+    substituted block model covers it). Uses `PlacementChoices.client()` like the model redirect.
 - **GUI per-placement picker — DONE & verified (single-player).** Full design/recon/status in
   [docs/gui-replacement-picker-plan.md](docs/gui-replacement-picker-plan.md). Players open a "Replace"
   button on Structurize's build-tool window → a multi-row picker (one row per distinct source block in
