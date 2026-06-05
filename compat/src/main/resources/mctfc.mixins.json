@@ -11,7 +11,8 @@
     "MixinBarrelBlockEntity",
     "AbstractTileEntityRackAccessor",
     "MixinRackInventory",
-    "MixinFoodUtils"
+    "MixinFoodUtils",
+    "MixinEntityAIStructureMiner"
   ],
   "client": [
     "MixinWindowField"

@@ -587,7 +587,24 @@ hooks above added.)
 
 </details>
 
-### Non-falling ("mortared") cobble — DONE & verified
+### Miner shaft uses the hut fill-block setting — DONE
+
+The MineColonies miner builds two ways: its node/tunnel/shaft **blueprints** go through Structurize's `StructurePlacer`
+(already datapack-substituted by the engine, like the builder — unchanged), but the **vertical-shaft frame** is placed
+raw. The main fill + water-walling + `getSolidSubstitution()` already read the hut's configurable **`FILL_BLOCK` setting**
+(set it to a TFC block in the miner GUI — request, inventory-consume and placement then all agree on a block the player
+can actually supply). The one gap: `EntityAIStructureMiner#getLadderBackFillBlock()` is **hardcoded** to
+`Blocks.COBBLESTONE`/`NETHERRACK`, ignoring that setting — and vanilla cobblestone both *landslides* under TFC and isn't
+obtainable in a TFC world, so the ladder backfill desynced (requested vanilla cobble, couldn't be fulfilled / collapsed).
+Fix: [MixinEntityAIStructureMiner](compat/src/main/java/com/mctfc/mixin/MixinEntityAIStructureMiner.java) (`@Mixin(remap
+= false)`, `@Inject` RETURN on the private `getLadderBackFillBlock`, shadowing the private `getMainFillBlock`) returns the
+`FILL_BLOCK` setting so the **whole** shaft uses the GUI-chosen block. **Not** the substitution engine — this is the
+vanilla MineColonies fill-block mechanism, just made consistent. (Default `FILL_BLOCK` is still cobblestone; the player
+sets a TFC block — e.g. a cemented cobble or any TFC stone — in the hut GUI.) An earlier attempt that substituted the raw
+placement via the engine was reverted: it placed a substituted block but still *requested* vanilla cobblestone, which
+breaks in TFC.
+
+### Non-falling ("mortared"/"cemented") cobble — DONE & verified
 
 TFC makes cobble collapse (gravity), which wrecks MineColonies cobble builds. `:compat` registers a
 **non-falling twin** of every cobble block and substitutes builds onto it.
