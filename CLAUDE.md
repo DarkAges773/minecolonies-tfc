@@ -121,8 +121,11 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
   the client `MixinWindowField` (the field-GUI mode toggle) — all under the "Farmer farms TFC crops" section
   below — `MixinInventoryCitizen` (decay-aware food stacking; see "Decay-aware item stacking" below),
   `MixinBarrelBlockEntity` (vanilla barrel → tfc:chest size/restrictions; see "Vanilla furnaces made decorative"),
-  and the food-spoilage trio `AbstractTileEntityRackAccessor` + `MixinRackInventory` + `MixinFoodUtils`
-  (colony-storage preservation + FIFO/skip-rotten eating; see "Food spoilage management" below). Applying MixinGradle here ALSO injects the runtime refmap
+  the food-spoilage trio `AbstractTileEntityRackAccessor` + `MixinRackInventory` + `MixinFoodUtils`
+  (colony-storage preservation + FIFO/skip-rotten eating + the TFC-food saturation bridge; see "Food spoilage management"
+  below), `MixinEntityAIStructureMiner` (ladder backfill honours the hut fill-block setting; see "Miner shaft uses the hut
+  fill-block setting"), and the collapse-support pair `MixinAbstractEntityAIStructure` + `MixinSupport` (build areas are
+  collapse-proof while built; see "Build areas are collapse-proof"). Applying MixinGradle here ALSO injects the runtime refmap
   remapping (`mixin.env.remapRefMap`) into `:compat`'s dev runs — needed even when this config was empty,
   because without it *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in
   the official-mapped dev env (`InvalidAccessorException`). MixinGradle auto-registers `:compat`'s own
@@ -317,8 +320,11 @@ vanilla block, pool on the TFC-result tag) — never a fixed `to` + `to_tag` on 
 - **Wood** ([tfc_wood.json](compat/src/main/resources/data/mctfc/block_substitutions/tfc_wood.json)): vanilla →
   the **look-alike** TFC wood — oak/acacia/mangrove keep their name; spruce→chestnut, birch→douglas_fir,
   jungle→spruce, dark_oak→hickory, cherry→kapok, bamboo→palm — across all forms (planks, log/wood + stripped,
-  stairs, slab, fence, fence_gate, door, trapdoor, button, pressure_plate). Bamboo is special (`*_block` → log,
-  `*_mosaic*` → TFC palm mosaic). Singletons default to oak: `minecraft:chest`, `trapped_chest`,
+  stairs, slab, fence, fence_gate, door, trapdoor, button, pressure_plate, **sign + wall_sign**). **Hanging signs**
+  (`*_hanging_sign`, `*_wall_hanging_sign`) map by the same wood rule but TFC keys them as
+  `tfc:wood/planks/{hanging_sign,wall_hanging_sign}/<metal>/<wood>` (a metal × wood matrix) — we default the metal to
+  **copper** (`hanging_sign/copper/<wood>`); the candidate pool offers the wood re-pick (copper kept). Bamboo is special
+  (`*_block` → log, `*_mosaic*` → TFC palm mosaic). Singletons default to oak: `minecraft:chest`, `trapped_chest`,
   `crafting_table` (→ `oak_workbench`). Plus a per-form candidate pool so the player can pick any TFC wood. The
   **nether woods (crimson/warped) are NOT mapped to TFC here** — they're handled 1:1 by the optional Beneath
   datapack (Beneath ships real crimson/warped wood); see "Optional per-mod datapacks".
@@ -603,6 +609,47 @@ vanilla MineColonies fill-block mechanism, just made consistent. (Default `FILL_
 sets a TFC block — e.g. a cemented cobble or any TFC stone — in the hut GUI.) An earlier attempt that substituted the raw
 placement via the engine was reverted: it placed a substituted block but still *requested* vanilla cobblestone, which
 breaks in TFC.
+
+### Build areas are collapse-proof while being built (virtual TFC support) — DONE, in-world test pending
+
+TFC raw stone **collapses** (cave-ins) when mined unsupported, which wrecks any MineColonies schematic with an underground
+part — builder basements/cellars, the quarry pit, miner shafts/nodes. Rather than have workers place real TFC support
+beams (too expensive/finicky), `:compat` makes the **active build area read as supported** for the duration of the build,
+then releases it — by which point the walls are placed (non-falling substituted blocks) and stand on their own.
+
+- **Recon of TFC's collapse/support** (decompiled, `net.dries007.tfc.util.Support` + `CollapseRecipe`): support is data-driven
+  (`data/tfc/.../supports/horizontal_support_beam.json`: `support_up/down 2`, `support_horizontal 4`; only **horizontal**
+  beams define a supported volume). There are **two** collapse trigger paths, each consulting support at a different method:
+  (A) **mining a block** — `ForgeEventHandler.onBlockBroken` → `CollapseRecipe.tryTriggerCollapse`, which (only after a random
+  `collapseTriggerChance` gate) calls `Support.findUnsupportedPositions(level, pos±rad)`; (B) **raw-rock random tick** —
+  `RawRockBlock` (`random.nextInt(64)==0 && canStartCollapse && !Support.isSupported(level,pos)`). `canStartCollapse` itself
+  does **no** support check. Both support queries are rare (behind probability gates) and never per-tick.
+- **The implementation** ([BuildAreaSupport](compat/src/main/java/com/mctfc/collapse/BuildAreaSupport.java) registry +
+  [MixinAbstractEntityAIStructure](compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIStructure.java) +
+  [MixinSupport](compat/src/main/java/com/mctfc/mixin/MixinSupport.java)):
+  - **Box registry** — `Map<UUID, (dimension, BoundingBox, stamp)>`, server-side, transient. Keyed by worker + tagged with
+    dimension (so a box never shields the same coords in another dimension). A **1200-tick TTL** backstops removal: a box not
+    refreshed for 60s is pruned lazily in `isProtected` (workers refresh far more often while working). Primary removal is the
+    explicit `resetCurrentStructure` clear; the TTL covers the cases with no such signal (miner shaft excavation, removed/idle
+    worker).
+  - **Register/deregister (schematic path)** — builder/miner/quarrier all extend `AbstractEntityAIStructure`, so one mixin on the
+    base covers all: `@Inject` HEAD of `structureStep` registers the schematic's world AABB (computed from `structurePlacer.getB()`
+    — `getProgressPosInWorld(0,0,0)`..`(sizeX-1,…)` corners, padded by 1), refreshed every step (idempotent, self-heals after a
+    reload); `@Inject` HEAD of `resetCurrentStructure` removes it (the single point MC nulls the structure on completion **and**
+    every abandon/error path). Reads the protected `structurePlacer` (raw `Tuple` shadow) + shadowed `getWorker()`.
+  - **Miner raw shaft excavation** — the miner digs the vertical shaft in its own AI states (`doShaftMining`/`repairLadder`/
+    `doShaftBuilding`) with `structurePlacer == null`, so the schematic hook above never fires there.
+    [MixinEntityAIStructureMiner](compat/src/main/java/com/mctfc/mixin/MixinEntityAIStructureMiner.java) `@Inject`s HEAD of those
+    three and registers the **open-shaft column** — the 7×7 `SHAFT_RADIUS` cross-section (offset toward the dig direction, away
+    from the cobble, matching the AI's own scan), from the current bottom (`WorkerUtil.getLastLadder`) up to the hut Y, padded 2 —
+    keyed by the same worker UUID. Building is reached via `getWorker().getCitizenData().getWorkBuilding()` (not a deep
+    `building`-field shadow). The box self-clears via the TTL (and the next node's `resetCurrentStructure`).
+  - **Virtual support** — two `@Inject`s on `Support` (the exact methods TFC consults, so behaviour matches real beams for both
+    paths, zero polling): `isSupported` HEAD-cancellable → `true` if pos ∈ a box (path B); `findUnsupportedPositions` RETURN →
+    `removeIf` returned positions ∈ a box (path A). Added cost is a point-in-AABB test over the ~1–3 active boxes, short-circuited
+    when nothing is building — only ever runs inside TFC's already-rare, gated queries.
+  - All `@Mixin(remap = false)` (MineColonies/TFC own classes). Server-side. Once the build finishes the box is dropped and normal
+    TFC collapse physics resume.
 
 ### Non-falling ("mortared"/"cemented") cobble — DONE & verified
 
