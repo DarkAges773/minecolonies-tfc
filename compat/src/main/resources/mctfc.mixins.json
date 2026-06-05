@@ -12,7 +12,9 @@
     "AbstractTileEntityRackAccessor",
     "MixinRackInventory",
     "MixinFoodUtils",
-    "MixinEntityAIStructureMiner"
+    "MixinEntityAIStructureMiner",
+    "MixinAbstractEntityAIStructure",
+    "MixinSupport"
   ],
   "client": [
     "MixinWindowField"

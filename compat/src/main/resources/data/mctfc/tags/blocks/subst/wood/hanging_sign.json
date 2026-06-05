@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:wood/planks/hanging_sign/copper/acacia",
+    "tfc:wood/planks/hanging_sign/copper/ash",
+    "tfc:wood/planks/hanging_sign/copper/aspen",
+    "tfc:wood/planks/hanging_sign/copper/birch",
+    "tfc:wood/planks/hanging_sign/copper/blackwood",
+    "tfc:wood/planks/hanging_sign/copper/chestnut",
+    "tfc:wood/planks/hanging_sign/copper/douglas_fir",
+    "tfc:wood/planks/hanging_sign/copper/hickory",
+    "tfc:wood/planks/hanging_sign/copper/kapok",
+    "tfc:wood/planks/hanging_sign/copper/mangrove",
+    "tfc:wood/planks/hanging_sign/copper/maple",
+    "tfc:wood/planks/hanging_sign/copper/oak",
+    "tfc:wood/planks/hanging_sign/copper/palm",
+    "tfc:wood/planks/hanging_sign/copper/pine",
+    "tfc:wood/planks/hanging_sign/copper/rosewood",
+    "tfc:wood/planks/hanging_sign/copper/sequoia",
+    "tfc:wood/planks/hanging_sign/copper/spruce",
+    "tfc:wood/planks/hanging_sign/copper/sycamore",
+    "tfc:wood/planks/hanging_sign/copper/white_cedar",
+    "tfc:wood/planks/hanging_sign/copper/willow"
+  ]
+}
