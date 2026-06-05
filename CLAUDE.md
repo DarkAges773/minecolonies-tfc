@@ -524,9 +524,32 @@ diet-variety scoring); rotten handling is **skip-only** (disposal will be a futu
 - **Config** ([Config](compat/src/main/java/com/mctfc/Config.java)): `foodColonyStorageDecay` (`config/mctfc-common.toml`,
   default 0.25). Lang: the trait tooltip key `mctfc.food_trait.colony_storage` (TFC's `FoodTrait#addTooltipInfo` calls
   `Component.translatable(translationKey)` directly, so the key *is* the lang key).
+- **Config** ([Config](compat/src/main/java/com/mctfc/Config.java)): `foodColonyStorageDecay` (`config/mctfc-common.toml`,
+  default 0.25). Lang: the trait tooltip key `mctfc.food_trait.colony_storage` (TFC's `FoodTrait#addTooltipInfo` calls
+  `Component.translatable(translationKey)` directly, so the key *is* the lang key).
 - **Verified to load:** compiles; all three mixins apply (`AbstractTileEntityRackAccessor`/`MixinRackInventory` into the
   rack, `MixinFoodUtils` into `FoodUtils`); trait registers; runs in a live colony world without crash. **In-world
   behaviour** (food actually preserving in racks, FIFO order, rotten skipped) still to be confirmed in gameplay.
+
+### TFC food nutrition value (citizen saturation) — DONE & verified
+
+TFC food fed MineColonies citizens almost no saturation (~0.83). **Why:** every TFC food item ships a *flat* vanilla
+`FoodProperties` (`nutrition = 4`, `saturationMod = 0.3`) — its real nutrition lives in the TFC `FoodData` capability
+(`hunger()`, `saturation()`, the 5 nutrients), which MineColonies never reads. `FoodUtils#getFoodValue(ItemStack,
+FoodProperties, double)` then computes `nutrition × 0.25 (non-MC-food nerf) / 1.2`, i.e. `4 × 0.25 / 1.2 ≈ 0.83` — vs
+MineColonies' own food (`IMinecoloniesFoodItem`, no nerf) at `nutrition/1.2 ≈ 4–10`.
+
+- **The bridge** (third hook in [MixinFoodUtils](compat/src/main/java/com/mctfc/mixin/MixinFoodUtils.java)): `@Inject` HEAD
+  (cancellable) on the **core** `getFoodValue(ItemStack, FoodProperties, double)` — every saturation path funnels through
+  it (`ItemStackUtils#consumeFood` for citizen self-eat / nether / player-fed; the cook's `increaseSaturation`; the qty
+  calcs; the JEI/EMI tooltip), and the `getFoodValue(stack, citizen)` overload delegates to it. For TFC food (gated on
+  `FoodCapability.has`) it recomputes from `FoodData`: `hunger × (1 + saturation) / 1.2 × (1 + researchBonus) ×
+  Config.tfcFoodSaturationModifier`, dropping the 0.25 nerf and keeping the `/1.2` + research scaling so it matches MC's
+  own food. `hunger` is a **flat 4** across all TFC food, so `saturation` (the real quality signal: berry 0.2 → cabbage
+  0.5 → bread 1.0 → cooked_beef 2.0; meals higher) is what differentiates — landing blueberry ≈ 4.0, cooked_beef ≈ 10.0,
+  right in MC's range. Non-TFC food falls through unchanged.
+- **Config** ([Config](compat/src/main/java/com/mctfc/Config.java)): `tfcFoodSaturationModifier` (default `1.0` = 100%,
+  range 0–10), a live balance multiplier on the bridged value.
 
 <details><summary>Original tilling recon (kept for reference)</summary>
 

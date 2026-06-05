@@ -30,6 +30,10 @@ public class Config
             .comment("Decay-rate multiplier for TFC food while it is stored in a colony-owned rack/warehouse (0.0 = frozen, 1.0 = normal speed). Player-placed racks are unaffected, and food reverts to normal decay once withdrawn. Applied live via the food trait (re-read on config reload).")
             .defineInRange("foodColonyStorageDecay", 0.25, 0.0, 1.0);
 
+    private static final ForgeConfigSpec.DoubleValue TFC_FOOD_SATURATION_MODIFIER = BUILDER
+            .comment("Balance multiplier for the saturation TFC food gives MineColonies citizens (1.0 = 100%, the default). The bridged value (TFC hunger x quality) is scaled by this — raise it if TFC food feels too weak, lower it if too strong. Applied live (re-read on config reload).")
+            .defineInRange("tfcFoodSaturationModifier", 1.0, 0.0, 10.0);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     /** Fertilize once the crop's primary nutrient is below this (0..1). */
@@ -44,6 +48,9 @@ public class Config
     /** Decay-rate multiplier for TFC food in colony-owned storage (0 = frozen, 1 = normal). Read live by the food trait. */
     public static float foodColonyStorageDecay = 0.25f;
 
+    /** Balance multiplier for the saturation TFC food gives citizens (1.0 = 100%). Read live by the food-value bridge. */
+    public static float tfcFoodSaturationModifier = 1.0f;
+
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event)
     {
@@ -51,5 +58,6 @@ public class Config
         fertilizeTarget = FERTILIZE_TARGET.get().floatValue();
         decorativeVanillaFurnaces = DECORATIVE_VANILLA_FURNACES.get();
         foodColonyStorageDecay = FOOD_COLONY_STORAGE_DECAY.get().floatValue();
+        tfcFoodSaturationModifier = TFC_FOOD_SATURATION_MODIFIER.get().floatValue();
     }
 }

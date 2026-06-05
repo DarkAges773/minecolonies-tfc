@@ -1,12 +1,15 @@
 package com.mctfc.mixin;
 
+import com.mctfc.Config;
 import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.crafting.ItemStorage;
 import com.minecolonies.api.inventory.InventoryCitizen;
 import com.minecolonies.api.util.FoodUtils;
 import net.dries007.tfc.common.capabilities.food.FoodCapability;
+import net.dries007.tfc.common.capabilities.food.FoodData;
 import net.dries007.tfc.common.capabilities.food.IFood;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,6 +28,10 @@ import java.util.Set;
  *   <li><b>FIFO tiebreaker</b> — after MineColonies picks a slot, swap to another slot holding the <i>same item</i>
  *       (hence the same desirability score — a true tiebreaker that preserves MC's diet-variety logic) but with a
  *       sooner rot date, so the colony eats the food closest to spoiling first.</li>
+ *   <li><b>TFC nutrition bridge</b> — TFC food carries only a flat vanilla {@code FoodProperties} (nutrition 4,
+ *       saturation 0.3); its real nutrition lives in the TFC {@code FoodData} capability. MineColonies' value calc
+ *       reads the flat vanilla nutrition and applies a 0.25&times; non-MC-food nerf, so every TFC food fed a citizen
+ *       barely any saturation (~0.83). We recompute the value from TFC's own {@code FoodData}.</li>
  * </ul>
  *
  * {@code @Mixin(remap = false)} — {@code FoodUtils} is MineColonies' own class.
@@ -32,6 +39,30 @@ import java.util.Set;
 @Mixin(value = FoodUtils.class, remap = false)
 public class MixinFoodUtils
 {
+    /**
+     * Value TFC food from its real {@code FoodData} instead of the flat, nerfed vanilla nutrition. Uses TFC's
+     * {@code hunger} (fullness restored) scaled by {@code saturation} (TFC's quality signal), dropping MineColonies'
+     * 0.25&times; non-MC-food penalty but keeping the {@code /1.2} and research-bonus scaling so it stays comparable
+     * to MineColonies' own food. Non-TFC food falls through to the vanilla MineColonies calc unchanged.
+     */
+    @Inject(method = "getFoodValue(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/food/FoodProperties;D)D", at = @At("HEAD"), cancellable = true)
+    private static void mctfc$tfcFoodValue(final ItemStack foodStack, final FoodProperties itemFood, final double researchBonus, final CallbackInfoReturnable<Double> cir)
+    {
+        if (itemFood == null || !FoodCapability.has(foodStack))
+        {
+            return;
+        }
+        final IFood food = FoodCapability.get(foodStack);
+        if (food == null)
+        {
+            return;
+        }
+        final FoodData data = food.getData();
+        final double base = Math.max(data.hunger(), 1);
+        final double quality = 1.0 + Math.max(0.0, data.saturation());
+        cir.setReturnValue(base * quality / 1.2 * (1.0 + researchBonus) * Config.tfcFoodSaturationModifier);
+    }
+
     @Inject(method = "canEat", at = @At("HEAD"), cancellable = true)
     private static void mctfc$skipRotten(final ItemStack stack, final IBuilding homeBuilding, final IBuilding workBuilding, final CallbackInfoReturnable<Boolean> cir)
     {
