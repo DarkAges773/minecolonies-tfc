@@ -7,6 +7,12 @@
     { "from_tag": "mctfc:subst/soil/dirt", "to_tag": "mctfc:subst/soil/dirt" },
 
     { "from": "minecraft:torch", "to": "tfc:torch" },
-    { "from": "minecraft:wall_torch", "to": "tfc:wall_torch" }
+    { "from": "minecraft:wall_torch", "to": "tfc:wall_torch" },
+
+    { "from": "minecraft:chain", "to": "tfc:metal/chain/wrought_iron" },
+    { "from_tag": "mctfc:subst/metal/chain", "to_tag": "mctfc:subst/metal/chain" },
+
+    { "from": "minecraft:lantern", "to": "tfc:metal/lamp/wrought_iron", "apply_properties": { "lit": "true" } },
+    { "from_tag": "mctfc:subst/metal/lamp", "to_tag": "mctfc:subst/metal/lamp", "apply_properties": { "lit": "true" } }
   ]
 }
