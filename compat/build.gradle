@@ -110,6 +110,11 @@ dependencies {
     runtimeOnly fg.deobf("curse.maven:patchouli-306770:${patchouli_file_id}")
     // Dev-run-only: recipe/item viewer for testing (not a real dependency).
     runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")
+    // Dev-run-only: Jade (block/entity info HUD) for inspecting blocks/citizens in-game.
+    runtimeOnly fg.deobf("curse.maven:jade-324717:6855440")
+    // Dev-run-only: TFC Support Indicator (visualises TFC collapse-support coverage) — handy for testing the
+    // build-area collapse-proofing.
+    runtimeOnly fg.deobf("curse.maven:tfc-support-indicator-1195624:7700000")
     // Beneath — added to test in-game whether its blocks are accessible (e.g. as substitution targets).
     implementation fg.deobf("curse.maven:beneath-1113980:7400831")
 }
