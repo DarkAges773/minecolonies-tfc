@@ -1,8 +1,12 @@
 package com.structurizereplacements;
 
+import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers;
+import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.AddType;
+import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.GeneralBlockPlacementHandler;
 import com.mojang.logging.LogUtils;
 import com.structurizereplacements.integration.minecolonies.MineColoniesIntegration;
 import com.structurizereplacements.network.Network;
+import com.structurizereplacements.placement.TwoTallPlantPlacementHandler;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -25,6 +29,10 @@ public class StructurizeReplacements
     {
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         Network.register();
+        // Place two-tall plants (TFC tall flowers etc.) atomically — both halves in one call, like vanilla's
+        // DoublePlantPlacementHandler — so the builder's per-tick placement doesn't leave a self-destructing
+        // lone half. Inserted before the catch-all GeneralBlockPlacementHandler. (Structurize is always present.)
+        PlacementHandlers.add(new TwoTallPlantPlacementHandler(), GeneralBlockPlacementHandler.class, AddType.BEFORE);
         // Optional MineColonies integration — touched only when MineColonies is loaded, so its
         // MineColonies-referencing classes are never classloaded in the standalone case.
         if (ModList.get().isLoaded("minecolonies"))
