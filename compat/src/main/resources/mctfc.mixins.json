@@ -15,7 +15,9 @@
     "MixinEntityAIStructureMiner",
     "MixinAbstractEntityAIStructure",
     "MixinSupport",
-    "MixinCitizenAI"
+    "MixinCitizenAI",
+    "MixinLampBlockEntity",
+    "MixinTfcLightBlocks"
   ],
   "client": [
     "MixinWindowField"

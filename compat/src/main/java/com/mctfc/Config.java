@@ -34,6 +34,10 @@ public class Config
             .comment("Balance multiplier for the saturation TFC food gives MineColonies citizens (1.0 = 100%, the default). The bridged value (TFC hunger x quality) is scaled by this — raise it if TFC food feels too weak, lower it if too strong. Applied live (re-read on config reload).")
             .defineInRange("tfcFoodSaturationModifier", 1.0, 0.0, 10.0);
 
+    private static final ForgeConfigSpec.BooleanValue KEEP_COLONY_LIGHTS_LIT = BUILDER
+            .comment("Stop TFC light sources (metal lamps, torches, candles/candle cakes, jack-o'-lanterns) from burning out / running out of fuel while they are inside a MineColonies colony's claimed area, so colonies stay lit. Only freezes the burn-out of already-lit sources (it won't relight one that's gone out or fuel an unlit lamp); light outside any colony decays normally. Set false to let TFC light burnout apply everywhere.")
+            .define("keepColonyLightsLit", true);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     /** Fertilize once the crop's primary nutrient is below this (0..1). */
@@ -51,6 +55,9 @@ public class Config
     /** Balance multiplier for the saturation TFC food gives citizens (1.0 = 100%). Read live by the food-value bridge. */
     public static float tfcFoodSaturationModifier = 1.0f;
 
+    /** Keep TFC light sources inside a colony from burning out / running out of fuel. Read live by the light mixins. */
+    public static boolean keepColonyLightsLit = true;
+
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event)
     {
@@ -59,5 +66,6 @@ public class Config
         decorativeVanillaFurnaces = DECORATIVE_VANILLA_FURNACES.get();
         foodColonyStorageDecay = FOOD_COLONY_STORAGE_DECAY.get().floatValue();
         tfcFoodSaturationModifier = TFC_FOOD_SATURATION_MODIFIER.get().floatValue();
+        keepColonyLightsLit = KEEP_COLONY_LIGHTS_LIT.get();
     }
 }

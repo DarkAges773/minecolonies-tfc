@@ -125,8 +125,10 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
   (colony-storage preservation + FIFO/skip-rotten eating + the TFC-food saturation bridge; see "Food spoilage management"
   below), `MixinEntityAIStructureMiner` (ladder backfill honours the hut fill-block setting; see "Miner shaft uses the hut
   fill-block setting"), the collapse-support pair `MixinAbstractEntityAIStructure` + `MixinSupport` (build areas are
-  collapse-proof while built; see "Build areas are collapse-proof"), and `MixinCitizenAI` (rest for TFC's *localized* rain at
-  a fixed worksite anchor, not the global flag; see "Citizens rest for TFC's localized rain"). Applying MixinGradle here ALSO injects the runtime refmap
+  collapse-proof while built; see "Build areas are collapse-proof"), `MixinCitizenAI` (rest for TFC's *localized* rain at
+  a fixed worksite anchor, not the global flag; see "Citizens rest for TFC's localized rain"), and the keep-colony-lights-lit
+  pair `MixinTfcLightBlocks` (multi-target on the TFC torch/candle/jack-o'-lantern `randomTick`) + `MixinLampBlockEntity` (the
+  metal-lamp fuel drain; see "TFC light sources never burn out inside a colony"). Applying MixinGradle here ALSO injects the runtime refmap
   remapping (`mixin.env.remapRefMap`) into `:compat`'s dev runs — needed even when this config was empty,
   because without it *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in
   the official-mapped dev env (`InvalidAccessorException`). MixinGradle auto-registers `:compat`'s own
@@ -691,6 +693,32 @@ anchor, preserving vanilla's stop-for-any-precipitation behaviour but localized 
   `net.dries007.tfc.util.EnvironmentHelpers` is fine. Guards bypass this branch entirely (they work in rain) so are
   unaffected. **Follow-up if wanted:** make it rain-only (`Climate.getPrecipitation(world, anchor) == RAIN`, a deliberate
   change from vanilla snow-parity), and/or expose a config toggle.
+
+### TFC light sources never burn out inside a colony — DONE, in-world test pending
+
+TFC light sources burn out: the **metal lamp** (`tfc:metal/lamp/<metal>` — there is **no** `tfc:lantern`; TFC removes the
+vanilla lantern, the lamp is its equivalent) drains a fluid fuel (olive_oil/tallow; lava in a blue-steel lamp is the only
+infinite vanilla case) and goes dark when empty; **torches** decay to `tfc:dead_torch` after `torchTicks` (~1h), **candles**
+go out, **jack-o'-lanterns** revert to carved pumpkins. All burn-out is server-side, per-position, on `randomTick`, backed by
+a `TickCounterBlockEntity` (calendar-delta, unload-safe); TFC's only "off switch" is global (`torchTicks/candleTicks/jackOLanternTicks = -1`),
+not colony-scoped. So colonies go dark unless re-lit/refuelled.
+
+`:compat` freezes the burn-out of **already-lit** sources while they sit inside a colony (it won't relight a dead one or fuel
+an unlit lamp). Gate: [ColonyLights](compat/src/main/java/com/mctfc/light/ColonyLights.java)`#keepLit(level, pos)` =
+server-side && `Config.keepColonyLightsLit` && `IColonyManager.getColonyByPosFromWorld(level, pos) != null` (the
+chunk-owning-colony cap). Two mixins (`@Mixin(remap=…)` as noted):
+- [MixinTfcLightBlocks](compat/src/main/java/com/mctfc/mixin/MixinTfcLightBlocks.java) — **one multi-target** `@Mixin({TFCTorchBlock,
+  TFCWallTorchBlock, TFCCandleBlock, TFCCandleCakeBlock, JackOLanternBlock})`; all five override the same
+  `randomTick(BlockState, ServerLevel, BlockPos, RandomSource)`, so a single `@Inject(HEAD, cancellable)` cancels the whole
+  tick (burn-out, and for candles the rain-extinguish too) when in-colony. `randomTick` is a **vanilla** `Block` method →
+  **remapped** (the default; do NOT set `remap=false` here, unlike most `:compat` mixins which target the mods' own members).
+- [MixinLampBlockEntity](compat/src/main/java/com/mctfc/mixin/MixinLampBlockEntity.java) — `@Mixin(remap=false)` (TFC's own
+  method) `@Inject(HEAD, cancellable)` on `LampBlockEntity#checkHasRanOut` (the single fuel-drain chokepoint, also called from
+  `use`/`fluidTankChanged`, so hooking it covers all drain paths). `level`/`pos` via casting `this` to vanilla `BlockEntity`.
+- Cheap (random ticks are infrequent; the colony lookup is a chunk-cap read). Config
+  [Config](compat/src/main/java/com/mctfc/Config.java)`#keepColonyLightsLit` (default **true**; false ⇒ TFC burnout applies
+  everywhere). **Verified to load** (both mixins bind — `defaultRequire:1` would fail otherwise — client reaches menu, 0
+  injection failures); in-world behaviour (lamp/torch/candle/jack staying lit in a colony, decaying outside) still to confirm.
 
 ### Non-falling ("mortared"/"cemented") cobble — DONE & verified
 
