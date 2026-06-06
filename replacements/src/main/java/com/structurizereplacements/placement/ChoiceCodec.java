@@ -1,5 +1,8 @@
 package com.structurizereplacements.placement;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -58,5 +61,63 @@ public final class ChoiceCodec
             }
         }
         return map;
+    }
+
+    /**
+     * Write a choice map under {@code key} as a list of {@code {from,to}} block-id entries. Removes the key
+     * when the map is empty/null (so a cleared map doesn't leave a stale tag). Same on-disk shape used by
+     * the MineColonies building NBT, so the two stores are interchangeable.
+     */
+    public static void writeNbt(final CompoundTag tag, final String key, final Map<Block, Block> choices)
+    {
+        if (choices == null || choices.isEmpty())
+        {
+            tag.remove(key);
+            return;
+        }
+        final ListTag list = new ListTag();
+        choices.forEach((from, to) -> {
+            final ResourceLocation f = ForgeRegistries.BLOCKS.getKey(from);
+            final ResourceLocation t = ForgeRegistries.BLOCKS.getKey(to);
+            if (f != null && t != null)
+            {
+                final CompoundTag entry = new CompoundTag();
+                entry.putString("from", f.toString());
+                entry.putString("to", t.toString());
+                list.add(entry);
+            }
+        });
+        if (list.isEmpty())
+        {
+            tag.remove(key);
+        }
+        else
+        {
+            tag.put(key, list);
+        }
+    }
+
+    /** Read a choice map written by {@link #writeNbt}; {@code null} when absent or empty. */
+    public static Map<Block, Block> readNbt(final CompoundTag tag, final String key)
+    {
+        if (!tag.contains(key, Tag.TAG_LIST))
+        {
+            return null;
+        }
+        final Map<Block, Block> map = new HashMap<>();
+        final ListTag list = tag.getList(key, Tag.TAG_COMPOUND);
+        for (int i = 0; i < list.size(); i++)
+        {
+            final CompoundTag entry = list.getCompound(i);
+            final ResourceLocation f = ResourceLocation.tryParse(entry.getString("from"));
+            final ResourceLocation t = ResourceLocation.tryParse(entry.getString("to"));
+            final Block from = (f != null && ForgeRegistries.BLOCKS.containsKey(f)) ? ForgeRegistries.BLOCKS.getValue(f) : null;
+            final Block to = (t != null && ForgeRegistries.BLOCKS.containsKey(t)) ? ForgeRegistries.BLOCKS.getValue(t) : null;
+            if (from != null && to != null)
+            {
+                map.put(from, to);
+            }
+        }
+        return map.isEmpty() ? null : map;
     }
 }

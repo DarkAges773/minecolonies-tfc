@@ -6,7 +6,9 @@
   "refmap": "structurizereplacements.refmap.json",
   "mixins": [
     "MixinAbstractBuilding",
-    "MixinRegisteredStructureManager"
+    "MixinAbstractWorkOrder",
+    "MixinRegisteredStructureManager",
+    "MixinTileEntityDecorationController"
   ],
   "client": [
     "MixinAbstractBuildingView",

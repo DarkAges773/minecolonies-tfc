@@ -5,12 +5,14 @@ import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.buildings.ICommonBuilding;
 import com.minecolonies.api.colony.buildings.views.IBuildingView;
+import com.minecolonies.api.colony.workorders.IServerWorkOrder;
 import com.structurizereplacements.placement.ChoiceResolver;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.placement.StagedChoices;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.Map;
 
@@ -28,11 +30,20 @@ import java.util.Map;
  *       so the Build Options material list/preview reflect that building. Read-only.</li>
  * </ul>
  *
- * <p>The lookup also works for the build wand's preview: there's no building at the preview position, so
- * the resolver returns {@code null} and the handler falls back to the global session picks.
+ * <p><b>Decorations</b> (placed without a hut block) have no {@code AbstractBuilding}, but the build origin
+ * carries a {@code TileEntityDecorationController} block entity ({@code workOrder.getLocation()} ==
+ * {@code worldPos} == the controller's position). So when no building is found we fall through to the block
+ * entity at {@code worldPos}: if it is a {@link PlacementChoiceHolder} (the controller, via
+ * {@code MixinTileEntityDecorationController}) we use its choices. Server-side we likewise adopt the staged
+ * placing-player choices on first resolve and persist them (the controller's NBT — which the standard block
+ * entity update packet also syncs to the client). This is the same flow as buildings with a cleaner,
+ * position-co-located store.
+ *
+ * <p>The lookup also works for the build wand's preview: there's no building or controller at the preview
+ * position, so the resolver returns {@code null} and the handler falls back to the global session picks.
  *
  * <p>Server-side this is called once per builder structure handler (the handler caches the result), so the
- * colony lookup is not per-block.
+ * colony / block-entity lookup is not per-block.
  */
 public final class BuildingChoiceResolver
 {
@@ -53,35 +64,64 @@ public final class BuildingChoiceResolver
         if (world.isClientSide)
         {
             final IBuildingView view = IColonyManager.getInstance().getBuildingView(world.dimension(), worldPos);
-            if (!(view instanceof PlacementChoiceHolder holder))
+            if (view instanceof PlacementChoiceHolder holder)
             {
-                return null;
+                final Map<Block, Block> choices = holder.getReplacementChoices();
+                return choices == null ? Map.of() : choices;
             }
-            final Map<Block, Block> choices = holder.getReplacementChoices();
-            return choices == null ? Map.of() : choices;
+            // No building view here — maybe a decoration controller (its choices are synced via the block
+            // entity update packet). Read-only on the client.
+            final BlockEntity be = world.getBlockEntity(worldPos);
+            if (be instanceof PlacementChoiceHolder holder)
+            {
+                final Map<Block, Block> choices = holder.getReplacementChoices();
+                return choices == null ? Map.of() : choices;
+            }
+            return null;
         }
 
         final IColony colony = IColonyManager.getInstance().getColonyByPosFromWorld(world, worldPos);
         final ICommonBuilding building = colony == null ? null : colony.getCommonBuildingManager().getBuilding(worldPos);
-        if (!(building instanceof PlacementChoiceHolder holder))
+        if (building instanceof PlacementChoiceHolder holder)
         {
-            return null;
+            Map<Block, Block> choices = holder.getReplacementChoices();
+            if (choices == null || choices.isEmpty())
+            {
+                final Map<Block, Block> staged = StagedChoices.take(worldPos);
+                if (staged != null && !staged.isEmpty())
+                {
+                    holder.setReplacementChoices(staged);
+                    if (building instanceof IBuilding persistent)
+                    {
+                        persistent.markDirty();
+                    }
+                    choices = staged;
+                }
+            }
+            return choices;
         }
 
-        Map<Block, Block> choices = holder.getReplacementChoices();
-        if (choices == null || choices.isEmpty())
+        // No building here — a decoration. The decoration's work order (which exists for the whole build,
+        // unlike its controller block entity, placed mid-build) carries the placing player's choices, adopted
+        // at MixinAbstractWorkOrder#onAdded. Its getLocation() == worldPos.
+        if (colony != null)
         {
-            final Map<Block, Block> staged = StagedChoices.take(worldPos);
-            if (staged != null && !staged.isEmpty())
+            for (final IServerWorkOrder wo : colony.getWorkManager().getWorkOrders().values())
             {
-                holder.setReplacementChoices(staged);
-                if (building instanceof IBuilding persistent)
+                if (worldPos.equals(wo.getLocation()) && wo instanceof PlacementChoiceHolder holder)
                 {
-                    persistent.markDirty();
+                    return holder.getReplacementChoices();
                 }
-                choices = staged;
             }
         }
-        return choices;
+
+        // No active work order — a built decoration being re-resolved. Read the controller block entity, which
+        // the work order copies its choices onto at build completion (MixinAbstractWorkOrder#onRemoved).
+        final BlockEntity be = world.getBlockEntity(worldPos);
+        if (be instanceof PlacementChoiceHolder holder)
+        {
+            return holder.getReplacementChoices();
+        }
+        return null;
     }
 }
