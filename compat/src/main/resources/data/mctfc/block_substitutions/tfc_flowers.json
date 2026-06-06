@@ -40,7 +40,6 @@
     { "from_tag": "mctfc:subst/plant/tall_flower", "to_tag": "mctfc:subst/plant/tall_flower", "copy_properties": { "half": "part" } },
 
     { "from": "minecraft:vine", "to": "tfc:plant/jungle_vines" },
-    { "from_tag": "mctfc:subst/plant/vine", "to_tag": "mctfc:subst/plant/vine" },
 
     { "from": "minecraft:grass", "to": "tfc:plant/ryegrass" },
     { "from_tag": "mctfc:subst/plant/short_grass", "to_tag": "mctfc:subst/plant/short_grass" },
