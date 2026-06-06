@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:plant/pampas_grass",
+    "tfc:plant/switchgrass",
+    "tfc:plant/tall_fescue_grass"
+  ]
+}

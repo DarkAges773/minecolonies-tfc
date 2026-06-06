@@ -1,5 +1,5 @@
 {
-  "__comment": "Vanilla flowers -> TFC plants (tfc:plant/<x>), with name/closest-match fixed defaults plus a candidate pool (mctfc:subst/plant/flower, keyed on the converted result) so the player can re-pick any TFC flower via the Replace GUI. Potted flowers (minecraft:potted_<x>) map the same way to TFC's own potted plant blocks (tfc:plant/potted/<x>). Double-tall vanilla flowers (sunflower/lilac/rose_bush/peony) map to TFC two-tall plants via copy_properties {half:part} (vanilla uses 'half', TFC uses 'part'; both serialize lower/upper), with a tall_flower pool. Edit/reload with /reload.",
+  "__comment": "Vanilla plants -> TFC plants (tfc:plant/<x>), each a name/closest-match fixed default plus a candidate pool (keyed on the converted result) so the player can re-pick via the Replace GUI. Covers: small flowers (pool mctfc:subst/plant/flower) and their potted forms (tfc:plant/potted/<x>, pool potted_flower); double-tall flowers sunflower/lilac/rose_bush/peony (pool tall_flower); vines (minecraft:vine -> jungle_vines, pool vine incl. ivy); short grass/fern (single, pools short_grass/fern); and tall_grass/large_fern (double, pools tall_grass/large_fern). Double-tall plants use copy_properties {half:part} (vanilla uses 'half', TFC uses 'part'; both serialize lower/upper) and are placed atomically by TwoTallPlantPlacementHandler. Edit/reload with /reload.",
   "replacements": [
     { "from": "minecraft:dandelion", "to": "tfc:plant/dandelion" },
     { "from": "minecraft:poppy", "to": "tfc:plant/poppy" },
@@ -37,6 +37,21 @@
     { "from": "minecraft:rose_bush", "to": "tfc:plant/rose", "copy_properties": { "half": "part" } },
     { "from": "minecraft:sunflower", "to": "tfc:plant/sapphire_tower", "copy_properties": { "half": "part" } },
     { "from": "minecraft:peony", "to": "tfc:plant/foxglove", "copy_properties": { "half": "part" } },
-    { "from_tag": "mctfc:subst/plant/tall_flower", "to_tag": "mctfc:subst/plant/tall_flower", "copy_properties": { "half": "part" } }
+    { "from_tag": "mctfc:subst/plant/tall_flower", "to_tag": "mctfc:subst/plant/tall_flower", "copy_properties": { "half": "part" } },
+
+    { "from": "minecraft:vine", "to": "tfc:plant/jungle_vines" },
+    { "from_tag": "mctfc:subst/plant/vine", "to_tag": "mctfc:subst/plant/vine" },
+
+    { "from": "minecraft:grass", "to": "tfc:plant/ryegrass" },
+    { "from_tag": "mctfc:subst/plant/short_grass", "to_tag": "mctfc:subst/plant/short_grass" },
+
+    { "from": "minecraft:fern", "to": "tfc:plant/sword_fern" },
+    { "from_tag": "mctfc:subst/plant/fern", "to_tag": "mctfc:subst/plant/fern" },
+
+    { "from": "minecraft:tall_grass", "to": "tfc:plant/tall_fescue_grass", "copy_properties": { "half": "part" } },
+    { "from_tag": "mctfc:subst/plant/tall_grass", "to_tag": "mctfc:subst/plant/tall_grass", "copy_properties": { "half": "part" } },
+
+    { "from": "minecraft:large_fern", "to": "tfc:plant/ostrich_fern", "copy_properties": { "half": "part" } },
+    { "from_tag": "mctfc:subst/plant/large_fern", "to_tag": "mctfc:subst/plant/large_fern", "copy_properties": { "half": "part" } }
   ]
 }
