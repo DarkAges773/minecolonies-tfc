@@ -13,13 +13,17 @@ import com.structurizereplacements.substitution.BlockSubstitutions;
 import com.structurizereplacements.substitution.CandidateRule;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The replacement picker window: one row per distinct candidate source block, showing source → current
@@ -96,7 +100,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
     private void updateRow(final int index, final Pane row)
     {
         final Block source = sources.get(index);
-        row.findPaneOfTypeByID("srcIcon", ItemIcon.class).setItem(new ItemStack(source));
+        row.findPaneOfTypeByID("srcIcon", ItemIcon.class).setItem(iconFor(source));
         row.findPaneOfTypeByID("srcName", Text.class).setText(source.getName());
 
         final Block chosen = context.current().get(source);
@@ -104,7 +108,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
         final Text dstName = row.findPaneOfTypeByID("dstName", Text.class);
         if (chosen != null)
         {
-            dstIcon.setItem(new ItemStack(chosen));
+            dstIcon.setItem(iconFor(chosen));
             dstName.setText(chosen.getName());
         }
         else
@@ -124,26 +128,61 @@ public class WindowReplacements extends AbstractWindowSkeleton
             return;
         }
 
+        // The picker is item-based, but some candidate blocks have no item (e.g. TFC's potted plants are
+        // registered with no BlockItem). iconFor falls back to the contained block's item; we keep a
+        // display-item -> candidate-block map so the pick round-trips back to the right (possibly itemless)
+        // block instead of Block.byItem returning AIR. Entries that can't produce any icon are skipped
+        // (an air entry would be invisible and unpickable).
         final List<ItemStack> pool = new ArrayList<>();
+        final Map<Item, Block> byDisplayItem = new HashMap<>();
         ForgeRegistries.BLOCKS.tags().getTag(rule.toTag()).forEach(block -> {
-            if (block != Blocks.AIR)
+            if (block == Blocks.AIR)
             {
-                pool.add(new ItemStack(block));
+                return;
+            }
+            final ItemStack icon = iconFor(block);
+            if (!icon.isEmpty() && byDisplayItem.putIfAbsent(icon.getItem(), block) == null)
+            {
+                pool.add(icon);
             }
         });
 
         final Block current = context.current().get(source);
         final Component title = Component.translatable("com.ldtteam.structurize.gui.scantool.replace")
                 .append(Component.literal(" ")).append(source.getName());
-        new WindowSelectRes(this, title, new ItemStack(current != null ? current : source), pool,
-                (stack, count) -> choose(source, stack)).open();
+        new WindowSelectRes(this, title, iconFor(current != null ? current : source), pool,
+                (stack, count) -> choose(source, byDisplayItem.getOrDefault(stack.getItem(), Block.byItem(stack.getItem())))).open();
     }
 
-    private void choose(final Block source, final ItemStack stack)
+    private void choose(final Block source, final Block target)
     {
-        final Block target = Block.byItem(stack.getItem());
-        context.choose(source, target == Blocks.AIR ? null : target);
+        context.choose(source, target == null || target == Blocks.AIR ? null : target);
         // Re-read rows so the new pick shows when we return from the candidate picker.
         this.list.refreshElementPanes();
+    }
+
+    /**
+     * The icon to display for a candidate/source block. Normally {@code new ItemStack(block)}, but some blocks
+     * have no item ({@code block.asItem() == AIR}) — notably TFC's potted plants, registered with no BlockItem.
+     * For a {@link FlowerPotBlock} we fall back to the contained plant's item (which does exist and is distinct
+     * per pot, so it also makes the pick round-trip unambiguous). Returns {@link ItemStack#EMPTY} if nothing
+     * can represent the block.
+     */
+    private static ItemStack iconFor(final Block block)
+    {
+        final ItemStack direct = new ItemStack(block);
+        if (!direct.isEmpty())
+        {
+            return direct;
+        }
+        if (block instanceof FlowerPotBlock pot)
+        {
+            final ItemStack content = new ItemStack(pot.getContent());
+            if (!content.isEmpty())
+            {
+                return content;
+            }
+        }
+        return ItemStack.EMPTY;
     }
 }
