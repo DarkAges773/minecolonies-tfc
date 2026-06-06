@@ -121,7 +121,9 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
         }
 
         // --- optional blockstate properties to stamp onto the result (e.g. no_gravity:true) ---
-        final Map<String, String> properties = parseProperties(obj);
+        final Map<String, String> properties = parseStringMap(obj, "apply_properties");
+        // --- optional source-property -> target-property copy (e.g. half -> part for double plants) ---
+        final Map<String, String> copyProperties = parseStringMap(obj, "copy_properties");
 
         // --- target: candidate pool (interactive) ---
         if (obj.has("to_tag"))
@@ -132,7 +134,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has a malformed 'to_tag'; skipping.", file);
                 return;
             }
-            candidates.add(new CandidateRule(fromBlock, fromTag, TagKey.create(Registries.BLOCK, toTagId), properties));
+            candidates.add(new CandidateRule(fromBlock, fromTag, TagKey.create(Registries.BLOCK, toTagId), properties, copyProperties));
             return;
         }
 
@@ -146,7 +148,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has an unknown 'to' block; skipping.", file);
                 return;
             }
-            rules.add(new SubstitutionRule(fromBlock, fromTag, to, properties));
+            rules.add(new SubstitutionRule(fromBlock, fromTag, to, properties, copyProperties));
             return;
         }
 
@@ -154,21 +156,22 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
     }
 
     /**
-     * Parse the optional {@code "apply_properties"} object — blockstate property name → value, stamped
-     * onto the substituted block. Values are read as strings ({@code true}/{@code 1}/{@code "x"} all work,
-     * since JSON primitives stringify). Returns an empty map when absent or malformed.
+     * Parse an optional string→string object under {@code key} — used for {@code "apply_properties"}
+     * (property name → value, stamped onto the result) and {@code "copy_properties"} (source property name →
+     * target property name, value carried across). Values are read as strings ({@code true}/{@code 1}/{@code "x"}
+     * all work, since JSON primitives stringify). Returns an empty map when absent.
      */
-    private static Map<String, String> parseProperties(final JsonObject obj)
+    private static Map<String, String> parseStringMap(final JsonObject obj, final String key)
     {
-        if (!obj.has("apply_properties"))
+        if (!obj.has(key))
         {
             return Map.of();
         }
         final Map<String, String> out = new HashMap<>();
-        final JsonObject props = GsonHelper.getAsJsonObject(obj, "apply_properties");
-        for (final String key : props.keySet())
+        final JsonObject props = GsonHelper.getAsJsonObject(obj, key);
+        for (final String name : props.keySet())
         {
-            out.put(key, props.get(key).getAsString());
+            out.put(name, props.get(name).getAsString());
         }
         return out;
     }

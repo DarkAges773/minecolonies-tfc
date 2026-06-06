@@ -22,6 +22,11 @@ Each entry in the `"replacements"` array has exactly one **source** and one **ta
 - Optional `"apply_properties"`: an object of blockstate property name → value, stamped onto the result
   after the swap (e.g. `{"no_gravity":"true"}` so a substituted TFC cobble is placed non-falling). A
   property the target block doesn't define is skipped.
+- Optional `"copy_properties"`: an object of **source** property name → **target** property name. The
+  source state's value of the first is carried (by its serialized name) into the second on the result —
+  for when the source and target name "the same" property differently (e.g. `{"half":"part"}` maps a
+  vanilla `DoublePlantBlock`'s `half=lower/upper` onto a mod's two-tall plant `part=lower/upper`). Skipped
+  if either property is absent or the value doesn't parse on the target.
 
 First match wins; unknown ids are logged and skipped. Substitution is **explicit** — a rule applies only
 to the block(s) it names, with no implicit cascade to sibling forms, so list each form (planks/stairs/
@@ -65,3 +70,16 @@ inert by default.
 
 The picked log is stamped `axis=x`, so it places lying on its side. This is the same mechanism a TFC
 pack uses for `{"no_gravity":"true"}` on a substituted cobble.
+
+### `copy_properties` (map a differently-named property — e.g. double plants)
+
+```json
+{ "from": "minecraft:lilac", "to": "othermod:tall_lilac",
+  "copy_properties": { "half": "part" } }
+```
+
+A vanilla double-tall plant stores its two halves as separate blueprint cells differing by `half`
+(`lower`/`upper`). If the target mod's two-tall plant uses a different property name (`part`), a plain
+swap would leave both cells at the target's default and desync the halves. `copy_properties` carries the
+per-cell `half` value into `part`, keeping the lower/upper halves aligned. (Both serialize `lower`/`upper`,
+so the value transfers directly.)

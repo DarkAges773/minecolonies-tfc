@@ -15,12 +15,14 @@ import java.util.Map;
  *
  * <p>{@link #properties} are blockstate property assignments (name → value) stamped onto whichever
  * candidate the player picks — e.g. {@code {"no_gravity":"true"}} so any picked TFC cobble is non-falling.
+ * {@link #copyProperties} carry a source property value into a differently-named target property (e.g.
+ * {@code {"half":"part"}} for double plants); see {@link SubstitutionRule}.
  *
  * <p>Example: {@code #minecraft:planks → #tfc:planks} lets any vanilla plank be replaced by a chosen
  * TFC plank.
  */
 public record CandidateRule(@Nullable Block fromBlock, @Nullable TagKey<Block> fromTag, TagKey<Block> toTag,
-                            Map<String, String> properties)
+                            Map<String, String> properties, Map<String, String> copyProperties)
 {
     public boolean matches(final BlockState state)
     {

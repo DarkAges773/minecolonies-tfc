@@ -1,5 +1,5 @@
 {
-  "__comment": "Vanilla flowers -> TFC plants (tfc:plant/<x>), with name/closest-match fixed defaults plus a candidate pool (mctfc:subst/plant/flower, keyed on the converted result) so the player can re-pick any TFC flower via the Replace GUI. Potted flowers (minecraft:potted_<x>) map the same way to TFC's own potted plant blocks (tfc:plant/potted/<x>). Double-tall vanilla flowers (sunflower/lilac/rose_bush/peony) are intentionally NOT mapped: TFC's only double-tall flower (foxglove) uses a 'part' property where vanilla uses 'half', so a simple swap would desync the two halves. Edit/reload with /reload.",
+  "__comment": "Vanilla flowers -> TFC plants (tfc:plant/<x>), with name/closest-match fixed defaults plus a candidate pool (mctfc:subst/plant/flower, keyed on the converted result) so the player can re-pick any TFC flower via the Replace GUI. Potted flowers (minecraft:potted_<x>) map the same way to TFC's own potted plant blocks (tfc:plant/potted/<x>). Double-tall vanilla flowers (sunflower/lilac/rose_bush/peony) map to TFC two-tall plants via copy_properties {half:part} (vanilla uses 'half', TFC uses 'part'; both serialize lower/upper), with a tall_flower pool. Edit/reload with /reload.",
   "replacements": [
     { "from": "minecraft:dandelion", "to": "tfc:plant/dandelion" },
     { "from": "minecraft:poppy", "to": "tfc:plant/poppy" },
@@ -31,6 +31,12 @@
     { "from": "minecraft:potted_lily_of_the_valley", "to": "tfc:plant/potted/lily_of_the_valley" },
     { "from": "minecraft:potted_wither_rose", "to": "tfc:plant/potted/black_orchid" },
     { "from": "minecraft:potted_torchflower", "to": "tfc:plant/potted/calendula" },
-    { "from_tag": "mctfc:subst/plant/potted_flower", "to_tag": "mctfc:subst/plant/potted_flower" }
+    { "from_tag": "mctfc:subst/plant/potted_flower", "to_tag": "mctfc:subst/plant/potted_flower" },
+
+    { "from": "minecraft:lilac", "to": "tfc:plant/lilac", "copy_properties": { "half": "part" } },
+    { "from": "minecraft:rose_bush", "to": "tfc:plant/rose", "copy_properties": { "half": "part" } },
+    { "from": "minecraft:sunflower", "to": "tfc:plant/sapphire_tower", "copy_properties": { "half": "part" } },
+    { "from": "minecraft:peony", "to": "tfc:plant/foxglove", "copy_properties": { "half": "part" } },
+    { "from_tag": "mctfc:subst/plant/tall_flower", "to_tag": "mctfc:subst/plant/tall_flower", "copy_properties": { "half": "part" } }
   ]
 }

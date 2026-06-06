@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:plant/foxglove",
+    "tfc:plant/hibiscus",
+    "tfc:plant/lilac",
+    "tfc:plant/rose",
+    "tfc:plant/sapphire_tower",
+    "tfc:plant/marigold",
+    "tfc:plant/sea_lavender",
+    "tfc:plant/pickerelweed",
+    "tfc:plant/arrowhead"
+  ]
+}

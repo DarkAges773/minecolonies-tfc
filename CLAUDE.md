@@ -188,7 +188,11 @@ default on) — applies to every Structurize placement, not opt-in per build (a 
 
 **Rule JSON** — each entry has exactly one source (`"from"` block id or `"from_tag"` block tag id) and one
 target (`"to"` block id → auto-substitution, or `"to_tag"` block tag id → interactive GUI pool); first
-match wins; unknown ids are logged and skipped. `:replacements` ships **no active rules** (a published
+match wins; unknown ids are logged and skipped. Two optional blockstate post-ops on the result:
+`"apply_properties"` (name → value, stamped onto the result, e.g. `{"lit":"true"}`) and `"copy_properties"`
+(source-property-name → target-property-name, carrying the source state's value across — e.g.
+`{"half":"part"}` maps vanilla `DoublePlantBlock`'s `half` onto a TFC two-tall plant's `part`; both serialize
+`lower`/`upper`). Both apply on the fixed-rule and the GUI-pick paths; a property the target lacks is skipped. `:replacements` ships **no active rules** (a published
 library must not rewrite consumers' blueprints) — the old `examples.json` is now copy-paste reference in
 [docs/substitution-rule-examples.md](docs/substitution-rule-examples.md) (fixed `to` swaps, `to_tag` wooden
 candidate pools, an `apply_properties` example). TFC rules ship in `:compat` (see "TFC default substitutions" below):
@@ -366,12 +370,24 @@ vanilla block, pool on the TFC-result tag) — never a fixed `to` + `to_tag` on 
   `tulip_<color>`, cornflower→grape_hyacinth, wither_rose→black_orchid, torchflower→calendula) **plus a candidate
   pool** (`mctfc:subst/plant/flower`, keyed on the converted result) of all 46 TFC ornamental flowers. **Potted**
   flowers (`minecraft:potted_<x>`) map the same way to TFC's own potted plant blocks (`tfc:plant/potted/<x>`) with
-  pool `mctfc:subst/plant/potted_flower`. The pool tags are the intersection of TFC's potted (decorative) set and its
-  standalone plants, minus non-flowers (saplings/ferns/krummholz/cactus/grass/…) and **foxglove**. Flowers are plain
+  pool `mctfc:subst/plant/potted_flower`. The small-flower pool is the intersection of TFC's potted (decorative) set and its
+  standalone plants, minus non-flowers (saplings/ferns/krummholz/cactus/grass/…) and **all double-tall plants** (rose,
+  sapphire_tower, foxglove — they live in the separate `tall_flower` pool; mixing them into the single-flower pool would let
+  a 2-tall plant be picked for a 1-block slot). Flowers are plain
   block-state substitution (no engine change — they go through the same `handleBlockPlacement`/preview path as any
-  block). **Not mapped: vanilla double-tall flowers** (sunflower/lilac/rose_bush/peony) — TFC's only double-tall
-  flower (foxglove) keys its halves on a `part` property where vanilla uses `half`, so a naive swap would desync the
-  two halves; left vanilla. The pool/rule files are hand-curated static JSON (not from gen_tfc_substitutions.sh).
+  block). The pool/rule files are hand-curated static JSON (not from gen_tfc_substitutions.sh).
+- **Double-tall flowers** (same [tfc_flowers.json](compat/src/main/resources/data/mctfc/block_substitutions/tfc_flowers.json)):
+  vanilla `DoublePlantBlock`s map to TFC two-tall plants — lilac→lilac, rose_bush→rose, sunflower→sapphire_tower,
+  peony→foxglove — plus a `mctfc:subst/plant/tall_flower` pool (foxglove/hibiscus/lilac/rose/sapphire_tower +
+  the water ones marigold/sea_lavender/pickerelweed/arrowhead). **Gotcha that needed an engine feature:** TFC
+  two-tall plants (`TALL_GRASS`/`TALL_WATER`/`TALL_WATER_FRESH` types) aren't vanilla `DoublePlantBlock`s — they
+  key their halves on a **`part`** property where vanilla uses **`half`** (both serialize `lower`/`upper`). A plain
+  swap would leave both cells at the target's default `part` (desynced halves). So each double rule carries
+  `"copy_properties": { "half": "part" }` — the engine's new source→target property-copy (see "The substitution
+  feature"), applied per cell, so the lower/upper halves stay aligned. (Both blueprint halves are separate
+  `BlockInfo`s; the rewrite fires on each, and since the TFC target isn't a `DoublePlantBlock`, Structurize's
+  generic per-cell placement places each independently — works as long as the build goes bottom-up onto valid
+  ground, which TFC soil substitution provides.)
 
 ### Farmer farms TFC crops (till → plant → fertilize → harvest) — DONE & verified
 

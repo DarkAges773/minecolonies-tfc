@@ -162,27 +162,33 @@ public final class BlockSubstitutions
         final Block source = state.getBlock();
         final Block base = datapackTarget(source);
 
-        // Determine the final target block and which rule's apply_properties go with it.
+        // Determine the final target block and which rule's properties go with it.
         Block target = base;
         Map<String, String> properties = Map.of();
+        Map<String, String> copyProps = Map.of();
         if (overrides != null && !overrides.isEmpty() && overrides.get(base) != null)
         {
             // Player pick on the converted block — properties come from the candidate rule.
             target = overrides.get(base);
-            properties = candidateFor(base).map(CandidateRule::properties).orElse(Map.of());
+            final Optional<CandidateRule> rule = candidateFor(base);
+            properties = rule.map(CandidateRule::properties).orElse(Map.of());
+            copyProps = rule.map(CandidateRule::copyProperties).orElse(Map.of());
         }
         else
         {
             // Datapack only — properties come from the matched fixed rule (if any).
-            properties = fixedRuleFor(source).map(SubstitutionRule::properties).orElse(Map.of());
+            final Optional<SubstitutionRule> rule = fixedRuleFor(source);
+            properties = rule.map(SubstitutionRule::properties).orElse(Map.of());
+            copyProps = rule.map(SubstitutionRule::copyProperties).orElse(Map.of());
         }
 
-        if (target == source && properties.isEmpty())
+        if (target == source && properties.isEmpty() && copyProps.isEmpty())
         {
             return state;
         }
         BlockState result = (target == source) ? state : copyProperties(state, target.defaultBlockState());
-        return properties.isEmpty() ? result : applyProperties(result, properties);
+        result = properties.isEmpty() ? result : applyProperties(result, properties);
+        return copyProps.isEmpty() ? result : applyCopyProperties(state, result, copyProps);
     }
 
     /** The fixed (non-interactive) rule whose source matches this block, if any — for its properties. */
@@ -217,6 +223,33 @@ public final class BlockSubstitutions
     private static <T extends Comparable<T>> BlockState setFromString(final BlockState state, final Property<T> property, final String value)
     {
         return property.getValue(value).map(v -> state.setValue(property, v)).orElse(state);
+    }
+
+    /**
+     * Carry a value from a source-state property into a <i>differently-named</i> property on the result
+     * (source-name → target-name). Used to map vanilla {@code DoublePlantBlock}'s {@code half} onto a TFC
+     * two-tall plant's {@code part} (both serialize {@code lower}/{@code upper}), so a substituted double
+     * plant keeps its halves aligned. Each entry is skipped if either property is absent or the value
+     * doesn't parse on the target.
+     */
+    private static BlockState applyCopyProperties(final BlockState source, BlockState result, final Map<String, String> copyProps)
+    {
+        for (final Map.Entry<String, String> entry : copyProps.entrySet())
+        {
+            final Property<?> srcProp = source.getBlock().getStateDefinition().getProperty(entry.getKey());
+            final Property<?> dstProp = result.getBlock().getStateDefinition().getProperty(entry.getValue());
+            if (srcProp != null && dstProp != null)
+            {
+                result = setFromString(result, dstProp, valueName(source, srcProp));
+            }
+        }
+        return result;
+    }
+
+    /** The serialized name of {@code property}'s value in {@code state} (e.g. {@code half=LOWER} → {@code "lower"}). */
+    private static <T extends Comparable<T>> String valueName(final BlockState state, final Property<T> property)
+    {
+        return property.getName(state.getValue(property));
     }
 
     /**

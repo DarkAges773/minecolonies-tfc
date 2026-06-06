@@ -15,11 +15,16 @@ import java.util.Map;
  * after the swap — e.g. {@code {"no_gravity":"true"}} so a substituted TFC cobble is placed non-falling.
  * A property the target block doesn't define is skipped.
  *
+ * <p>{@link #copyProperties} carry a value from a <i>source</i> property into a <i>differently-named</i>
+ * target property (source-name → target-name) — e.g. {@code {"half":"part"}} maps vanilla
+ * {@code DoublePlantBlock}'s {@code half=lower/upper} onto a TFC two-tall plant's {@code part=lower/upper},
+ * so a substituted double plant keeps its two halves aligned. Skipped if either property is absent.
+ *
  * <p>Matching is per-block (both exact-block and block-tag membership are block-level), so the
  * engine can cache results keyed by {@link Block}.
  */
 public record SubstitutionRule(@Nullable Block fromBlock, @Nullable TagKey<Block> fromTag, Block to,
-                               Map<String, String> properties)
+                               Map<String, String> properties, Map<String, String> copyProperties)
 {
     public boolean matches(final BlockState state)
     {
