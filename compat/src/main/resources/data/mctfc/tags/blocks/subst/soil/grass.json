@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:grass/loam",
+    "tfc:grass/sandy_loam",
+    "tfc:grass/silt",
+    "tfc:grass/silty_loam"
+  ]
+}

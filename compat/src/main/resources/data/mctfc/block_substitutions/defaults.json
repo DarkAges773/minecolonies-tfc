@@ -6,6 +6,12 @@
     { "from": "minecraft:dirt", "to": "tfc:dirt/loam" },
     { "from_tag": "mctfc:subst/soil/dirt", "to_tag": "mctfc:subst/soil/dirt" },
 
+    { "from": "minecraft:grass_block", "to": "tfc:grass/loam" },
+    { "from_tag": "mctfc:subst/soil/grass", "to_tag": "mctfc:subst/soil/grass" },
+
+    { "from": "minecraft:dirt_path", "to": "tfc:grass_path/loam" },
+    { "from_tag": "mctfc:subst/soil/grass_path", "to_tag": "mctfc:subst/soil/grass_path" },
+
     { "from": "minecraft:torch", "to": "tfc:torch" },
     { "from": "minecraft:wall_torch", "to": "tfc:wall_torch" },
 

@@ -1,10 +1,14 @@
 package com.mctfc;
 
+import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers;
+import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.AddType;
+import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.BlockGrassPathPlacementHandler;
 import com.mctfc.block.MortaredCobbleRegistry;
 import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.MortaredCobbleData;
 import com.mctfc.food.FoodPreservation;
 import com.mctfc.network.McFarmingNetwork;
+import com.mctfc.placement.TfcSoilPlacementHandler;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -43,6 +47,11 @@ public class MineColoniesTFC
         modBus.addListener(FoodPreservation::onCommonSetup);
         // Network channel for the farming bridge (per-field harvest-mode toggle from the field GUI).
         McFarmingNetwork.register();
+        // Let the builder place substituted TFC grass / grass-path by requesting the matching TFC dirt
+        // (suppliable) instead of the grass/path itself — mirroring vanilla's grass/path handling. Registered
+        // before Structurize's BlockGrassPathPlacementHandler, which would otherwise place a vanilla path for
+        // TFC's PathBlock (a DirtPathBlock subclass).
+        PlacementHandlers.add(new TfcSoilPlacementHandler(), BlockGrassPathPlacementHandler.class, AddType.BEFORE);
         LOGGER.info("MineColonies x TerraFirmaCraft bridge loaded.");
     }
 }
