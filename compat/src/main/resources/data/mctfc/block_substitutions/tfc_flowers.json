@@ -1,0 +1,36 @@
+{
+  "__comment": "Vanilla flowers -> TFC plants (tfc:plant/<x>), with name/closest-match fixed defaults plus a candidate pool (mctfc:subst/plant/flower, keyed on the converted result) so the player can re-pick any TFC flower via the Replace GUI. Potted flowers (minecraft:potted_<x>) map the same way to TFC's own potted plant blocks (tfc:plant/potted/<x>). Double-tall vanilla flowers (sunflower/lilac/rose_bush/peony) are intentionally NOT mapped: TFC's only double-tall flower (foxglove) uses a 'part' property where vanilla uses 'half', so a simple swap would desync the two halves. Edit/reload with /reload.",
+  "replacements": [
+    { "from": "minecraft:dandelion", "to": "tfc:plant/dandelion" },
+    { "from": "minecraft:poppy", "to": "tfc:plant/poppy" },
+    { "from": "minecraft:blue_orchid", "to": "tfc:plant/blue_orchid" },
+    { "from": "minecraft:allium", "to": "tfc:plant/allium" },
+    { "from": "minecraft:azure_bluet", "to": "tfc:plant/houstonia" },
+    { "from": "minecraft:red_tulip", "to": "tfc:plant/tulip_red" },
+    { "from": "minecraft:orange_tulip", "to": "tfc:plant/tulip_orange" },
+    { "from": "minecraft:white_tulip", "to": "tfc:plant/tulip_white" },
+    { "from": "minecraft:pink_tulip", "to": "tfc:plant/tulip_pink" },
+    { "from": "minecraft:oxeye_daisy", "to": "tfc:plant/oxeye_daisy" },
+    { "from": "minecraft:cornflower", "to": "tfc:plant/grape_hyacinth" },
+    { "from": "minecraft:lily_of_the_valley", "to": "tfc:plant/lily_of_the_valley" },
+    { "from": "minecraft:wither_rose", "to": "tfc:plant/black_orchid" },
+    { "from": "minecraft:torchflower", "to": "tfc:plant/calendula" },
+    { "from_tag": "mctfc:subst/plant/flower", "to_tag": "mctfc:subst/plant/flower" },
+
+    { "from": "minecraft:potted_dandelion", "to": "tfc:plant/potted/dandelion" },
+    { "from": "minecraft:potted_poppy", "to": "tfc:plant/potted/poppy" },
+    { "from": "minecraft:potted_blue_orchid", "to": "tfc:plant/potted/blue_orchid" },
+    { "from": "minecraft:potted_allium", "to": "tfc:plant/potted/allium" },
+    { "from": "minecraft:potted_azure_bluet", "to": "tfc:plant/potted/houstonia" },
+    { "from": "minecraft:potted_red_tulip", "to": "tfc:plant/potted/tulip_red" },
+    { "from": "minecraft:potted_orange_tulip", "to": "tfc:plant/potted/tulip_orange" },
+    { "from": "minecraft:potted_white_tulip", "to": "tfc:plant/potted/tulip_white" },
+    { "from": "minecraft:potted_pink_tulip", "to": "tfc:plant/potted/tulip_pink" },
+    { "from": "minecraft:potted_oxeye_daisy", "to": "tfc:plant/potted/oxeye_daisy" },
+    { "from": "minecraft:potted_cornflower", "to": "tfc:plant/potted/grape_hyacinth" },
+    { "from": "minecraft:potted_lily_of_the_valley", "to": "tfc:plant/potted/lily_of_the_valley" },
+    { "from": "minecraft:potted_wither_rose", "to": "tfc:plant/potted/black_orchid" },
+    { "from": "minecraft:potted_torchflower", "to": "tfc:plant/potted/calendula" },
+    { "from_tag": "mctfc:subst/plant/potted_flower", "to_tag": "mctfc:subst/plant/potted_flower" }
+  ]
+}

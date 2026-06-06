@@ -360,6 +360,18 @@ vanilla block, pool on the TFC-result tag) — never a fixed `to` + `to_tag` on 
   variant). The rule files and tags are emitted by [gen_tfc_substitutions.sh](compat/gen_tfc_substitutions.sh)
   (re-run if TFC's rock/wood set changes); they're plain static JSON, so `/reload`-able and editable. Validated:
   every fixed-rule target and all pool-tag members (880) resolve to real TFC blocks.
+- **Flowers** ([tfc_flowers.json](compat/src/main/resources/data/mctfc/block_substitutions/tfc_flowers.json)):
+  vanilla small flowers → TFC plants (`tfc:plant/<x>`) with name/closest-match **fixed defaults** (dandelion/poppy/
+  blue_orchid/allium/oxeye_daisy/lily_of_the_valley keep their name; azure_bluet→houstonia, the four tulips→
+  `tulip_<color>`, cornflower→grape_hyacinth, wither_rose→black_orchid, torchflower→calendula) **plus a candidate
+  pool** (`mctfc:subst/plant/flower`, keyed on the converted result) of all 46 TFC ornamental flowers. **Potted**
+  flowers (`minecraft:potted_<x>`) map the same way to TFC's own potted plant blocks (`tfc:plant/potted/<x>`) with
+  pool `mctfc:subst/plant/potted_flower`. The pool tags are the intersection of TFC's potted (decorative) set and its
+  standalone plants, minus non-flowers (saplings/ferns/krummholz/cactus/grass/…) and **foxglove**. Flowers are plain
+  block-state substitution (no engine change — they go through the same `handleBlockPlacement`/preview path as any
+  block). **Not mapped: vanilla double-tall flowers** (sunflower/lilac/rose_bush/peony) — TFC's only double-tall
+  flower (foxglove) keys its halves on a `part` property where vanilla uses `half`, so a naive swap would desync the
+  two halves; left vanilla. The pool/rule files are hand-curated static JSON (not from gen_tfc_substitutions.sh).
 
 ### Farmer farms TFC crops (till → plant → fertilize → harvest) — DONE & verified
 
