@@ -14,7 +14,8 @@
     "MixinFoodUtils",
     "MixinEntityAIStructureMiner",
     "MixinAbstractEntityAIStructure",
-    "MixinSupport"
+    "MixinSupport",
+    "MixinCitizenAI"
   ],
   "client": [
     "MixinWindowField"

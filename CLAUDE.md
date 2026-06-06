@@ -124,8 +124,9 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
   the food-spoilage trio `AbstractTileEntityRackAccessor` + `MixinRackInventory` + `MixinFoodUtils`
   (colony-storage preservation + FIFO/skip-rotten eating + the TFC-food saturation bridge; see "Food spoilage management"
   below), `MixinEntityAIStructureMiner` (ladder backfill honours the hut fill-block setting; see "Miner shaft uses the hut
-  fill-block setting"), and the collapse-support pair `MixinAbstractEntityAIStructure` + `MixinSupport` (build areas are
-  collapse-proof while built; see "Build areas are collapse-proof"). Applying MixinGradle here ALSO injects the runtime refmap
+  fill-block setting"), the collapse-support pair `MixinAbstractEntityAIStructure` + `MixinSupport` (build areas are
+  collapse-proof while built; see "Build areas are collapse-proof"), and `MixinCitizenAI` (rest for TFC's *localized* rain at
+  a fixed worksite anchor, not the global flag; see "Citizens rest for TFC's localized rain"). Applying MixinGradle here ALSO injects the runtime refmap
   remapping (`mixin.env.remapRefMap`) into `:compat`'s dev runs — needed even when this config was empty,
   because without it *other* mods' SRG-named mixins (e.g. Patchouli's `AccessorScreen`) fail to apply in
   the official-mapped dev env (`InvalidAccessorException`). MixinGradle auto-registers `:compat`'s own
@@ -661,6 +662,35 @@ then releases it — by which point the walls are placed (non-falling substitute
     when nothing is building — only ever runs inside TFC's already-rare, gated queries.
   - All `@Mixin(remap = false)` (MineColonies/TFC own classes). Server-side. Once the build finishes the box is dropped and normal
     TFC collapse physics resume.
+
+### Citizens rest for TFC's localized rain (not the global flag) — DONE, in-world test pending
+
+MineColonies citizens stop working and "rest" (the `IDLE`/`BAD_WEATHER` branch of `CitizenAI#calculateNextState`) when
+`Level#isRaining()` is true. That's the **global** dimension-wide vanilla flag. TFC keeps the vanilla weather cycle but
+makes rain **localized**: `EnvironmentHelpers.isRainingOrSnowing(level, pos) = level.isRaining() && WorldTracker.get(level).isRaining(tick, Climate.getRainfall(pos))`
+— precipitation only actually falls where the position's annual rainfall beats the current event intensity, and TFC's
+temperature decides rain vs snow (`Climate.getPrecipitation`). TFC also redirects `Level#isRainingAt(pos)` through this
+model (its `LevelMixin`). So under TFC the global flag over-triggers: citizens rest during any rain *cycle* even when their
+colony sits in an arid cell where nothing falls (and `world.isRaining()` is likewise on during snow, exactly like vanilla).
+
+[MixinCitizenAI](compat/src/main/java/com/mctfc/mixin/MixinCitizenAI.java) (`@Mixin(remap = false)`, `@Redirect` the lone
+`Level#isRaining()` call in `calculateNextState`; the vanilla target's `@At` is `remap = true`, the enclosing injector
+isn't) replaces it with `EnvironmentHelpers.isRainingOrSnowing(world, anchor)` — **rain *or* snow** actually falling at the
+anchor, preserving vanilla's stop-for-any-precipitation behaviour but localized to the colony.
+- **Fixed anchor, not the live citizen position** — the anchor is the citizen's **work building** (`getCitizenData().getWorkBuilding().getPosition()`),
+  else the **colony center** (`getCitizenColonyHandler().getColonyOrRegister().getCenter()`), else the citizen as a last
+  resort (shadows the `private final EntityCitizen citizen` field). This is deliberate: TFC rain is localized, so sampling
+  the *moving* citizen at a rain border creates a feedback loop (in rain → rest → wander to a dry spot → work → walk back
+  into rain → rest …) that flip-flops every decide cycle (~10 ticks / 0.5 s; see the cadence note). Anchoring to the
+  worksite makes the decision "is it raining on my job?" — stable wherever the citizen wanders, so transitions happen only
+  when the local weather genuinely starts/stops (TFC's triangular intensity ramp crosses the site's rainfall threshold
+  ~once up, once down per ~18000–24000-tick event). Per-hut localization is a feature: a hut on the dry side of a border
+  keeps working while one on the wet side rests.
+- **Cheap:** the redirect runs ~2×/s per active citizen (the `decideAiTask` cadence) and is an O(1) `isRaining()` field read
+  AND a cached chunk-rainfall lookup — no throttling needed. `:compat` depends on TFC directly, so importing
+  `net.dries007.tfc.util.EnvironmentHelpers` is fine. Guards bypass this branch entirely (they work in rain) so are
+  unaffected. **Follow-up if wanted:** make it rain-only (`Climate.getPrecipitation(world, anchor) == RAIN`, a deliberate
+  change from vanilla snow-parity), and/or expose a config toggle.
 
 ### Non-falling ("mortared"/"cemented") cobble — DONE & verified
 
