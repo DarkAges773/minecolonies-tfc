@@ -1,0 +1,6 @@
+{
+  "pack": {
+    "description": "MineColonies x TFC — ArborFirmaCraft compat (auto-enabled only when the 'afc' mod is installed)",
+    "pack_format": 15
+  }
+}

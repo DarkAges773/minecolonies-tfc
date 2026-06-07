@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "afc:wood/stripped_log/baobab",
+    "afc:wood/stripped_log/cypress",
+    "afc:wood/stripped_log/eucalyptus",
+    "afc:wood/stripped_log/fig",
+    "afc:wood/stripped_log/hevea",
+    "afc:wood/stripped_log/ipe",
+    "afc:wood/stripped_log/ironwood",
+    "afc:wood/stripped_log/mahogany",
+    "afc:wood/stripped_log/teak",
+    "afc:wood/stripped_log/tualang"
+  ]
+}

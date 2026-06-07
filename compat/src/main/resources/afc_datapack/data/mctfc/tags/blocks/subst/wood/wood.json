@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "afc:wood/wood/baobab",
+    "afc:wood/wood/cypress",
+    "afc:wood/wood/eucalyptus",
+    "afc:wood/wood/fig",
+    "afc:wood/wood/hevea",
+    "afc:wood/wood/ipe",
+    "afc:wood/wood/ironwood",
+    "afc:wood/wood/mahogany",
+    "afc:wood/wood/teak",
+    "afc:wood/wood/tualang"
+  ]
+}

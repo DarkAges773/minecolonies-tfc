@@ -4,6 +4,7 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.AddType;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.BlockGrassPathPlacementHandler;
 import com.mctfc.block.MortaredCobbleRegistry;
+import com.mctfc.data.AfcDataPack;
 import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.MortaredCobbleData;
 import com.mctfc.food.FoodPreservation;
@@ -43,6 +44,9 @@ public class MineColoniesTFC
         modBus.addListener(MortaredCobbleData::onAddPackFinders);
         // Optional built-in datapack: enabled only when the 'beneath' mod is present (Beneath-specific rules).
         modBus.addListener(BeneathDataPack::onAddPackFinders);
+        // Optional built-in datapack: enabled only when ArborFirmaCraft ('afc') is present — AFC wood overrides
+        // (priority 1, so they beat the base TFC wood mapping) + AFC woods joining the candidate pools.
+        modBus.addListener(AfcDataPack::onAddPackFinders);
         // Register the colony-storage food-preservation trait (TFC food decays slower in colony-owned racks).
         modBus.addListener(FoodPreservation::onCommonSetup);
         // Network channel for the farming bridge (per-field harvest-mode toggle from the field GUI).
