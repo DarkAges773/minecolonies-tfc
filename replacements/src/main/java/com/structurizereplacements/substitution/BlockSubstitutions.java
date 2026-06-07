@@ -108,6 +108,16 @@ public final class BlockSubstitutions
     }
 
     /**
+     * Whether {@code block} is a Domum Ornamentum materialized block — not a usable plain-substitution
+     * source or candidate target (its material lives in NBT; bare, it renders as a cycling preview). The GUI
+     * filters these out of candidate pools/rows. Delegates to {@link DomumMaterialRewriter#isMaterializedBlock}.
+     */
+    public static boolean isMaterializedSource(final Block block)
+    {
+        return DomumMaterialRewriter.isMaterializedBlock(block);
+    }
+
+    /**
      * All blocks in a single blueprint entry that could be a substitution source: the placed block plus
      * any material(s) a Domum Ornamentum block carries in its {@code textureData} NBT. Used by the GUI to
      * enumerate pickable rows (so a DO panel's contained oak surfaces alongside bare oak).
@@ -141,8 +151,15 @@ public final class BlockSubstitutions
     {
         for (final Block raw : sourceBlocksOf(info))
         {
+            // A Domum Ornamentum host block (its material lives in NBT, handled via the contained-block rows
+            // collected alongside it) is not a meaningful plain-substitution source — skip it so it doesn't
+            // show as a cycling, unpickable row.
+            if (DomumMaterialRewriter.isMaterializedBlock(raw))
+            {
+                continue;
+            }
             final Block resolved = datapackTarget(raw);
-            if (candidateFor(resolved).isPresent())
+            if (!DomumMaterialRewriter.isMaterializedBlock(resolved) && candidateFor(resolved).isPresent())
             {
                 out.add(resolved);
             }

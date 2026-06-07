@@ -24,24 +24,37 @@ import java.util.concurrent.CompletableFuture;
  * replacement choices.
  *
  * <ul>
- *   <li>{@link #sources()} — distinct candidate blocks in the building's blueprint, loaded asynchronously
- *       (the building view only knows its pack/path) the same way {@code WindowBuildBuilding} does;</li>
+ *   <li>{@link #sources()} — distinct candidate blocks in the blueprint that <i>will be built</i>
+ *       (the <b>target</b> level/style, supplied by {@code WindowBuildBuilding} — NOT the building's current
+ *       level), loaded asynchronously the same way that window loads its resource list;</li>
  *   <li>{@link #current()} — the building view's synced choices ({@code MixinAbstractBuildingView});</li>
  *   <li>{@link #choose} — optimistically update the view, send {@link SetBuildingChoicesMessage} to persist
  *       on the server, re-bake the preview, and refresh the Build Options material list.</li>
  * </ul>
+ *
+ * <p>The choice map is per-building (block → block), not per-level, so editing it for the next tier's blocks
+ * just augments the same map; only the <i>source list</i> must reflect the tier about to be built — hence the
+ * caller passes the resolved target {@code structurePack}/{@code structurePath} rather than the view's current
+ * ones (which would show the current tier and hide blocks new to the upgrade).
  */
 public class BuildingChoiceContext implements ReplacementChoiceContext
 {
     private final IBuildingView view;
+    private final String structurePack;
+    private final String structurePath;
     private final Runnable refreshMaterials;
 
     private Runnable reloader = () -> {};
     private List<Block> sources = List.of();
 
-    public BuildingChoiceContext(final IBuildingView view, final Runnable refreshMaterials)
+    public BuildingChoiceContext(final IBuildingView view,
+                                 final String structurePack,
+                                 final String structurePath,
+                                 final Runnable refreshMaterials)
     {
         this.view = view;
+        this.structurePack = structurePack;
+        this.structurePath = structurePath;
         this.refreshMaterials = refreshMaterials;
         loadBlueprintSources();
     }
@@ -95,7 +108,7 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
 
     private void loadBlueprintSources()
     {
-        final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(view.getStructurePack(), view.getStructurePath());
+        final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(structurePack, structurePath);
         ClientFutureProcessor.queueBlueprint(new ClientFutureProcessor.BlueprintProcessingData(future, this::onBlueprintLoaded));
     }
 

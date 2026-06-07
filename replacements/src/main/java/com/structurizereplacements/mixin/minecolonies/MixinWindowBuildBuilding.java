@@ -2,6 +2,7 @@ package com.structurizereplacements.mixin.minecolonies;
 
 import com.ldtteam.blockui.PaneBuilders;
 import com.ldtteam.blockui.views.BOWindow;
+import com.ldtteam.blockui.views.DropDownList;
 import com.ldtteam.blockui.views.View;
 import com.minecolonies.api.colony.buildings.views.IBuildingView;
 import com.minecolonies.core.client.gui.WindowBuildBuilding;
@@ -15,6 +16,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.List;
 
 /**
  * Client-only: adds a "Replace" button to MineColonies' Build Options window ({@code WindowBuildBuilding})
@@ -41,6 +44,15 @@ public abstract class MixinWindowBuildBuilding
     @Shadow(remap = false)
     private IBuildingView building;
 
+    @Shadow(remap = false)
+    private DropDownList stylesDropDownList;
+
+    @Shadow(remap = false)
+    private List<String> styles;
+
+    @Shadow(remap = false)
+    public abstract boolean canBeUpgraded();
+
     @Inject(method = "<init>", at = @At("TAIL"), remap = false)
     private void structurizereplacements$addReplaceButton(final CallbackInfo ci)
     {
@@ -56,10 +68,47 @@ public abstract class MixinWindowBuildBuilding
         // MineColonies' own mini-button frame as the (light) background; the icon is overlaid over it.
         button.setImage(new ResourceLocation("minecolonies", "textures/gui/builderhut/builder_button_mini.png"), false);
         button.setHandler(b -> new WindowReplacements(
-                new BuildingChoiceContext(this.building, this::updateResources), (BOWindow) (Object) this).open());
+                new BuildingChoiceContext(this.building, targetStructurePack(), targetStructurePath(), this::updateResources),
+                (BOWindow) (Object) this).open());
         window.addChild(button);
         // Tooltip must be built AFTER the button is attached — it resolves the hover pane's parent window.
         PaneBuilders.singleLineTooltip(
                 Component.translatable("com.ldtteam.structurize.gui.scantool.replace"), button);
+    }
+
+    /**
+     * The structure pack of the blueprint that will actually be built — the style currently selected in the
+     * window's dropdown (mirrors {@code updateResources}), falling back to the building's own pack if the
+     * dropdown isn't populated yet.
+     */
+    private String targetStructurePack()
+    {
+        final int idx = stylesDropDownList == null ? -1 : stylesDropDownList.getSelectedIndex();
+        if (styles != null && idx >= 0 && idx < styles.size())
+        {
+            return styles.get(idx);
+        }
+        return this.building.getStructurePack();
+    }
+
+    /**
+     * The blueprint path of the <i>target</i> level (current + 1 when upgradable, else current) — the same
+     * next-level path {@code WindowBuildBuilding#updateResources} loads for its material list, so the picker
+     * lists the blocks about to be built rather than the current tier's.
+     */
+    private String targetStructurePath()
+    {
+        final String current = this.building.getStructurePath();
+        if (current == null || current.isEmpty())
+        {
+            return current;
+        }
+        int nextLevel = this.building.getBuildingLevel();
+        if (canBeUpgraded())
+        {
+            nextLevel = this.building.getBuildingLevel() + 1;
+        }
+        final String base = current.replace(".blueprint", "");
+        return base.substring(0, base.length() - 1) + nextLevel + ".blueprint";
     }
 }

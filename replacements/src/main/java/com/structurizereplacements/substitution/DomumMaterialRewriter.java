@@ -39,6 +39,18 @@ public final class DomumMaterialRewriter
     private static final String TEXTURE_DATA_KEY = "textureData";
 
     /**
+     * Whether {@code block} is a Domum Ornamentum "materialized" block (panel, brick, framed, DO door, …).
+     * These carry their real material(s) in tile-entity NBT, so they aren't meaningful plain-substitution
+     * sources or candidate targets — a bare DO block has no chosen material, renders as a cycling preview,
+     * and the player can't specify how it would look. DO registers some of them into vanilla tags (e.g. its
+     * door is in {@code minecraft:wooden_doors}), so the GUI must filter them out of candidate pools/rows.
+     */
+    public static boolean isMaterializedBlock(@Nullable final Block block)
+    {
+        return block instanceof IMateriallyTexturedBlock;
+    }
+
+    /**
      * Whether this blueprint entry is a Domum Ornamentum "materialized" block carrying texture data — i.e.
      * one whose preview material lives in tile-entity NBT. Used as the predicate for the preview-render
      * blueprint transform (so it only touches DO blocks, leaving the host state untouched).

@@ -136,7 +136,10 @@ public class WindowReplacements extends AbstractWindowSkeleton
         final List<ItemStack> pool = new ArrayList<>();
         final Map<Item, Block> byDisplayItem = new HashMap<>();
         ForgeRegistries.BLOCKS.tags().getTag(rule.toTag()).forEach(block -> {
-            if (block == Blocks.AIR)
+            // Skip air and Domum Ornamentum materialized blocks: DO registers some (e.g. its door) into
+            // vanilla tags like minecraft:wooden_doors, but a bare DO block has no chosen material — it
+            // renders as a cycling preview and can't be meaningfully picked as a substitution target.
+            if (block == Blocks.AIR || BlockSubstitutions.isMaterializedSource(block))
             {
                 return;
             }
