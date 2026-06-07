@@ -37,7 +37,12 @@
     { "from_tag": "structurizereplacements:subst/concrete_powder",    "to_tag": "structurizereplacements:subst/concrete_powder" },
     { "from_tag": "structurizereplacements:subst/beds",               "to_tag": "structurizereplacements:subst/beds" },
 
+    { "from_tag": "minecraft:leaves",                        "to_tag": "minecraft:leaves" },
+
     { "from_tag": "minecraft:small_flowers",                 "to_tag": "minecraft:small_flowers" },
-    { "from_tag": "structurizereplacements:subst/tall_flowers", "to_tag": "structurizereplacements:subst/tall_flowers" }
+    { "from_tag": "structurizereplacements:subst/tall_flowers",  "to_tag": "structurizereplacements:subst/tall_flowers" },
+    { "from_tag": "minecraft:saplings",                      "to_tag": "minecraft:saplings" },
+    { "from_tag": "structurizereplacements:subst/mushrooms",     "to_tag": "structurizereplacements:subst/mushrooms" },
+    { "from_tag": "structurizereplacements:subst/potted_plants", "to_tag": "structurizereplacements:subst/potted_plants" }
   ]
 }
