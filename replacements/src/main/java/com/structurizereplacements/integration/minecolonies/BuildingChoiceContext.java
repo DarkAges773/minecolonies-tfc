@@ -147,12 +147,25 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
 
     private void loadBlueprintSources()
     {
-        // Update mode → the next-tier blueprint passed in by the window (what will be built); current mode →
-        // the building view's current pack/path (the tier as it stands now — the pre-fix "old" behavior).
+        // Update mode → the next-tier blueprint passed in by the window (what will be built). Current mode →
+        // the building's CURRENT tier: the view's structure path carries the original build-level digit (not
+        // the upgraded level), so re-stamp it with the building's actual current level — same trailing-digit
+        // scheme MineColonies uses to derive a level's blueprint.
         final String pack = updateMode ? targetPack : view.getStructurePack();
-        final String path = updateMode ? targetPath : view.getStructurePath();
+        final String path = updateMode ? targetPath : pathForLevel(view.getStructurePath(), view.getBuildingLevel());
         final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(pack, path);
         ClientFutureProcessor.queueBlueprint(new ClientFutureProcessor.BlueprintProcessingData(future, this::onBlueprintLoaded));
+    }
+
+    /** The blueprint path for a given level: the base path with its trailing level digit replaced by {@code level}. */
+    private static String pathForLevel(final String basePath, final int level)
+    {
+        if (basePath == null || basePath.isEmpty())
+        {
+            return basePath;
+        }
+        final String base = basePath.replace(".blueprint", "");
+        return base.substring(0, base.length() - 1) + level + ".blueprint";
     }
 
     private void onBlueprintLoaded(final Blueprint blueprint)
