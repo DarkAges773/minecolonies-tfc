@@ -40,21 +40,24 @@ import java.util.concurrent.CompletableFuture;
 public class BuildingChoiceContext implements ReplacementChoiceContext
 {
     private final IBuildingView view;
-    private final String structurePack;
-    private final String structurePath;
+    private final String targetPack;
+    private final String targetPath;
     private final Runnable refreshMaterials;
+
+    /** true = source from the to-be-built (next tier) palette (default); false = the current tier's palette. */
+    private boolean updateMode = true;
 
     private Runnable reloader = () -> {};
     private List<Block> sources = List.of();
 
     public BuildingChoiceContext(final IBuildingView view,
-                                 final String structurePack,
-                                 final String structurePath,
+                                 final String targetPack,
+                                 final String targetPath,
                                  final Runnable refreshMaterials)
     {
         this.view = view;
-        this.structurePack = structurePack;
-        this.structurePath = structurePath;
+        this.targetPack = targetPack;
+        this.targetPath = targetPath;
         this.refreshMaterials = refreshMaterials;
         loadBlueprintSources();
     }
@@ -101,14 +104,54 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
     }
 
     @Override
+    public void reset()
+    {
+        // Optimistic local clear, then tell the server to drop all picks for this building.
+        if (view instanceof PlacementChoiceHolder holder)
+        {
+            holder.setReplacementChoices(null);
+        }
+        McNetwork.sendBuildingChoices(view.getPosition(), Map.of());
+        BlueprintHandler.getInstance().clearCache();
+        refreshMaterials.run();
+    }
+
+    @Override
     public void onClosed()
     {
         refreshMaterials.run();
     }
 
+    @Override
+    public boolean hasPaletteModeToggle()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isUpdateMode()
+    {
+        return updateMode;
+    }
+
+    @Override
+    public void setUpdateMode(final boolean update)
+    {
+        if (update == updateMode)
+        {
+            return;
+        }
+        updateMode = update;
+        loadBlueprintSources(); // async; the reloader redraws the rows when the blueprint resolves
+    }
+
     private void loadBlueprintSources()
     {
-        final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(structurePack, structurePath);
+        // Update mode → the next-tier blueprint passed in by the window (what will be built); current mode →
+        // the building view's current pack/path (the tier as it stands now — the pre-fix "old" behavior).
+        final String pack = updateMode ? targetPack : view.getStructurePack();
+        final String path = updateMode ? targetPath : view.getStructurePath();
+        final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(pack, path);
         ClientFutureProcessor.queueBlueprint(new ClientFutureProcessor.BlueprintProcessingData(future, this::onBlueprintLoaded));
     }
 

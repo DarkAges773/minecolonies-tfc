@@ -64,6 +64,13 @@ public class BuildWandChoiceContext implements ReplacementChoiceContext
         BlueprintHandler.getInstance().clearCache();
     }
 
+    @Override
+    public void reset()
+    {
+        ClientPlacementChoices.set(new HashMap<>());
+        BlueprintHandler.getInstance().clearCache();
+    }
+
     private static Blueprint currentBlueprint()
     {
         for (final BlueprintPreviewData data : RenderingCache.getBlueprintsToRender())

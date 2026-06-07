@@ -3,7 +3,12 @@
         size="300 210" pause="false" lightbox="true">
 
     <text id="title" size="300 12" pos="0 6" textalign="MIDDLE" color="white"
-          label="$(com.ldtteam.structurize.gui.scan.replace.title)"/>
+          label="$(structurizereplacements.gui.replace.title)"/>
+
+    <!-- Palette-tier toggle: only shown (and only meaningful) in the per-building Build Options picker;
+         hidden for the build wand. Top-left corner, clear of the centered title. -->
+    <buttonimage id="paletteMode" label="$(structurizereplacements.gui.replace.palette.update)" size="56 16" pos="2 3"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 
     <list id="rows" size="296 158" pos="2 22" childspacing="-1">
         <box size="100% 20" linewidth="1">
@@ -17,6 +22,8 @@
         </box>
     </list>
 
-    <buttonimage id="done" label="$(gui.done)" size="60 17" pos="120 188"
+    <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="60 17" pos="80 188"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+    <buttonimage id="done" label="$(gui.done)" size="60 17" pos="160 188"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 </window>

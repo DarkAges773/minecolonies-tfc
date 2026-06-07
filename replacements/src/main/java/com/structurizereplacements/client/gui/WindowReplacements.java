@@ -1,6 +1,7 @@
 package com.structurizereplacements.client.gui;
 
 import com.ldtteam.blockui.Pane;
+import com.ldtteam.blockui.PaneBuilders;
 import com.ldtteam.blockui.controls.ButtonImage;
 import com.ldtteam.blockui.controls.ItemIcon;
 import com.ldtteam.blockui.controls.Text;
@@ -59,8 +60,44 @@ public class WindowReplacements extends AbstractWindowSkeleton
         this.parent = parent;
         this.context.setReloader(this::reload);
         registerButton("done", this::returnToParent);
+        registerButton("reset", this::resetChoices);
+        registerButton("paletteMode", this::togglePaletteMode);
         this.list = findPaneOfTypeByID("rows", ScrollingList.class);
         this.list.setDataProvider(() -> sources.size(), this::updateRow);
+
+        final ButtonImage modeButton = findPaneOfTypeByID("paletteMode", ButtonImage.class);
+        if (context.hasPaletteModeToggle())
+        {
+            updatePaletteModeButton(modeButton);
+            PaneBuilders.singleLineTooltip(
+                    Component.translatable("structurizereplacements.gui.replace.palette.tooltip"), modeButton);
+        }
+        else
+        {
+            modeButton.hide();
+        }
+    }
+
+    private void togglePaletteMode()
+    {
+        context.setUpdateMode(!context.isUpdateMode());
+        updatePaletteModeButton(findPaneOfTypeByID("paletteMode", ButtonImage.class));
+        // sources reload asynchronously via the context's reloader; rows redraw then.
+    }
+
+    /** Label the toggle with the palette tier it is currently showing. */
+    private void updatePaletteModeButton(final ButtonImage button)
+    {
+        button.setText(Component.translatable(context.isUpdateMode()
+                ? "structurizereplacements.gui.replace.palette.update"
+                : "structurizereplacements.gui.replace.palette.current"));
+    }
+
+    private void resetChoices()
+    {
+        this.context.reset();
+        // Re-read rows so every source shows the default ("?") again.
+        this.list.refreshElementPanes();
     }
 
     private void returnToParent()

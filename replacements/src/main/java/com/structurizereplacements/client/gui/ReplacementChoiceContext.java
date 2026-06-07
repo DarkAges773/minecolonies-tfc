@@ -22,6 +22,9 @@ public interface ReplacementChoiceContext
     /** Apply a pick ({@code target == null} clears it), then persist/sync/refresh as appropriate. */
     void choose(Block source, Block target);
 
+    /** Clear <i>all</i> picks back to the datapack defaults, then persist/sync/refresh as appropriate. */
+    void reset();
+
     /** Called when the window closes (e.g. to refresh the parent GUI). */
     default void onClosed() {}
 
@@ -30,4 +33,27 @@ public interface ReplacementChoiceContext
      * and redraw — used when sources load asynchronously (e.g. a building's blueprint future).
      */
     default void setReloader(final Runnable reloader) {}
+
+    /**
+     * Whether this context offers the current-vs-update palette toggle. Only the per-building Build Options
+     * context does (a building has tiers); the build wand places a single blueprint, so it returns
+     * {@code false} and {@link WindowReplacements} hides the toggle.
+     */
+    default boolean hasPaletteModeToggle()
+    {
+        return false;
+    }
+
+    /**
+     * In <i>update</i> mode ({@code true}, the default) {@link #sources()} come from the blueprint about to
+     * be built (the next tier); in <i>current</i> mode ({@code false}) they come from the building's current
+     * tier. Meaningful only when {@link #hasPaletteModeToggle()} is {@code true}.
+     */
+    default boolean isUpdateMode()
+    {
+        return true;
+    }
+
+    /** Switch palette mode and reload sources (no-op unless {@link #hasPaletteModeToggle()}). */
+    default void setUpdateMode(final boolean update) {}
 }
