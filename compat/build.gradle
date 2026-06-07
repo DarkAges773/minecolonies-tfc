@@ -27,10 +27,10 @@ evaluationDependsOn(':replacements')
 
 def mod_id = 'mctfc'
 def mod_name = 'MineColonies x TerraFirmaCraft'
-def mod_license = 'All Rights Reserved'
+def mod_license = 'GPL-3.0'
 def mod_version = '0.1.0'
 def mod_group_id = 'com.mctfc'
-def mod_authors = 'chkomov'
+def mod_authors = 'DarkAges'
 def mod_description = 'Compatibility bridge between MineColonies and TerraFirmaCraft for Forge 1.20.1.'
 
 version = mod_version

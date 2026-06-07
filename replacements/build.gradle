@@ -18,11 +18,11 @@ plugins {
 apply plugin: 'org.spongepowered.mixin'
 
 def mod_id = 'structurizereplacements'
-def mod_name = 'Structurize Replacements'
-def mod_license = 'All Rights Reserved'
+def mod_name = 'Palette Swap for MineColonies'
+def mod_license = 'GPL-3.0'
 def mod_version = '0.1.0'
 def mod_group_id = 'com.structurizereplacements'
-def mod_authors = 'chkomov'
+def mod_authors = 'DarkAges'
 def mod_description = 'Tag- and family-based block substitution for Structurize blueprints. Standalone; only requires Structurize.'
 
 version = mod_version
