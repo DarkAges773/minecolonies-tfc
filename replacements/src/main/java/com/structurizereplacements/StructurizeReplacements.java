@@ -4,9 +4,11 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.AddType;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.GeneralBlockPlacementHandler;
 import com.mojang.logging.LogUtils;
+import com.structurizereplacements.data.DefaultRulesDataPack;
 import com.structurizereplacements.integration.minecolonies.MineColoniesIntegration;
 import com.structurizereplacements.network.Network;
 import com.structurizereplacements.placement.TwoTallPlantPlacementHandler;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -28,6 +30,12 @@ public class StructurizeReplacements
     public StructurizeReplacements(FMLJavaModLoadingContext context)
     {
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        final IEventBus modBus = context.getModEventBus();
+        // Optional, opt-in built-in datapack of ready-made candidate-pool rules (wood/wool/terracotta/glass/
+        // concrete/beds/flowers). Disabled by default (required=false) so the published library stays inert;
+        // a player running the mod standalone can enable it in the world's Data Packs screen for an instant
+        // "Replace" picker. See DefaultRulesDataPack.
+        modBus.addListener(DefaultRulesDataPack::onAddPackFinders);
         Network.register();
         // Place two-tall plants (TFC tall flowers etc.) atomically — both halves in one call, like vanilla's
         // DoublePlantPlacementHandler — so the builder's per-tick placement doesn't leave a self-destructing
