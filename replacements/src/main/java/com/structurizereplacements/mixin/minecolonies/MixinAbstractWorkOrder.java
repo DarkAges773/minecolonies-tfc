@@ -8,9 +8,7 @@ import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.placement.StagedChoices;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -22,9 +20,8 @@ import java.util.Map;
 
 /**
  * Carries the player's replacement choices on a MineColonies <b>work order</b> — the reliable home for a
- * <b>decoration</b> build, which (unlike a hut) has no {@code AbstractBuilding} and whose
- * {@code TileEntityDecorationController} is placed <i>during</i> the build (so it does not exist at build
- * start, when the structure handler resolves its choices once). The work order, by contrast, exists for the
+ * <b>decoration</b> build, which (unlike a hut) has no {@code AbstractBuilding} and no player-accessible
+ * controller (a plain decoration's anchor isn't a decoration controller). The work order exists for the
  * whole build and its {@code getLocation()} equals the structure handler's {@code worldPos} (see
  * {@code BuildingStructureHandler}'s {@code super(world, workOrder.getLocation(), …)}), so
  * {@code BuildingChoiceResolver} can find it by position.
@@ -39,11 +36,9 @@ import java.util.Map;
  * {@code MixinRegisteredStructureManager} at building creation, so {@code take} returns nothing here and the
  * building's own store stays authoritative. {@code remap = false}: MineColonies' own members.
  *
- * <p>Across rebuilds/upgrades: a work order is removed when its build completes, so on removal we copy the
- * choices onto the decoration's controller block entity (now placed) — which persists for the decoration's
- * lifetime ({@code MixinTileEntityDecorationController}). A re-issued work order then re-adopts them from the
- * controller ({@code onAdded}, when no fresh staged picks exist), so an upgrade/rebuild keeps the picks
- * without the player re-choosing.
+ * <p>Scope: the work order is removed when its build completes, so this store is per-build — the picks apply
+ * to the build (and survive a save during it). A decoration has no persistent player-facing anchor, so it
+ * can't be re-built/upgraded through a GUI anyway; re-placing it via the build tool re-stages the picks.
  */
 @Mixin(value = AbstractWorkOrder.class, remap = false)
 public class MixinAbstractWorkOrder implements PlacementChoiceHolder
@@ -73,57 +68,11 @@ public class MixinAbstractWorkOrder implements PlacementChoiceHolder
         {
             return;
         }
-        // Fresh placement: take the placing player's staged choices.
         final Map<Block, Block> staged = StagedChoices.take(getLocation());
         if (staged != null && !staged.isEmpty())
         {
             this.structurizereplacements$choices = staged;
-            return;
         }
-        // Rebuild/upgrade: no fresh picks — re-adopt from the controller persisted at this position (set there
-        // by a prior build's onRemoved).
-        final Map<Block, Block> persisted = structurizereplacements$controllerChoices(colony);
-        if (persisted != null && !persisted.isEmpty())
-        {
-            this.structurizereplacements$choices = persisted;
-        }
-    }
-
-    /**
-     * On completion (work order removed) copy the choices onto the decoration controller now standing at this
-     * position, so they persist for the decoration's lifetime and survive into the next build/upgrade.
-     */
-    @Inject(method = "onRemoved", at = @At("TAIL"))
-    private void structurizereplacements$persistToController(final IColony colony, final CallbackInfo ci)
-    {
-        if (structurizereplacements$choices == null || structurizereplacements$choices.isEmpty())
-        {
-            return;
-        }
-        final BlockEntity be = structurizereplacements$controllerAt(colony);
-        if (be instanceof PlacementChoiceHolder holder)
-        {
-            holder.setReplacementChoices(structurizereplacements$choices);
-            be.setChanged();
-        }
-    }
-
-    @Unique
-    private Map<Block, Block> structurizereplacements$controllerChoices(final IColony colony)
-    {
-        final BlockEntity be = structurizereplacements$controllerAt(colony);
-        return (be instanceof PlacementChoiceHolder holder) ? holder.getReplacementChoices() : null;
-    }
-
-    @Unique
-    private BlockEntity structurizereplacements$controllerAt(final IColony colony)
-    {
-        if (colony == null)
-        {
-            return null;
-        }
-        final Level world = colony.getWorld();
-        return (world != null && world.isLoaded(getLocation())) ? world.getBlockEntity(getLocation()) : null;
     }
 
     @Inject(method = "write", at = @At("TAIL"))
