@@ -20,9 +20,13 @@ import java.util.Map;
  *
  * <p>Example: {@code #minecraft:planks → #tfc:planks} lets any vanilla plank be replaced by a chosen
  * TFC plank.
+ *
+ * <p>{@link #priority} resolves conflicts when several candidate rules match the same block: the highest
+ * priority wins (ties broken by load order — last loaded wins). Default {@code 0}. See
+ * {@code BlockSubstitutions#candidateFor}.
  */
 public record CandidateRule(@Nullable Block fromBlock, @Nullable TagKey<Block> fromTag, TagKey<Block> toTag,
-                            Map<String, String> properties, Map<String, String> copyProperties)
+                            Map<String, String> properties, Map<String, String> copyProperties, int priority)
 {
     public boolean matches(final BlockState state)
     {

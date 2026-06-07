@@ -33,6 +33,11 @@ import java.util.Map;
  * <p>An optional {@code "apply_properties"} object (name → value) stamps blockstate properties onto the
  * result after the swap — e.g. {@code {"no_gravity":"true"}} so a substituted TFC cobble is placed
  * non-falling. Properties the target block doesn't define are skipped.
+ * <p>An optional {@code "priority"} int (default {@code 0}) resolves conflicts when several rules match the
+ * same block: the highest priority wins (ties broken by load order — last loaded wins). This lets an
+ * optional add-on datapack override a base rule when its mod is present (give the override a higher
+ * priority); rules load from <i>all</i> packs into one set, so without this the winner among same-source
+ * rules would be load-order-arbitrary.
  * <pre>{@code
  * {
  *   "replacements": [
@@ -40,7 +45,8 @@ import java.util.Map;
  *     { "from_tag": "minecraft:planks", "to": "tfc:wood/planks/oak" },         // tag -> block
  *     { "from_tag": "minecraft:wooden_stairs", "to_tag": "minecraft:wooden_stairs" }, // GUI candidate pool
  *     { "from": "minecraft:cobblestone", "to_tag": "tfc:rock/cobble",          // pool + stamped property
- *       "apply_properties": { "no_gravity": "true" } }
+ *       "apply_properties": { "no_gravity": "true" } },
+ *     { "from": "minecraft:birch_planks", "to": "afc:eucalyptus_planks", "priority": 1 } // overrides a base rule
  *   ]
  * }
  * }</pre>
@@ -124,6 +130,8 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
         final Map<String, String> properties = parseStringMap(obj, "apply_properties");
         // --- optional source-property -> target-property copy (e.g. half -> part for double plants) ---
         final Map<String, String> copyProperties = parseStringMap(obj, "copy_properties");
+        // --- optional conflict priority (highest wins when several rules match the same block; default 0) ---
+        final int priority = GsonHelper.getAsInt(obj, "priority", 0);
 
         // --- target: candidate pool (interactive) ---
         if (obj.has("to_tag"))
@@ -134,7 +142,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has a malformed 'to_tag'; skipping.", file);
                 return;
             }
-            candidates.add(new CandidateRule(fromBlock, fromTag, TagKey.create(Registries.BLOCK, toTagId), properties, copyProperties));
+            candidates.add(new CandidateRule(fromBlock, fromTag, TagKey.create(Registries.BLOCK, toTagId), properties, copyProperties, priority));
             return;
         }
 
@@ -148,7 +156,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has an unknown 'to' block; skipping.", file);
                 return;
             }
-            rules.add(new SubstitutionRule(fromBlock, fromTag, to, properties, copyProperties));
+            rules.add(new SubstitutionRule(fromBlock, fromTag, to, properties, copyProperties, priority));
             return;
         }
 

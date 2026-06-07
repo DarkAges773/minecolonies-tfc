@@ -22,9 +22,14 @@ import java.util.Map;
  *
  * <p>Matching is per-block (both exact-block and block-tag membership are block-level), so the
  * engine can cache results keyed by {@link Block}.
+ *
+ * <p>{@link #priority} resolves conflicts when several rules match the same block: the highest priority
+ * wins (ties broken by load order — last loaded wins). Default {@code 0}; an optional datapack that should
+ * override a base rule when its mod is present declares a higher priority (e.g. {@code 1}). See
+ * {@code BlockSubstitutions#bestFixedRule}.
  */
 public record SubstitutionRule(@Nullable Block fromBlock, @Nullable TagKey<Block> fromTag, Block to,
-                               Map<String, String> properties, Map<String, String> copyProperties)
+                               Map<String, String> properties, Map<String, String> copyProperties, int priority)
 {
     public boolean matches(final BlockState state)
     {

@@ -45,18 +45,23 @@ public final class BlockSubstitutions
         cache.clear();
     }
 
-    /** The interactive candidate rule (if any) whose source matches this block — for the GUI. */
+    /**
+     * The interactive candidate rule (if any) whose source matches this block — for the GUI. When several
+     * match, the highest {@code priority} wins (ties broken by load order, last wins), so an optional pack
+     * can override a base pool.
+     */
     public static Optional<CandidateRule> candidateFor(final Block source)
     {
         final BlockState probe = source.defaultBlockState();
+        CandidateRule best = null;
         for (final CandidateRule rule : candidateRules)
         {
-            if (rule.matches(probe))
+            if (rule.matches(probe) && (best == null || rule.priority() >= best.priority()))
             {
-                return Optional.of(rule);
+                best = rule;
             }
         }
-        return Optional.empty();
+        return Optional.ofNullable(best);
     }
 
     /**
@@ -194,15 +199,27 @@ public final class BlockSubstitutions
     /** The fixed (non-interactive) rule whose source matches this block, if any — for its properties. */
     private static Optional<SubstitutionRule> fixedRuleFor(final Block source)
     {
+        return bestFixedRule(source);
+    }
+
+    /**
+     * The fixed rule that wins for this source: among all rules whose source matches, the one with the
+     * highest {@code priority} (ties broken by load order — last wins). This single chokepoint keeps the
+     * cached target block ({@link #resolve}) and the applied rule's properties ({@link #fixedRuleFor})
+     * agreeing on the same rule. An optional datapack overrides a base rule by declaring a higher priority.
+     */
+    private static Optional<SubstitutionRule> bestFixedRule(final Block source)
+    {
         final BlockState probe = source.defaultBlockState();
+        SubstitutionRule best = null;
         for (final SubstitutionRule rule : rules)
         {
-            if (rule.matches(probe))
+            if (rule.matches(probe) && (best == null || rule.priority() >= best.priority()))
             {
-                return Optional.of(rule);
+                best = rule;
             }
         }
-        return Optional.empty();
+        return Optional.ofNullable(best);
     }
 
     /** Stamp blockstate property assignments (name → value) onto a state; skips properties it lacks. */
@@ -304,15 +321,7 @@ public final class BlockSubstitutions
 
     private static Optional<Block> resolve(final Block source)
     {
-        final BlockState probe = source.defaultBlockState();
-        for (final SubstitutionRule rule : rules)
-        {
-            if (rule.matches(probe))
-            {
-                return Optional.of(rule.to());
-            }
-        }
-        return Optional.empty();
+        return bestFixedRule(source).map(SubstitutionRule::to);
     }
 
     /** Carry over every property the source and target blocks share, so orientation etc. survive. */
