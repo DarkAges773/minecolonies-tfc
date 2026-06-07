@@ -90,6 +90,16 @@
     { "from": "minecraft:jungle_sign", "to": "afc:wood/planks/teak_sign", "priority": 1 },
     { "from": "minecraft:jungle_wall_sign", "to": "afc:wood/planks/teak_wall_sign", "priority": 1 },
     { "from": "minecraft:jungle_hanging_sign", "to": "afc:wood/planks/hanging_sign/copper/teak", "priority": 1 },
-    { "from": "minecraft:jungle_wall_hanging_sign", "to": "afc:wood/planks/wall_hanging_sign/copper/teak", "priority": 1 }
+    { "from": "minecraft:jungle_wall_hanging_sign", "to": "afc:wood/planks/wall_hanging_sign/copper/teak", "priority": 1 },
+    { "from": "minecraft:birch_sapling", "to": "afc:wood/sapling/eucalyptus", "priority": 1 },
+    { "from": "minecraft:spruce_sapling", "to": "afc:wood/sapling/cypress", "priority": 1 },
+    { "from": "minecraft:cherry_sapling", "to": "afc:wood/sapling/fig", "priority": 1 },
+    { "from": "minecraft:acacia_sapling", "to": "afc:wood/sapling/baobab", "priority": 1 },
+    { "from": "minecraft:jungle_sapling", "to": "afc:wood/sapling/teak", "priority": 1 },
+    { "from": "minecraft:potted_birch_sapling", "to": "afc:wood/potted_sapling/eucalyptus", "priority": 1 },
+    { "from": "minecraft:potted_spruce_sapling", "to": "afc:wood/potted_sapling/cypress", "priority": 1 },
+    { "from": "minecraft:potted_cherry_sapling", "to": "afc:wood/potted_sapling/fig", "priority": 1 },
+    { "from": "minecraft:potted_acacia_sapling", "to": "afc:wood/potted_sapling/baobab", "priority": 1 },
+    { "from": "minecraft:potted_jungle_sapling", "to": "afc:wood/potted_sapling/teak", "priority": 1 }
   ]
 }

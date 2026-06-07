@@ -12,6 +12,13 @@
     { "from": "minecraft:dirt_path", "to": "tfc:grass_path/loam" },
     { "from_tag": "mctfc:subst/soil/grass_path", "to_tag": "mctfc:subst/soil/grass_path" },
 
+    { "from": "minecraft:dead_bush", "to": "tfc:plant/dead_bush" },
+    { "from": "minecraft:potted_dead_bush", "to": "tfc:plant/potted/dead_bush" },
+
+    { "from": "minecraft:pumpkin", "to": "tfc:pumpkin" },
+    { "from": "minecraft:melon", "to": "tfc:melon" },
+    { "from": "minecraft:jack_o_lantern", "to": "tfc:jack_o_lantern" },
+
     { "from": "minecraft:torch", "to": "tfc:torch" },
     { "from": "minecraft:wall_torch", "to": "tfc:wall_torch" },
 

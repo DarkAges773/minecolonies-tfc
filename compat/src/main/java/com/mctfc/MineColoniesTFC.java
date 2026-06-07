@@ -6,6 +6,7 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.Bl
 import com.mctfc.block.MortaredCobbleRegistry;
 import com.mctfc.data.AfcDataPack;
 import com.mctfc.data.BeneathDataPack;
+import com.mctfc.data.FirmaLifeDataPack;
 import com.mctfc.data.MortaredCobbleData;
 import com.mctfc.food.FoodPreservation;
 import com.mctfc.network.McFarmingNetwork;
@@ -47,6 +48,9 @@ public class MineColoniesTFC
         // Optional built-in datapack: enabled only when ArborFirmaCraft ('afc') is present — AFC wood overrides
         // (priority 1, so they beat the base TFC wood mapping) + AFC woods joining the candidate pools.
         modBus.addListener(AfcDataPack::onAddPackFinders);
+        // Optional built-in datapack: enabled only when FirmaLife ('firmalife') is present — FirmaLife carved/lit
+        // pumpkin (jack o'lantern) variants (priority 1).
+        modBus.addListener(FirmaLifeDataPack::onAddPackFinders);
         // Register the colony-storage food-preservation trait (TFC food decays slower in colony-owned racks).
         modBus.addListener(FoodPreservation::onCommonSetup);
         // Network channel for the farming bridge (per-field harvest-mode toggle from the field GUI).

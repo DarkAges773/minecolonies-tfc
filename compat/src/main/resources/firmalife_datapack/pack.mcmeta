@@ -1,0 +1,6 @@
+{
+  "pack": {
+    "description": "MineColonies x TFC — FirmaLife compat (auto-enabled only when the 'firmalife' mod is installed)",
+    "pack_format": 15
+  }
+}
