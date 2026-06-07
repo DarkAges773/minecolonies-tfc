@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:metal/anvil/bismuth_bronze",
+    "tfc:metal/anvil/black_bronze",
+    "tfc:metal/anvil/black_steel",
+    "tfc:metal/anvil/blue_steel",
+    "tfc:metal/anvil/bronze",
+    "tfc:metal/anvil/copper",
+    "tfc:metal/anvil/red_steel",
+    "tfc:metal/anvil/steel",
+    "tfc:metal/anvil/wrought_iron"
+  ]
+}

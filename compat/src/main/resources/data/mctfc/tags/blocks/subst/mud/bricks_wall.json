@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:mud_bricks/loam_wall",
+    "tfc:mud_bricks/sandy_loam_wall",
+    "tfc:mud_bricks/silt_wall",
+    "tfc:mud_bricks/silty_loam_wall"
+  ]
+}

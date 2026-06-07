@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "afc:wood/planks/hanging_sign/copper/baobab",
+    "afc:wood/planks/hanging_sign/copper/cypress",
+    "afc:wood/planks/hanging_sign/copper/eucalyptus",
+    "afc:wood/planks/hanging_sign/copper/fig",
+    "afc:wood/planks/hanging_sign/copper/hevea",
+    "afc:wood/planks/hanging_sign/copper/ipe",
+    "afc:wood/planks/hanging_sign/copper/ironwood",
+    "afc:wood/planks/hanging_sign/copper/mahogany",
+    "afc:wood/planks/hanging_sign/copper/teak",
+    "afc:wood/planks/hanging_sign/copper/tualang"
+  ]
+}
