@@ -85,6 +85,15 @@ public final class MortaredCobbleData
         joinTag(pack, "tfc", "can_carve", mortaredRef);              // TFC chisel/carving
         joinTag(pack, "tfc", "toughness_2", mortaredRef);            // TFC explosion-resistance tier
 
+        // Make the twins legal Domum Ornamentum skins so a DO block skinned with cobblestone (substituted to a
+        // mortared twin) passes DO's valid-skins check. 'default' covers most components; slab/stairs/wall are
+        // independent lists. Tags resolve transitively, so #mctfc:mortared_cobblestone members count as members
+        // of these DO tags.
+        for (final String doTag : new String[] {"default", "slab_materials", "stairs_materials", "wall_materials"})
+        {
+            joinTag(pack, "domum_ornamentum", doTag, mortaredRef);
+        }
+
         MineColoniesTFC.LOGGER.info("Generated mortared-cobble data: {} twin(s) tagged + recipes.", tagValues.size());
         return pack;
     }

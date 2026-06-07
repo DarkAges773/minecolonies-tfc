@@ -82,6 +82,11 @@ public final class DomumMaterialRewriter
      * isn't a legal skin for its component (not in {@link IMateriallyTexturedBlockComponent#getValidSkins()})
      * is <b>skipped</b>, since DO would reject/misrender it.
      *
+     * <p>Note: DO's valid-skins tags are curated and TFC ships nothing into them, so our TFC substitution
+     * targets are added to the relevant DO material tags by a datapack (see {@code DomumMaterialTags}); that
+     * keeps this guard meaningful (genuinely-incompatible skins still skip) while letting TFC materials
+     * substitute inside DO blocks.
+     *
      * @return a new tile-entity tag when at least one component changed, otherwise the same
      *         {@code tileEntityData} reference (possibly {@code null}).
      */
@@ -118,7 +123,8 @@ public final class DomumMaterialRewriter
             {
                 continue;
             }
-            // skip-illegal: only substitute within what the component accepts.
+            // skip-illegal: only substitute within what the component accepts (TFC targets are tagged in via
+            // the datapack so they pass here).
             final TagKey<Block> skins = validSkins.get(ResourceLocation.tryParse(key));
             if (skins != null && !to.defaultBlockState().is(skins))
             {
