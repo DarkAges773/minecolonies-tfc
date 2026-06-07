@@ -117,6 +117,12 @@ dependencies {
     runtimeOnly fg.deobf("curse.maven:tfc-support-indicator-1195624:7700000")
     // Beneath — added to test in-game whether its blocks are accessible (e.g. as substitution targets).
     implementation fg.deobf("curse.maven:beneath-1113980:7400831")
+    // ArborFirmaCraft (TFC tree/wood addon) — optional; future substitutions + compat patches, gated on
+    // ModList.isLoaded("afc") like Beneath. Stays an optional dependency (not mandatory in mods.toml).
+    implementation fg.deobf("curse.maven:arborfirmacraft-877545:8071302")
+    // FirmaLife (TFC food/farming/expansion addon) — optional; future substitutions + compat patches, gated on
+    // ModList.isLoaded("firmalife") like Beneath. Stays an optional dependency (not mandatory in mods.toml).
+    implementation fg.deobf("curse.maven:firmalife-453394:7602336")
 }
 
 // :compat mixins target MineColonies (per-building substitution choices for the builder). MineColonies
