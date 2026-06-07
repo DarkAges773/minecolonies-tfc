@@ -99,5 +99,5 @@ Per-mod identity (id/name/version) lives in each subproject's `build.gradle`; sh
 
 ## License
 
-All Rights Reserved (see each subproject's `build.gradle`). These are independent addons and are not
+GNU General Public License version 3 (GPLv3) (see each subproject's `build.gradle`). These are independent addons and are not
 affiliated with the MineColonies or TerraFirmaCraft teams.
