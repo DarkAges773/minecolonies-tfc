@@ -127,6 +127,8 @@ dependencies {
     // Dev-run-only: TFC Support Indicator (visualises TFC collapse-support coverage) — handy for testing the
     // build-area collapse-proofing.
     runtimeOnly fg.deobf("curse.maven:tfc-support-indicator-1195624:7700000")
+    // Dev-run-only test mod (tmrv).
+    runtimeOnly fg.deobf("curse.maven:tmrv-1194921:8145843")
     // Beneath — added to test in-game whether its blocks are accessible (e.g. as substitution targets).
     implementation fg.deobf("curse.maven:beneath-1113980:7400831")
     // ArborFirmaCraft (TFC tree/wood addon) — optional; future substitutions + compat patches, gated on
