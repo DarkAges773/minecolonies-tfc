@@ -17,7 +17,8 @@
     "MixinSupport",
     "MixinCitizenAI",
     "MixinLampBlockEntity",
-    "MixinTfcLightBlocks"
+    "MixinTfcLightBlocks",
+    "MixinAbstractEntityAIUsesFurnace"
   ],
   "client": [
     "MixinWindowField"

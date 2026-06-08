@@ -127,7 +127,8 @@ dependencies {
     // Dev-run-only: TFC Support Indicator (visualises TFC collapse-support coverage) — handy for testing the
     // build-area collapse-proofing.
     runtimeOnly fg.deobf("curse.maven:tfc-support-indicator-1195624:7700000")
-    // Dev-run-only test mod (tmrv).
+    // Dev-run-only: Too Many Recipe Viewers (bundles JEI 15.x) — lets JEI run alongside EMI for cross-checking
+    // recipe/usage and item discovery in-game.
     runtimeOnly fg.deobf("curse.maven:tmrv-1194921:8145843")
     // Beneath — added to test in-game whether its blocks are accessible (e.g. as substitution targets).
     implementation fg.deobf("curse.maven:beneath-1113980:7400831")
