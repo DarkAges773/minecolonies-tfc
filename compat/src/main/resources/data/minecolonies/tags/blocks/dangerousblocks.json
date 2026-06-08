@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:firepit",
+    "tfc:grill",
+    "tfc:pot",
+    "tfc:charcoal_forge",
+    "tfc:molten"
+  ]
+}

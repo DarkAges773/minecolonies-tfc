@@ -427,6 +427,25 @@ chunk-owning-colony cap). Two mixins (`@Mixin(remap=…)` as noted):
   everywhere). **Verified to load** (both mixins bind — `defaultRequire:1` would fail otherwise — client reaches menu, 0
   injection failures); in-world behaviour (lamp/torch/candle/jack staying lit in a colony, decaying outside) still to confirm.
 
+## Colonists avoid TFC heat sources (pathfinding) — DONE, in-world test pending
+
+MineColonies' pathfinder treats certain blocks as "dangerous to stand on/in" and routes citizens around them
+(`PathfindingUtils.isDangerous` → not passable/walkable unless `pathingOptions.canPassDanger()`). The vanilla
+list is hardcoded (`FireBlock`, `CampfireBlock`, `MagmaBlock`, sweet berry bush, powder snow, lava cauldron)
+**plus** anything in the `minecolonies:dangerousblocks` block tag (which MineColonies ships **empty**). TFC's
+heat blocks aren't vanilla `CampfireBlock`/`FireBlock`, so without help colonists happily walk through a lit
+firepit.
+
+`:compat` adds TFC's **contact-damaging** heat blocks to that tag
+([data/minecolonies/tags/blocks/dangerousblocks.json](../compat/src/main/resources/data/minecolonies/tags/blocks/dangerousblocks.json),
+`"replace": false` so it merges): `tfc:firepit`, `tfc:grill`, `tfc:pot` (the latter two extend `FirepitBlock`),
+`tfc:charcoal_forge`, and `tfc:molten`. These are exactly the TFC blocks whose block class overrides `stepOn`
+to hurt the entity (confirmed by decompiling — `death.attack.tfc.grill`/`pot` are TFC's own death messages).
+**Deliberately excluded** as non-damaging-to-stand-on: bloomery, crucible, blast furnace, and TFC torches
+(interact-only devices / light blocks — tagging them would make citizens needlessly avoid harmless decoration).
+Like the vanilla campfire treatment, the tag is block-level, so an *unlit* firepit/forge is avoided too
+(conservative, but matches how MineColonies already treats `instanceof CampfireBlock`). Datapack-only — no code.
+
 ## Non-falling ("mortared"/"cemented") cobble — DONE & verified
 
 TFC makes cobble collapse (gravity), which wrecks MineColonies cobble builds. `:compat` registers a
