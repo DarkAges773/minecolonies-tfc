@@ -2,6 +2,7 @@ package com.structurizereplacements.mixin.minecolonies;
 
 import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.structurizereplacements.placement.ChoiceCodec;
+import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -32,11 +33,13 @@ import java.util.Map;
  * methods (stable names), {@code serializeToView} is MineColonies' own.
  */
 @Mixin(AbstractBuilding.class)
-public class MixinAbstractBuilding implements PlacementChoiceHolder
+public class MixinAbstractBuilding implements PlacementChoiceHolder, MineshaftChoiceHolder
 {
-    @Unique private static final String SREP_KEY = "structurizereplacements_choices";
+    @Unique private static final String SREP_KEY           = "structurizereplacements_choices";
+    @Unique private static final String SREP_MINESHAFT_KEY = "structurizereplacements_mineshaft_choices";
 
     @Unique private Map<Block, Block> structurizereplacements$choices;
+    @Unique private Map<Block, Block> structurizereplacements$mineshaftChoices;
 
     @Override
     public void setReplacementChoices(final Map<Block, Block> choices)
@@ -50,16 +53,30 @@ public class MixinAbstractBuilding implements PlacementChoiceHolder
         return this.structurizereplacements$choices;
     }
 
+    @Override
+    public void setMineshaftChoices(final Map<Block, Block> choices)
+    {
+        this.structurizereplacements$mineshaftChoices = choices;
+    }
+
+    @Override
+    public Map<Block, Block> getMineshaftChoices()
+    {
+        return this.structurizereplacements$mineshaftChoices;
+    }
+
     /**
-     * Append the choice map to the building's client-sync buffer so the client view can display it (and
-     * the Build Options list/preview can reflect it). Symmetric with
-     * {@code MixinAbstractBuildingView#deserialize}; always writes a count (self-describing) so it stays
-     * aligned with whatever MineColonies wrote before us.
+     * Append both choice maps to the building's client-sync buffer so the client view can display them (the
+     * Build Options list/preview reflects the hut map; the miner's settings picker reads the mineshaft map).
+     * Symmetric with {@code MixinAbstractBuildingView#deserialize} — the two maps are written and read in
+     * the <b>same order</b> (hut, then mineshaft); each is self-describing (writes a count), so the buffer
+     * stays aligned with whatever MineColonies wrote before us.
      */
     @Inject(method = "serializeToView", at = @At("TAIL"), remap = false)
     private void structurizereplacements$writeChoicesToView(final FriendlyByteBuf buf, final boolean fullSync, final CallbackInfo ci)
     {
         ChoiceCodec.write(buf, structurizereplacements$choices);
+        ChoiceCodec.write(buf, structurizereplacements$mineshaftChoices);
     }
 
     @Inject(method = "serializeNBT()Lnet/minecraft/nbt/CompoundTag;", at = @At("RETURN"), remap = false)
@@ -85,13 +102,17 @@ public class MixinAbstractBuilding implements PlacementChoiceHolder
         {
             cir.getReturnValue().put(SREP_KEY, list);
         }
+        // The mineshaft map uses the shared ChoiceCodec NBT shape (keyed, so order is irrelevant).
+        ChoiceCodec.writeNbt(cir.getReturnValue(), SREP_MINESHAFT_KEY, structurizereplacements$mineshaftChoices);
     }
 
     @Inject(method = "deserializeNBT(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"), remap = false)
     private void structurizereplacements$readChoices(final CompoundTag tag, final CallbackInfo ci)
     {
+        this.structurizereplacements$mineshaftChoices = ChoiceCodec.readNbt(tag, SREP_MINESHAFT_KEY);
         if (!tag.contains(SREP_KEY, Tag.TAG_LIST))
         {
+            this.structurizereplacements$choices = null;
             return;
         }
         final Map<Block, Block> read = new HashMap<>();

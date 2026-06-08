@@ -65,6 +65,12 @@ public class WindowReplacements extends AbstractWindowSkeleton
         this.list = findPaneOfTypeByID("rows", ScrollingList.class);
         this.list.setDataProvider(() -> sources.size(), this::updateRow);
 
+        final Text title = findPaneOfTypeByID("title", Text.class);
+        if (title != null)
+        {
+            title.setText(Component.translatable(context.titleKey()));
+        }
+
         final ButtonImage modeButton = findPaneOfTypeByID("paletteMode", ButtonImage.class);
         if (context.hasPaletteModeToggle())
         {

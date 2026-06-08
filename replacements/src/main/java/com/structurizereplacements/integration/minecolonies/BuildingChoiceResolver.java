@@ -6,7 +6,9 @@ import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.buildings.ICommonBuilding;
 import com.minecolonies.api.colony.buildings.views.IBuildingView;
 import com.minecolonies.api.colony.workorders.IServerWorkOrder;
+import com.minecolonies.core.colony.workorders.WorkOrderMiner;
 import com.structurizereplacements.placement.ChoiceResolver;
+import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.placement.StagedChoices;
 import net.minecraft.core.BlockPos;
@@ -89,13 +91,27 @@ public final class BuildingChoiceResolver
             return choices;
         }
 
-        // No building here — a decoration. Its work order (which exists for the whole build) carries the
-        // placing player's choices, adopted at MixinAbstractWorkOrder#onAdded. Its getLocation() == worldPos.
+        // No building here — a decoration or a miner mineshaft node. Its work order (which exists for the
+        // whole build) is at worldPos (getLocation() == worldPos).
         if (colony != null)
         {
             for (final IServerWorkOrder wo : colony.getWorkManager().getWorkOrders().values())
             {
-                if (worldPos.equals(wo.getLocation()) && wo instanceof PlacementChoiceHolder holder)
+                if (!worldPos.equals(wo.getLocation()))
+                {
+                    continue;
+                }
+                // Miner mineshaft node: the work order itself has no player picks (the miner AI created it).
+                // Use the MINESHAFT palette of the hut that claimed it (its own building, the miner hut) so
+                // the player's mineshaft picks apply to every tunnel/shaft.
+                if (wo instanceof WorkOrderMiner)
+                {
+                    final ICommonBuilding hut = colony.getCommonBuildingManager().getBuilding(wo.getClaimedBy());
+                    return hut instanceof MineshaftChoiceHolder holder ? holder.getMineshaftChoices() : null;
+                }
+                // Plain decoration: its work order carries the placing player's choices, adopted at
+                // MixinAbstractWorkOrder#onAdded.
+                if (wo instanceof PlacementChoiceHolder holder)
                 {
                     return holder.getReplacementChoices();
                 }

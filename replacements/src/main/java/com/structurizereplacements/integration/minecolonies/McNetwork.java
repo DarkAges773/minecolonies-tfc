@@ -34,9 +34,15 @@ public final class McNetwork
                 SetBuildingChoicesMessage::handle);
     }
 
-    /** Client → server: set a single building's replacement choices. */
+    /** Client → server: set a single building's hut-palette replacement choices. */
     public static void sendBuildingChoices(final BlockPos buildingPos, final Map<Block, Block> choices)
     {
-        CHANNEL.sendToServer(new SetBuildingChoicesMessage(buildingPos, choices));
+        CHANNEL.sendToServer(new SetBuildingChoicesMessage(buildingPos, choices, false));
+    }
+
+    /** Client → server: set the miner's mineshaft-palette replacement choices. */
+    public static void sendMineshaftChoices(final BlockPos buildingPos, final Map<Block, Block> choices)
+    {
+        CHANNEL.sendToServer(new SetBuildingChoicesMessage(buildingPos, choices, true));
     }
 }

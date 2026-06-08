@@ -2,6 +2,7 @@ package com.structurizereplacements.mixin.minecolonies;
 
 import com.minecolonies.core.colony.buildings.views.AbstractBuildingView;
 import com.structurizereplacements.placement.ChoiceCodec;
+import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.block.Block;
@@ -22,10 +23,13 @@ import java.util.Map;
  * <p>{@code remap = false}: {@code deserialize} is MineColonies' own method.
  */
 @Mixin(AbstractBuildingView.class)
-public class MixinAbstractBuildingView implements PlacementChoiceHolder
+public class MixinAbstractBuildingView implements PlacementChoiceHolder, MineshaftChoiceHolder
 {
     @Unique
     private Map<Block, Block> structurizereplacements$choices;
+
+    @Unique
+    private Map<Block, Block> structurizereplacements$mineshaftChoices;
 
     @Override
     public void setReplacementChoices(final Map<Block, Block> choices)
@@ -39,10 +43,28 @@ public class MixinAbstractBuildingView implements PlacementChoiceHolder
         return this.structurizereplacements$choices;
     }
 
+    @Override
+    public void setMineshaftChoices(final Map<Block, Block> choices)
+    {
+        this.structurizereplacements$mineshaftChoices = choices;
+    }
+
+    @Override
+    public Map<Block, Block> getMineshaftChoices()
+    {
+        return this.structurizereplacements$mineshaftChoices;
+    }
+
+    /**
+     * Read both choice maps in the same order {@code MixinAbstractBuilding#serializeToView} wrote them
+     * (hut, then mineshaft).
+     */
     @Inject(method = "deserialize", at = @At("TAIL"), remap = false)
     private void structurizereplacements$readChoicesFromBuffer(final FriendlyByteBuf buf, final CallbackInfo ci)
     {
-        final Map<Block, Block> read = ChoiceCodec.read(buf);
-        this.structurizereplacements$choices = read.isEmpty() ? null : read;
+        final Map<Block, Block> hut = ChoiceCodec.read(buf);
+        this.structurizereplacements$choices = hut.isEmpty() ? null : hut;
+        final Map<Block, Block> mineshaft = ChoiceCodec.read(buf);
+        this.structurizereplacements$mineshaftChoices = mineshaft.isEmpty() ? null : mineshaft;
     }
 }

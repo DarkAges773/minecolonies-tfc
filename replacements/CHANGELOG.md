@@ -7,6 +7,12 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **Mineshaft palette (miner)** — the miner hut's settings list now has an *Edit Mineshaft Palette* row
+  that opens the picker for the materials of the tunnels/shafts the miner digs (the `infrastructure/mineshafts/*`
+  schematics, aggregated across all node types). This palette is stored separately from the hut building's
+  palette and applies to every mineshaft the miner builds.
+
 ## [0.1.0] - 2026-06-08
 First release.
 

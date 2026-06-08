@@ -56,4 +56,13 @@ public interface ReplacementChoiceContext
 
     /** Switch palette mode and reload sources (no-op unless {@link #hasPaletteModeToggle()}). */
     default void setUpdateMode(final boolean update) {}
+
+    /**
+     * Translation key for the window title. Defaults to the generic "Edit Block Palette"; contexts editing a
+     * specific palette (e.g. the miner's mineshaft palette) override this to label the window accordingly.
+     */
+    default String titleKey()
+    {
+        return "structurizereplacements.gui.replace.title";
+    }
 }

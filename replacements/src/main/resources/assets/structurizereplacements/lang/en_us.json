@@ -1,5 +1,7 @@
 {
   "structurizereplacements.gui.replace.title": "Edit Block Palette",
+  "structurizereplacements.gui.replace.mineshaft.title": "Edit Mineshaft Palette",
+  "structurizereplacements.gui.replace.mineshaft.button": "Edit Mineshaft Palette",
   "structurizereplacements.gui.replace.reset": "Reset",
   "structurizereplacements.gui.replace.palette.update": "Upgrade",
   "structurizereplacements.gui.replace.palette.current": "Current",
