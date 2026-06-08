@@ -14,6 +14,10 @@ All notable changes to this mod are documented here. The format is based on
 - **Colonists avoid TFC heat sources** — TFC's contact-damaging heat blocks (firepit, grill, pot, charcoal
   forge, molten) are added to MineColonies' `dangerousblocks` tag, so citizen pathfinding routes around them
   the same way it avoids vanilla campfires and fire.
+- **Miner lucky-ore drops are TFC ores** — the miner's "lucky block" finds (rolled while tunnelling through
+  stone) now yield TFC rich ore nuggets instead of vanilla ore blocks, scaling with hut level by metal age:
+  L1 copper → L2 bronze (tin/bismuth/zinc) → L3 silver/gold → L4 iron → L5 nickel. Gives the colony miner a
+  real reason to exist in a TFC world (TFC ore is rare, so miners otherwise just dig stone).
 
 ## [0.1.0] - 2026-06-08
 First release. Requires Palette Swap for MineColonies (`structurizereplacements`) `1.20.1-0.1.0`+.

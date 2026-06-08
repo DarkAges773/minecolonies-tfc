@@ -446,6 +446,31 @@ to hurt the entity (confirmed by decompiling — `death.attack.tfc.grill`/`pot` 
 Like the vanilla campfire treatment, the tag is block-level, so an *unlit* firepit/forge is avoided too
 (conservative, but matches how MineColonies already treats `instanceof CampfireBlock`). Datapack-only — no code.
 
+## Miner lucky-ore drops are TFC ores — DONE, in-world test pending
+
+The MineColonies miner has a "lucky block" mechanic: each block it mines that's in `minecolonies:orechanceblocks`
+(ships as `#forge:stone` + `#minecraft:base_stone_overworld/nether` — i.e. **stone**, not ore) rolls a
+`luckyblockchance`% chance (server config, default 1; × the `MoreOres` research) to additionally drop from the
+loot table `minecolonies:miner/lucky_ore<hutLevel>` (1–5). Stock MineColonies fills those tables with **vanilla
+ore blocks** (coal/copper → … → diamond/emerald), which are off-progression in TFC — and since TFC ore is rare,
+a colony miner mostly just chews through stone, so this lucky roll is effectively the miner's whole ore output.
+
+`:compat` overrides all five tables ([data/minecolonies/loot_tables/miner/lucky_ore{1..5}.json](../compat/src/main/resources/data/minecolonies/loot_tables/miner/lucky_ore1.json),
+last-datapack-wins) to drop TFC **rich** ore nuggets (`tfc:ore/rich_<ore>`, ≈⅓ ingot each when melted). The
+trigger needs no change — TFC raw/hardened rock is already in `forge:stone`. Tiers are **cumulative** and map
+**hut level → TFC metal age** (so upgrading the miner advances the colony's metallurgy), with weights by
+geological rarity:
+- **L1 Copper** — native copper / malachite / tetrahedrite (w48).
+- **L2 + Bronze base** — cassiterite (tin) / bismuthinite / sphalerite (zinc) (w28).
+- **L3 + Black bronze** — native silver / native gold (w6).
+- **L4 + Iron** — hematite / magnetite / limonite (w32 — iron becomes the bulk find once unlocked).
+- **L5 + Steel** — garnierite (nickel) (w3).
+
+Each table is a single 1-roll pool (one nugget per successful proc), mirroring the vanilla structure it replaces.
+**Rich** (not small/normal) was chosen deliberately: TFC ore scarcity means this is the miner's main metal
+source, so the find should be worth it. Datapack-only — no code. Tune via the per-ore weights or vanilla's
+`luckyblockchance` config.
+
 ## Non-falling ("mortared"/"cemented") cobble — DONE & verified
 
 TFC makes cobble collapse (gravity), which wrecks MineColonies cobble builds. `:compat` registers a

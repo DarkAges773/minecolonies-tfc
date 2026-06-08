@@ -1,0 +1,23 @@
+{
+  "pools": [
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "entries": [
+        { "type": "minecraft:item", "name": "tfc:ore/rich_native_copper", "weight": 48 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_malachite", "weight": 48 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_tetrahedrite", "weight": 48 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_cassiterite", "weight": 28 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_bismuthinite", "weight": 28 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_sphalerite", "weight": 28 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_native_silver", "weight": 6 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_native_gold", "weight": 6 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_hematite", "weight": 32 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_magnetite", "weight": 32 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_limonite", "weight": 32 },
+        { "type": "minecraft:item", "name": "tfc:ore/rich_garnierite", "weight": 3 }
+      ]
+    }
+  ],
+  "random_sequence": "minecolonies:miner/lucky_ore5"
+}
