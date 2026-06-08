@@ -4,3 +4,20 @@
 plugins {
     id 'net.minecraftforge.gradle' version '[6.0,6.2)' apply false
 }
+
+// Per-mod auto-rolling "build number" used as the PATCH of each mod's version (MAJOR.MINOR stay manual in
+// the subprojects' build.gradle). It's the count of commits that touched the given subproject path, so each
+// mod's patch advances only when that mod changes: rolls forward per commit, monotonic per mod, reproducible
+// (the same commit always builds the same version), and never mutates a tracked file. Falls back to "0" when
+// git isn't available (e.g. building from a source archive).
+ext.gitBuildNumber = { String path ->
+    try {
+        def proc = ['git', 'rev-list', '--count', 'HEAD', '--', path].execute(null, rootDir)
+        proc.waitFor()
+        if (proc.exitValue() == 0) {
+            return proc.text.trim()
+        }
+    } catch (ignored) {
+    }
+    return '0'
+}

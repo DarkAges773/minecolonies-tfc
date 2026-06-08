@@ -854,6 +854,30 @@ pack), so the base pools stay TFC-only and error-free when it's absent. No new c
 `from_tag=to_tag` rules already cover the merged tag), so a crimson plank can be re-picked to warped or any TFC
 wood, and vice-versa.
 
+## Versioning, releases & changelog
+
+**Version scheme:** each mod releases as `<mcversion>-<MAJOR.MINOR.patch>` (e.g. `1.20.1-0.1.41`), matching the
+MineColonies/Structurize ecosystem. In each subproject's `build.gradle`, `mod_version_base` holds the
+**manual** `MAJOR.MINOR` (bump MINOR for a back-compat feature, MAJOR for a rule-schema / saved-NBT break); the
+**patch auto-rolls** from `rootProject.gitBuildNumber(<subproject dir>)` = the count of commits touching that
+subproject — per-mod, monotonic, reproducible (same commit → same version), and never mutates a tracked file.
+The `1.20.1-` prefix comes from the shared `minecraft_version`. Published as **Beta** while `0.x`; cut `1.0.0`
+as the first **Release** once the rule/NBT formats are stable. Display names: `structurizereplacements` =
+**Palette Swap for MineColonies**, `mctfc` = **MineColonies × TerraFirmaCraft**.
+
+**Changelog — Claude curates `[Unreleased]` per change** ([replacements/CHANGELOG.md](replacements/CHANGELOG.md),
+[compat/CHANGELOG.md](compat/CHANGELOG.md), Keep-a-Changelog): for every **user-facing** change, add a one-line
+bullet under the right mod's `## [Unreleased]` (Added/Changed/Fixed/Removed) **as part of that change** — both
+files if it touches both mods. **Skip** internal / refactor / build-plumbing / test-only changes, and **never
+stamp version headers yourself**. The user cuts a release with `./gradlew :<mod>:cutRelease` (moves
+`[Unreleased]` into a dated `## [version]` section + a fresh empty `[Unreleased]`; refuses when `[Unreleased]`
+is empty).
+
+**`:compat` → `:replacements` dependency floor:** `replacements_min` in [compat/build.gradle](compat/build.gradle)
+drives the `structurizereplacements` `versionRange` in `mctfc`'s `mods.toml`; raise it **manually** when `mctfc`
+starts relying on a newer Palette Swap feature. With the MC-prefixed scheme a bare `[0.1,)` is a no-op (any
+`1.20.1-*` satisfies it), so the bound must carry the prefix (`[1.20.1-0.1.0,)`).
+
 ## Conventions
 
 - Prefer public APIs / events; when reaching another mod's internals use a mixin (with `remap=false`

@@ -28,14 +28,26 @@ evaluationDependsOn(':replacements')
 def mod_id = 'mctfc'
 def mod_name = 'MineColonies x TerraFirmaCraft'
 def mod_license = 'GPL-3.0'
-def mod_version = '0.1.0'
+// MAJOR.MINOR — bump manually (MINOR = new back-compat feature, MAJOR = rule-schema/NBT break).
+def mod_version_base = '0.1'
+// PATCH auto-rolls from the count of commits that touched this subproject (see rootProject.gitBuildNumber)
+// — the rolling "build number", advancing only when this mod changes.
+def mod_version = "${mod_version_base}.${rootProject.gitBuildNumber(projectDir.name)}".toString()
 def mod_group_id = 'com.mctfc'
 def mod_authors = 'DarkAges'
 def mod_description = 'Compatibility bridge between MineColonies and TerraFirmaCraft for Forge 1.20.1.'
 
-version = mod_version
+// Released as <mcversion>-<semver> (e.g. 1.20.1-0.1.0), matching the ecosystem (see :replacements).
+def full_version = "${minecraft_version}-${mod_version}".toString()
+version = full_version
 group = mod_group_id
 base { archivesName = mod_id }
+
+// Minimum :replacements (Palette Swap) release this build of mctfc requires. Bump this MANUALLY (not from
+// :replacements' current version) whenever mctfc starts relying on a newer Palette Swap feature — it's the
+// lower bound of the structurizereplacements dependency in mods.toml. Must carry the MC prefix to be a real
+// bound, since with the <mcversion>-<semver> scheme a bare "[0.1,)" is satisfied by any 1.20.1-* version.
+def replacements_min = "${minecraft_version}-0.1.0".toString()
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
@@ -137,8 +149,9 @@ tasks.named('processResources', ProcessResources).configure {
             minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
             forge_version: forge_version, forge_version_range: forge_version_range,
             loader_version_range: loader_version_range,
-            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: full_version,
             mod_authors: mod_authors, mod_description: mod_description,
+            replacements_min: replacements_min,
     ]
     inputs.properties replaceProperties
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
@@ -163,4 +176,34 @@ tasks.named('jar', Jar).configure {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+// Cut a release in CHANGELOG.md: rename the curated '## [Unreleased]' section to a dated section for the
+// current version (mod_version, e.g. 0.1.41) and leave a fresh empty '## [Unreleased]' on top. Run
+// intentionally at release time (`./gradlew :compat:cutRelease`), then commit the changelog. Refuses when
+// [Unreleased] is empty so we never stamp an empty release.
+tasks.register('cutRelease') {
+    group = 'release'
+    description = "Move CHANGELOG [Unreleased] into a dated section for version ${mod_version}."
+    doLast {
+        def changelog = file('CHANGELOG.md')
+        if (!changelog.exists()) {
+            throw new GradleException("No CHANGELOG.md in ${projectDir}")
+        }
+        def text = changelog.text
+        def marker = '## [Unreleased]'
+        def idx = text.indexOf(marker)
+        if (idx < 0) {
+            throw new GradleException("No '${marker}' section in CHANGELOG.md")
+        }
+        def afterMarker = idx + marker.length()
+        def nextHeader = text.indexOf('\n## [', afterMarker)
+        def body = (nextHeader < 0 ? text.substring(afterMarker) : text.substring(afterMarker, nextHeader)).trim()
+        if (body.isEmpty()) {
+            throw new GradleException("CHANGELOG [Unreleased] is empty - nothing to release.")
+        }
+        def date = new Date().format('yyyy-MM-dd')
+        changelog.text = text.substring(0, idx) + "${marker}\n\n## [${mod_version}] - ${date}" + text.substring(afterMarker)
+        println "Cut ${mod_id} release ${mod_version} (${date}) in CHANGELOG.md"
+    }
 }
