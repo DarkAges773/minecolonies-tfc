@@ -7,6 +7,11 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **Cemented cobble creative tab** — the mortared ("Cemented") cobble twins now live in a *MineColonies ×
+  TerraFirmaCraft* creative tab. This also makes them selectable as the miner's *Fill Block* (and visible in
+  MineColonies' other item pickers), which previously only listed blocks that appear in some creative tab.
+
 ## [0.1.0] - 2026-06-08
 First release. Requires Palette Swap for MineColonies (`structurizereplacements`) `1.20.1-0.1.0`+.
 

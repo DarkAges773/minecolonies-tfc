@@ -5,12 +5,8 @@ import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,7 +14,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -82,58 +77,18 @@ public class MixinAbstractBuilding implements PlacementChoiceHolder, MineshaftCh
     @Inject(method = "serializeNBT()Lnet/minecraft/nbt/CompoundTag;", at = @At("RETURN"), remap = false)
     private void structurizereplacements$writeChoices(final CallbackInfoReturnable<CompoundTag> cir)
     {
-        if (structurizereplacements$choices == null || structurizereplacements$choices.isEmpty())
-        {
-            return;
-        }
-        final ListTag list = new ListTag();
-        structurizereplacements$choices.forEach((from, to) -> {
-            final ResourceLocation f = ForgeRegistries.BLOCKS.getKey(from);
-            final ResourceLocation t = ForgeRegistries.BLOCKS.getKey(to);
-            if (f != null && t != null)
-            {
-                final CompoundTag entry = new CompoundTag();
-                entry.putString("from", f.toString());
-                entry.putString("to", t.toString());
-                list.add(entry);
-            }
-        });
-        if (!list.isEmpty())
-        {
-            cir.getReturnValue().put(SREP_KEY, list);
-        }
-        // The mineshaft map uses the shared ChoiceCodec NBT shape (keyed, so order is irrelevant).
-        ChoiceCodec.writeNbt(cir.getReturnValue(), SREP_MINESHAFT_KEY, structurizereplacements$mineshaftChoices);
+        // Both maps use the shared ChoiceCodec NBT shape (keyed, so order is irrelevant). Write them
+        // independently — a building may have only one of them (e.g. the miner sets mineshaft picks but no
+        // hut-building picks), so neither write may short-circuit the other.
+        final CompoundTag tag = cir.getReturnValue();
+        ChoiceCodec.writeNbt(tag, SREP_KEY, structurizereplacements$choices);
+        ChoiceCodec.writeNbt(tag, SREP_MINESHAFT_KEY, structurizereplacements$mineshaftChoices);
     }
 
     @Inject(method = "deserializeNBT(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"), remap = false)
     private void structurizereplacements$readChoices(final CompoundTag tag, final CallbackInfo ci)
     {
+        this.structurizereplacements$choices = ChoiceCodec.readNbt(tag, SREP_KEY);
         this.structurizereplacements$mineshaftChoices = ChoiceCodec.readNbt(tag, SREP_MINESHAFT_KEY);
-        if (!tag.contains(SREP_KEY, Tag.TAG_LIST))
-        {
-            this.structurizereplacements$choices = null;
-            return;
-        }
-        final Map<Block, Block> read = new HashMap<>();
-        final ListTag list = tag.getList(SREP_KEY, Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++)
-        {
-            final CompoundTag entry = list.getCompound(i);
-            final Block from = structurizereplacements$block(entry.getString("from"));
-            final Block to = structurizereplacements$block(entry.getString("to"));
-            if (from != null && to != null)
-            {
-                read.put(from, to);
-            }
-        }
-        this.structurizereplacements$choices = read.isEmpty() ? null : read;
-    }
-
-    @Unique
-    private static Block structurizereplacements$block(final String id)
-    {
-        final ResourceLocation rl = ResourceLocation.tryParse(id);
-        return (rl != null && ForgeRegistries.BLOCKS.containsKey(rl)) ? ForgeRegistries.BLOCKS.getValue(rl) : null;
     }
 }

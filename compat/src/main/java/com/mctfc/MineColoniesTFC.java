@@ -41,6 +41,10 @@ public class MineColoniesTFC
         // collapsing cobble doesn't wreck MineColonies builds). Substitution targets these via the
         // mctfc:mortared_cobblestone tag.
         modBus.addListener(MortaredCobbleRegistry::onRegister);
+        // Creative tab holding the mortared-cobble twins. Beyond being grabbable, this is what makes them
+        // discoverable by MineColonies (its item pickers — incl. the miner fill-block setting — only see
+        // items that appear in some creative tab).
+        MctfcCreativeTab.TABS.register(modBus);
         // Runtime data pack: the mctfc:mortared_cobblestone tag (every twin) + a mortar recipe per twin.
         modBus.addListener(MortaredCobbleData::onAddPackFinders);
         // Optional built-in datapack: enabled only when the 'beneath' mod is present (Beneath-specific rules).
