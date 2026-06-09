@@ -96,16 +96,21 @@ iron becomes a hot bloom), consumes the input, and flips the cap to `DONE`. So t
 mold is filled, wherever the worker happens to be (and it resumes correctly after a reload). The inject is gated
 cheaply (unlit **and** something in the input slot) so idle furnaces cost almost nothing.
 
-### Worker flow (parallel furnaces), stateless — load and retrieve only
-The worker keeps **no** per-furnace job map; it reads each furnace's cap phase:
-- **`IDLE`** → load it: move one ore grade (≥100 mB) → input, an empty mold → result, burn fuel from the racks
-  through the fuel slot; light it (`litTime = meltDuration`) and set `MELTING`.
+### Worker flow — stage a batch, load, retrieve
+Like the vanilla furnace workers, the worker **carries a batch** of materials in its own inventory and loads
+furnaces from there (it keeps no per-furnace job map; it reads each furnace's cap phase):
+- **stage** — when it can't load anything from the batch it's carrying, it pulls a fresh batch of one makeable
+  metal's materials from the **racks** into its **inventory**: up to a stack of ore + the molds (cast) / fuel,
+  or charcoal (iron). Bounded (a few stacks) so it never trips the worker's full-inventory dump.
+- **`IDLE`** furnace → load it from the **carried batch**: one ore grade (≥100 mB) → input, an empty mold →
+  result, burn fuel through the fuel slot; light it (`litTime = meltDuration`) and set `MELTING`.
 - **`MELTING`** → leave it; the furnace finishes on its own.
-- **`DONE`** → haul the finished item out of the result slot into the racks, award XP, set `IDLE`.
+- **`DONE`** → haul the finished item out of the result slot into the **racks**, award XP, set `IDLE`.
 
 The metal/fluid is re-derived from the **input-slot ore** (at completion). Ore is consumed as a **single grade
 per melt** (so the input slot holds the exact stack that drops on break); the carried fuel pool persists in the
-cap.
+cap. Staging into the inventory is the seam the colony **request system** will later feed (deliver to the
+building → worker stages → loads).
 
 ### Caveats
 - The furnace's slots are exposed on its faces, so a **hopper could pull ore/fuel/mold mid-melt** (the furnaces
@@ -173,9 +178,11 @@ Read live from `HeatCapability.get(ore).getHeatCapacity()` + the ore's `HeatingR
 | Iron | bloom | — needs charcoal (bloomery) — | ✅ | — |
 
 ### Parallel furnaces & storage
-Storage is the building's **racks** (`getContainers()`), not the hut-block inventory. All furnaces run in
-parallel: the worker loads each idle furnace, they cook independently (`litTime`), and it collects each as it
-finishes — so a 5-furnace hut runs five melts at once.
+Colony storage is the building's **racks** (`getContainers()`), not the hut-block inventory; the worker stages
+batches out of the racks into its **own inventory** and loads furnaces from there (results go back to the
+racks — see §3 "Worker flow"). All furnaces run in parallel: the worker loads each idle furnace, they cook
+independently (`litTime`), and it hauls each result out as it finishes — so a 5-furnace hut runs five melts at
+once.
 
 ### Skills
 Strength shortens melt duration (primary skill); Stamina is the secondary. (Lucky-ore drops while mining are a

@@ -43,6 +43,12 @@ public final class FurnaceFuel
         return !stack.isEmpty() && Fuel.get(stack) != null;
     }
 
+    /** Whether this fuel is hot enough (after the hut's level bonus) to run an operation needing {@code required}°C. */
+    public static boolean isHotEnough(final ItemStack stack, final float required, final int hutLevel)
+    {
+        return isFuel(stack) && fuelTemp(stack) + Config.furnaceFuelTempBonus(hutLevel) >= required;
+    }
+
     private static float fuelTemp(final ItemStack stack)
     {
         final Fuel fuel = Fuel.get(stack);

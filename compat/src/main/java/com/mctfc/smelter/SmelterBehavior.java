@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * TFC-flavoured replacement for the MineColonies Smelter's furnace loop (see docs/tfc-furnace-workers.md).
@@ -66,6 +67,10 @@ public class SmelterBehavior implements FurnaceBehavior
     private static final int    DEFAULT_DURATION = 200;
     private static final int    WORK_TICK_RATE   = 10;
     private static final double XP_PER_OUTPUT     = 5.0;
+    /** How much of each material the worker stages in its own inventory per gather trip. */
+    private static final int    ORE_BATCH        = 64;
+    private static final int    MOLD_BATCH       = 16;
+    private static final int    FUEL_BATCH       = 64;
 
     private enum State implements IAIState
     {
@@ -98,20 +103,19 @@ public class SmelterBehavior implements FurnaceBehavior
     @Override
     public IAIState startWorking()
     {
-        if (!ai.gotoBuilding())
-        {
-            return ai.state();
-        }
-
         final List<BlockPos> furnaces = ai.furnaces();
         final Level world = ai.world();
         if (furnaces.isEmpty() || world == null)
         {
+            if (!ai.gotoBuilding())
+            {
+                return ai.state();
+            }
             ai.delay(40);
             return AIWorkerState.START_WORKING;
         }
 
-        // 1) haul out any furnace that has finished — the furnace fills the mold itself when its fuel burns out.
+        // 1) haul out any finished furnace — walk straight to it, no detour back to the hut.
         for (final BlockPos furnace : furnaces)
         {
             final FurnaceProcess cap = capOf(furnaceAt(furnace));
@@ -123,9 +127,8 @@ public class SmelterBehavior implements FurnaceBehavior
             }
         }
 
-        // 2) otherwise load an idle furnace with the next ready ore.
-        final List<IItemHandler> storage = storage();
-        final ItemStack ready = findReadyJob(storage);
+        // 2) load an idle furnace from the batch already in hand — again straight to the furnace.
+        final ItemStack ready = findReadyJob(inventory());
         if (!ready.isEmpty())
         {
             for (final BlockPos furnace : furnaces)
@@ -139,6 +142,20 @@ public class SmelterBehavior implements FurnaceBehavior
                     return State.WORK;
                 }
             }
+            // Carrying loadable materials but every furnace is busy — wait here, don't trek back to the hut.
+            ai.delay(40);
+            return AIWorkerState.START_WORKING;
+        }
+
+        // 3) out of materials in hand — only now return to the hut to stage a fresh batch from the racks.
+        if (!ai.gotoBuilding())
+        {
+            return ai.state();
+        }
+        if (stageBatch())
+        {
+            ai.delay(20);
+            return AIWorkerState.START_WORKING;
         }
 
         ai.delay(60);
@@ -157,16 +174,15 @@ public class SmelterBehavior implements FurnaceBehavior
         }
 
         final FurnaceBlockEntity be = furnaceAt(target);
-        final List<IItemHandler> storage = storage();
         if (be != null)
         {
             if (collect)
             {
-                retrieve(be, storage);
+                retrieve(be, racks());
             }
             else if (!loadOre.isEmpty())
             {
-                load(be, loadOre, storage);
+                load(be, loadOre, inventory());
             }
         }
 
@@ -434,7 +450,8 @@ public class SmelterBehavior implements FurnaceBehavior
         }
     }
 
-    private List<IItemHandler> storage()
+    /** The building's racks — the colony storage the worker stages batches out of and ships results into. */
+    private List<IItemHandler> racks()
     {
         final IBuilding building = ai.building();
         final Level world = ai.world();
@@ -452,6 +469,102 @@ public class SmelterBehavior implements FurnaceBehavior
             }
         }
         return handlers;
+    }
+
+    /** The batch the worker is carrying — furnaces are loaded from here, not straight from the racks. */
+    private List<IItemHandler> inventory()
+    {
+        return ai.worker() == null ? List.of() : List.of(ai.worker().getInventoryCitizen());
+    }
+
+    /** Inventory first, then racks — used to decide what the colony can make as a whole before staging. */
+    private List<IItemHandler> combined()
+    {
+        final List<IItemHandler> all = new ArrayList<>(inventory());
+        all.addAll(racks());
+        return all;
+    }
+
+    /**
+     * Pull a batch of one makeable metal's materials (ore + mold/fuel, or ore + charcoal for iron) from the
+     * racks into the worker's inventory, topping up what it's already carrying. Returns whether anything moved.
+     */
+    private boolean stageBatch()
+    {
+        final ItemStack grade = findReadyJob(combined());
+        final List<IItemHandler> inv = inventory();
+        if (grade.isEmpty() || inv.isEmpty())
+        {
+            return false;
+        }
+        final IItemHandler to = inv.get(0);
+        final List<IItemHandler> racks = racks();
+        final Output output = SmelterRecipes.outputFor(grade);
+        boolean moved = false;
+
+        final int haveOre = countMatching(to, s -> ItemHandlerHelper.canItemStacksStack(s, grade));
+        moved |= moveToInventory(racks, to, s -> ItemHandlerHelper.canItemStacksStack(s, grade), ORE_BATCH - haveOre);
+
+        if (output != null && output.bloom())
+        {
+            moved |= moveToInventory(racks, to, SmelterRecipes::isCharcoal, FUEL_BATCH);
+        }
+        else
+        {
+            if (countMatching(to, SmelterBehavior::isEmptyMold) == 0)
+            {
+                moved |= moveToInventory(racks, to, SmelterBehavior::isEmptyMold, MOLD_BATCH);
+            }
+            final float meltTemp = meltTempOf(grade);
+            if (!FurnaceFuel.hasFuelHotEnough(meltTemp, ai.buildingLevel(), inv))
+            {
+                moved |= moveToInventory(racks, to, s -> FurnaceFuel.isHotEnough(s, meltTemp, ai.buildingLevel()), FUEL_BATCH);
+            }
+        }
+        return moved;
+    }
+
+    /** Move up to {@code max} matching items from the racks into the carried inventory. */
+    private static boolean moveToInventory(final List<IItemHandler> from, final IItemHandler to, final Predicate<ItemStack> match, final int max)
+    {
+        int moved = 0;
+        for (final IItemHandler h : from)
+        {
+            for (int slot = 0; slot < h.getSlots() && moved < max; slot++)
+            {
+                final ItemStack stack = h.getStackInSlot(slot);
+                if (stack.isEmpty() || !match.test(stack))
+                {
+                    continue;
+                }
+                final ItemStack pulled = h.extractItem(slot, Math.min(max - moved, stack.getCount()), true);
+                if (pulled.isEmpty())
+                {
+                    continue;
+                }
+                final int accepted = pulled.getCount() - ItemHandlerHelper.insertItem(to, pulled.copy(), false).getCount();
+                if (accepted > 0)
+                {
+                    h.extractItem(slot, accepted, false);
+                    moved += accepted;
+                }
+            }
+        }
+        return moved > 0;
+    }
+
+    private static int countMatching(final IItemHandler handler, final Predicate<ItemStack> match)
+    {
+        int count = 0;
+        for (int slot = 0; slot < handler.getSlots(); slot++)
+        {
+            final ItemStack stack = handler.getStackInSlot(slot);
+            if (!stack.isEmpty() && match.test(stack))
+            {
+                count += stack.getCount();
+            }
+        }
+        return count;
     }
 
     private FurnaceBlockEntity furnaceAt(final BlockPos furnace)
