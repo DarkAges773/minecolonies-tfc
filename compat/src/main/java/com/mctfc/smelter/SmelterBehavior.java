@@ -129,10 +129,11 @@ public class SmelterBehavior implements FurnaceBehavior
         }
         for (final BlockPos furnace : furnaces)
         {
-            final FurnaceProcess cap = capOf(furnaceAt(furnace));
-            if (cap != null && cap.phase() == FurnaceProcess.Phase.DONE)
+            final FurnaceBlockEntity be = furnaceAt(furnace);
+            final FurnaceProcess cap = capOf(be);
+            if (cap != null && cap.phase() == FurnaceProcess.Phase.DONE && canStow(be.getItem(FURNACE_RESULT)))
             {
-                return true; // a finished furnace to unload
+                return true; // a finished furnace we have room to unload
             }
         }
         if (idleFurnaceCount() > 0 && !findReadyJob(combined()).isEmpty())
@@ -144,14 +145,24 @@ public class SmelterBehavior implements FurnaceBehavior
 
     private boolean hasCooledMold(final List<IItemHandler> storage)
     {
+        final Level world = ai.world();
+        if (world == null)
+        {
+            return false;
+        }
         for (final IItemHandler h : storage)
         {
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final MoldLike mold = MoldLike.get(h.getStackInSlot(slot));
-                if (mold != null && mold.getTemperature() == 0f && CastingRecipe.get(mold) != null)
+                if (mold == null || mold.getTemperature() != 0f)
                 {
-                    return true;
+                    continue;
+                }
+                final CastingRecipe recipe = CastingRecipe.get(mold);
+                if (recipe != null && canStow(recipe.assemble(mold, world.registryAccess())))
+                {
+                    return true; // a cooled mold whose ingot we have room for
                 }
             }
         }
@@ -252,13 +263,14 @@ public class SmelterBehavior implements FurnaceBehavior
             {
                 continue;
             }
-            final FurnaceProcess cap = capOf(furnaceAt(furnace));
-            if (cap == null)
+            final FurnaceBlockEntity be = furnaceAt(furnace);
+            final FurnaceProcess cap = capOf(be);
+            if (be == null || cap == null)
             {
                 tended.add(furnace);
                 continue;
             }
-            final boolean done = cap.phase() == FurnaceProcess.Phase.DONE;
+            final boolean done = cap.phase() == FurnaceProcess.Phase.DONE && canStow(be.getItem(FURNACE_RESULT));
             final boolean loadable = cap.phase() == FurnaceProcess.Phase.IDLE && !findReadyJob(inventory()).isEmpty();
             if (done || loadable)
             {
@@ -307,20 +319,26 @@ public class SmelterBehavior implements FurnaceBehavior
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final MoldLike mold = MoldLike.get(h.getStackInSlot(slot));
-                if (mold == null || mold.getTemperature() != 0f || CastingRecipe.get(mold) == null)
+                if (mold == null || mold.getTemperature() != 0f)
                 {
                     continue;
+                }
+                final CastingRecipe recipe = CastingRecipe.get(mold);
+                if (recipe == null)
+                {
+                    continue;
+                }
+                final ItemStack result = recipe.assemble(mold, world.registryAccess());
+                if (!canStow(result))
+                {
+                    continue; // no room for the ingot — leave the cooled mold here, extract it later
                 }
                 final ItemStack filled = h.extractItem(slot, 1, false);
                 final MoldLike taken = MoldLike.get(filled);
-                final CastingRecipe recipe = CastingRecipe.get(taken);
-                if (taken == null || recipe == null)
+                if (taken != null)
                 {
-                    insert(storage, filled); // shouldn't happen; put it back
-                    continue;
+                    taken.drainIgnoringTemperature(Integer.MAX_VALUE, IFluidHandler.FluidAction.EXECUTE);
                 }
-                final ItemStack result = recipe.assemble(taken, world.registryAccess());
-                taken.drainIgnoringTemperature(Integer.MAX_VALUE, IFluidHandler.FluidAction.EXECUTE);
                 insert(storage, result);
                 if (world.getRandom().nextFloat() >= recipe.getBreakChance())
                 {
@@ -402,6 +420,10 @@ public class SmelterBehavior implements FurnaceBehavior
         final ItemStack result = be.getItem(FURNACE_RESULT);
         if (!result.isEmpty())
         {
+            if (!canStow(result))
+            {
+                return; // nowhere to put it — leave it in the furnace (stays DONE) and retry when space frees
+            }
             insert(storage, result.copy());
             be.setItem(FURNACE_RESULT, ItemStack.EMPTY);
             ai.worker().getCitizenExperienceHandler().addExperience(XP_PER_OUTPUT);
@@ -680,10 +702,64 @@ public class SmelterBehavior implements FurnaceBehavior
                 return;
             }
         }
+        // Racks full: carry the overflow in the worker's own inventory — MineColonies' dump cycle then moves it
+        // to the building / warehouse. (Loaders that already pass the inventory just re-try it harmlessly.)
+        for (final IItemHandler h : inventory())
+        {
+            stack = ItemHandlerHelper.insertItem(h, stack, false);
+            if (stack.isEmpty())
+            {
+                return;
+            }
+        }
         if (!stack.isEmpty() && ai.worker() != null)
         {
-            ai.worker().spawnAtLocation(stack);
+            ai.worker().spawnAtLocation(stack); // absolute last resort (both racks and inventory full)
         }
+    }
+
+    /** Whether {@code stack} fully fits into the racks or, failing that, the worker's inventory. */
+    private boolean canStow(final ItemStack stack)
+    {
+        final List<IItemHandler> racks = racks();
+        final List<IItemHandler> inv = inventory();
+        if (hasEmptySlot(racks) || hasEmptySlot(inv))
+        {
+            return true; // an empty slot takes any single output — fast path
+        }
+        ItemStack remaining = stack.copy();
+        for (final IItemHandler h : racks)
+        {
+            remaining = ItemHandlerHelper.insertItem(h, remaining, true);
+            if (remaining.isEmpty())
+            {
+                return true;
+            }
+        }
+        for (final IItemHandler h : inv)
+        {
+            remaining = ItemHandlerHelper.insertItem(h, remaining, true);
+            if (remaining.isEmpty())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasEmptySlot(final List<IItemHandler> handlers)
+    {
+        for (final IItemHandler h : handlers)
+        {
+            for (int slot = 0; slot < h.getSlots(); slot++)
+            {
+                if (h.getStackInSlot(slot).isEmpty())
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** The building's racks — the colony storage the worker stages out of and ships results into. */
