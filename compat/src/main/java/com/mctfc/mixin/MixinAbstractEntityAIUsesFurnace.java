@@ -12,6 +12,8 @@ import com.minecolonies.core.entity.ai.workers.AbstractEntityAIUsesFurnace;
 import com.mctfc.furnace.FurnaceBehavior;
 import com.mctfc.furnace.FurnaceBehaviors;
 import com.mctfc.furnace.FurnaceWorker;
+
+import static com.minecolonies.core.entity.ai.workers.AbstractEntityAIInteract.RENDER_META_WORKING;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -65,6 +67,29 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
         {
             cir.setReturnValue(this.mctfc$behavior.startWorking());
         }
+    }
+
+    /**
+     * Override the (always-{@code false}) {@code AbstractEntityAIBasic#canGoIdle()} so MineColonies' CitizenAI
+     * lets the citizen wander / idle (and pauses the work AI) when our behavior has no work — the seam the
+     * farmer uses. Furnace workers without a behavior keep the vanilla default.
+     */
+    public boolean canGoIdle()
+    {
+        final boolean idle = this.mctfc$behavior != null && this.mctfc$behavior.canGoIdle();
+        // Own the citizen's working/idle look ourselves. The base sets it off the work-AI state, but CitizenAI
+        // pauses our work AI while idle (so it never clears the "working" texture) and our cycle briefly dips
+        // through IDLE while working (so it flickers). canGoIdle is polled continuously by CitizenAI in both
+        // states, so it's the reliable single point: working ⇒ glasses-down texture, idle ⇒ default.
+        if (this.mctfc$behavior != null)
+        {
+            final AbstractEntityCitizen citizen = worker();
+            if (citizen != null)
+            {
+                citizen.setRenderMetadata(idle ? "" : RENDER_META_WORKING);
+            }
+        }
+        return idle;
     }
 
     // --- FurnaceWorker bridge (no @Shadow: cast for public members, invoker for protected) ---

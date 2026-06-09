@@ -30,4 +30,15 @@ public interface FurnaceBehavior
      * gathering, or {@code ai.state()} to stay put).
      */
     IAIState startWorking();
+
+    /**
+     * Whether the worker may go idle now (nothing to do). MineColonies' {@code CitizenAI} only lets the citizen
+     * wander / do idle behaviour while the worker AI reports it can go idle (otherwise it keeps the work AI
+     * running); the default {@code AbstractEntityAIBasic#canGoIdle()} is always {@code false}. Return {@code
+     * true} when there's no work so the citizen idles like the vanilla farmer instead of busy-cycling.
+     */
+    default boolean canGoIdle()
+    {
+        return false;
+    }
 }

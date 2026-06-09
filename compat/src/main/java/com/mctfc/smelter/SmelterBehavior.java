@@ -12,8 +12,10 @@ import com.minecolonies.api.entity.ai.statemachine.AITarget;
 import com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 import com.minecolonies.api.entity.citizen.Skill;
+import net.dries007.tfc.common.capabilities.MoldLike;
 import net.dries007.tfc.common.capabilities.heat.HeatCapability;
 import net.dries007.tfc.common.capabilities.heat.IHeat;
+import net.dries007.tfc.common.recipes.CastingRecipe;
 import net.dries007.tfc.common.recipes.HeatingRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Item;
@@ -24,6 +26,7 @@ import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -31,8 +34,10 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -40,54 +45,50 @@ import java.util.function.Predicate;
  * Collapses TFC metallurgy ({@link SmelterRecipes}): ~{@value SmelterRecipes#UNITS_PER_OUTPUT} mB of one ore →
  * one casting (an ingot, delivered in its mold) or, for iron, a raw bloom.
  *
- * <p><b>The work lives in the furnace itself.</b> Ore goes in the furnace's <b>input</b> slot, fuel in its
- * <b>fuel</b> slot, the mold in its <b>result</b> slot (filled in place on completion) — so the contents drop if
- * the furnace is broken and are visible in the furnace GUI — and the melt timer/flame is the vanilla
- * {@code litTime} (a depleting flame = progress). Only the carried fuel pool rides in the furnace's
- * {@link FurnaceProcess} capability. The worker keeps no per-furnace job map; a furnace is <i>idle</i> when its
- * input slot is empty, <i>melting</i> while {@code litTime > 0}, and <i>done</i> once it has ore but
- * {@code litTime == 0}. This persists exactly across reload (it's all furnace BE NBT) and lets a 5-furnace hut
- * run five melts at once.
+ * <p><b>Staged AI</b> (like the farmer), three stages cycling, each with a skip-guard:
+ * <ol>
+ *   <li><b>{@code BATCH_STAGING}</b> — at the hut, top the carried inventory up to the idle furnaces' worth of
+ *       ore + molds + fuel/charcoal pulled from the racks.</li>
+ *   <li><b>{@code TEND_FURNACES}</b> — one sweep of the furnaces: each finished one is unloaded (output → racks)
+ *       and, if materials are in hand, immediately reloaded; each idle one is loaded. One pass, both jobs.</li>
+ *   <li><b>{@code MOLD_UNLOAD}</b> — at the hut, for each fully-cooled (heat 0) filled mold in the racks, run
+ *       TFC's casting extraction (ingot out, mold kept or broken per its break chance).</li>
+ * </ol>
  *
- * <p>Safe against the vanilla furnace: TFC ore has no vanilla smelting recipe, so the BE never auto-smelts our
- * ore or auto-burns our fuel — it only counts {@code litTime} down.
- *
- * <p><b>Authentic to TFC:</b> melt time from the heat model ({@code ~meltTemp × heat_capacity / 3} ticks,
- * shortened by Strength); fuel temperature-gated (must clear the metal's melt temp after the hut's level bonus)
- * and duration-pooled for longevity ({@link FurnaceFuel}); the output is the supplied mold filled and heated to
- * just below melting, or a hot iron bloom (bloomery, 2 charcoal, no mold).
+ * <p>The furnace finishes a melt itself (see {@code MixinAbstractFurnaceBlockEntity}/{@link SmelterProcessing}):
+ * when its {@code litTime} burns out it fills the mold in place and flips its {@link FurnaceProcess} cap to
+ * {@code DONE}. Work items live in the furnace's own slots (so they drop on break / show in the GUI), the melt
+ * timer is the vanilla {@code litTime}, and only the carried fuel pool rides in the cap — all furnace BE NBT, so
+ * it survives reload. <b>Storage</b> is the building's racks; the worker stages batches into its own inventory
+ * and loads furnaces from there.
  */
 public class SmelterBehavior implements FurnaceBehavior
 {
-    private static final int INPUT  = 0;
-    private static final int FUEL   = 1;
-    private static final int RESULT = 2;
+    private static final int FURNACE_INPUT  = 0;
+    private static final int FURNACE_FUEL   = 1;
+    private static final int FURNACE_RESULT = 2;
 
     private static final int    MIN_DURATION     = 40;
     private static final int    DEFAULT_DURATION = 200;
     private static final int    WORK_TICK_RATE   = 10;
     private static final double XP_PER_OUTPUT     = 5.0;
-    /** How much of each material the worker stages in its own inventory per gather trip. */
-    private static final int    ORE_BATCH        = 64;
-    private static final int    MOLD_BATCH       = 16;
-    private static final int    FUEL_BATCH       = 64;
 
     private enum State implements IAIState
     {
-        WORK;
+        BATCH_STAGING, TEND_FURNACES, MOLD_UNLOAD;
 
         @Override
         public boolean isOkayToEat()
         {
-            return false;
+            return true; // these are between-action waits; let the citizen eat if hungry
         }
     }
 
     private final FurnaceWorker ai;
-
+    /** Furnaces already handled in the current TEND sweep (so each is visited once). */
+    private final Set<BlockPos> tended = new HashSet<>();
+    /** The furnace currently being walked to / tended. */
     private BlockPos target;
-    private boolean collect;
-    private ItemStack loadOre = ItemStack.EMPTY;
 
     public SmelterBehavior(final FurnaceWorker ai)
     {
@@ -97,104 +98,327 @@ public class SmelterBehavior implements FurnaceBehavior
     @Override
     public Collection<AITarget<IAIState>> targets()
     {
-        return List.of(new AITarget<IAIState>(State.WORK, this::work, WORK_TICK_RATE));
+        return List.of(
+          new AITarget<IAIState>(State.BATCH_STAGING, this::stage, WORK_TICK_RATE),
+          new AITarget<IAIState>(State.TEND_FURNACES, this::tend, WORK_TICK_RATE),
+          new AITarget<IAIState>(State.MOLD_UNLOAD, this::moldUnload, WORK_TICK_RATE));
     }
 
     @Override
     public IAIState startWorking()
     {
-        final List<BlockPos> furnaces = ai.furnaces();
-        final Level world = ai.world();
-        if (furnaces.isEmpty() || world == null)
-        {
-            if (!ai.gotoBuilding())
-            {
-                return ai.state();
-            }
-            ai.delay(40);
-            return AIWorkerState.START_WORKING;
-        }
+        // Decide up front like the vanilla smelter: only enter the work cycle if there's something to do,
+        // otherwise idle (the base IDLE → START_WORKING re-checks every few ticks).
+        return hasWork() ? State.BATCH_STAGING : AIWorkerState.IDLE;
+    }
 
-        // 1) haul out any finished furnace — walk straight to it, no detour back to the hut.
+    @Override
+    public boolean canGoIdle()
+    {
+        // Let CitizenAI run the wander/idle minimal-AI (and stop ticking us) whenever there's no work to do.
+        return !hasWork();
+    }
+
+    /** Whether any stage has work: a finished furnace, an idle furnace with a makeable melt, or a cooled mold. */
+    private boolean hasWork()
+    {
+        final List<BlockPos> furnaces = ai.furnaces();
+        if (ai.world() == null || furnaces.isEmpty())
+        {
+            return false;
+        }
         for (final BlockPos furnace : furnaces)
         {
             final FurnaceProcess cap = capOf(furnaceAt(furnace));
             if (cap != null && cap.phase() == FurnaceProcess.Phase.DONE)
             {
-                this.target = furnace;
-                this.collect = true;
-                return State.WORK;
+                return true; // a finished furnace to unload
             }
         }
-
-        // 2) load an idle furnace from the batch already in hand — again straight to the furnace.
-        final ItemStack ready = findReadyJob(inventory());
-        if (!ready.isEmpty())
+        if (idleFurnaceCount() > 0 && !findReadyJob(combined()).isEmpty())
         {
-            for (final BlockPos furnace : furnaces)
+            return true; // an idle furnace and a metal we can make from what's in hand or the racks
+        }
+        return hasCooledMold(racks()); // a fully-cooled filled mold to extract
+    }
+
+    private boolean hasCooledMold(final List<IItemHandler> storage)
+    {
+        for (final IItemHandler h : storage)
+        {
+            for (int slot = 0; slot < h.getSlots(); slot++)
             {
-                final FurnaceProcess cap = capOf(furnaceAt(furnace));
-                if (cap != null && cap.phase() == FurnaceProcess.Phase.IDLE)
+                final MoldLike mold = MoldLike.get(h.getStackInSlot(slot));
+                if (mold != null && mold.getTemperature() == 0f && CastingRecipe.get(mold) != null)
                 {
-                    this.target = furnace;
-                    this.collect = false;
-                    this.loadOre = ready;
-                    return State.WORK;
+                    return true;
                 }
             }
-            // Carrying loadable materials but every furnace is busy — wait here, don't trek back to the hut.
-            ai.delay(40);
-            return AIWorkerState.START_WORKING;
         }
+        return false;
+    }
 
-        // 3) out of materials in hand — only now return to the hut to stage a fresh batch from the racks.
+    // --- Stage 1: BATCH_STAGING ---------------------------------------------------------------------------
+
+    private IAIState stage()
+    {
         if (!ai.gotoBuilding())
         {
             return ai.state();
         }
-        if (stageBatch())
-        {
-            ai.delay(20);
-            return AIWorkerState.START_WORKING;
-        }
-
-        ai.delay(60);
-        return AIWorkerState.START_WORKING;
+        stageBatch();
+        return State.TEND_FURNACES;
     }
 
-    private IAIState work()
+    /** Top the carried inventory up to the idle furnaces' worth of ore + molds + fuel/charcoal from the racks. */
+    private void stageBatch()
     {
-        if (target == null)
+        final int idle = idleFurnaceCount();
+        final List<IItemHandler> inv = inventory();
+        if (idle <= 0 || inv.isEmpty())
         {
-            return AIWorkerState.START_WORKING;
+            return;
         }
-        if (!ai.gotoWorkPos(target))
+        final IItemHandler to = inv.get(0);
+        final List<IItemHandler> racks = racks();
+
+        // molds (one per cast melt), fuel (covers cast melts), charcoal (the iron bloomery + doubles as fuel).
+        topUp(racks, to, SmelterBehavior::isEmptyMold, idle);
+        topUp(racks, to, FurnaceFuel::isFuel, idle);
+        topUp(racks, to, SmelterRecipes::isCharcoal, SmelterRecipes.CHARCOAL_PER_BLOOM * idle);
+
+        // Ore: top up to `idle` whole single-grade melts, completing the partial melts the worker already
+        // carries by pulling the matching grade from the racks (so held ore isn't disregarded).
+        int guard = idle + 8;
+        while (inventoryMelts(to) < idle && guard-- > 0)
         {
-            return State.WORK;
+            final ItemStack grade = gradeToComplete(to, racks);
+            if (grade.isEmpty())
+            {
+                break; // no grade the racks can contribute a (combined) melt of
+            }
+            final int perMelt = (int) Math.ceil((double) SmelterRecipes.UNITS_PER_OUTPUT / SmelterRecipes.meltMb(grade));
+            final int held = countMatching(List.of(to), s -> ItemHandlerHelper.canItemStacksStack(s, grade));
+            final int wanted = (held / perMelt + 1) * perMelt - held; // bring held up to the next whole melt
+            if (!moveToInventory(racks, to, s -> ItemHandlerHelper.canItemStacksStack(s, grade), wanted))
+            {
+                break; // racks ran dry for this grade — stop (avoids spinning)
+            }
+        }
+    }
+
+    // --- Stage 2: TEND_FURNACES (unload + load in one sweep) -----------------------------------------------
+
+    private IAIState tend()
+    {
+        if (ai.furnaces().isEmpty() || ai.world() == null)
+        {
+            tended.clear();
+            return AIWorkerState.IDLE;
         }
 
-        final FurnaceBlockEntity be = furnaceAt(target);
-        if (be != null)
+        if (target != null)
         {
-            if (collect)
+            if (!ai.gotoWorkPos(target))
             {
-                retrieve(be, racks());
+                return State.TEND_FURNACES; // still walking
             }
-            else if (!loadOre.isEmpty())
+            final FurnaceBlockEntity be = furnaceAt(target);
+            final FurnaceProcess cap = capOf(be);
+            if (be != null && cap != null)
             {
-                load(be, loadOre, inventory());
+                if (cap.phase() == FurnaceProcess.Phase.DONE)
+                {
+                    retrieve(be, racks()); // output → racks, cap → IDLE
+                }
+                if (cap.phase() == FurnaceProcess.Phase.IDLE)
+                {
+                    final ItemStack ore = findReadyJob(inventory());
+                    if (!ore.isEmpty())
+                    {
+                        load(be, ore, inventory()); // cap → MELTING
+                    }
+                }
             }
+            tended.add(target);
+            target = null;
+            return State.TEND_FURNACES;
         }
 
-        this.target = null;
-        this.loadOre = ItemStack.EMPTY;
-        return AIWorkerState.START_WORKING;
+        // pick the next furnace that needs unloading or can be loaded.
+        for (final BlockPos furnace : ai.furnaces())
+        {
+            if (tended.contains(furnace))
+            {
+                continue;
+            }
+            final FurnaceProcess cap = capOf(furnaceAt(furnace));
+            if (cap == null)
+            {
+                tended.add(furnace);
+                continue;
+            }
+            final boolean done = cap.phase() == FurnaceProcess.Phase.DONE;
+            final boolean loadable = cap.phase() == FurnaceProcess.Phase.IDLE && !findReadyJob(inventory()).isEmpty();
+            if (done || loadable)
+            {
+                target = furnace;
+                return State.TEND_FURNACES;
+            }
+            tended.add(furnace); // melting, or idle with nothing to load
+        }
+
+        tended.clear();
+        return State.MOLD_UNLOAD;
+    }
+
+    // --- Stage 3: MOLD_UNLOAD -----------------------------------------------------------------------------
+
+    private IAIState moldUnload()
+    {
+        if (!ai.gotoBuilding())
+        {
+            return ai.state();
+        }
+        if (extractCooledMold(racks()))
+        {
+            ai.delay(WORK_TICK_RATE);
+            return State.MOLD_UNLOAD; // more may be cooled
+        }
+        // No more cooled molds. Loop the cycle while there's still other work (so we don't dip through the
+        // AIWorkerState.IDLE "working flash"); otherwise go idle and let CitizenAI / canGoIdle take over.
+        return hasWork() ? State.BATCH_STAGING : AIWorkerState.IDLE;
     }
 
     /**
-     * An ore in stock with ≥100 mB of a <i>single</i> grade and its requirement met: for a cast metal an empty
-     * mold <i>and</i> fuel hot enough for its melt temp; for iron, 2 charcoal (the bloomery). Returns one
-     * representative ore of that grade, or empty.
+     * Extract one fully-cooled (heat 0) filled mold from storage using TFC's own casting recipe: the ingot is
+     * produced and the mold is drained, then kept or broken by its {@link CastingRecipe#getBreakChance()}.
+     * Skips blooms/ingots/empty molds (no casting recipe). Returns whether one was processed.
+     */
+    private boolean extractCooledMold(final List<IItemHandler> storage)
+    {
+        final Level world = ai.world();
+        if (world == null)
+        {
+            return false;
+        }
+        for (final IItemHandler h : storage)
+        {
+            for (int slot = 0; slot < h.getSlots(); slot++)
+            {
+                final MoldLike mold = MoldLike.get(h.getStackInSlot(slot));
+                if (mold == null || mold.getTemperature() != 0f || CastingRecipe.get(mold) == null)
+                {
+                    continue;
+                }
+                final ItemStack filled = h.extractItem(slot, 1, false);
+                final MoldLike taken = MoldLike.get(filled);
+                final CastingRecipe recipe = CastingRecipe.get(taken);
+                if (taken == null || recipe == null)
+                {
+                    insert(storage, filled); // shouldn't happen; put it back
+                    continue;
+                }
+                final ItemStack result = recipe.assemble(taken, world.registryAccess());
+                taken.drainIgnoringTemperature(Integer.MAX_VALUE, IFluidHandler.FluidAction.EXECUTE);
+                insert(storage, result);
+                if (world.getRandom().nextFloat() >= recipe.getBreakChance())
+                {
+                    insert(storage, filled); // mold survives (now empty) — gets re-staged
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // --- Loading / unloading a single furnace -------------------------------------------------------------
+
+    /**
+     * Load a furnace from the carried inventory: ore → input, mold → result, fuel through the fuel slot; set the
+     * cap to MELTING and light it. Nothing is consumed unless the whole operation can proceed.
+     */
+    private void load(final FurnaceBlockEntity be, final ItemStack oreType, final List<IItemHandler> source)
+    {
+        final Output output = SmelterRecipes.outputFor(oreType);
+        if (output == null)
+        {
+            return;
+        }
+        final HeatingRecipe recipe = HeatingRecipe.getRecipe(oreType);
+        final float meltTemp = recipe != null ? recipe.getTemperature() : 1000f;
+        final Fluid fluid = recipe != null && !recipe.getDisplayOutputFluid().isEmpty() ? recipe.getDisplayOutputFluid().getFluid() : null;
+        final int meltDuration = duration(output, meltTemp);
+        final int level = ai.buildingLevel();
+        final FurnaceProcess cap = capOf(be);
+        if (cap == null)
+        {
+            return;
+        }
+
+        if (output.bloom())
+        {
+            if (countMatching(source, SmelterRecipes::isCharcoal) < SmelterRecipes.CHARCOAL_PER_BLOOM)
+            {
+                return;
+            }
+        }
+        else if (fluid == null
+                   || !FurnaceFuel.canBurn(cap.pool(), meltTemp, meltDuration, level, be.getItem(FURNACE_FUEL), source))
+        {
+            return;
+        }
+
+        final ItemStack ore = consumeOre(oreType, source);
+        if (ore.isEmpty())
+        {
+            return;
+        }
+        be.setItem(FURNACE_INPUT, ore);
+
+        if (output.bloom())
+        {
+            consumeCharcoal(source);
+        }
+        else
+        {
+            final ItemStack mold = takeEmptyMold(source);
+            if (mold.isEmpty())
+            {
+                be.setItem(FURNACE_INPUT, ItemStack.EMPTY);
+                insert(source, ore); // back out — hand the ore back
+                return;
+            }
+            be.setItem(FURNACE_RESULT, mold);
+            cap.setPool(FurnaceFuel.burn(cap.pool(), meltTemp, meltDuration, level, be, FURNACE_FUEL, source));
+        }
+        cap.setPhase(FurnaceProcess.Phase.MELTING);
+        light(be, meltDuration);
+    }
+
+    /** Haul the finished casting (filled hot mold or bloom) out of the result slot into the racks; cap → IDLE. */
+    private void retrieve(final FurnaceBlockEntity be, final List<IItemHandler> storage)
+    {
+        final ItemStack result = be.getItem(FURNACE_RESULT);
+        if (!result.isEmpty())
+        {
+            insert(storage, result.copy());
+            be.setItem(FURNACE_RESULT, ItemStack.EMPTY);
+            ai.worker().getCitizenExperienceHandler().addExperience(XP_PER_OUTPUT);
+        }
+        final FurnaceProcess cap = capOf(be);
+        if (cap != null)
+        {
+            cap.setPhase(FurnaceProcess.Phase.IDLE);
+        }
+        be.setChanged();
+    }
+
+    // --- Ready-job / consumption helpers ------------------------------------------------------------------
+
+    /**
+     * An ore in {@code storage} with ≥100 mB of a single grade and its requirement met: for a cast metal an
+     * empty mold and fuel hot enough for its melt temp; for iron, 2 charcoal. Returns one representative ore.
      */
     private ItemStack findReadyJob(final List<IItemHandler> storage)
     {
@@ -253,95 +477,45 @@ public class SmelterBehavior implements FurnaceBehavior
         return ItemStack.EMPTY;
     }
 
+    /**
+     * An ore grade that has rack stock to contribute <i>and</i> reaches ≥100 mB once combined with what the
+     * worker already carries — so a partially-held melt gets completed instead of ignored.
+     */
+    private ItemStack gradeToComplete(final IItemHandler inv, final List<IItemHandler> racks)
+    {
+        final Map<Item, Integer> rackMb = new HashMap<>();
+        final Map<Item, ItemStack> sample = new HashMap<>();
+        for (final IItemHandler h : racks)
+        {
+            for (int slot = 0; slot < h.getSlots(); slot++)
+            {
+                final ItemStack stack = h.getStackInSlot(slot);
+                if (!stack.isEmpty() && SmelterRecipes.outputFor(stack) != null)
+                {
+                    rackMb.merge(stack.getItem(), SmelterRecipes.meltMb(stack) * stack.getCount(), Integer::sum);
+                    sample.putIfAbsent(stack.getItem(), stack);
+                }
+            }
+        }
+        for (final Map.Entry<Item, Integer> e : rackMb.entrySet())
+        {
+            final ItemStack grade = sample.get(e.getKey());
+            final int carriedMb = countMatching(List.of(inv), s -> ItemHandlerHelper.canItemStacksStack(s, grade)) * SmelterRecipes.meltMb(grade);
+            if (e.getValue() + carriedMb >= SmelterRecipes.UNITS_PER_OUTPUT)
+            {
+                return grade;
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
     private static float meltTempOf(final ItemStack ore)
     {
         final HeatingRecipe recipe = HeatingRecipe.getRecipe(ore);
         return recipe != null ? recipe.getTemperature() : 1000f;
     }
 
-    /**
-     * Load a furnace: read TFC's heat model for the melt time, then move the inputs into the furnace's own
-     * slots (ore → input, mold → result, fuel into the fuel slot from the racks) and light it. Nothing is
-     * consumed unless the whole operation can proceed.
-     */
-    private void load(final FurnaceBlockEntity be, final ItemStack oreType, final List<IItemHandler> storage)
-    {
-        final Output output = SmelterRecipes.outputFor(oreType);
-        if (output == null)
-        {
-            return;
-        }
-        final HeatingRecipe recipe = HeatingRecipe.getRecipe(oreType);
-        final float meltTemp = recipe != null ? recipe.getTemperature() : 1000f;
-        final Fluid fluid = recipe != null && !recipe.getDisplayOutputFluid().isEmpty() ? recipe.getDisplayOutputFluid().getFluid() : null;
-        final int meltDuration = duration(oreType, meltTemp);
-        final int level = ai.buildingLevel();
-        final FurnaceProcess cap = capOf(be);
-        if (cap == null)
-        {
-            return;
-        }
-
-        // Gate before consuming anything.
-        if (output.bloom())
-        {
-            if (countCharcoal(storage) < SmelterRecipes.CHARCOAL_PER_BLOOM)
-            {
-                return;
-            }
-        }
-        else if (fluid == null
-                   || !FurnaceFuel.canBurn(cap.pool(), meltTemp, meltDuration, level, be.getItem(FUEL), storage))
-        {
-            return;
-        }
-
-        final ItemStack ore = consumeOre(oreType, storage);
-        if (ore.isEmpty())
-        {
-            return;
-        }
-        be.setItem(INPUT, ore);
-
-        if (output.bloom())
-        {
-            consumeCharcoal(storage);
-        }
-        else
-        {
-            final ItemStack mold = takeEmptyMold(storage);
-            if (mold.isEmpty())
-            {
-                be.setItem(INPUT, ItemStack.EMPTY); // back out: hand the ore back below
-                insert(storage, ore);
-                return;
-            }
-            be.setItem(RESULT, mold);
-            cap.setPool(FurnaceFuel.burn(cap.pool(), meltTemp, meltDuration, level, be, FUEL, storage));
-        }
-        cap.setPhase(FurnaceProcess.Phase.MELTING);
-        light(be, meltDuration);
-    }
-
-    /** Haul the finished casting (filled mold or hot bloom) out of the furnace's result slot into the racks. */
-    private void retrieve(final FurnaceBlockEntity be, final List<IItemHandler> storage)
-    {
-        final ItemStack result = be.getItem(RESULT);
-        if (!result.isEmpty())
-        {
-            insert(storage, result.copy());
-            be.setItem(RESULT, ItemStack.EMPTY);
-            ai.worker().getCitizenExperienceHandler().addExperience(XP_PER_OUTPUT);
-        }
-        final FurnaceProcess cap = capOf(be);
-        if (cap != null)
-        {
-            cap.setPhase(FurnaceProcess.Phase.IDLE);
-        }
-        be.setChanged();
-    }
-
-    /** Consume 100 mB of one ore grade from storage, combined into a single stack to place in the furnace; empty if short. */
+    /** Consume 100 mB of one ore grade from storage, combined into a single stack for the furnace; empty if short. */
     private ItemStack consumeOre(final ItemStack oreType, final List<IItemHandler> storage)
     {
         int need = SmelterRecipes.UNITS_PER_OUTPUT;
@@ -372,22 +546,6 @@ public class SmelterBehavior implements FurnaceBehavior
         return need <= 0 ? collected : ItemStack.EMPTY;
     }
 
-    private int countCharcoal(final List<IItemHandler> storage)
-    {
-        int count = 0;
-        for (final IItemHandler h : storage)
-        {
-            for (int slot = 0; slot < h.getSlots(); slot++)
-            {
-                if (SmelterRecipes.isCharcoal(h.getStackInSlot(slot)))
-                {
-                    count += h.getStackInSlot(slot).getCount();
-                }
-            }
-        }
-        return count;
-    }
-
     private void consumeCharcoal(final List<IItemHandler> storage)
     {
         int need = SmelterRecipes.CHARCOAL_PER_BLOOM;
@@ -407,7 +565,7 @@ public class SmelterBehavior implements FurnaceBehavior
         }
     }
 
-    /** Take one empty mold from storage (the supplied mold the ingot is cast in). */
+    /** Take one empty mold from storage (the mold the ingot is cast in). */
     private ItemStack takeEmptyMold(final List<IItemHandler> storage)
     {
         for (final IItemHandler h : storage)
@@ -434,97 +592,19 @@ public class SmelterBehavior implements FurnaceBehavior
         return handler == null || handler.getFluidInTank(0).isEmpty();
     }
 
-    private void insert(final List<IItemHandler> storage, ItemStack stack)
+    // --- Staging / storage plumbing -----------------------------------------------------------------------
+
+    /** Move matching items from the racks into the carried inventory until it holds {@code target} of them. */
+    private void topUp(final List<IItemHandler> racks, final IItemHandler inv, final Predicate<ItemStack> match, final int target)
     {
-        for (final IItemHandler h : storage)
+        final int have = countMatching(List.of(inv), match);
+        if (have < target)
         {
-            stack = ItemHandlerHelper.insertItem(h, stack, false);
-            if (stack.isEmpty())
-            {
-                return;
-            }
-        }
-        if (!stack.isEmpty() && ai.worker() != null)
-        {
-            ai.worker().spawnAtLocation(stack);
+            moveToInventory(racks, inv, match, target - have);
         }
     }
 
-    /** The building's racks — the colony storage the worker stages batches out of and ships results into. */
-    private List<IItemHandler> racks()
-    {
-        final IBuilding building = ai.building();
-        final Level world = ai.world();
-        if (building == null || world == null)
-        {
-            return List.of();
-        }
-        final List<IItemHandler> handlers = new ArrayList<>();
-        for (final BlockPos pos : building.getContainers())
-        {
-            final var be = world.getBlockEntity(pos);
-            if (be != null)
-            {
-                be.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(handlers::add);
-            }
-        }
-        return handlers;
-    }
-
-    /** The batch the worker is carrying — furnaces are loaded from here, not straight from the racks. */
-    private List<IItemHandler> inventory()
-    {
-        return ai.worker() == null ? List.of() : List.of(ai.worker().getInventoryCitizen());
-    }
-
-    /** Inventory first, then racks — used to decide what the colony can make as a whole before staging. */
-    private List<IItemHandler> combined()
-    {
-        final List<IItemHandler> all = new ArrayList<>(inventory());
-        all.addAll(racks());
-        return all;
-    }
-
-    /**
-     * Pull a batch of one makeable metal's materials (ore + mold/fuel, or ore + charcoal for iron) from the
-     * racks into the worker's inventory, topping up what it's already carrying. Returns whether anything moved.
-     */
-    private boolean stageBatch()
-    {
-        final ItemStack grade = findReadyJob(combined());
-        final List<IItemHandler> inv = inventory();
-        if (grade.isEmpty() || inv.isEmpty())
-        {
-            return false;
-        }
-        final IItemHandler to = inv.get(0);
-        final List<IItemHandler> racks = racks();
-        final Output output = SmelterRecipes.outputFor(grade);
-        boolean moved = false;
-
-        final int haveOre = countMatching(to, s -> ItemHandlerHelper.canItemStacksStack(s, grade));
-        moved |= moveToInventory(racks, to, s -> ItemHandlerHelper.canItemStacksStack(s, grade), ORE_BATCH - haveOre);
-
-        if (output != null && output.bloom())
-        {
-            moved |= moveToInventory(racks, to, SmelterRecipes::isCharcoal, FUEL_BATCH);
-        }
-        else
-        {
-            if (countMatching(to, SmelterBehavior::isEmptyMold) == 0)
-            {
-                moved |= moveToInventory(racks, to, SmelterBehavior::isEmptyMold, MOLD_BATCH);
-            }
-            final float meltTemp = meltTempOf(grade);
-            if (!FurnaceFuel.hasFuelHotEnough(meltTemp, ai.buildingLevel(), inv))
-            {
-                moved |= moveToInventory(racks, to, s -> FurnaceFuel.isHotEnough(s, meltTemp, ai.buildingLevel()), FUEL_BATCH);
-            }
-        }
-        return moved;
-    }
-
-    /** Move up to {@code max} matching items from the racks into the carried inventory. */
+    /** Move up to {@code max} matching items from the racks into the carried inventory; returns whether any moved. */
     private static boolean moveToInventory(final List<IItemHandler> from, final IItemHandler to, final Predicate<ItemStack> match, final int max)
     {
         int moved = 0;
@@ -553,18 +633,108 @@ public class SmelterBehavior implements FurnaceBehavior
         return moved > 0;
     }
 
-    private static int countMatching(final IItemHandler handler, final Predicate<ItemStack> match)
+    private static int countMatching(final List<IItemHandler> handlers, final Predicate<ItemStack> match)
     {
         int count = 0;
-        for (int slot = 0; slot < handler.getSlots(); slot++)
+        for (final IItemHandler h : handlers)
         {
-            final ItemStack stack = handler.getStackInSlot(slot);
-            if (!stack.isEmpty() && match.test(stack))
+            for (int slot = 0; slot < h.getSlots(); slot++)
             {
-                count += stack.getCount();
+                final ItemStack stack = h.getStackInSlot(slot);
+                if (!stack.isEmpty() && match.test(stack))
+                {
+                    count += stack.getCount();
+                }
             }
         }
         return count;
+    }
+
+    /** How many whole 100 mB melts of ore the carried inventory holds — counted <b>per grade</b> (a melt is single-grade). */
+    private int inventoryMelts(final IItemHandler inv)
+    {
+        final Map<Item, Integer> mb = new HashMap<>();
+        for (int slot = 0; slot < inv.getSlots(); slot++)
+        {
+            final ItemStack stack = inv.getStackInSlot(slot);
+            if (!stack.isEmpty() && SmelterRecipes.outputFor(stack) != null)
+            {
+                mb.merge(stack.getItem(), SmelterRecipes.meltMb(stack) * stack.getCount(), Integer::sum);
+            }
+        }
+        int melts = 0;
+        for (final int gradeMb : mb.values())
+        {
+            melts += gradeMb / SmelterRecipes.UNITS_PER_OUTPUT;
+        }
+        return melts;
+    }
+
+    private void insert(final List<IItemHandler> storage, ItemStack stack)
+    {
+        for (final IItemHandler h : storage)
+        {
+            stack = ItemHandlerHelper.insertItem(h, stack, false);
+            if (stack.isEmpty())
+            {
+                return;
+            }
+        }
+        if (!stack.isEmpty() && ai.worker() != null)
+        {
+            ai.worker().spawnAtLocation(stack);
+        }
+    }
+
+    /** The building's racks — the colony storage the worker stages out of and ships results into. */
+    private List<IItemHandler> racks()
+    {
+        final IBuilding building = ai.building();
+        final Level world = ai.world();
+        if (building == null || world == null)
+        {
+            return List.of();
+        }
+        final List<IItemHandler> handlers = new ArrayList<>();
+        for (final BlockPos pos : building.getContainers())
+        {
+            final var be = world.getBlockEntity(pos);
+            if (be != null)
+            {
+                be.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(handlers::add);
+            }
+        }
+        return handlers;
+    }
+
+    /** The batch the worker is carrying — furnaces are loaded from here, not straight from the racks. */
+    private List<IItemHandler> inventory()
+    {
+        return ai.worker() == null ? List.of() : List.of(ai.worker().getInventoryCitizen());
+    }
+
+    /** Inventory + racks — for deciding what the colony can make as a whole (carried batch plus stock). */
+    private List<IItemHandler> combined()
+    {
+        final List<IItemHandler> all = new ArrayList<>(inventory());
+        all.addAll(racks());
+        return all;
+    }
+
+    // --- Furnace helpers ----------------------------------------------------------------------------------
+
+    private int idleFurnaceCount()
+    {
+        int idle = 0;
+        for (final BlockPos furnace : ai.furnaces())
+        {
+            final FurnaceProcess cap = capOf(furnaceAt(furnace));
+            if (cap != null && cap.phase() == FurnaceProcess.Phase.IDLE)
+            {
+                idle++;
+            }
+        }
+        return idle;
     }
 
     private FurnaceBlockEntity furnaceAt(final BlockPos furnace)
@@ -595,22 +765,24 @@ public class SmelterBehavior implements FurnaceBehavior
         {
             return;
         }
-        final BlockState state = world.getBlockState(target);
+        final BlockState state = world.getBlockState(be.getBlockPos());
         if (state.getBlock() instanceof AbstractFurnaceBlock
               && state.hasProperty(AbstractFurnaceBlock.LIT)
               && !state.getValue(AbstractFurnaceBlock.LIT))
         {
-            world.setBlockAndUpdate(target, state.setValue(AbstractFurnaceBlock.LIT, true));
+            world.setBlockAndUpdate(be.getBlockPos(), state.setValue(AbstractFurnaceBlock.LIT, true));
         }
     }
 
     /**
-     * Melt duration from TFC's heat model: ~{@code meltTemp × heat_capacity / 3} ticks (the item heats by
-     * {@code ~3/heat_capacity} °C per tick), shortened by the smelter's Strength.
+     * Melt duration from TFC's heat model for the <b>fixed {@value SmelterRecipes#UNITS_PER_OUTPUT} mB</b> we
+     * smelt per operation: ~{@code meltTemp × heat_capacity / 3} ticks, using the <i>output</i> ingot/bloom's
+     * heat capacity (an ingot is exactly 100 mB) so the time reflects the metal amount, not the input ore grade.
+     * Shortened by the smelter's Strength.
      */
-    private int duration(final ItemStack ore, final float meltTemp)
+    private int duration(final Output output, final float meltTemp)
     {
-        final IHeat heat = HeatCapability.get(ore);
+        final IHeat heat = HeatCapability.get(new ItemStack(SmelterRecipes.item(output.result())));
         final float heatCapacity = heat != null ? heat.getHeatCapacity() : 0f;
         final int base = heatCapacity > 0f ? Math.round(meltTemp * heatCapacity / 3.0f) : DEFAULT_DURATION;
         final int strength = ai.worker().getCitizenData().getCitizenSkillHandler().getLevel(Skill.Strength);

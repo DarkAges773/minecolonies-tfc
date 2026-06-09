@@ -96,21 +96,27 @@ iron becomes a hot bloom), consumes the input, and flips the cap to `DONE`. So t
 mold is filled, wherever the worker happens to be (and it resumes correctly after a reload). The inject is gated
 cheaply (unlit **and** something in the input slot) so idle furnaces cost almost nothing.
 
-### Worker flow — stage a batch, load, retrieve
-Like the vanilla furnace workers, the worker **carries a batch** of materials in its own inventory and loads
-furnaces from there (it keeps no per-furnace job map; it reads each furnace's cap phase):
-- **stage** — when it can't load anything from the batch it's carrying, it pulls a fresh batch of one makeable
-  metal's materials from the **racks** into its **inventory**: up to a stack of ore + the molds (cast) / fuel,
-  or charcoal (iron). Bounded (a few stacks) so it never trips the worker's full-inventory dump.
-- **`IDLE`** furnace → load it from the **carried batch**: one ore grade (≥100 mB) → input, an empty mold →
-  result, burn fuel through the fuel slot; light it (`litTime = meltDuration`) and set `MELTING`.
-- **`MELTING`** → leave it; the furnace finishes on its own.
-- **`DONE`** → haul the finished item out of the result slot into the **racks**, award XP, set `IDLE`.
+### Worker flow — a 3-stage cycle (farmer-style)
+The worker keeps no per-furnace job map; it reads each furnace's cap phase and cycles three stages, each with a
+skip-guard (see [SmelterBehavior](../compat/src/main/java/com/mctfc/smelter/SmelterBehavior.java)):
 
-The metal/fluid is re-derived from the **input-slot ore** (at completion). Ore is consumed as a **single grade
-per melt** (so the input slot holds the exact stack that drops on break); the carried fuel pool persists in the
-cap. Staging into the inventory is the seam the colony **request system** will later feed (deliver to the
-building → worker stages → loads).
+1. **`BATCH_STAGING`** (at the hut) — top the carried inventory up to the **idle furnaces' worth** of ore +
+   molds + fuel/charcoal pulled from the racks (so it carries exactly what it can load now, not full stacks).
+2. **`TEND_FURNACES`** (one sweep of the furnaces) — each furnace is visited **once**: a `DONE` one is unloaded
+   (finished item → racks, cap → `IDLE`) and, if materials are in hand, **immediately reloaded** in the same
+   visit; an `IDLE` one is loaded (ore → input, mold → result, fuel through the fuel slot; `litTime` lit, cap →
+   `MELTING`). Unload + load in a single pass — no second walk, no reload lag.
+3. **`MOLD_UNLOAD`** (at the hut) — for each **fully-cooled (heat 0)** filled mold in the racks, run TFC's own
+   casting extraction (`CastingRecipe.assemble` → ingot; `MoldLike.drain`; the mold is kept or broken per
+   `getBreakChance`). Skips blooms/ingots/empty molds. Surviving empty molds go back to the racks and get
+   re-staged — so molds cycle until they break.
+
+Why hot molds aren't extracted at the furnace: a mold takes a long time to cool, so leaving it in the result
+slot would block that furnace. `TEND_FURNACES` hauls the hot mold out immediately (freeing the furnace); it
+cools in the racks; `MOLD_UNLOAD` extracts it later. The melt itself is finished autonomously by the furnace
+(the serverTick mixin → `DONE`), so the worker only stages, tends, and extracts. Ore is consumed as a **single
+grade per melt** (input slot holds the exact stack that drops on break); the carried fuel pool persists in the
+cap. Staging into the inventory is the seam the colony **request system** will later feed.
 
 ### Caveats
 - The furnace's slots are exposed on its faces, so a **hopper could pull ore/fuel/mold mid-melt** (the furnaces
@@ -226,8 +232,12 @@ worker drives the block entity directly, so automation is unaffected. The buildi
 1. ✅ Controller + dispatcher + recipe model + first `SmelterBehavior` (rack storage, parallel furnaces,
    heat-model duration, filled-mold output, temp-gated/duration-pooled fuel from racks).
 2. ✅ Furnace-as-container (§3): work in the vanilla furnace slots (ore/fuel/mold, drop-on-break + GUI-visible),
-   `litTime` as the melt timer + flame (`FurnaceBlockEntityAccessor`), the `FurnaceProcess` cap carrying only
-   the fuel pool; load/collect read slot state (no job map), exact reload resume; `FurnaceFuel` made stateless
-   and slot-based.
-3. ⬜ Auto-requesting (§8).
-4. ⬜ `CookBehavior` (§6).
+   `litTime` as the melt timer + flame (`FurnaceBlockEntityAccessor`), the `FurnaceProcess` cap carrying the
+   phase + fuel pool; exact reload resume; `FurnaceFuel` stateless/slot-based.
+3. ✅ Autonomous completion (`MixinAbstractFurnaceBlockEntity` + `SmelterProcessing`): the furnace fills the
+   mold itself when `litTime` hits 0 and flips to `DONE`.
+4. ✅ 3-stage worker (§3): `BATCH_STAGING` (top up to idle-furnace-count) → `TEND_FURNACES` (unload+load in one
+   sweep) → `MOLD_UNLOAD` (TFC casting extraction of cooled molds, break chance, molds recycled).
+5. ⬜ Auto-requesting (§8) — debounced (`hasWorkerOpenRequestsOfType`) requests for missing ore/molds/fuel in
+   the `BATCH_STAGING` guard.
+6. ⬜ `CookBehavior` (§6).
