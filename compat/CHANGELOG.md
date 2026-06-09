@@ -14,7 +14,8 @@ All notable changes to this mod are documented here. The format is based on
   of vanilla smeltables), and the worker honours them — uncheck an ore to stop smelting it, and the fuel
   allow-list governs which fuels it burns. It also **auto-restocks**: when the colony runs low on an enabled
   ore / allowed fuel / charcoal it requests more through the colony, with the low-water point exposed as an
-  **Ore restock threshold** setting in the hut's Settings tab (default 10).
+  **Ore restock threshold** setting in the hut's Settings tab (default 10). A fresh Smeltery is also seeded with
+  a default minimum-stock of 1 stack of ingot molds, so it keeps molds for casting without manual setup.
 - **Cemented cobble creative tab** — the mortared ("Cemented") cobble twins now live in a *MineColonies ×
   TerraFirmaCraft* creative tab. This also makes them selectable as the miner's *Fill Block* (and visible in
   MineColonies' other item pickers), which previously only listed blocks that appear in some creative tab.

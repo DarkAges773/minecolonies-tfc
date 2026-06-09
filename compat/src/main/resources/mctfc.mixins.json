@@ -23,7 +23,8 @@
     "FurnaceBlockEntityAccessor",
     "MixinAbstractFurnaceBlockEntity",
     "MixinCompatibilityManager",
-    "MixinAbstractBuildingModule"
+    "MixinAbstractBuildingModule",
+    "MixinAbstractBuilding"
   ],
   "client": [
     "MixinWindowField"

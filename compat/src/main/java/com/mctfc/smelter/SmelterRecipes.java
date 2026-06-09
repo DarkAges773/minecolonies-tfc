@@ -153,6 +153,13 @@ public final class SmelterRecipes
         return 0;
     }
 
+    /** The mold the smelter auto-stocks by default — the basic ceramic ingot mold (no fire-clay progression needed). */
+    public static ItemStack defaultMoldStack()
+    {
+        final Item item = item(new ResourceLocation("tfc", "ceramic/ingot_mold"));
+        return item == null || item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
+    }
+
     /** The casting mold this stack is (with its break chance), or {@code null} if it isn't a mold. */
     public static Mold moldOf(final ItemStack stack)
     {

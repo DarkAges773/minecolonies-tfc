@@ -280,8 +280,13 @@ rides the colony's dump/warehouse logistics instead of our self-managed rack wri
      data-driven on the wire, so a new key serializes/syncs/renders with **no central registration** — a future
      setting is one `BuildingSettings.register(predicate, key, factory)` call + a lang entry
      (`com.minecolonies.coremod.setting.<namespace>:<path>`). No per-setting mixin.
-5. **Molds via minimum-stock.** Rely on MineColonies' existing minimum-stock (player sets "keep ≥ N molds");
-   the smelter just consumes them. Optionally seed a sensible default.
+5. ✅ **Molds via minimum-stock.** Molds ride MineColonies' existing per-building minimum-stock (the player sets
+   "keep ≥ N", and the colony auto-requests to maintain it) — the smelter just consumes them. We **seed a default**
+   of 1 stack of ceramic ingot molds (molds stack to 16) on a fresh Smeltery via a tiny registry
+   ([BuildingStockSeeds](../compat/src/main/java/com/mctfc/settings/BuildingStockSeeds.java)) +
+   `MixinAbstractBuilding.onUpgradeComplete` at **level 1** (placement is level 0, where the min-stock module's
+   size cap `level × STOCK_PER_LEVEL` is 0 and rejects entries). Seeding only at first-build makes it a one-time
+   default — not re-applied on upgrades, and the player's removal sticks.
 
 ---
 
@@ -310,8 +315,9 @@ rides the colony's dump/warehouse logistics instead of our self-managed rack wri
 4. ✅ 3-stage worker (§3): `BATCH_STAGING` (top up to idle-furnace-count) → `TEND_FURNACES` (unload+load in one
    sweep) → `MOLD_UNLOAD` (TFC casting extraction of cooled molds, break chance, molds recycled). Idle via
    `canGoIdle`; worker owns the working/idle render; full-storage overflow → inventory then pause.
-5. 🔶 List-driven inputs & vanilla logistics (§8): (a) ✅ respect `ORE_LIST`/`FUEL_LIST` server-side, (b) ✅
+5. ✅ List-driven inputs & vanilla logistics (§8): (a) ✅ respect `ORE_LIST`/`FUEL_LIST` server-side, (b) ✅
    populate their GUIs with TFC ores/fuels, (c) ✅ vanilla inventory handling (deliverables → inventory → dump;
    batched cadence; no keep mixin), (d) ✅ requests (low-water `ore_threshold` setting; `MIN` = warehouse
-   reserve; extensible `BuildingSettings` registry), (e) ⬜ molds via minimum-stock. Block-style ore list.
+   reserve; extensible `BuildingSettings` registry), (e) ✅ molds via minimum-stock (default 1 stack seeded via
+   `BuildingStockSeeds` at first build). Block-style ore list.
 6. ⬜ `CookBehavior` (§6).

@@ -7,7 +7,9 @@ import com.mctfc.block.MortaredCobbleRegistry;
 import com.mctfc.furnace.FurnaceBehaviors;
 import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.settings.BuildingSettings;
+import com.mctfc.settings.BuildingStockSeeds;
 import com.mctfc.smelter.SmelterBehavior;
+import com.mctfc.smelter.SmelterRecipes;
 import com.minecolonies.core.colony.buildings.modules.settings.IntSetting;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingSmeltery;
 import com.minecolonies.core.entity.ai.workers.crafting.EntityAIWorkSmelter;
@@ -63,6 +65,9 @@ public class MineColoniesTFC
         // these onto each building's SettingsModule as it's built). Smeltery: the ore-restock low-water threshold.
         BuildingSettings.register(b -> b instanceof BuildingSmeltery, SmelterBehavior.ORE_THRESHOLD,
           () -> new IntSetting(SmelterBehavior.ORE_THRESHOLD_DEFAULT));
+        // Seed a default minimum-stock of 1 stack of ingot molds on a fresh Smeltery (molds stack to 16), so it
+        // keeps molds for casting out of the box. MixinAbstractBuilding applies this at first build (level 1).
+        BuildingStockSeeds.register(b -> b instanceof BuildingSmeltery, SmelterRecipes::defaultMoldStack, 1);
         // Runtime data pack: the mctfc:mortared_cobblestone tag (every twin) + a mortar recipe per twin.
         modBus.addListener(MortaredCobbleData::onAddPackFinders);
         // Optional built-in datapack: enabled only when the 'beneath' mod is present (Beneath-specific rules).
