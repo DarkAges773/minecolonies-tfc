@@ -4,6 +4,9 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.AddType;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.BlockGrassPathPlacementHandler;
 import com.mctfc.block.MortaredCobbleRegistry;
+import com.mctfc.furnace.FurnaceBehaviors;
+import com.mctfc.smelter.SmelterBehavior;
+import com.minecolonies.core.entity.ai.workers.crafting.EntityAIWorkSmelter;
 import com.mctfc.data.AfcDataPack;
 import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.FirmaLifeDataPack;
@@ -45,6 +48,10 @@ public class MineColoniesTFC
         // discoverable by MineColonies (its item pickers — incl. the miner fill-block setting — only see
         // items that appear in some creative tab).
         MctfcCreativeTab.TABS.register(modBus);
+        // TFC smelter: replace the MineColonies Smelter's vanilla furnace loop with TFC ore-melting/casting
+        // (collapsed: ~100 mB of ore → one ingot, or an iron bloom). Installed per-AI by
+        // MixinAbstractEntityAIUsesFurnace; other furnace workers (cook, …) stay vanilla until they get a behavior.
+        FurnaceBehaviors.register(EntityAIWorkSmelter.class, SmelterBehavior::new);
         // Runtime data pack: the mctfc:mortared_cobblestone tag (every twin) + a mortar recipe per twin.
         modBus.addListener(MortaredCobbleData::onAddPackFinders);
         // Optional built-in datapack: enabled only when the 'beneath' mod is present (Beneath-specific rules).

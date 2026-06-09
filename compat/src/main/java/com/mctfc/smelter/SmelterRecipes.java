@@ -60,10 +60,11 @@ public final class SmelterRecipes
 
     private static final ResourceLocation BLOOM = new ResourceLocation("tfc", "raw_iron_bloom");
 
-    /** ore item id → its output. Built from the (grade × base-ore) cross product below. */
-    private static final Map<ResourceLocation, Output> ORE_OUTPUT = build();
-
     private static final String[] GRADES = {"small", "poor", "normal", "rich"};
+
+    /** ore item id → its output. Built from the (grade × base-ore) cross product below. Declared AFTER
+     * {@link #GRADES}/{@link #BLOOM}: static fields initialise in source order, and {@link #build()} reads them. */
+    private static final Map<ResourceLocation, Output> ORE_OUTPUT = build();
 
     private static Map<ResourceLocation, Output> build()
     {
@@ -130,6 +131,42 @@ public final class SmelterRecipes
         if (path.startsWith("ore/normal_")) return 25;
         if (path.startsWith("ore/rich_")) return 35;
         return 0;
+    }
+
+    /** The casting mold this stack is (with its break chance), or {@code null} if it isn't a mold. */
+    public static Mold moldOf(final ItemStack stack)
+    {
+        final ResourceLocation id = idOf(stack);
+        if (id == null)
+        {
+            return null;
+        }
+        for (final Mold mold : MOLDS)
+        {
+            if (mold.item().equals(id))
+            {
+                return mold;
+            }
+        }
+        return null;
+    }
+
+    /** Whether this stack is one of the casting molds. */
+    public static boolean isMold(final ItemStack stack)
+    {
+        return moldOf(stack) != null;
+    }
+
+    /** Whether this stack is the charcoal the iron-bloom path consumes. */
+    public static boolean isCharcoal(final ItemStack stack)
+    {
+        return !stack.isEmpty() && CHARCOAL.equals(idOf(stack));
+    }
+
+    /** Resolve an item id to its {@link Item} (TFC is a mandatory dependency, so these always exist). */
+    public static Item item(final ResourceLocation id)
+    {
+        return ForgeRegistries.ITEMS.getValue(id);
     }
 
     private static ResourceLocation idOf(final ItemStack stack)

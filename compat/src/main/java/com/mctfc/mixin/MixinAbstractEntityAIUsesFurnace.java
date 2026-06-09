@@ -3,10 +3,11 @@ package com.mctfc.mixin;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.entity.ai.statemachine.AITarget;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
-import com.minecolonies.api.entity.ai.statemachine.tickratestatemachine.TickingTransition;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import com.minecolonies.core.colony.buildings.modules.FurnaceUserModule;
 import com.minecolonies.core.colony.jobs.AbstractJob;
+import com.minecolonies.core.entity.ai.workers.AbstractAISkeleton;
+import com.minecolonies.core.entity.ai.workers.AbstractEntityAIBasic;
 import com.minecolonies.core.entity.ai.workers.AbstractEntityAIUsesFurnace;
 import com.mctfc.furnace.FurnaceBehavior;
 import com.mctfc.furnace.FurnaceBehaviors;
@@ -14,7 +15,6 @@ import com.mctfc.furnace.FurnaceWorker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,26 +30,18 @@ import java.util.List;
  * the behavior's states and routes {@code startWorking} to it, otherwise the worker runs vanilla unchanged
  * (so the Cook and any non-customised furnace user are untouched until they get their own behavior).
  *
- * <p>It also implements {@link FurnaceWorker}, the bridge a behavior drives the worker through. The worker /
- * building / world are derived lazily from the captured {@code job} (so we never shadow the deeply-inherited
- * {@code worker}/{@code world} fields that fail to resolve at apply time — see CLAUDE.md); only the AI's own
- * navigation/pacing methods are shadowed ({@code remap = false}: MineColonies' own members).
+ * <p>It implements {@link FurnaceWorker}, the bridge a behavior drives the worker through. We deliberately
+ * avoid {@code @Shadow} of MineColonies' AI internals: the worker/building/world come from the captured
+ * {@code job}, the AI's <b>public</b> helpers ({@code setDelay}/{@code getState}/{@code registerTarget}) are
+ * reached by casting to their declaring classes, and the <b>protected</b> navigation helpers go through
+ * {@link AbstractEntityAIBasicInvoker}. (A plain {@code @Shadow} of these inherited members fails to apply —
+ * "method … was not located in the target class" — see CLAUDE.md.)
  */
 @Mixin(AbstractEntityAIUsesFurnace.class)
 public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
 {
     @Unique private AbstractJob<?, ?> mctfc$job;
     @Unique private FurnaceBehavior mctfc$behavior;
-
-    @Shadow(remap = false) protected abstract boolean walkToBuilding();
-
-    @Shadow(remap = false) protected abstract boolean walkToWorkPos(BlockPos pos);
-
-    @Shadow(remap = false) public abstract void setDelay(int timeout);
-
-    @Shadow(remap = false) public abstract IAIState getState();
-
-    @Shadow(remap = false) public abstract void registerTarget(TickingTransition<IAIState> target);
 
     @Inject(method = "<init>", at = @At("TAIL"), remap = false)
     private void mctfc$installBehavior(final AbstractJob<?, ?> job, final CallbackInfo ci)
@@ -58,9 +50,10 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
         this.mctfc$behavior = FurnaceBehaviors.create(this, this);
         if (this.mctfc$behavior != null)
         {
+            final AbstractAISkeleton<?> skeleton = (AbstractAISkeleton<?>) (Object) this;
             for (final AITarget<IAIState> target : this.mctfc$behavior.targets())
             {
-                registerTarget(target);
+                skeleton.registerTarget(target);
             }
         }
     }
@@ -74,7 +67,7 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
         }
     }
 
-    // --- FurnaceWorker bridge (derived from the captured job; no field shadows) ---
+    // --- FurnaceWorker bridge (no @Shadow: cast for public members, invoker for protected) ---
 
     @Override
     public AbstractEntityCitizen worker()
@@ -105,24 +98,24 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
     @Override
     public boolean gotoBuilding()
     {
-        return walkToBuilding();
+        return ((AbstractEntityAIBasicInvoker) (Object) this).mctfc$walkToBuilding();
     }
 
     @Override
     public boolean gotoWorkPos(final BlockPos pos)
     {
-        return walkToWorkPos(pos);
+        return ((AbstractEntityAIBasicInvoker) (Object) this).mctfc$walkToWorkPos(pos);
     }
 
     @Override
     public void delay(final int ticks)
     {
-        setDelay(ticks);
+        ((AbstractEntityAIBasic<?, ?>) (Object) this).setDelay(ticks);
     }
 
     @Override
     public IAIState state()
     {
-        return getState();
+        return ((AbstractAISkeleton<?>) (Object) this).getState();
     }
 }
