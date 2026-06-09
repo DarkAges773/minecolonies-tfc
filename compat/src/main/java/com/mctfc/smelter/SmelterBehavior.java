@@ -8,12 +8,21 @@ import com.mctfc.furnace.FurnaceWorker;
 import com.mctfc.mixin.FurnaceBlockEntityAccessor;
 import com.mctfc.smelter.SmelterRecipes.Output;
 import com.minecolonies.api.colony.buildings.IBuilding;
+import com.minecolonies.api.colony.buildings.modules.settings.ISettingKey;
+import com.minecolonies.api.colony.requestsystem.request.IRequest;
+import com.minecolonies.api.colony.requestsystem.requestable.Stack;
+import com.minecolonies.api.colony.requestsystem.requestable.StackList;
+import com.minecolonies.api.colony.requestsystem.token.IToken;
 import com.minecolonies.api.crafting.ItemStorage;
 import com.minecolonies.api.entity.ai.statemachine.AITarget;
 import com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 import com.minecolonies.api.entity.citizen.Skill;
 import com.minecolonies.core.colony.buildings.modules.ItemListModule;
+import com.minecolonies.core.colony.buildings.modules.settings.IntSetting;
+import com.minecolonies.core.colony.buildings.modules.settings.SettingKey;
+import com.minecolonies.core.colony.buildings.workerbuildings.BuildingSmeltery;
+import net.minecraft.resources.ResourceLocation;
 import net.dries007.tfc.common.capabilities.MoldLike;
 import net.dries007.tfc.common.capabilities.heat.HeatCapability;
 import net.dries007.tfc.common.capabilities.heat.IHeat;
@@ -43,6 +52,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.minecolonies.api.util.constant.BuildingConstants.FUEL_LIST;
+import static com.minecolonies.api.util.constant.translation.RequestSystemTranslationConstants.REQUESTS_TYPE_BURNABLE;
+import static com.minecolonies.api.util.constant.translation.RequestSystemTranslationConstants.REQUESTS_TYPE_SMELTABLE_ORE;
 import static com.minecolonies.core.entity.ai.workers.crafting.EntityAIWorkSmelter.ORE_LIST;
 
 /**
@@ -78,6 +89,20 @@ public class SmelterBehavior implements FurnaceBehavior
     private static final int    WORK_TICK_RATE   = 10;
     private static final double XP_PER_OUTPUT     = 5.0;
 
+    /** Per-hut low-water threshold for restocking, exposed in the Settings tab (registered via
+     * {@code BuildingSettings} in {@code MineColoniesTFC}); when colony stock of an enabled ore / allowed fuel /
+     * charcoal falls to this, the worker requests more. */
+    public static final ISettingKey<IntSetting> ORE_THRESHOLD = new SettingKey<>(IntSetting.class, new ResourceLocation("mctfc", "ore_threshold"));
+    /** Default for {@link #ORE_THRESHOLD}: 10 = one ingot's worth of small native ore. */
+    public static final int ORE_THRESHOLD_DEFAULT = 10;
+
+    /** Per-restock order size (items) for ore/fuel — modest and flat (not per-furnace), so a restock tops up the
+     * smeltery without draining the warehouse; consumed stock is simply re-requested. */
+    private static final int RESTOCK_BATCH          = 32;
+    /** Per-restock order size for charcoal (the iron bloomery catalyst, 2 per bloom — a smaller batch suffices). */
+    private static final int CHARCOAL_RESTOCK_BATCH = 16;
+    private static final int REQUEST_CHECK_INTERVAL = 100; // ticks between restock checks (throttle)
+
     private enum State implements IAIState
     {
         BATCH_STAGING, TEND_FURNACES, MOLD_UNLOAD;
@@ -94,6 +119,12 @@ public class SmelterBehavior implements FurnaceBehavior
     private final Set<BlockPos> tended = new HashSet<>();
     /** The furnace currently being walked to / tended. */
     private BlockPos target;
+    /** Game-time gate so the restock check (polled every tick via {@link #canGoIdle()}) only runs occasionally. */
+    private long nextRequestCheck;
+    /** Tokens of our outstanding restock requests, so we don't fire a duplicate while one is still in flight. */
+    private IToken<?> oreRequest;
+    private IToken<?> fuelRequest;
+    private IToken<?> charcoalRequest;
 
     public SmelterBehavior(final FurnaceWorker ai)
     {
@@ -120,7 +151,11 @@ public class SmelterBehavior implements FurnaceBehavior
     @Override
     public boolean canGoIdle()
     {
-        // Let CitizenAI run the wander/idle minimal-AI (and stop ticking us) whenever there's no work to do.
+        // canGoIdle is polled continuously by CitizenAI in *both* states, so it's our one reliable hook that
+        // also runs while the worker is idle (work AI paused) — exactly when we may be out of ore and need to
+        // restock. Fire the (throttled, debounced) request check here so the worker still orders materials while
+        // waiting/wandering. Then: let CitizenAI run the wander/idle minimal-AI whenever there's no work to do.
+        requestMissing();
         return !hasWork();
     }
 
@@ -906,6 +941,124 @@ public class SmelterBehavior implements FurnaceBehavior
     {
         final IBuilding building = ai.building();
         return building == null ? null : building.getModuleMatching(ItemListModule.class, m -> m.getId().equals(id));
+    }
+
+    // --- Auto-requesting (low-water restock; docs §8 stage 4) ---------------------------------------------
+
+    /**
+     * Restock check: when the colony's stock of an enabled ore / allowed fuel / charcoal has fallen to the hut's
+     * {@link #ORE_THRESHOLD} setting, fire one <b>debounced</b> colony request to top it up. Called from
+     * {@link #canGoIdle()} (so it runs even while the worker idles waiting on a delivery) and throttled to keep
+     * that continuous polling cheap. The ore request carries the smeltery's {@code MIN} ("warehousemin") setting
+     * as its left-over, so couriers keep that many in the warehouse reserve — exactly as the vanilla smelter does.
+     */
+    private void requestMissing()
+    {
+        final Level world = ai.world();
+        if (world == null || !(ai.building() instanceof BuildingSmeltery) || ai.worker() == null
+              || ai.worker().getCitizenData() == null)
+        {
+            return;
+        }
+        if (world.getGameTime() < nextRequestCheck)
+        {
+            return;
+        }
+        nextRequestCheck = world.getGameTime() + REQUEST_CHECK_INTERVAL;
+
+        final int threshold = settingValue(ORE_THRESHOLD, ORE_THRESHOLD_DEFAULT);
+        final int reserve = settingValue(BuildingSmeltery.MIN, 0);
+        // A modest, fixed per-restock batch — NOT scaled by furnace count. We top up to here, consume it, then
+        // re-request, so the smeltery never hoovers the whole warehouse into its racks in one order. The MIN
+        // ("warehousemin") setting rides along as the request's left-over, so the warehouse keeps that reserve.
+        final List<IItemHandler> stock = combined();
+
+        if (countMatching(stock, this::oreEnabled) <= threshold && !isOpen(oreRequest))
+        {
+            final List<ItemStack> ores = enabledOreStacks();
+            if (!ores.isEmpty())
+            {
+                oreRequest = ai.worker().getCitizenData().createRequestAsync(new StackList(ores, REQUESTS_TYPE_SMELTABLE_ORE, RESTOCK_BATCH, 1, reserve));
+            }
+        }
+        if (countMatching(stock, this::fuelAllowed) <= threshold && !isOpen(fuelRequest))
+        {
+            final List<ItemStack> fuels = allowedFuelStacks();
+            if (!fuels.isEmpty())
+            {
+                fuelRequest = ai.worker().getCitizenData().createRequestAsync(new StackList(fuels, REQUESTS_TYPE_BURNABLE, RESTOCK_BATCH, 1, reserve));
+            }
+        }
+        if (countMatching(stock, SmelterRecipes::isCharcoal) <= threshold && !isOpen(charcoalRequest))
+        {
+            final Item charcoal = SmelterRecipes.item(SmelterRecipes.CHARCOAL);
+            if (charcoal != null)
+            {
+                charcoalRequest = ai.worker().getCitizenData().createRequestAsync(new Stack(new ItemStack(charcoal), CHARCOAL_RESTOCK_BATCH, 1));
+            }
+        }
+    }
+
+    /** A smeltery IntSetting's value, or {@code fallback} if the building isn't a smeltery / the setting is absent. */
+    private int settingValue(final ISettingKey<IntSetting> key, final int fallback)
+    {
+        if (!(ai.building() instanceof BuildingSmeltery building))
+        {
+            return fallback;
+        }
+        final IntSetting setting = building.getSetting(key);
+        return setting == null ? fallback : Math.max(0, setting.getValue());
+    }
+
+    /** One stack of each enabled TFC ore (not blocked via the hut's ores list) — the ore request's candidate set. */
+    private List<ItemStack> enabledOreStacks()
+    {
+        final List<ItemStack> ores = new ArrayList<>();
+        for (final ItemStack ore : SmelterRecipes.oreStacks())
+        {
+            if (oreEnabled(ore))
+            {
+                ores.add(ore);
+            }
+        }
+        return ores;
+    }
+
+    /** The fuels the player allows via the hut's fuel list — the fuel request's candidate set. */
+    private List<ItemStack> allowedFuelStacks()
+    {
+        final ItemListModule fuelList = listModule(FUEL_LIST);
+        final List<ItemStack> fuels = new ArrayList<>();
+        if (fuelList != null)
+        {
+            for (final ItemStorage entry : fuelList.getList())
+            {
+                fuels.add(entry.getItemStack());
+            }
+        }
+        return fuels;
+    }
+
+    /**
+     * Whether {@code token} is one of the worker's still-outstanding requests — the debounce. Matches by token id
+     * against {@link IBuilding#getOpenRequests} (which keeps a request listed through its in-flight/being-delivered
+     * states, only dropping it once resolved), so we never queue a duplicate while one is on its way. (This is the
+     * fix for the earlier spam: a display-string filter missed requests once they were assigned to a resolver.)
+     */
+    private boolean isOpen(final IToken<?> token)
+    {
+        if (token == null || ai.worker() == null || ai.worker().getCitizenData() == null)
+        {
+            return false;
+        }
+        for (final IRequest<?> req : ai.building().getOpenRequests(ai.worker().getCitizenData().getId()))
+        {
+            if (token.equals(req.getId()))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     // --- Furnace helpers ----------------------------------------------------------------------------------

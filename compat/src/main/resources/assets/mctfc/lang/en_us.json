@@ -4,5 +4,6 @@
   "mctfc.food_trait.colony_storage": "Kept fresh in colony storage",
   "gui.mctfc.field.harvestmode.fruiting": "Fruiting",
   "gui.mctfc.field.harvestmode.seeding": "Seeding",
-  "gui.mctfc.field.harvestmode.tooltip": "Click to toggle. Fruiting: harvest ripe crops (produce) and any that went to seed. Seeding: let crops go to seed, then harvest for max seeds."
+  "gui.mctfc.field.harvestmode.tooltip": "Click to toggle. Fruiting: harvest ripe crops (produce) and any that went to seed. Seeding: let crops go to seed, then harvest for max seeds.",
+  "com.minecolonies.coremod.setting.mctfc:ore_threshold": "Ore restock threshold"
 }

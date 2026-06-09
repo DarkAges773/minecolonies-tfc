@@ -12,7 +12,9 @@ All notable changes to this mod are documented here. The format is based on
   TFC ore into metal and casts it (ingots in molds; iron becomes a raw bloom), driven by the furnace's own
   fuel/heat. The hut's **Ores** and **Fuel** lists are now populated with **TFC ores and TFC fuels** (instead
   of vanilla smeltables), and the worker honours them — uncheck an ore to stop smelting it, and the fuel
-  allow-list governs which fuels it burns.
+  allow-list governs which fuels it burns. It also **auto-restocks**: when the colony runs low on an enabled
+  ore / allowed fuel / charcoal it requests more through the colony, with the low-water point exposed as an
+  **Ore restock threshold** setting in the hut's Settings tab (default 10).
 - **Cemented cobble creative tab** — the mortared ("Cemented") cobble twins now live in a *MineColonies ×
   TerraFirmaCraft* creative tab. This also makes them selectable as the miner's *Fill Block* (and visible in
   MineColonies' other item pickers), which previously only listed blocks that appear in some creative tab.

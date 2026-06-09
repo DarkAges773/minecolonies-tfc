@@ -6,7 +6,10 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.Bl
 import com.mctfc.block.MortaredCobbleRegistry;
 import com.mctfc.furnace.FurnaceBehaviors;
 import com.mctfc.furnace.FurnaceProcessCapability;
+import com.mctfc.settings.BuildingSettings;
 import com.mctfc.smelter.SmelterBehavior;
+import com.minecolonies.core.colony.buildings.modules.settings.IntSetting;
+import com.minecolonies.core.colony.buildings.workerbuildings.BuildingSmeltery;
 import com.minecolonies.core.entity.ai.workers.crafting.EntityAIWorkSmelter;
 import com.mctfc.data.AfcDataPack;
 import com.mctfc.data.BeneathDataPack;
@@ -56,6 +59,10 @@ public class MineColoniesTFC
         // (collapsed: ~100 mB of ore → one ingot, or an iron bloom). Installed per-AI by
         // MixinAbstractEntityAIUsesFurnace; other furnace workers (cook, …) stay vanilla until they get a behavior.
         FurnaceBehaviors.register(EntityAIWorkSmelter.class, SmelterBehavior::new);
+        // Add our per-hut settings to the relevant buildings' Settings tab (MixinAbstractBuildingModule grafts
+        // these onto each building's SettingsModule as it's built). Smeltery: the ore-restock low-water threshold.
+        BuildingSettings.register(b -> b instanceof BuildingSmeltery, SmelterBehavior.ORE_THRESHOLD,
+          () -> new IntSetting(SmelterBehavior.ORE_THRESHOLD_DEFAULT));
         // Runtime data pack: the mctfc:mortared_cobblestone tag (every twin) + a mortar recipe per twin.
         modBus.addListener(MortaredCobbleData::onAddPackFinders);
         // Optional built-in datapack: enabled only when the 'beneath' mod is present (Beneath-specific rules).

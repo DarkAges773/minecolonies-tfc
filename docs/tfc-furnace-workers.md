@@ -259,9 +259,27 @@ rides the colony's dump/warehouse logistics instead of our self-managed rack wri
    inventory) and prevents stray staged molds piling up in the worker's inventory. No building-keep mixin (see the
    reality check above). `canCarry`/`canStowRacks` gate each path; on full storage the output stays in the
    furnace/mold and the dump frees space.
-4. **Requests (auto-request).** In the `BATCH_STAGING` guard, debounced (`hasWorkerOpenRequestsOfType` /
-   `hasBuildingEnoughElseCount`) requests for the enabled ores + allowed fuels when the racks run low (mirrors
-   the base `requestSmeltable` + fuel `StackList`).
+4. ✅ **Requests (auto-request, low-water buffer).** `requestMissing()` fires when colony stock of an enabled
+   ore / allowed fuel / charcoal falls to a **per-hut threshold** — exposed as the `ore_threshold` **setting**
+   (default 10 = one small-ore ingot's worth) in the Settings tab. Requests are debounced by **tracking each
+   request's token** and skipping while that token is still in the worker's open requests — which keeps a request
+   listed through its in-flight/being-delivered states, unlike a display-string filter that misses a request once
+   it's assigned to a resolver (that gap was an early spam bug). The check is throttled and fired from `canGoIdle`
+   so it runs **even while the worker idles** waiting on a delivery (the work AI is paused then). Ores/fuels go out
+   as a `StackList` of the enabled TFC ores / allowed fuels (charcoal as a `Stack`). Each order is a **modest flat
+   batch** (`RESTOCK_BATCH`, *not* scaled by furnace count) and passes the smeltery's **`MIN`** ("warehousemin")
+   setting through as its `leftOver` — so it tops the smeltery up while the warehouse keeps its `MIN` reserve,
+   instead of hoovering the whole warehouse in one order (the original per-furnace count did exactly that — a
+   4-furnace hut's order overran a small warehouse). Consumed stock is simply re-requested.
+   - **`MIN` ≠ threshold (verified):** vanilla's `MIN` is the request's `leftOver` (how much the warehouse keeps
+     in reserve when fulfilling the smelter), **not** a reorder trigger — so we keep `MIN` doing that and added a
+     separate `ore_threshold` setting for the reorder point.
+   - **Settings framework:** custom hut settings are added via a tiny registry,
+     [BuildingSettings](../compat/src/main/java/com/mctfc/settings/BuildingSettings.java) + `MixinAbstractBuildingModule`
+     (grafts registered settings onto a building's `SettingsModule` at `setBuilding`). MineColonies' settings are
+     data-driven on the wire, so a new key serializes/syncs/renders with **no central registration** — a future
+     setting is one `BuildingSettings.register(predicate, key, factory)` call + a lang entry
+     (`com.minecolonies.coremod.setting.<namespace>:<path>`). No per-setting mixin.
 5. **Molds via minimum-stock.** Rely on MineColonies' existing minimum-stock (player sets "keep ≥ N molds");
    the smelter just consumes them. Optionally seed a sensible default.
 
@@ -294,5 +312,6 @@ rides the colony's dump/warehouse logistics instead of our self-managed rack wri
    `canGoIdle`; worker owns the working/idle render; full-storage overflow → inventory then pause.
 5. 🔶 List-driven inputs & vanilla logistics (§8): (a) ✅ respect `ORE_LIST`/`FUEL_LIST` server-side, (b) ✅
    populate their GUIs with TFC ores/fuels, (c) ✅ vanilla inventory handling (deliverables → inventory → dump;
-   batched cadence; no keep mixin), (d) ⬜ requests, (e) ⬜ molds via minimum-stock. Block-style ore list.
+   batched cadence; no keep mixin), (d) ✅ requests (low-water `ore_threshold` setting; `MIN` = warehouse
+   reserve; extensible `BuildingSettings` registry), (e) ⬜ molds via minimum-stock. Block-style ore list.
 6. ⬜ `CookBehavior` (§6).
