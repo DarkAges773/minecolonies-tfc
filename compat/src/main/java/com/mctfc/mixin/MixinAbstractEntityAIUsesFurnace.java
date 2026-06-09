@@ -82,6 +82,13 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
     }
 
     @Override
+    public int buildingLevel()
+    {
+        final IBuilding building = building();
+        return building == null ? 0 : building.getBuildingLevel();
+    }
+
+    @Override
     public Level world()
     {
         final AbstractEntityCitizen w = worker();

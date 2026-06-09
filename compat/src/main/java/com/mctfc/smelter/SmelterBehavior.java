@@ -1,6 +1,7 @@
 package com.mctfc.smelter;
 
 import com.mctfc.furnace.FurnaceBehavior;
+import com.mctfc.furnace.FurnaceFuel;
 import com.mctfc.furnace.FurnaceWorker;
 import com.mctfc.smelter.SmelterRecipes.Output;
 import com.minecolonies.api.colony.buildings.IBuilding;
@@ -75,6 +76,7 @@ public class SmelterBehavior implements FurnaceBehavior
     }
 
     private final FurnaceWorker ai;
+    private final FurnaceFuel fuel = new FurnaceFuel();
     private final Map<BlockPos, FurnaceJob> furnaceJobs = new HashMap<>();
 
     private BlockPos target;
@@ -177,10 +179,14 @@ public class SmelterBehavior implements FurnaceBehavior
         return AIWorkerState.START_WORKING;
     }
 
-    /** A metal in stock with ≥100 mB of ore and its requirement (an empty mold, or 2 charcoal for iron). */
+    /**
+     * A metal in stock with ≥100 mB of ore and its requirement: for a cast metal an empty mold <i>and</i> fuel
+     * hot enough for its melt temp; for iron, 2 charcoal (the bloomery).
+     */
     private Output findReadyJob(final List<IItemHandler> storage)
     {
         final Map<Output, Integer> mb = new HashMap<>();
+        final Map<Output, ItemStack> sample = new HashMap<>();
         int charcoal = 0;
         boolean emptyMold = false;
         for (final IItemHandler h : storage)
@@ -192,6 +198,7 @@ public class SmelterBehavior implements FurnaceBehavior
                 if (out != null)
                 {
                     mb.merge(out, SmelterRecipes.meltMb(stack) * stack.getCount(), Integer::sum);
+                    sample.putIfAbsent(out, stack);
                 }
                 else if (SmelterRecipes.isCharcoal(stack))
                 {
@@ -205,13 +212,31 @@ public class SmelterBehavior implements FurnaceBehavior
         }
         for (final Map.Entry<Output, Integer> e : mb.entrySet())
         {
-            if (e.getValue() >= SmelterRecipes.UNITS_PER_OUTPUT
-                  && (e.getKey().bloom() ? charcoal >= SmelterRecipes.CHARCOAL_PER_BLOOM : emptyMold))
+            final Output out = e.getKey();
+            if (e.getValue() < SmelterRecipes.UNITS_PER_OUTPUT)
             {
-                return e.getKey();
+                continue;
+            }
+            if (out.bloom())
+            {
+                if (charcoal >= SmelterRecipes.CHARCOAL_PER_BLOOM)
+                {
+                    return out;
+                }
+            }
+            else if (emptyMold
+                       && fuel.hasFuelHotEnough(meltTempOf(sample.get(out)), ai.buildingLevel(), storage))
+            {
+                return out;
             }
         }
         return null;
+    }
+
+    private static float meltTempOf(final ItemStack ore)
+    {
+        final HeatingRecipe recipe = HeatingRecipe.getRecipe(ore);
+        return recipe != null ? recipe.getTemperature() : 1000f;
     }
 
     /** Reserve a furnace's melt: read TFC's heat model for the duration + fluid, consume the inputs up front. */
@@ -225,7 +250,15 @@ public class SmelterBehavior implements FurnaceBehavior
         final HeatingRecipe recipe = HeatingRecipe.getRecipe(sample);
         final float meltTemp = recipe != null ? recipe.getTemperature() : 1000f;
         final Fluid fluid = recipe != null && !recipe.getDisplayOutputFluid().isEmpty() ? recipe.getDisplayOutputFluid().getFluid() : null;
-        final long doneAt = ai.world().getGameTime() + duration(sample, meltTemp);
+        final int meltDuration = duration(sample, meltTemp);
+        final int level = ai.buildingLevel();
+
+        // Cast metals burn fuel hot enough for the melt (checked before consuming anything); iron's heat comes
+        // from its bloomery charcoal instead.
+        if (!job.bloom() && !fuel.canBurn(target, meltTemp, meltDuration, level, storage))
+        {
+            return null;
+        }
 
         if (!consumeOre(job, storage))
         {
@@ -244,8 +277,9 @@ public class SmelterBehavior implements FurnaceBehavior
             {
                 return null; // lost the mold / fluid between picking and loading; ore already spent (rare)
             }
+            fuel.burn(target, meltTemp, meltDuration, level, storage);
         }
-        return new FurnaceJob(job, doneAt, mold, fluid, meltTemp);
+        return new FurnaceJob(job, ai.world().getGameTime() + meltDuration, mold, fluid, meltTemp);
     }
 
     /** Produce the finished casting: the supplied mold filled with the hot ingot, or a hot iron bloom. */

@@ -26,6 +26,9 @@ public interface FurnaceWorker
     /** The worker's building (the Smeltery, Restaurant, …). */
     IBuilding building();
 
+    /** The building's level (1–5) — drives the fuel heat bonus, so higher huts melt higher-tier metals. */
+    int buildingLevel();
+
     /** The level the worker is in. */
     Level world();
 
