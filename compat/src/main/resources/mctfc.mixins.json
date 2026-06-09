@@ -19,7 +19,9 @@
     "MixinLampBlockEntity",
     "MixinTfcLightBlocks",
     "AbstractEntityAIBasicInvoker",
-    "MixinAbstractEntityAIUsesFurnace"
+    "MixinAbstractEntityAIUsesFurnace",
+    "FurnaceBlockEntityAccessor",
+    "MixinAbstractFurnaceBlockEntity"
   ],
   "client": [
     "MixinWindowField"

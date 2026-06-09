@@ -198,6 +198,9 @@ changing a feature so you don't re-derive (or undo) a hard-won fix:
 - [docs/compat-features.md](docs/compat-features.md) — every `:compat` (mctfc) bridge feature: TFC
   substitutions, farming, food (stacking/spoilage/nutrition), collapse-proofing, colony lights, mortared
   cobble, decorative furnaces, optional per-mod datapacks.
+- [docs/tfc-furnace-workers.md](docs/tfc-furnace-workers.md) — design for the TFC furnace-worker rework
+  (Smelter done, Cook planned): the behaviour-controller (dispatcher mixin + `FurnaceBehavior` strategy), the
+  furnace-as-container + `litTime` model, and the reusable temperature-gated/duration-pooled fuel system.
 - [docs/substitution-rule-examples.md](docs/substitution-rule-examples.md) — copy-paste rule JSON reference.
 - [docs/curseforge-description.md](docs/curseforge-description.md) — CurseForge store description.
 

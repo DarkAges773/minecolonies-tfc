@@ -5,6 +5,7 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.Ad
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.BlockGrassPathPlacementHandler;
 import com.mctfc.block.MortaredCobbleRegistry;
 import com.mctfc.furnace.FurnaceBehaviors;
+import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.smelter.SmelterBehavior;
 import com.minecolonies.core.entity.ai.workers.crafting.EntityAIWorkSmelter;
 import com.mctfc.data.AfcDataPack;
@@ -48,6 +49,9 @@ public class MineColoniesTFC
         // discoverable by MineColonies (its item pickers — incl. the miner fill-block setting — only see
         // items that appear in some creative tab).
         MctfcCreativeTab.TABS.register(modBus);
+        // Per-furnace process store: attach our FurnaceProcess capability to every vanilla furnace BE so an
+        // in-progress TFC operation (ore + mold + finish tick + carried fuel) persists with the furnace.
+        FurnaceProcessCapability.init(modBus);
         // TFC smelter: replace the MineColonies Smelter's vanilla furnace loop with TFC ore-melting/casting
         // (collapsed: ~100 mB of ore → one ingot, or an iron bloom). Installed per-AI by
         // MixinAbstractEntityAIUsesFurnace; other furnace workers (cook, …) stay vanilla until they get a behavior.

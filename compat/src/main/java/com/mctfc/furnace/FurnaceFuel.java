@@ -2,41 +2,40 @@ package com.mctfc.furnace;
 
 import com.mctfc.Config;
 import net.dries007.tfc.util.Fuel;
-import net.minecraft.core.BlockPos;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Reusable TFC-fuel model for a furnace-using worker (Smelter, Cook, …). Shared by every
- * {@link FurnaceBehavior} so the "what can this hut burn / make" split is driven by <b>required temperature</b>,
- * not by hard-coded per-hut fuel lists:
+ * Reusable, <b>stateless</b> TFC-fuel model for furnace workers (Smelter, Cook, …). The "which hut can burn
+ * what / make what" split is driven by <b>required temperature per operation</b>, not by hard-coded per-hut fuel
+ * lists:
  *
  * <ul>
  *   <li><b>Fuel</b> is any TFC fuel ({@code Fuel.get != null}); each carries a TFC {@code duration} (ticks) and
  *       {@code temperature} (°C).</li>
- *   <li><b>Effective heat</b> at a furnace = the burning fuel's temperature + a per-building-level bonus
- *       ({@link com.mctfc.Config#furnaceFuelTempBonus}, configurable per level), so higher-level huts reach
- *       hotter work (e.g. nickel) without ever reaching the cast-iron melt.</li>
- *   <li>An operation needing {@code requiredTemp} for {@code durationTicks} succeeds only if a fuel hot enough
- *       is (or can be) burning. Fuel is consumed by <b>duration with carry-over</b> — one long fuel covers
- *       several operations.</li>
+ *   <li><b>Effective heat</b> = the burning fuel's temperature + a per-building-level bonus
+ *       ({@link Config#furnaceFuelTempBonus}, configurable per level), so higher-level huts reach hotter work
+ *       (e.g. nickel) without ever reaching the cast-iron melt.</li>
+ *   <li>An operation needing {@code requiredTemp} for {@code durationTicks} runs only if a fuel hot enough is (or
+ *       can be) burning. TFC-authentic: the heat-up <i>rate</i> is fixed by {@code heat_capacity}; the device
+ *       temperature is only the <i>ceiling</i> — hotter fuel doesn't melt faster, it just decides whether the
+ *       metal melts at all.</li>
+ *   <li><b>Longevity</b> — fuel is consumed by duration with carry-over: one charcoal (1800 ticks) covers ~4
+ *       copper melts. Fuel physically sits in the furnace's <b>fuel slot</b> (so it drops on break and shows in
+ *       the GUI), restocked from the racks; the partial-burn pool ({@link Burn}) lives in the furnace's
+ *       {@link FurnaceProcess} cap, so it persists across reload.</li>
  * </ul>
- *
- * <p>Each behavior keeps its own instance (per-furnace burn state is held here). Callers supply the
- * {@code requiredTemp} for their operation: the Smelter passes the metal's melt temp, the Cook would pass the
- * food's cooking temp — so the same component naturally lets a Cook burn cheap logs while the Smelter needs
- * charcoal for hot metals.
  */
 public final class FurnaceFuel
 {
-    /** Remaining burn at a furnace: ticks left and the temperature of the fuel producing them. */
-    private record Burn(int ticks, float temp) {}
+    private FurnaceFuel() {}
 
-    private final Map<BlockPos, Burn> burns = new HashMap<>();
+    /** A furnace's carried fuel: remaining burn ticks and the temperature of the fuel producing them. */
+    public record Burn(int ticks, float temp) {}
 
     /** Whether this stack is a usable (TFC) fuel. */
     public static boolean isFuel(final ItemStack stack)
@@ -56,17 +55,10 @@ public final class FurnaceFuel
         return fuel == null ? 0 : fuel.getDuration();
     }
 
-    /** Cheap pre-check: is any fuel hot enough for {@code required} (carried, or in storage)? Ignores duration. */
-    public boolean hasFuelHotEnough(final float required, final int hutLevel, final List<IItemHandler> storage)
+    /** Cheap pre-check (for picking a job): is any fuel in storage hot enough for {@code required}? Ignores duration. */
+    public static boolean hasFuelHotEnough(final float required, final int hutLevel, final List<IItemHandler> storage)
     {
         final float bonus = Config.furnaceFuelTempBonus(hutLevel);
-        for (final Burn burn : burns.values())
-        {
-            if (burn.ticks() > 0 && burn.temp() + bonus >= required)
-            {
-                return true;
-            }
-        }
         for (final IItemHandler h : storage)
         {
             for (int slot = 0; slot < h.getSlots(); slot++)
@@ -81,15 +73,26 @@ public final class FurnaceFuel
         return false;
     }
 
-    /** Whether {@code required}°C for {@code duration} ticks is satisfiable — the carried burn plus hot-enough fuel in storage. */
-    public boolean canBurn(final BlockPos furnace, final float required, final int duration, final int hutLevel, final List<IItemHandler> storage)
+    /**
+     * Whether {@code required}°C for {@code duration} ticks is satisfiable from the carried pool, the fuel
+     * already in the furnace's fuel slot, and hot-enough fuel in storage.
+     */
+    public static boolean canBurn(final Burn pool, final float required, final int duration, final int hutLevel,
+            final ItemStack fuelInSlot, final List<IItemHandler> storage)
     {
         final float bonus = Config.furnaceFuelTempBonus(hutLevel);
-        final Burn cur = burns.get(furnace);
-        int have = (cur != null && cur.temp() + bonus >= required) ? cur.ticks() : 0;
+        int have = (pool.temp() + bonus >= required) ? pool.ticks() : 0;
         if (have >= duration)
         {
             return true;
+        }
+        if (isFuel(fuelInSlot) && fuelTemp(fuelInSlot) + bonus >= required)
+        {
+            have += fuelDuration(fuelInSlot) * fuelInSlot.getCount();
+            if (have >= duration)
+            {
+                return true;
+            }
         }
         for (final IItemHandler h : storage)
         {
@@ -110,38 +113,93 @@ public final class FurnaceFuel
     }
 
     /**
-     * Reserve {@code duration} ticks at {@code required}°C for this furnace, consuming hot-enough fuel from
-     * storage as needed (carrying over any surplus). Call only after {@link #canBurn} returned true.
+     * Reserve {@code duration} ticks at {@code required}°C. The furnace's {@code fuelSlot} holds at most the
+     * <b>single</b> fuel item currently being burned (so the colony's fuel isn't hoarded into furnaces); the
+     * carried {@link Burn} pool is that item's remaining ticks. We draw down the pool, and only when it's spent
+     * do we discard the slot item and ignite the next one (a fresh item pulled from storage). A too-cool fuel
+     * sitting in the slot is returned to storage first. Returns the new pool; call only after {@link #canBurn}.
      */
-    public void burn(final BlockPos furnace, final float required, final int duration, final int hutLevel, final List<IItemHandler> storage)
+    public static Burn burn(final Burn pool, final float required, final int duration, final int hutLevel,
+            final Container furnace, final int fuelSlot, final List<IItemHandler> storage)
     {
         final float bonus = Config.furnaceFuelTempBonus(hutLevel);
-        final Burn cur = burns.get(furnace);
-        final boolean carry = cur != null && cur.temp() + bonus >= required;
-        int pool = carry ? cur.ticks() : 0;
-        float temp = carry ? cur.temp() : 0f;
 
+        // A fuel already in the slot but too cool for this metal: hand it back so we can stock a hot one.
+        final ItemStack inSlot = furnace.getItem(fuelSlot);
+        if (!inSlot.isEmpty() && (!isFuel(inSlot) || fuelTemp(inSlot) + bonus < required))
+        {
+            insert(storage, inSlot.copy());
+            furnace.setItem(fuelSlot, ItemStack.EMPTY);
+        }
+
+        // The carried pool is the remaining burn of the item currently in the slot (valid only if hot enough).
+        int have = (pool.temp() + bonus >= required) ? pool.ticks() : 0;
+        float temp = pool.temp();
+
+        while (have < duration)
+        {
+            // The current item is spent (its remaining `have` is already counted) — discard it and ignite the next.
+            consumeOne(furnace, fuelSlot);
+            final ItemStack next = takeOneHotFuel(storage, required, bonus);
+            if (next.isEmpty())
+            {
+                break; // out of fuel (canBurn should have prevented this); melt proceeds on what we have
+            }
+            furnace.setItem(fuelSlot, next);
+            have += fuelDuration(next);
+            temp = fuelTemp(next);
+        }
+
+        have -= duration;
+        if (have <= 0)
+        {
+            consumeOne(furnace, fuelSlot); // the burning item is used up
+            have = 0;
+            temp = 0f;
+        }
+        furnace.setChanged();
+        return new Burn(have, temp);
+    }
+
+    private static void consumeOne(final Container furnace, final int fuelSlot)
+    {
+        final ItemStack slot = furnace.getItem(fuelSlot);
+        if (!slot.isEmpty())
+        {
+            slot.shrink(1);
+            if (slot.isEmpty())
+            {
+                furnace.setItem(fuelSlot, ItemStack.EMPTY);
+            }
+        }
+    }
+
+    /** Pull a single hot-enough fuel item out of storage (the worker igniting one piece at a time). */
+    private static ItemStack takeOneHotFuel(final List<IItemHandler> storage, final float required, final float bonus)
+    {
         for (final IItemHandler h : storage)
         {
-            for (int slot = 0; slot < h.getSlots() && pool < duration; slot++)
+            for (int slot = 0; slot < h.getSlots(); slot++)
             {
-                while (pool < duration)
+                final ItemStack stack = h.getStackInSlot(slot);
+                if (isFuel(stack) && fuelTemp(stack) + bonus >= required)
                 {
-                    final ItemStack in = h.getStackInSlot(slot);
-                    if (!isFuel(in) || fuelTemp(in) + bonus < required)
-                    {
-                        break;
-                    }
-                    final ItemStack taken = h.extractItem(slot, 1, false);
-                    if (taken.isEmpty())
-                    {
-                        break;
-                    }
-                    pool += fuelDuration(taken);
-                    temp = fuelTemp(taken);
+                    return h.extractItem(slot, 1, false);
                 }
             }
         }
-        burns.put(furnace, new Burn(Math.max(0, pool - duration), temp));
+        return ItemStack.EMPTY;
+    }
+
+    private static void insert(final List<IItemHandler> storage, ItemStack stack)
+    {
+        for (final IItemHandler h : storage)
+        {
+            stack = ItemHandlerHelper.insertItem(h, stack, false);
+            if (stack.isEmpty())
+            {
+                return;
+            }
+        }
     }
 }

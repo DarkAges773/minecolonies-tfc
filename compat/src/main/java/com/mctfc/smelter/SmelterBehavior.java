@@ -2,7 +2,10 @@ package com.mctfc.smelter;
 
 import com.mctfc.furnace.FurnaceBehavior;
 import com.mctfc.furnace.FurnaceFuel;
+import com.mctfc.furnace.FurnaceProcess;
+import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.furnace.FurnaceWorker;
+import com.mctfc.mixin.FurnaceBlockEntityAccessor;
 import com.mctfc.smelter.SmelterRecipes.Output;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.entity.ai.statemachine.AITarget;
@@ -13,15 +16,14 @@ import net.dries007.tfc.common.capabilities.heat.HeatCapability;
 import net.dries007.tfc.common.capabilities.heat.IHeat;
 import net.dries007.tfc.common.recipes.HeatingRecipe;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -33,36 +35,37 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * TFC-flavoured replacement for the MineColonies Smelter's furnace loop (see docs/compat-features.md).
- * Collapses TFC metallurgy ({@link SmelterRecipes}): ~{@value SmelterRecipes#UNITS_PER_OUTPUT} mB of one
- * metal's ore → one casting (an ingot, delivered in its mold) or, for iron, a raw bloom. No fuel — the
- * furnace is lit for show only.
+ * TFC-flavoured replacement for the MineColonies Smelter's furnace loop (see docs/tfc-furnace-workers.md).
+ * Collapses TFC metallurgy ({@link SmelterRecipes}): ~{@value SmelterRecipes#UNITS_PER_OUTPUT} mB of one ore →
+ * one casting (an ingot, delivered in its mold) or, for iron, a raw bloom.
  *
- * <p><b>Authentic to TFC:</b>
- * <ul>
- *   <li><b>Melt time</b> comes from TFC's own heat model — an item heats by {@code ~3/heat_capacity} °C/tick,
- *       so melting takes about {@code meltTemp × heat_capacity / 3} ticks (read live from
- *       {@link HeatCapability} + the ore's {@link HeatingRecipe}); shortened by the smelter's Strength.</li>
- *   <li><b>The output is the supplied mold, filled</b> with the cast ingot, heated to just below its melting
- *       point (so it has just solidified — extractable but glowing). Iron instead yields a hot raw bloom (no
- *       mold). The player extracts/finishes it exactly as in TFC.</li>
- * </ul>
+ * <p><b>The work lives in the furnace itself.</b> Ore goes in the furnace's <b>input</b> slot, fuel in its
+ * <b>fuel</b> slot, the mold in its <b>result</b> slot (filled in place on completion) — so the contents drop if
+ * the furnace is broken and are visible in the furnace GUI — and the melt timer/flame is the vanilla
+ * {@code litTime} (a depleting flame = progress). Only the carried fuel pool rides in the furnace's
+ * {@link FurnaceProcess} capability. The worker keeps no per-furnace job map; a furnace is <i>idle</i> when its
+ * input slot is empty, <i>melting</i> while {@code litTime > 0}, and <i>done</i> once it has ore but
+ * {@code litTime == 0}. This persists exactly across reload (it's all furnace BE NBT) and lets a 5-furnace hut
+ * run five melts at once.
  *
- * <p><b>Storage</b> = the building's racks ({@code getContainers()}). <b>Furnaces</b> run in parallel: each is
- * loaded with one melt (inputs consumed up front) and cooks on its own timer; the worker collects each as it
- * finishes, so a 5-furnace hut runs five melts at once.
+ * <p>Safe against the vanilla furnace: TFC ore has no vanilla smelting recipe, so the BE never auto-smelts our
+ * ore or auto-burns our fuel — it only counts {@code litTime} down.
+ *
+ * <p><b>Authentic to TFC:</b> melt time from the heat model ({@code ~meltTemp × heat_capacity / 3} ticks,
+ * shortened by Strength); fuel temperature-gated (must clear the metal's melt temp after the hut's level bonus)
+ * and duration-pooled for longevity ({@link FurnaceFuel}); the output is the supplied mold filled and heated to
+ * just below melting, or a hot iron bloom (bloomery, 2 charcoal, no mold).
  */
 public class SmelterBehavior implements FurnaceBehavior
 {
-    private static final int    MIN_DURATION   = 40;
-    private static final int    DEFAULT_DURATION = 200;
-    private static final int    WORK_TICK_RATE = 10;
-    private static final double  XP_PER_OUTPUT = 5.0;
-    /** Heat the just-cast ingot/bloom to this many °C below its melting point — hot, but solidified. */
-    private static final float   BELOW_MELT     = 1.0f;
+    private static final int INPUT  = 0;
+    private static final int FUEL   = 1;
+    private static final int RESULT = 2;
 
-    /** A melt in progress at one furnace. {@code mold} is the empty mold reserved for a cast ingot (null for iron). */
-    private record FurnaceJob(Output output, long doneAt, ItemStack mold, Fluid fluid, float meltTemp) {}
+    private static final int    MIN_DURATION     = 40;
+    private static final int    DEFAULT_DURATION = 200;
+    private static final int    WORK_TICK_RATE   = 10;
+    private static final double XP_PER_OUTPUT     = 5.0;
 
     private enum State implements IAIState
     {
@@ -76,12 +79,10 @@ public class SmelterBehavior implements FurnaceBehavior
     }
 
     private final FurnaceWorker ai;
-    private final FurnaceFuel fuel = new FurnaceFuel();
-    private final Map<BlockPos, FurnaceJob> furnaceJobs = new HashMap<>();
 
     private BlockPos target;
     private boolean collect;
-    private Output loadJob;
+    private ItemStack loadOre = ItemStack.EMPTY;
 
     public SmelterBehavior(final FurnaceWorker ai)
     {
@@ -109,12 +110,12 @@ public class SmelterBehavior implements FurnaceBehavior
             ai.delay(40);
             return AIWorkerState.START_WORKING;
         }
-        final long now = world.getGameTime();
 
+        // 1) haul out any furnace that has finished — the furnace fills the mold itself when its fuel burns out.
         for (final BlockPos furnace : furnaces)
         {
-            final FurnaceJob job = furnaceJobs.get(furnace);
-            if (job != null && now >= job.doneAt())
+            final FurnaceProcess cap = capOf(furnaceAt(furnace));
+            if (cap != null && cap.phase() == FurnaceProcess.Phase.DONE)
             {
                 this.target = furnace;
                 this.collect = true;
@@ -122,17 +123,19 @@ public class SmelterBehavior implements FurnaceBehavior
             }
         }
 
+        // 2) otherwise load an idle furnace with the next ready ore.
         final List<IItemHandler> storage = storage();
-        final Output ready = findReadyJob(storage);
-        if (ready != null)
+        final ItemStack ready = findReadyJob(storage);
+        if (!ready.isEmpty())
         {
             for (final BlockPos furnace : furnaces)
             {
-                if (!furnaceJobs.containsKey(furnace))
+                final FurnaceProcess cap = capOf(furnaceAt(furnace));
+                if (cap != null && cap.phase() == FurnaceProcess.Phase.IDLE)
                 {
                     this.target = furnace;
                     this.collect = false;
-                    this.loadJob = ready;
+                    this.loadOre = ready;
                     return State.WORK;
                 }
             }
@@ -153,40 +156,34 @@ public class SmelterBehavior implements FurnaceBehavior
             return State.WORK;
         }
 
+        final FurnaceBlockEntity be = furnaceAt(target);
         final List<IItemHandler> storage = storage();
-        if (collect)
+        if (be != null)
         {
-            final FurnaceJob job = furnaceJobs.remove(target);
-            if (job != null)
+            if (collect)
             {
-                produce(job, storage);
-                ai.worker().getCitizenExperienceHandler().addExperience(XP_PER_OUTPUT);
+                retrieve(be, storage);
             }
-            setLit(target, false);
-        }
-        else if (loadJob != null)
-        {
-            final FurnaceJob job = load(loadJob, storage);
-            if (job != null)
+            else if (!loadOre.isEmpty())
             {
-                furnaceJobs.put(target, job);
-                setLit(target, true);
+                load(be, loadOre, storage);
             }
         }
 
         this.target = null;
-        this.loadJob = null;
+        this.loadOre = ItemStack.EMPTY;
         return AIWorkerState.START_WORKING;
     }
 
     /**
-     * A metal in stock with ≥100 mB of ore and its requirement: for a cast metal an empty mold <i>and</i> fuel
-     * hot enough for its melt temp; for iron, 2 charcoal (the bloomery).
+     * An ore in stock with ≥100 mB of a <i>single</i> grade and its requirement met: for a cast metal an empty
+     * mold <i>and</i> fuel hot enough for its melt temp; for iron, 2 charcoal (the bloomery). Returns one
+     * representative ore of that grade, or empty.
      */
-    private Output findReadyJob(final List<IItemHandler> storage)
+    private ItemStack findReadyJob(final List<IItemHandler> storage)
     {
-        final Map<Output, Integer> mb = new HashMap<>();
-        final Map<Output, ItemStack> sample = new HashMap<>();
+        final Map<Item, Integer> mb = new HashMap<>();
+        final Map<Item, ItemStack> sample = new HashMap<>();
         int charcoal = 0;
         boolean emptyMold = false;
         for (final IItemHandler h : storage)
@@ -194,11 +191,14 @@ public class SmelterBehavior implements FurnaceBehavior
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final ItemStack stack = h.getStackInSlot(slot);
-                final Output out = SmelterRecipes.outputFor(stack);
-                if (out != null)
+                if (stack.isEmpty())
                 {
-                    mb.merge(out, SmelterRecipes.meltMb(stack) * stack.getCount(), Integer::sum);
-                    sample.putIfAbsent(out, stack);
+                    continue;
+                }
+                if (SmelterRecipes.outputFor(stack) != null)
+                {
+                    mb.merge(stack.getItem(), SmelterRecipes.meltMb(stack) * stack.getCount(), Integer::sum);
+                    sample.putIfAbsent(stack.getItem(), stack);
                 }
                 else if (SmelterRecipes.isCharcoal(stack))
                 {
@@ -210,10 +210,15 @@ public class SmelterBehavior implements FurnaceBehavior
                 }
             }
         }
-        for (final Map.Entry<Output, Integer> e : mb.entrySet())
+        for (final Map.Entry<Item, Integer> e : mb.entrySet())
         {
-            final Output out = e.getKey();
             if (e.getValue() < SmelterRecipes.UNITS_PER_OUTPUT)
+            {
+                continue;
+            }
+            final ItemStack ore = sample.get(e.getKey());
+            final Output out = SmelterRecipes.outputFor(ore);
+            if (out == null)
             {
                 continue;
             }
@@ -221,16 +226,15 @@ public class SmelterBehavior implements FurnaceBehavior
             {
                 if (charcoal >= SmelterRecipes.CHARCOAL_PER_BLOOM)
                 {
-                    return out;
+                    return ore;
                 }
             }
-            else if (emptyMold
-                       && fuel.hasFuelHotEnough(meltTempOf(sample.get(out)), ai.buildingLevel(), storage))
+            else if (emptyMold && FurnaceFuel.hasFuelHotEnough(meltTempOf(ore), ai.buildingLevel(), storage))
             {
-                return out;
+                return ore;
             }
         }
-        return null;
+        return ItemStack.EMPTY;
     }
 
     private static float meltTempOf(final ItemStack ore)
@@ -239,112 +243,133 @@ public class SmelterBehavior implements FurnaceBehavior
         return recipe != null ? recipe.getTemperature() : 1000f;
     }
 
-    /** Reserve a furnace's melt: read TFC's heat model for the duration + fluid, consume the inputs up front. */
-    private FurnaceJob load(final Output job, final List<IItemHandler> storage)
+    /**
+     * Load a furnace: read TFC's heat model for the melt time, then move the inputs into the furnace's own
+     * slots (ore → input, mold → result, fuel into the fuel slot from the racks) and light it. Nothing is
+     * consumed unless the whole operation can proceed.
+     */
+    private void load(final FurnaceBlockEntity be, final ItemStack oreType, final List<IItemHandler> storage)
     {
-        final ItemStack sample = firstOre(job, storage);
-        if (sample.isEmpty())
+        final Output output = SmelterRecipes.outputFor(oreType);
+        if (output == null)
         {
-            return null;
+            return;
         }
-        final HeatingRecipe recipe = HeatingRecipe.getRecipe(sample);
+        final HeatingRecipe recipe = HeatingRecipe.getRecipe(oreType);
         final float meltTemp = recipe != null ? recipe.getTemperature() : 1000f;
         final Fluid fluid = recipe != null && !recipe.getDisplayOutputFluid().isEmpty() ? recipe.getDisplayOutputFluid().getFluid() : null;
-        final int meltDuration = duration(sample, meltTemp);
+        final int meltDuration = duration(oreType, meltTemp);
         final int level = ai.buildingLevel();
-
-        // Cast metals burn fuel hot enough for the melt (checked before consuming anything); iron's heat comes
-        // from its bloomery charcoal instead.
-        if (!job.bloom() && !fuel.canBurn(target, meltTemp, meltDuration, level, storage))
+        final FurnaceProcess cap = capOf(be);
+        if (cap == null)
         {
-            return null;
+            return;
         }
 
-        if (!consumeOre(job, storage))
+        // Gate before consuming anything.
+        if (output.bloom())
         {
-            return null;
+            if (countCharcoal(storage) < SmelterRecipes.CHARCOAL_PER_BLOOM)
+            {
+                return;
+            }
+        }
+        else if (fluid == null
+                   || !FurnaceFuel.canBurn(cap.pool(), meltTemp, meltDuration, level, be.getItem(FUEL), storage))
+        {
+            return;
         }
 
-        ItemStack mold = ItemStack.EMPTY;
-        if (job.bloom())
+        final ItemStack ore = consumeOre(oreType, storage);
+        if (ore.isEmpty())
+        {
+            return;
+        }
+        be.setItem(INPUT, ore);
+
+        if (output.bloom())
         {
             consumeCharcoal(storage);
         }
         else
         {
-            mold = takeEmptyMold(storage);
-            if (mold.isEmpty() || fluid == null)
+            final ItemStack mold = takeEmptyMold(storage);
+            if (mold.isEmpty())
             {
-                return null; // lost the mold / fluid between picking and loading; ore already spent (rare)
+                be.setItem(INPUT, ItemStack.EMPTY); // back out: hand the ore back below
+                insert(storage, ore);
+                return;
             }
-            fuel.burn(target, meltTemp, meltDuration, level, storage);
+            be.setItem(RESULT, mold);
+            cap.setPool(FurnaceFuel.burn(cap.pool(), meltTemp, meltDuration, level, be, FUEL, storage));
         }
-        return new FurnaceJob(job, ai.world().getGameTime() + meltDuration, mold, fluid, meltTemp);
+        cap.setPhase(FurnaceProcess.Phase.MELTING);
+        light(be, meltDuration);
     }
 
-    /** Produce the finished casting: the supplied mold filled with the hot ingot, or a hot iron bloom. */
-    private void produce(final FurnaceJob job, final List<IItemHandler> storage)
+    /** Haul the finished casting (filled mold or hot bloom) out of the furnace's result slot into the racks. */
+    private void retrieve(final FurnaceBlockEntity be, final List<IItemHandler> storage)
     {
-        final float temp = Math.max(1f, job.meltTemp() - BELOW_MELT);
-        if (job.output().bloom())
+        final ItemStack result = be.getItem(RESULT);
+        if (!result.isEmpty())
         {
-            final ItemStack bloom = new ItemStack(SmelterRecipes.item(job.output().result()));
-            HeatCapability.setTemperature(bloom, temp);
-            insert(storage, bloom);
-            return;
+            insert(storage, result.copy());
+            be.setItem(RESULT, ItemStack.EMPTY);
+            ai.worker().getCitizenExperienceHandler().addExperience(XP_PER_OUTPUT);
         }
-
-        // Cast metal: fill the reserved mold and heat it to just below melting.
-        final ItemStack mold = job.mold().copy();
-        final IFluidHandlerItem handler = mold.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).orElse(null);
-        if (handler != null && job.fluid() != null)
+        final FurnaceProcess cap = capOf(be);
+        if (cap != null)
         {
-            handler.fill(new FluidStack(job.fluid(), SmelterRecipes.UNITS_PER_OUTPUT), IFluidHandler.FluidAction.EXECUTE);
-            final ItemStack filled = handler.getContainer();
-            HeatCapability.setTemperature(filled, temp);
-            insert(storage, filled);
+            cap.setPhase(FurnaceProcess.Phase.IDLE);
         }
-        else
-        {
-            insert(storage, mold); // fallback: return the mold unfilled rather than void it
-        }
+        be.setChanged();
     }
 
-    private ItemStack firstOre(final Output job, final List<IItemHandler> storage)
-    {
-        for (final IItemHandler h : storage)
-        {
-            for (int slot = 0; slot < h.getSlots(); slot++)
-            {
-                final ItemStack stack = h.getStackInSlot(slot);
-                if (job.equals(SmelterRecipes.outputFor(stack)))
-                {
-                    return stack.copy();
-                }
-            }
-        }
-        return ItemStack.EMPTY;
-    }
-
-    private boolean consumeOre(final Output job, final List<IItemHandler> storage)
+    /** Consume 100 mB of one ore grade from storage, combined into a single stack to place in the furnace; empty if short. */
+    private ItemStack consumeOre(final ItemStack oreType, final List<IItemHandler> storage)
     {
         int need = SmelterRecipes.UNITS_PER_OUTPUT;
+        ItemStack collected = ItemStack.EMPTY;
         for (final IItemHandler h : storage)
         {
             for (int slot = 0; slot < h.getSlots() && need > 0; slot++)
             {
-                while (need > 0 && job.equals(SmelterRecipes.outputFor(h.getStackInSlot(slot))))
+                while (need > 0 && ItemHandlerHelper.canItemStacksStack(h.getStackInSlot(slot), oreType))
                 {
                     final ItemStack taken = h.extractItem(slot, 1, false);
                     if (taken.isEmpty())
                     {
                         break;
                     }
+                    if (collected.isEmpty())
+                    {
+                        collected = taken;
+                    }
+                    else
+                    {
+                        collected.grow(1);
+                    }
                     need -= SmelterRecipes.meltMb(taken);
                 }
             }
         }
-        return need <= 0;
+        return need <= 0 ? collected : ItemStack.EMPTY;
+    }
+
+    private int countCharcoal(final List<IItemHandler> storage)
+    {
+        int count = 0;
+        for (final IItemHandler h : storage)
+        {
+            for (int slot = 0; slot < h.getSlots(); slot++)
+            {
+                if (SmelterRecipes.isCharcoal(h.getStackInSlot(slot)))
+                {
+                    count += h.getStackInSlot(slot).getCount();
+                }
+            }
+        }
+        return count;
     }
 
     private void consumeCharcoal(final List<IItemHandler> storage)
@@ -420,7 +445,7 @@ public class SmelterBehavior implements FurnaceBehavior
         final List<IItemHandler> handlers = new ArrayList<>();
         for (final BlockPos pos : building.getContainers())
         {
-            final BlockEntity be = world.getBlockEntity(pos);
+            final var be = world.getBlockEntity(pos);
             if (be != null)
             {
                 be.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(handlers::add);
@@ -429,19 +454,40 @@ public class SmelterBehavior implements FurnaceBehavior
         return handlers;
     }
 
-    private void setLit(final BlockPos furnace, final boolean lit)
+    private FurnaceBlockEntity furnaceAt(final BlockPos furnace)
     {
+        final Level world = ai.world();
+        return world != null && world.getBlockEntity(furnace) instanceof FurnaceBlockEntity be ? be : null;
+    }
+
+    private FurnaceProcess capOf(final FurnaceBlockEntity be)
+    {
+        return FurnaceProcessCapability.get(be);
+    }
+
+    /**
+     * Light the furnace for {@code ticks}: set its {@code litTime}/{@code litDuration} (the vanilla BE counts it
+     * down and extinguishes the flame when it expires — which is also our melt timer) and flip the LIT
+     * blockstate so the flame renders immediately.
+     */
+    private void light(final FurnaceBlockEntity be, final int ticks)
+    {
+        final FurnaceBlockEntityAccessor accessor = (FurnaceBlockEntityAccessor) be;
+        accessor.setLitTime(ticks);
+        accessor.setLitDuration(Math.max(1, ticks));
+        be.setChanged();
+
         final Level world = ai.world();
         if (world == null)
         {
             return;
         }
-        final BlockState state = world.getBlockState(furnace);
+        final BlockState state = world.getBlockState(target);
         if (state.getBlock() instanceof AbstractFurnaceBlock
               && state.hasProperty(AbstractFurnaceBlock.LIT)
-              && state.getValue(AbstractFurnaceBlock.LIT) != lit)
+              && !state.getValue(AbstractFurnaceBlock.LIT))
         {
-            world.setBlockAndUpdate(furnace, state.setValue(AbstractFurnaceBlock.LIT, lit));
+            world.setBlockAndUpdate(target, state.setValue(AbstractFurnaceBlock.LIT, true));
         }
     }
 
