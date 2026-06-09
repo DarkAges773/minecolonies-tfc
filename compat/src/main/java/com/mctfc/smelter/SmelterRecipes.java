@@ -3,8 +3,10 @@ package com.mctfc.smelter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,6 +114,24 @@ public final class SmelterRecipes
     public static Output outputFor(final ItemStack stack)
     {
         return stack.isEmpty() ? null : ORE_OUTPUT.get(idOf(stack));
+    }
+
+    /**
+     * One stack of every ore the smelter can process — the candidate set populating the hut's "ores" list GUI
+     * (see {@code MixinCompatibilityManager}), so the player picks which TFC ores to smelt from TFC ores alone.
+     */
+    public static List<ItemStack> oreStacks()
+    {
+        final List<ItemStack> stacks = new ArrayList<>();
+        for (final ResourceLocation id : ORE_OUTPUT.keySet())
+        {
+            final Item item = item(id);
+            if (item != null && item != Items.AIR)
+            {
+                stacks.add(new ItemStack(item));
+            }
+        }
+        return stacks;
     }
 
     /**

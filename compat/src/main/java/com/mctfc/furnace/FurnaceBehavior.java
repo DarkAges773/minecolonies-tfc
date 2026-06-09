@@ -41,4 +41,15 @@ public interface FurnaceBehavior
     {
         return false;
     }
+
+    /**
+     * How many delivered outputs (counted via {@link FurnaceWorker#countAction()}) accumulate before
+     * MineColonies' standard dump cycle ships the carried batch to the building/warehouse. The base furnace
+     * worker dumps after <b>every</b> action (1) — fine for vanilla's stack-at-a-time smelting, but for our
+     * one-output-at-a-time loop that would make the worker trek back to the hut per ingot, so we batch.
+     */
+    default int actionsUntilDump()
+    {
+        return 16;
+    }
 }

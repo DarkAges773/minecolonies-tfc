@@ -44,6 +44,14 @@ public interface FurnaceWorker
     /** Set ticks until this AI state ticks again (pacing for "cooking"/"melting" timers). */
     void delay(int ticks);
 
+    /**
+     * Count one completed work action: bumps the citizen's actions-done (which, past
+     * {@link FurnaceBehavior#actionsUntilDump()}, makes MineColonies' standard dump cycle ship the carried
+     * outputs to the building/warehouse) and decrements saturation (the worker gets hungry from working).
+     * Call once per delivered output.
+     */
+    void countAction();
+
     /** The AI's current state (for handlers that need to stay put: {@code return ai.state()}). */
     IAIState state();
 }

@@ -8,6 +8,7 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Reusable, <b>stateless</b> TFC-fuel model for furnace workers (Smelter, Cook, …). The "which hut can burn
@@ -61,8 +62,12 @@ public final class FurnaceFuel
         return fuel == null ? 0 : fuel.getDuration();
     }
 
-    /** Cheap pre-check (for picking a job): is any fuel in storage hot enough for {@code required}? Ignores duration. */
-    public static boolean hasFuelHotEnough(final float required, final int hutLevel, final List<IItemHandler> storage)
+    /**
+     * Cheap pre-check (for picking a job): is any <b>allowed</b> fuel in storage hot enough for {@code required}?
+     * Ignores duration. {@code allowed} is the hut's fuel allow-list filter (see the Smelter's {@code fuelAllowed}).
+     */
+    public static boolean hasFuelHotEnough(final float required, final int hutLevel, final Predicate<ItemStack> allowed,
+            final List<IItemHandler> storage)
     {
         final float bonus = Config.furnaceFuelTempBonus(hutLevel);
         for (final IItemHandler h : storage)
@@ -70,7 +75,7 @@ public final class FurnaceFuel
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final ItemStack stack = h.getStackInSlot(slot);
-                if (isFuel(stack) && fuelTemp(stack) + bonus >= required)
+                if (allowed.test(stack) && fuelTemp(stack) + bonus >= required)
                 {
                     return true;
                 }
@@ -84,7 +89,7 @@ public final class FurnaceFuel
      * already in the furnace's fuel slot, and hot-enough fuel in storage.
      */
     public static boolean canBurn(final Burn pool, final float required, final int duration, final int hutLevel,
-            final ItemStack fuelInSlot, final List<IItemHandler> storage)
+            final Predicate<ItemStack> allowed, final ItemStack fuelInSlot, final List<IItemHandler> storage)
     {
         final float bonus = Config.furnaceFuelTempBonus(hutLevel);
         int have = (pool.temp() + bonus >= required) ? pool.ticks() : 0;
@@ -92,6 +97,7 @@ public final class FurnaceFuel
         {
             return true;
         }
+        // Fuel already burning in the slot counts even if it would no longer pass the allow-list (let it finish).
         if (isFuel(fuelInSlot) && fuelTemp(fuelInSlot) + bonus >= required)
         {
             have += fuelDuration(fuelInSlot) * fuelInSlot.getCount();
@@ -105,7 +111,7 @@ public final class FurnaceFuel
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final ItemStack stack = h.getStackInSlot(slot);
-                if (isFuel(stack) && fuelTemp(stack) + bonus >= required)
+                if (allowed.test(stack) && fuelTemp(stack) + bonus >= required)
                 {
                     have += fuelDuration(stack) * stack.getCount();
                     if (have >= duration)
@@ -126,7 +132,7 @@ public final class FurnaceFuel
      * sitting in the slot is returned to storage first. Returns the new pool; call only after {@link #canBurn}.
      */
     public static Burn burn(final Burn pool, final float required, final int duration, final int hutLevel,
-            final Container furnace, final int fuelSlot, final List<IItemHandler> storage)
+            final Predicate<ItemStack> allowed, final Container furnace, final int fuelSlot, final List<IItemHandler> storage)
     {
         final float bonus = Config.furnaceFuelTempBonus(hutLevel);
 
@@ -146,7 +152,7 @@ public final class FurnaceFuel
         {
             // The current item is spent (its remaining `have` is already counted) — discard it and ignite the next.
             consumeOne(furnace, fuelSlot);
-            final ItemStack next = takeOneHotFuel(storage, required, bonus);
+            final ItemStack next = takeOneHotFuel(storage, required, bonus, allowed);
             if (next.isEmpty())
             {
                 break; // out of fuel (canBurn should have prevented this); melt proceeds on what we have
@@ -180,15 +186,16 @@ public final class FurnaceFuel
         }
     }
 
-    /** Pull a single hot-enough fuel item out of storage (the worker igniting one piece at a time). */
-    private static ItemStack takeOneHotFuel(final List<IItemHandler> storage, final float required, final float bonus)
+    /** Pull a single hot-enough, allowed fuel item out of storage (the worker igniting one piece at a time). */
+    private static ItemStack takeOneHotFuel(final List<IItemHandler> storage, final float required, final float bonus,
+            final Predicate<ItemStack> allowed)
     {
         for (final IItemHandler h : storage)
         {
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final ItemStack stack = h.getStackInSlot(slot);
-                if (isFuel(stack) && fuelTemp(stack) + bonus >= required)
+                if (allowed.test(stack) && fuelTemp(stack) + bonus >= required)
                 {
                     return h.extractItem(slot, 1, false);
                 }

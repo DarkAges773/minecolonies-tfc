@@ -213,11 +213,64 @@ worker drives the block entity directly, so automation is unaffected. The buildi
 
 ---
 
-## 8. Open items / future
+## 8. Planned: list-driven inputs & MineColonies-idiomatic logistics  — **PLANNED**
 
-- **Auto-requesting** ore / molds / charcoal / fuel through the colony (mirror MineColonies' `StackList`
-  fallback, behind the `hasBuildingEnoughElseCount` + `hasWorkerOpenRequestsOfType` duplicate-guard). Today the
-  smelter only works off stock in the racks.
+The smelter currently reads/writes the building racks directly and ignores the hut's configuration. The next
+phase makes it behave like a vanilla furnace worker, with the **hut's lists as the single source of truth** for
+what to smelt, what to keep, and what to request — so the player picks which TFC ores/fuels to use, and overflow
+rides the colony's dump/warehouse logistics instead of our self-managed rack writes.
+
+### What MineColonies gives us (and the gotchas)
+- **`ORE_LIST` (`"ores"`)** on the Smeltery is a **block list**: the base smelts vanilla-smeltable ores **not**
+  in it (`isSmeltable = IS_SMELTABLE && isOre && !inList`). TFC ores fail `IS_SMELTABLE` (no vanilla furnace
+  recipe), so they neither smelt via the base **nor appear in the list GUI** — the toggleable items are supplied
+  at the building's module/view registration via the `IS_SMELTABLE` predicate.
+- **`FUEL_LIST`** is an **allow list** (use only listed fuels).
+- **Dump keep** is building-driven: `dumpOneMoreSlot` → `building.buildingRequiresCertainAmountOfItem(...)` →
+  `building.getRequiredItemsAndAmount()` (a `Map<Predicate, (keepAmount, appliesToInventory)>`). **Reality check
+  (verified):** the crafting module's keep entries are `appliesToInventory=false`, so the dump does **not** keep
+  smeltable/fuel in the *worker's* inventory — vanilla furnace workers simply load their furnace promptly (moving
+  inputs out of the inventory) and dump after **every** action (`getActionsDoneUntilDumping()==1`), tolerating
+  minor re-staging churn. So **no building-keep mixin is needed**: we mirror vanilla and keep our staging tight.
+- **Minimum-stock** is an existing per-building feature (keep ≥ N of an item, auto-requested) — the natural home
+  for **molds**, which can't ride the ore/fuel lists (filled vs empty molds are the same item).
+- Note: even vanilla doesn't auto-drain a full building to the warehouse — couriers deliver *requests*; a full
+  building just stalls the worker (items held in inventory). So the win here is idiom/consistency + player
+  control, not magic overflow.
+
+### Stages
+1. ✅ **Respect the lists (server-side).** Smelt only TFC ores **not** in `ORE_LIST` (block-style — smelt all
+   enabled except unchecked); `FurnaceFuel` burns only fuels **allowed** by `FUEL_LIST` (allow-list threaded in
+   as a `Predicate<ItemStack>`). `SmelterBehavior.oreEnabled`/`fuelAllowed` filter `findReadyJob`/staging/
+   `inventoryMelts`/`gradeToComplete`. The fuel allow-list only constrains once it actually names a TFC fuel, so
+   the vanilla default (coal/charcoal) can't starve the worker.
+2. ✅ **Populate the list GUIs with TFC items.** `MixinCompatibilityManager` replaces
+   `getSmeltableOres()`/`getFuel()` (the lists' candidate sources) with **TFC ores** (`SmelterRecipes.oreStacks`)
+   and **TFC fuels** (`FurnaceFuel.isFuel`) — TFC-only, since the only consumers are smeltery-aligned (the two
+   list GUIs, the "needs smeltable ore" validator, the base ore request). *(Stages 1 + 2 ship together.)*
+3. ✅ **Vanilla inventory handling.** Finished **deliverables** (cast ingot, raw bloom) go into the **worker's
+   inventory** (like vanilla `extractFromFurnace`); `FurnaceWorker.countAction()` bumps actions-done + decrements
+   saturation per output, and MineColonies' standard **dump cycle** ships the carried batch to the
+   building/warehouse. Since the base furnace worker dumps after every action, the dispatcher raises the cadence
+   to `FurnaceBehavior.actionsUntilDump()` (16) for our behaviors only, so the worker doesn't trek to the hut per
+   ingot. **Molds are never carried** — a mold is a reusable tool, so it's loaded into a furnace straight from the
+   racks and returned there after casting (cycling racks → furnace → racks); `stageBatch` stages only consumables
+   (ore/fuel/charcoal). This both sidesteps the empty-vs-filled-mold ambiguity (only deliverables ride the
+   inventory) and prevents stray staged molds piling up in the worker's inventory. No building-keep mixin (see the
+   reality check above). `canCarry`/`canStowRacks` gate each path; on full storage the output stays in the
+   furnace/mold and the dump frees space.
+4. **Requests (auto-request).** In the `BATCH_STAGING` guard, debounced (`hasWorkerOpenRequestsOfType` /
+   `hasBuildingEnoughElseCount`) requests for the enabled ores + allowed fuels when the racks run low (mirrors
+   the base `requestSmeltable` + fuel `StackList`).
+5. **Molds via minimum-stock.** Rely on MineColonies' existing minimum-stock (player sets "keep ≥ N molds");
+   the smelter just consumes them. Optionally seed a sensible default.
+
+---
+
+## 9. Open items / future
+
+- **List-driven inputs & vanilla logistics** — the next phase (§8): smelt/keep/request driven by the hut's
+  `ORE_LIST`/`FUEL_LIST`/min-stock, with vanilla inventory handling. Subsumes the old standalone "auto-request".
 - **Hopper protection** on furnace faces (§3 wrinkle).
 - **Tuning** — `furnaceFuelTempBonusByLevel` (config, per-level list) and the melt-duration formula are easy knobs.
 - **Fuel-pool persistence** — the longevity pool resets on reload (minor waste); could persist to building NBT
@@ -227,7 +280,7 @@ worker drives the block entity directly, so automation is unaffected. The buildi
 
 ---
 
-## 9. Build order
+## 10. Build order
 
 1. ✅ Controller + dispatcher + recipe model + first `SmelterBehavior` (rack storage, parallel furnaces,
    heat-model duration, filled-mold output, temp-gated/duration-pooled fuel from racks).
@@ -237,7 +290,9 @@ worker drives the block entity directly, so automation is unaffected. The buildi
 3. ✅ Autonomous completion (`MixinAbstractFurnaceBlockEntity` + `SmelterProcessing`): the furnace fills the
    mold itself when `litTime` hits 0 and flips to `DONE`.
 4. ✅ 3-stage worker (§3): `BATCH_STAGING` (top up to idle-furnace-count) → `TEND_FURNACES` (unload+load in one
-   sweep) → `MOLD_UNLOAD` (TFC casting extraction of cooled molds, break chance, molds recycled).
-5. ⬜ Auto-requesting (§8) — debounced (`hasWorkerOpenRequestsOfType`) requests for missing ore/molds/fuel in
-   the `BATCH_STAGING` guard.
+   sweep) → `MOLD_UNLOAD` (TFC casting extraction of cooled molds, break chance, molds recycled). Idle via
+   `canGoIdle`; worker owns the working/idle render; full-storage overflow → inventory then pause.
+5. 🔶 List-driven inputs & vanilla logistics (§8): (a) ✅ respect `ORE_LIST`/`FUEL_LIST` server-side, (b) ✅
+   populate their GUIs with TFC ores/fuels, (c) ✅ vanilla inventory handling (deliverables → inventory → dump;
+   batched cadence; no keep mixin), (d) ⬜ requests, (e) ⬜ molds via minimum-stock. Block-style ore list.
 6. ⬜ `CookBehavior` (§6).

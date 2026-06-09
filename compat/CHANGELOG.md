@@ -8,6 +8,11 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Smelter melts & casts TFC metal** — the Smelter worker now runs TFC metallurgy in its furnaces: it melts
+  TFC ore into metal and casts it (ingots in molds; iron becomes a raw bloom), driven by the furnace's own
+  fuel/heat. The hut's **Ores** and **Fuel** lists are now populated with **TFC ores and TFC fuels** (instead
+  of vanilla smeltables), and the worker honours them — uncheck an ore to stop smelting it, and the fuel
+  allow-list governs which fuels it burns.
 - **Cemented cobble creative tab** — the mortared ("Cemented") cobble twins now live in a *MineColonies ×
   TerraFirmaCraft* creative tab. This also makes them selectable as the miner's *Fill Block* (and visible in
   MineColonies' other item pickers), which previously only listed blocks that appear in some creative tab.

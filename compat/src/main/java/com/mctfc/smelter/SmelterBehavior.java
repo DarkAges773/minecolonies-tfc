@@ -8,10 +8,12 @@ import com.mctfc.furnace.FurnaceWorker;
 import com.mctfc.mixin.FurnaceBlockEntityAccessor;
 import com.mctfc.smelter.SmelterRecipes.Output;
 import com.minecolonies.api.colony.buildings.IBuilding;
+import com.minecolonies.api.crafting.ItemStorage;
 import com.minecolonies.api.entity.ai.statemachine.AITarget;
 import com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 import com.minecolonies.api.entity.citizen.Skill;
+import com.minecolonies.core.colony.buildings.modules.ItemListModule;
 import net.dries007.tfc.common.capabilities.MoldLike;
 import net.dries007.tfc.common.capabilities.heat.HeatCapability;
 import net.dries007.tfc.common.capabilities.heat.IHeat;
@@ -39,6 +41,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import static com.minecolonies.api.util.constant.BuildingConstants.FUEL_LIST;
+import static com.minecolonies.core.entity.ai.workers.crafting.EntityAIWorkSmelter.ORE_LIST;
 
 /**
  * TFC-flavoured replacement for the MineColonies Smelter's furnace loop (see docs/tfc-furnace-workers.md).
@@ -131,7 +136,7 @@ public class SmelterBehavior implements FurnaceBehavior
         {
             final FurnaceBlockEntity be = furnaceAt(furnace);
             final FurnaceProcess cap = capOf(be);
-            if (cap != null && cap.phase() == FurnaceProcess.Phase.DONE && canStow(be.getItem(FURNACE_RESULT)))
+            if (cap != null && cap.phase() == FurnaceProcess.Phase.DONE && canDeliver(be.getItem(FURNACE_RESULT)))
             {
                 return true; // a finished furnace we have room to unload
             }
@@ -160,9 +165,9 @@ public class SmelterBehavior implements FurnaceBehavior
                     continue;
                 }
                 final CastingRecipe recipe = CastingRecipe.get(mold);
-                if (recipe != null && canStow(recipe.assemble(mold, world.registryAccess())))
+                if (recipe != null && canCarry(recipe.assemble(mold, world.registryAccess())))
                 {
-                    return true; // a cooled mold whose ingot we have room for
+                    return true; // a cooled mold whose ingot we have room to carry
                 }
             }
         }
@@ -181,7 +186,10 @@ public class SmelterBehavior implements FurnaceBehavior
         return State.TEND_FURNACES;
     }
 
-    /** Top the carried inventory up to the idle furnaces' worth of ore + molds + fuel/charcoal from the racks. */
+    /** Top the carried inventory up to the idle furnaces' worth of <b>consumable</b> ore + fuel/charcoal from the
+     * racks. Molds are deliberately <i>not</i> staged: a mold is a reusable tool, so it's loaded into a furnace
+     * straight from the racks and returned there after casting (cycling racks → furnace → racks), rather than
+     * lingering as a stray in the worker's inventory. */
     private void stageBatch()
     {
         final int idle = idleFurnaceCount();
@@ -193,9 +201,8 @@ public class SmelterBehavior implements FurnaceBehavior
         final IItemHandler to = inv.get(0);
         final List<IItemHandler> racks = racks();
 
-        // molds (one per cast melt), fuel (covers cast melts), charcoal (the iron bloomery + doubles as fuel).
-        topUp(racks, to, SmelterBehavior::isEmptyMold, idle);
-        topUp(racks, to, FurnaceFuel::isFuel, idle);
+        // fuel (allowed by the hut's fuel list), charcoal (the iron bloomery catalyst) — both consumed by melts.
+        topUp(racks, to, this::fuelAllowed, idle);
         topUp(racks, to, SmelterRecipes::isCharcoal, SmelterRecipes.CHARCOAL_PER_BLOOM * idle);
 
         // Ore: top up to `idle` whole single-grade melts, completing the partial melts the worker already
@@ -240,7 +247,7 @@ public class SmelterBehavior implements FurnaceBehavior
             {
                 if (cap.phase() == FurnaceProcess.Phase.DONE)
                 {
-                    retrieve(be, racks()); // output → racks, cap → IDLE
+                    retrieve(be); // bloom → inventory (dump ships it), filled mold → racks; cap → IDLE
                 }
                 if (cap.phase() == FurnaceProcess.Phase.IDLE)
                 {
@@ -270,7 +277,7 @@ public class SmelterBehavior implements FurnaceBehavior
                 tended.add(furnace);
                 continue;
             }
-            final boolean done = cap.phase() == FurnaceProcess.Phase.DONE && canStow(be.getItem(FURNACE_RESULT));
+            final boolean done = cap.phase() == FurnaceProcess.Phase.DONE && canDeliver(be.getItem(FURNACE_RESULT));
             final boolean loadable = cap.phase() == FurnaceProcess.Phase.IDLE && !findReadyJob(inventory()).isEmpty();
             if (done || loadable)
             {
@@ -329,9 +336,9 @@ public class SmelterBehavior implements FurnaceBehavior
                     continue;
                 }
                 final ItemStack result = recipe.assemble(mold, world.registryAccess());
-                if (!canStow(result))
+                if (!canCarry(result))
                 {
-                    continue; // no room for the ingot — leave the cooled mold here, extract it later
+                    continue; // inventory full — leave the cooled mold here, cast it later
                 }
                 final ItemStack filled = h.extractItem(slot, 1, false);
                 final MoldLike taken = MoldLike.get(filled);
@@ -339,10 +346,12 @@ public class SmelterBehavior implements FurnaceBehavior
                 {
                     taken.drainIgnoringTemperature(Integer.MAX_VALUE, IFluidHandler.FluidAction.EXECUTE);
                 }
-                insert(storage, result);
+                deliver(result); // ingot is the deliverable — carry it; the dump ships it to storage
+                ai.worker().getCitizenExperienceHandler().addExperience(XP_PER_OUTPUT);
+                ai.countAction();
                 if (world.getRandom().nextFloat() >= recipe.getBreakChance())
                 {
-                    insert(storage, filled); // mold survives (now empty) — gets re-staged
+                    insert(storage, filled); // mold survives (now empty) — back to the racks to be re-staged
                 }
                 return true;
             }
@@ -382,7 +391,7 @@ public class SmelterBehavior implements FurnaceBehavior
             }
         }
         else if (fluid == null
-                   || !FurnaceFuel.canBurn(cap.pool(), meltTemp, meltDuration, level, be.getItem(FURNACE_FUEL), source))
+                   || !FurnaceFuel.canBurn(cap.pool(), meltTemp, meltDuration, level, this::fuelAllowed, be.getItem(FURNACE_FUEL), source))
         {
             return;
         }
@@ -400,7 +409,7 @@ public class SmelterBehavior implements FurnaceBehavior
         }
         else
         {
-            final ItemStack mold = takeEmptyMold(source);
+            final ItemStack mold = takeEmptyMold(racks()); // molds live in the racks, not the carried batch
             if (mold.isEmpty())
             {
                 be.setItem(FURNACE_INPUT, ItemStack.EMPTY);
@@ -408,25 +417,42 @@ public class SmelterBehavior implements FurnaceBehavior
                 return;
             }
             be.setItem(FURNACE_RESULT, mold);
-            cap.setPool(FurnaceFuel.burn(cap.pool(), meltTemp, meltDuration, level, be, FURNACE_FUEL, source));
+            cap.setPool(FurnaceFuel.burn(cap.pool(), meltTemp, meltDuration, level, this::fuelAllowed, be, FURNACE_FUEL, source));
         }
         cap.setPhase(FurnaceProcess.Phase.MELTING);
         light(be, meltDuration);
     }
 
-    /** Haul the finished casting (filled hot mold or bloom) out of the result slot into the racks; cap → IDLE. */
-    private void retrieve(final FurnaceBlockEntity be, final List<IItemHandler> storage)
+    /**
+     * Empty the furnace's result slot and flip the cap to IDLE. A <b>bloom</b> is a finished deliverable, so it's
+     * carried out into the worker's inventory (vanilla-style — MineColonies' dump cycle then ships it to the
+     * building/warehouse, see §8). A <b>filled hot mold</b> is intermediate: it goes to the racks to cool, where
+     * {@code MOLD_UNLOAD} later casts the ingot. Leaves the result in place (stays DONE) when there's no room.
+     */
+    private void retrieve(final FurnaceBlockEntity be)
     {
         final ItemStack result = be.getItem(FURNACE_RESULT);
         if (!result.isEmpty())
         {
-            if (!canStow(result))
+            if (SmelterRecipes.isMold(result))
             {
-                return; // nowhere to put it — leave it in the furnace (stays DONE) and retry when space frees
+                if (!canStowRacks(result))
+                {
+                    return; // racks full — leave the filled mold in the furnace and retry when space frees
+                }
+                insertRacks(result.copy());
             }
-            insert(storage, result.copy());
+            else
+            {
+                if (!canCarry(result))
+                {
+                    return; // inventory full — leave the bloom; the dump will free space, then retry
+                }
+                deliver(result.copy());
+                ai.worker().getCitizenExperienceHandler().addExperience(XP_PER_OUTPUT);
+                ai.countAction();
+            }
             be.setItem(FURNACE_RESULT, ItemStack.EMPTY);
-            ai.worker().getCitizenExperienceHandler().addExperience(XP_PER_OUTPUT);
         }
         final FurnaceProcess cap = capOf(be);
         if (cap != null)
@@ -439,15 +465,16 @@ public class SmelterBehavior implements FurnaceBehavior
     // --- Ready-job / consumption helpers ------------------------------------------------------------------
 
     /**
-     * An ore in {@code storage} with ≥100 mB of a single grade and its requirement met: for a cast metal an
-     * empty mold and fuel hot enough for its melt temp; for iron, 2 charcoal. Returns one representative ore.
+     * An ore in {@code storage} with ≥100 mB of a single grade and its requirement met: for a cast metal fuel hot
+     * enough for its melt temp <i>and</i> an empty mold available in the racks (molds aren't carried — see
+     * {@link #stageBatch()}); for iron, 2 charcoal. Returns one representative ore.
      */
     private ItemStack findReadyJob(final List<IItemHandler> storage)
     {
         final Map<Item, Integer> mb = new HashMap<>();
         final Map<Item, ItemStack> sample = new HashMap<>();
         int charcoal = 0;
-        boolean emptyMold = false;
+        final boolean emptyMold = countMatching(racks(), SmelterBehavior::isEmptyMold) > 0;
         for (final IItemHandler h : storage)
         {
             for (int slot = 0; slot < h.getSlots(); slot++)
@@ -457,7 +484,7 @@ public class SmelterBehavior implements FurnaceBehavior
                 {
                     continue;
                 }
-                if (SmelterRecipes.outputFor(stack) != null)
+                if (oreEnabled(stack))
                 {
                     mb.merge(stack.getItem(), SmelterRecipes.meltMb(stack) * stack.getCount(), Integer::sum);
                     sample.putIfAbsent(stack.getItem(), stack);
@@ -465,10 +492,6 @@ public class SmelterBehavior implements FurnaceBehavior
                 else if (SmelterRecipes.isCharcoal(stack))
                 {
                     charcoal += stack.getCount();
-                }
-                else if (isEmptyMold(stack))
-                {
-                    emptyMold = true;
                 }
             }
         }
@@ -491,7 +514,7 @@ public class SmelterBehavior implements FurnaceBehavior
                     return ore;
                 }
             }
-            else if (emptyMold && FurnaceFuel.hasFuelHotEnough(meltTempOf(ore), ai.buildingLevel(), storage))
+            else if (emptyMold && FurnaceFuel.hasFuelHotEnough(meltTempOf(ore), ai.buildingLevel(), this::fuelAllowed, storage))
             {
                 return ore;
             }
@@ -512,7 +535,7 @@ public class SmelterBehavior implements FurnaceBehavior
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final ItemStack stack = h.getStackInSlot(slot);
-                if (!stack.isEmpty() && SmelterRecipes.outputFor(stack) != null)
+                if (oreEnabled(stack))
                 {
                     rackMb.merge(stack.getItem(), SmelterRecipes.meltMb(stack) * stack.getCount(), Integer::sum);
                     sample.putIfAbsent(stack.getItem(), stack);
@@ -679,7 +702,7 @@ public class SmelterBehavior implements FurnaceBehavior
         for (int slot = 0; slot < inv.getSlots(); slot++)
         {
             final ItemStack stack = inv.getStackInSlot(slot);
-            if (!stack.isEmpty() && SmelterRecipes.outputFor(stack) != null)
+            if (oreEnabled(stack))
             {
                 mb.merge(stack.getItem(), SmelterRecipes.meltMb(stack) * stack.getCount(), Integer::sum);
             }
@@ -692,6 +715,10 @@ public class SmelterBehavior implements FurnaceBehavior
         return melts;
     }
 
+    /**
+     * General placement for non-deliverables (an empty mold being recycled, ore handed back): the given storage
+     * first, then the worker's inventory, then the ground as an absolute last resort.
+     */
     private void insert(final List<IItemHandler> storage, ItemStack stack)
     {
         for (final IItemHandler h : storage)
@@ -702,8 +729,6 @@ public class SmelterBehavior implements FurnaceBehavior
                 return;
             }
         }
-        // Racks full: carry the overflow in the worker's own inventory — MineColonies' dump cycle then moves it
-        // to the building / warehouse. (Loaders that already pass the inventory just re-try it harmlessly.)
         for (final IItemHandler h : inventory())
         {
             stack = ItemHandlerHelper.insertItem(h, stack, false);
@@ -718,25 +743,60 @@ public class SmelterBehavior implements FurnaceBehavior
         }
     }
 
-    /** Whether {@code stack} fully fits into the racks or, failing that, the worker's inventory. */
-    private boolean canStow(final ItemStack stack)
+    /** Carry a finished deliverable (ingot/bloom) in the worker's inventory; the dump cycle ships it onward. */
+    private void deliver(ItemStack stack)
     {
-        final List<IItemHandler> racks = racks();
-        final List<IItemHandler> inv = inventory();
-        if (hasEmptySlot(racks) || hasEmptySlot(inv))
+        for (final IItemHandler h : inventory())
+        {
+            stack = ItemHandlerHelper.insertItem(h, stack, false);
+            if (stack.isEmpty())
+            {
+                return;
+            }
+        }
+        insert(racks(), stack); // gated by canCarry; on a race, fall back so nothing is lost
+    }
+
+    /** Put an intermediate (a filled hot mold cooling toward casting) into the racks. */
+    private void insertRacks(ItemStack stack)
+    {
+        for (final IItemHandler h : racks())
+        {
+            stack = ItemHandlerHelper.insertItem(h, stack, false);
+            if (stack.isEmpty())
+            {
+                return;
+            }
+        }
+        insert(inventory(), stack); // gated by canStowRacks; on a race, fall back so nothing is lost
+    }
+
+    /** Whether the finished result can be placed where it belongs: a bloom carried, a filled mold to the racks. */
+    private boolean canDeliver(final ItemStack result)
+    {
+        return !result.isEmpty() && (SmelterRecipes.isMold(result) ? canStowRacks(result) : canCarry(result));
+    }
+
+    /** Whether {@code stack} fully fits into the worker's inventory (where deliverables are carried). */
+    private boolean canCarry(final ItemStack stack)
+    {
+        return fits(inventory(), stack);
+    }
+
+    /** Whether {@code stack} fully fits into the building's racks (where intermediates/empty molds live). */
+    private boolean canStowRacks(final ItemStack stack)
+    {
+        return fits(racks(), stack);
+    }
+
+    private static boolean fits(final List<IItemHandler> handlers, final ItemStack stack)
+    {
+        if (hasEmptySlot(handlers))
         {
             return true; // an empty slot takes any single output — fast path
         }
         ItemStack remaining = stack.copy();
-        for (final IItemHandler h : racks)
-        {
-            remaining = ItemHandlerHelper.insertItem(h, remaining, true);
-            if (remaining.isEmpty())
-            {
-                return true;
-            }
-        }
-        for (final IItemHandler h : inv)
+        for (final IItemHandler h : handlers)
         {
             remaining = ItemHandlerHelper.insertItem(h, remaining, true);
             if (remaining.isEmpty())
@@ -795,6 +855,57 @@ public class SmelterBehavior implements FurnaceBehavior
         final List<IItemHandler> all = new ArrayList<>(inventory());
         all.addAll(racks());
         return all;
+    }
+
+    // --- Hut list filters (the "ores" block-list and "fuel" allow-list the player configures) ---------------
+
+    /**
+     * A smelter ore the player hasn't excluded via the hut's <b>ores</b> list (a block-list — empty by default,
+     * so everything smelts until the player unchecks specific TFC ores; see docs §8).
+     */
+    private boolean oreEnabled(final ItemStack stack)
+    {
+        if (SmelterRecipes.outputFor(stack) == null)
+        {
+            return false;
+        }
+        final ItemListModule blocked = listModule(ORE_LIST);
+        return blocked == null || !blocked.isItemInList(new ItemStorage(stack));
+    }
+
+    /**
+     * A TFC fuel the player permits via the hut's <b>fuel</b> list (an allow-list). The list only constrains once
+     * it actually names a TFC fuel; the vanilla default (coal/charcoal) that maps to no TFC fuel must not starve
+     * the smelter, so we fall back to "any TFC fuel" until the player curates the list with real TFC fuels.
+     */
+    private boolean fuelAllowed(final ItemStack stack)
+    {
+        if (!FurnaceFuel.isFuel(stack))
+        {
+            return false;
+        }
+        final ItemListModule allowed = listModule(FUEL_LIST);
+        if (allowed == null)
+        {
+            return true;
+        }
+        final List<ItemStorage> list = allowed.getList();
+        boolean constrains = false;
+        for (final ItemStorage entry : list)
+        {
+            if (FurnaceFuel.isFuel(entry.getItemStack()))
+            {
+                constrains = true;
+                break;
+            }
+        }
+        return !constrains || list.contains(new ItemStorage(stack));
+    }
+
+    private ItemListModule listModule(final String id)
+    {
+        final IBuilding building = ai.building();
+        return building == null ? null : building.getModuleMatching(ItemListModule.class, m -> m.getId().equals(id));
     }
 
     // --- Furnace helpers ----------------------------------------------------------------------------------

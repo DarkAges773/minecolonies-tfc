@@ -70,6 +70,20 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
     }
 
     /**
+     * The base furnace worker dumps after every action (returns 1). For our behaviors that would mean a trek
+     * back to the hut per single output, so batch the dump to {@link FurnaceBehavior#actionsUntilDump()}.
+     * Vanilla furnace workers (no behavior installed) keep their value.
+     */
+    @Inject(method = "getActionsDoneUntilDumping", at = @At("HEAD"), cancellable = true, remap = false)
+    private void mctfc$dumpCadence(final CallbackInfoReturnable<Integer> cir)
+    {
+        if (this.mctfc$behavior != null)
+        {
+            cir.setReturnValue(this.mctfc$behavior.actionsUntilDump());
+        }
+    }
+
+    /**
      * Override the (always-{@code false}) {@code AbstractEntityAIBasic#canGoIdle()} so MineColonies' CitizenAI
      * lets the citizen wander / idle (and pauses the work AI) when our behavior has no work — the seam the
      * farmer uses. Furnace workers without a behavior keep the vanilla default.
@@ -143,6 +157,12 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
     public void delay(final int ticks)
     {
         ((AbstractEntityAIBasic<?, ?>) (Object) this).setDelay(ticks);
+    }
+
+    @Override
+    public void countAction()
+    {
+        ((AbstractEntityAIBasic<?, ?>) (Object) this).incrementActionsDoneAndDecSaturation();
     }
 
     @Override
