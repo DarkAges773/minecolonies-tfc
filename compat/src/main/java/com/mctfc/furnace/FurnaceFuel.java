@@ -1,5 +1,6 @@
 package com.mctfc.furnace;
 
+import com.mctfc.Config;
 import net.dries007.tfc.util.Fuel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
@@ -17,9 +18,9 @@ import java.util.Map;
  * <ul>
  *   <li><b>Fuel</b> is any TFC fuel ({@code Fuel.get != null}); each carries a TFC {@code duration} (ticks) and
  *       {@code temperature} (°C).</li>
- *   <li><b>Effective heat</b> at a furnace = the burning fuel's temperature + {@code hutLevel ×}
- *       {@value #TEMP_BONUS_PER_LEVEL}°C, so higher-level huts reach hotter work (e.g. nickel) without ever
- *       reaching the cast-iron melt.</li>
+ *   <li><b>Effective heat</b> at a furnace = the burning fuel's temperature + a per-building-level bonus
+ *       ({@link com.mctfc.Config#furnaceFuelTempBonus}, configurable per level), so higher-level huts reach
+ *       hotter work (e.g. nickel) without ever reaching the cast-iron melt.</li>
  *   <li>An operation needing {@code requiredTemp} for {@code durationTicks} succeeds only if a fuel hot enough
  *       is (or can be) burning. Fuel is consumed by <b>duration with carry-over</b> — one long fuel covers
  *       several operations.</li>
@@ -32,9 +33,6 @@ import java.util.Map;
  */
 public final class FurnaceFuel
 {
-    /** Heat added to a fuel's temperature per building level (1–5). */
-    public static final int TEMP_BONUS_PER_LEVEL = 10;
-
     /** Remaining burn at a furnace: ticks left and the temperature of the fuel producing them. */
     private record Burn(int ticks, float temp) {}
 
@@ -61,7 +59,7 @@ public final class FurnaceFuel
     /** Cheap pre-check: is any fuel hot enough for {@code required} (carried, or in storage)? Ignores duration. */
     public boolean hasFuelHotEnough(final float required, final int hutLevel, final List<IItemHandler> storage)
     {
-        final float bonus = hutLevel * (float) TEMP_BONUS_PER_LEVEL;
+        final float bonus = Config.furnaceFuelTempBonus(hutLevel);
         for (final Burn burn : burns.values())
         {
             if (burn.ticks() > 0 && burn.temp() + bonus >= required)
@@ -86,7 +84,7 @@ public final class FurnaceFuel
     /** Whether {@code required}°C for {@code duration} ticks is satisfiable — the carried burn plus hot-enough fuel in storage. */
     public boolean canBurn(final BlockPos furnace, final float required, final int duration, final int hutLevel, final List<IItemHandler> storage)
     {
-        final float bonus = hutLevel * (float) TEMP_BONUS_PER_LEVEL;
+        final float bonus = Config.furnaceFuelTempBonus(hutLevel);
         final Burn cur = burns.get(furnace);
         int have = (cur != null && cur.temp() + bonus >= required) ? cur.ticks() : 0;
         if (have >= duration)
@@ -117,7 +115,7 @@ public final class FurnaceFuel
      */
     public void burn(final BlockPos furnace, final float required, final int duration, final int hutLevel, final List<IItemHandler> storage)
     {
-        final float bonus = hutLevel * (float) TEMP_BONUS_PER_LEVEL;
+        final float bonus = Config.furnaceFuelTempBonus(hutLevel);
         final Burn cur = burns.get(furnace);
         final boolean carry = cur != null && cur.temp() + bonus >= required;
         int pool = carry ? cur.ticks() : 0;

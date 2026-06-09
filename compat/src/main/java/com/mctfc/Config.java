@@ -5,6 +5,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Common config for the MineColonies&times;TFC bridge. Currently the farmer's soil-fertilizing thresholds
  * (see {@link com.mctfc.farming.FertilizerHelper}).
@@ -38,6 +41,10 @@ public class Config
             .comment("Stop TFC light sources (metal lamps, torches, candles/candle cakes, jack-o'-lanterns) from burning out / running out of fuel while they are inside a MineColonies colony's claimed area, so colonies stay lit. Only freezes the burn-out of already-lit sources (it won't relight one that's gone out or fuel an unlit lamp); light outside any colony decays normally. Set false to let TFC light burnout apply everywhere.")
             .define("keepColonyLightsLit", true);
 
+    private static final ForgeConfigSpec.ConfigValue<List<? extends Integer>> FURNACE_FUEL_TEMP_BONUS_BY_LEVEL = BUILDER
+            .comment("Extra effective fuel temperature (in C) added by building level for TFC furnace workers (e.g. the Smelter), one concrete entry per level: index 0 = level 1, index 1 = level 2, and so on. A fuel can run an operation only when its temperature plus this bonus reaches what the operation needs, so higher-level huts melt hotter metals with the same fuel. Default [0, 15, 30, 45, 60]: coal (1415C) reaches nickel (1453C) at level 4 (+45), charcoal (1350C) never does, and wood never reaches copper. A building level beyond the list uses the last entry; an empty list disables the bonus.")
+            .defineList("furnaceFuelTempBonusByLevel", List.of(0, 15, 30, 45, 60), o -> o instanceof Integer i && i >= 0);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     /** Fertilize once the crop's primary nutrient is below this (0..1). */
@@ -46,8 +53,8 @@ public class Config
     /** Top up until the nutrient reaches at least this (0..1). */
     public static float fertilizeTarget = 0.9f;
 
-    /** Block player interaction with vanilla furnace/smoker/blast furnace (TFC-smelting bypass fix). */
-    public static boolean decorativeVanillaFurnaces = true;
+    /** Block player interaction with vanilla furnace/smoker/blast furnace (TFC-smelting bypass fix). Set to false for the dev phase. */
+    public static boolean decorativeVanillaFurnaces = false;
 
     /** Decay-rate multiplier for TFC food in colony-owned storage (0 = frozen, 1 = normal). Read live by the food trait. */
     public static float foodColonyStorageDecay = 0.25f;
@@ -58,6 +65,23 @@ public class Config
     /** Keep TFC light sources inside a colony from burning out / running out of fuel. Read live by the light mixins. */
     public static boolean keepColonyLightsLit = true;
 
+    /** Effective-fuel-temperature bonus (C) per building level, index 0 = level 1. Read live by {@link com.mctfc.furnace.FurnaceFuel}. */
+    public static List<Integer> furnaceFuelTempBonusByLevel = List.of(0, 15, 30, 45, 60);
+
+    /**
+     * The effective-temperature bonus for a furnace worker's building level (1-based), from
+     * {@link #furnaceFuelTempBonusByLevel}; a level beyond the list uses the last entry, an empty list 0.
+     */
+    public static int furnaceFuelTempBonus(final int buildingLevel)
+    {
+        if (furnaceFuelTempBonusByLevel.isEmpty())
+        {
+            return 0;
+        }
+        final int index = Math.max(0, Math.min(buildingLevel - 1, furnaceFuelTempBonusByLevel.size() - 1));
+        return furnaceFuelTempBonusByLevel.get(index);
+    }
+
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event)
     {
@@ -67,5 +91,6 @@ public class Config
         foodColonyStorageDecay = FOOD_COLONY_STORAGE_DECAY.get().floatValue();
         tfcFoodSaturationModifier = TFC_FOOD_SATURATION_MODIFIER.get().floatValue();
         keepColonyLightsLit = KEEP_COLONY_LIGHTS_LIT.get();
+        furnaceFuelTempBonusByLevel = new ArrayList<>(FURNACE_FUEL_TEMP_BONUS_BY_LEVEL.get());
     }
 }
