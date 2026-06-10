@@ -45,6 +45,17 @@ public final class BlockSubstitutions
         cache.clear();
     }
 
+    /**
+     * Drop the memoized per-block resolutions (the rules stay). Needed on {@code TagsUpdatedEvent}:
+     * {@code setRules} runs in the reload-listener phase, but registry tags rebind in a LATER async step —
+     * a placement in that window memoizes a {@code from_tag} match against the OLD tag contents, and
+     * without this it would persist until the next reload.
+     */
+    public static void clearCache()
+    {
+        cache.clear();
+    }
+
     /** The active fixed rules — snapshot for the server→client rule sync. */
     public static List<SubstitutionRule> rules()
     {

@@ -26,6 +26,9 @@ src/generated/resources/.cache
 # logs
 *.log
 
+# local-only docs
+docs-local/
+
 # Claude Code (local agent state/settings). CLAUDE.md is intentionally NOT ignored - it is
 # tracked project documentation.
 .claude/

@@ -38,7 +38,7 @@ public class MixinBlueprintPlacementHandling
         final Map<Block, Block> choices = ServerPlacementChoices.forPlayer(msg.player);
         if (!choices.isEmpty())
         {
-            StagedChoices.stage(msg.pos, choices);
+            StagedChoices.stage(msg.player.level().dimension(), msg.pos, choices);
         }
     }
 }

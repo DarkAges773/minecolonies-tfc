@@ -68,7 +68,7 @@ public class MixinAbstractWorkOrder implements PlacementChoiceHolder
         {
             return;
         }
-        final Map<Block, Block> staged = StagedChoices.take(getLocation());
+        final Map<Block, Block> staged = StagedChoices.take(colony.getDimension(), getLocation());
         if (staged != null && !staged.isEmpty())
         {
             this.structurizereplacements$choices = staged;

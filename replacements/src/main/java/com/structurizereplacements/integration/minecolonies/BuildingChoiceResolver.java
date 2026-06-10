@@ -77,7 +77,7 @@ public final class BuildingChoiceResolver
             Map<Block, Block> choices = holder.getReplacementChoices();
             if (choices == null || choices.isEmpty())
             {
-                final Map<Block, Block> staged = StagedChoices.take(worldPos);
+                final Map<Block, Block> staged = StagedChoices.take(world.dimension(), worldPos);
                 if (staged != null && !staged.isEmpty())
                 {
                     holder.setReplacementChoices(staged);

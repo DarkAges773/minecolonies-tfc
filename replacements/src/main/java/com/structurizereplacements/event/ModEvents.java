@@ -3,10 +3,14 @@ package com.structurizereplacements.event;
 import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.network.Network;
 import com.structurizereplacements.placement.ServerPlacementChoices;
+import com.structurizereplacements.placement.StagedChoices;
 import com.structurizereplacements.substitution.BlockSubstitutionReloadListener;
+import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.OnDatapackSyncEvent;
+import net.minecraftforge.event.TagsUpdatedEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -42,5 +46,22 @@ public final class ModEvents
     public static void onPlayerLoggedOut(final PlayerEvent.PlayerLoggedOutEvent event)
     {
         ServerPlacementChoices.clear(event.getEntity().getUUID());
+    }
+
+    /**
+     * Registry tags rebind AFTER the reload-listener phase where {@code setRules} already cleared the memo
+     * cache — a placement in between memoizes {@code from_tag} matches against the old tag contents. This
+     * event fires on both sides (server rebind and client tag sync), closing that window everywhere.
+     */
+    @SubscribeEvent
+    public static void onTagsUpdated(final TagsUpdatedEvent event)
+    {
+        BlockSubstitutions.clearCache();
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(final ServerStoppedEvent event)
+    {
+        StagedChoices.clear();
     }
 }

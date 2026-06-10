@@ -18,6 +18,16 @@ All notable changes to this mod are documented here. The format is based on
 - **Network hardening** — malformed/hostile packets with absurd element counts are now rejected at decode
   instead of forcing huge allocations (could crash a server or client), and the choices message only accepts
   the client → server direction.
+- **Stale palette adoption** — picks staged at structure placement now expire after a short window and are
+  scoped to the dimension (and cleared on server stop), so a hut placed at the same coordinates in another
+  dimension or a later single-player world no longer silently adopts an old palette.
+- **`/reload` with tag rules** — `from_tag` rule matches are no longer cached against the pre-reload tag
+  contents during the brief window before tags rebind.
+- **Deterministic rule conflicts** — equal-priority rules for the same source block from *different* datapack
+  files now resolve in a stable (sorted file id) order instead of an arbitrary one. To override a rule from
+  another pack, give yours a higher `"priority"`.
+- **Malformed rule files** — a broken entry mid-file now skips the whole file (as the log always claimed)
+  instead of keeping the entries parsed before the error.
 
 ## [0.1.37] - 2026-06-09
 
