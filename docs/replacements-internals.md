@@ -61,9 +61,14 @@ In `:replacements` (generic):
   live refresh via `BlueprintHandler.getInstance().clearCache()`. Labels reuse existing translations
   (Structurize + vanilla `gui.done`).
   **Caveats / follow-ups:** the per-placement GUI choice applies to creative-paste placement; per-blueprint
-  session memory + row counts are unpolished; and **dedicated servers need rule sync** — candidate/datapack
-  rules load server-side only, so on a dedicated server the client GUI shows no rows and the preview can't
-  substitute (single-player works, shared JVM).
+  session memory + row counts are unpolished. **Dedicated-server rule sync — DONE:** rules load server-side
+  only, so the server pushes the active ruleset to clients via
+  [SyncSubstitutionRulesMessage](../replacements/src/main/java/com/structurizereplacements/network/SyncSubstitutionRulesMessage.java)
+  on `OnDatapackSyncEvent` (per player on join, all players after `/reload` — fires after the reload listener,
+  so the snapshot is current); the client just `setRules`-es the snapshot, and tag-based matching works because
+  vanilla syncs tag contents on the same triggers. Cleared client-side on disconnect
+  ([ClientForgeEvents](../replacements/src/main/java/com/structurizereplacements/event/ClientForgeEvents.java))
+  so rules never leak across sessions.
 - **Builder placement — DONE & verified (datapack rules).** MineColonies builder/quarrier use Structurize's
   `StructurePlacer`, so datapack substitution applies to builder-built structures across all three
   phases, kept consistent: **place** (`handleBlockPlacement`, already), **request materials**

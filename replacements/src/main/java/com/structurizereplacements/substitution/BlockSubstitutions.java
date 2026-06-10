@@ -45,6 +45,18 @@ public final class BlockSubstitutions
         cache.clear();
     }
 
+    /** The active fixed rules — snapshot for the server→client rule sync. */
+    public static List<SubstitutionRule> rules()
+    {
+        return rules;
+    }
+
+    /** The active interactive candidate rules — snapshot for the server→client rule sync. */
+    public static List<CandidateRule> candidates()
+    {
+        return candidateRules;
+    }
+
     /**
      * The interactive candidate rule (if any) whose source matches this block — for the GUI. When several
      * match, the highest {@code priority} wins (ties broken by load order, last wins), so an optional pack

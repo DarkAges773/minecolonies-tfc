@@ -181,9 +181,6 @@ behaviour after a change by placing a blueprint via the build tool and `/reload`
 
 Not yet done:
 - **Per-placement GUI opt-in toggle** in Structurize's `WindowExtendedBuildTool`.
-- **Dedicated-server rule sync** — substitution rules load server-side only, so on a dedicated server the
-  client preview/GUI can't substitute (single-player shares the JVM and works). Needs a server→client rule
-  packet on join / reload.
 - **Creative-anchor hut placement** (`ISpecialCreativeHandlerAnchorBlock.setup`) isn't covered by the
   per-building choice capture.
 - **Broader MC↔TFC bridging** in `:compat` beyond the implemented features (animals, more progression/requests).

@@ -1,0 +1,173 @@
+package com.structurizereplacements.network;
+
+import com.structurizereplacements.StructurizeReplacements;
+import com.structurizereplacements.substitution.BlockSubstitutions;
+import com.structurizereplacements.substitution.CandidateRule;
+import com.structurizereplacements.substitution.SubstitutionRule;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+
+/**
+ * Server → client: the full active substitution ruleset (fixed {@link SubstitutionRule}s + interactive
+ * {@link CandidateRule} pools). Rules load <b>server-side only</b> (datapacks, {@code
+ * BlockSubstitutionReloadListener}), so on a dedicated server the client previously had none — the build-wand
+ * preview and the GUI "Replace" picker silently did nothing (single-player shares the JVM and never noticed).
+ * Sent on player join and after {@code /reload} (see {@code ModEvents#onDatapackSync}); the client simply
+ * replaces its ruleset with the snapshot. Tag-based matching works client-side because vanilla already syncs
+ * tag contents on the same triggers.
+ */
+public class SyncSubstitutionRulesMessage
+{
+    private final List<SubstitutionRule> rules;
+    private final List<CandidateRule> candidates;
+
+    public SyncSubstitutionRulesMessage(final List<SubstitutionRule> rules, final List<CandidateRule> candidates)
+    {
+        this.rules = rules;
+        this.candidates = candidates;
+    }
+
+    public SyncSubstitutionRulesMessage(final FriendlyByteBuf buf)
+    {
+        final int ruleCount = buf.readVarInt();
+        this.rules = new ArrayList<>(ruleCount);
+        for (int i = 0; i < ruleCount; i++)
+        {
+            final Block fromBlock = readNullableBlock(buf);
+            final TagKey<Block> fromTag = readNullableTag(buf);
+            final Block to = readNullableBlock(buf);
+            final Map<String, String> properties = readStringMap(buf);
+            final Map<String, String> copyProperties = readStringMap(buf);
+            final int priority = buf.readInt();
+            if (to != null && (fromBlock != null || fromTag != null))
+            {
+                this.rules.add(new SubstitutionRule(fromBlock, fromTag, to, properties, copyProperties, priority));
+            }
+        }
+
+        final int candidateCount = buf.readVarInt();
+        this.candidates = new ArrayList<>(candidateCount);
+        for (int i = 0; i < candidateCount; i++)
+        {
+            final Block fromBlock = readNullableBlock(buf);
+            final TagKey<Block> fromTag = readNullableTag(buf);
+            final TagKey<Block> toTag = readNullableTag(buf);
+            final Map<String, String> properties = readStringMap(buf);
+            final Map<String, String> copyProperties = readStringMap(buf);
+            final int priority = buf.readInt();
+            if (toTag != null && (fromBlock != null || fromTag != null))
+            {
+                this.candidates.add(new CandidateRule(fromBlock, fromTag, toTag, properties, copyProperties, priority));
+            }
+        }
+    }
+
+    public void encode(final FriendlyByteBuf buf)
+    {
+        buf.writeVarInt(rules.size());
+        for (final SubstitutionRule rule : rules)
+        {
+            writeNullableBlock(buf, rule.fromBlock());
+            writeNullableTag(buf, rule.fromTag());
+            writeNullableBlock(buf, rule.to());
+            writeStringMap(buf, rule.properties());
+            writeStringMap(buf, rule.copyProperties());
+            buf.writeInt(rule.priority());
+        }
+
+        buf.writeVarInt(candidates.size());
+        for (final CandidateRule rule : candidates)
+        {
+            writeNullableBlock(buf, rule.fromBlock());
+            writeNullableTag(buf, rule.fromTag());
+            writeNullableTag(buf, rule.toTag());
+            writeStringMap(buf, rule.properties());
+            writeStringMap(buf, rule.copyProperties());
+            buf.writeInt(rule.priority());
+        }
+    }
+
+    public void handle(final Supplier<NetworkEvent.Context> ctx)
+    {
+        ctx.get().enqueueWork(() -> {
+            BlockSubstitutions.setRules(rules, candidates);
+            StructurizeReplacements.LOGGER.info("Synced {} fixed rule(s), {} candidate rule(s) from the server.",
+                    rules.size(), candidates.size());
+        });
+        ctx.get().setPacketHandled(true);
+    }
+
+    // --- buf helpers ----------------------------------------------------------------------------------------
+
+    private static void writeNullableBlock(final FriendlyByteBuf buf, @Nullable final Block block)
+    {
+        final ResourceLocation id = block == null ? null : ForgeRegistries.BLOCKS.getKey(block);
+        buf.writeBoolean(id != null);
+        if (id != null)
+        {
+            buf.writeResourceLocation(id);
+        }
+    }
+
+    @Nullable
+    private static Block readNullableBlock(final FriendlyByteBuf buf)
+    {
+        if (!buf.readBoolean())
+        {
+            return null;
+        }
+        final ResourceLocation id = buf.readResourceLocation();
+        return ForgeRegistries.BLOCKS.containsKey(id) ? ForgeRegistries.BLOCKS.getValue(id) : null;
+    }
+
+    private static void writeNullableTag(final FriendlyByteBuf buf, @Nullable final TagKey<Block> tag)
+    {
+        buf.writeBoolean(tag != null);
+        if (tag != null)
+        {
+            buf.writeResourceLocation(tag.location());
+        }
+    }
+
+    @Nullable
+    private static TagKey<Block> readNullableTag(final FriendlyByteBuf buf)
+    {
+        return buf.readBoolean() ? TagKey.create(Registries.BLOCK, buf.readResourceLocation()) : null;
+    }
+
+    private static void writeStringMap(final FriendlyByteBuf buf, final Map<String, String> map)
+    {
+        buf.writeVarInt(map.size());
+        map.forEach((key, value) -> {
+            buf.writeUtf(key);
+            buf.writeUtf(value);
+        });
+    }
+
+    private static Map<String, String> readStringMap(final FriendlyByteBuf buf)
+    {
+        final int size = buf.readVarInt();
+        if (size == 0)
+        {
+            return Map.of();
+        }
+        final Map<String, String> map = new HashMap<>(size);
+        for (int i = 0; i < size; i++)
+        {
+            map.put(buf.readUtf(), buf.readUtf());
+        }
+        return map;
+    }
+}
