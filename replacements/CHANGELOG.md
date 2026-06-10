@@ -7,6 +7,8 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.1.40] - 2026-06-10
+
 ### Fixed
 - **Multiplayer (dedicated servers) now works** — the active substitution ruleset is synced server → client on
   join and after `/reload`, so the build-wand preview and the *Replace* picker work on remote servers (they
