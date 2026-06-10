@@ -34,6 +34,12 @@ public class MixinAbstractBlueprintManipulationWindow
     private void structurizereplacements$addReplaceButton(final CallbackInfo ci)
     {
         final View window = (View) (Object) this;
+        // onOpened can re-fire on the same window (the shape tool's block pickers call it via
+        // WindowSelectRes.restoreOrigin()) — don't stack a second button + tooltip.
+        if (window.findPaneByID("structurizereplacements:open") != null)
+        {
+            return;
+        }
         final int size = 16;
         // 2px frame visible on each side; the 32×32 icon fills the inner 12×12, overlaid at draw time.
         final ButtonImageWithIcon button = new ButtonImageWithIcon(

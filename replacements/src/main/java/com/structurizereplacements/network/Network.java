@@ -34,7 +34,8 @@ public final class Network
         CHANNEL.registerMessage(id++, SyncReplacementChoicesMessage.class,
                 SyncReplacementChoicesMessage::encode,
                 SyncReplacementChoicesMessage::new,
-                SyncReplacementChoicesMessage::handle);
+                SyncReplacementChoicesMessage::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(id++, SyncSubstitutionRulesMessage.class,
                 SyncSubstitutionRulesMessage::encode,
                 SyncSubstitutionRulesMessage::new,

@@ -4,6 +4,7 @@ import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import com.structurizereplacements.substitution.CandidateRule;
 import com.structurizereplacements.substitution.SubstitutionRule;
+import io.netty.handler.codec.DecoderException;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -30,6 +31,11 @@ import java.util.function.Supplier;
  */
 public class SyncSubstitutionRulesMessage
 {
+    /** Decode caps — generous (a kitchen-sink pack stack is ~10–20k rules), but bounded so a hostile
+     *  peer can't force a multi-GB pre-size allocation from a tiny payload. */
+    private static final int MAX_RULES = 65536;
+    private static final int MAX_PROPERTIES = 256;
+
     private final List<SubstitutionRule> rules;
     private final List<CandidateRule> candidates;
 
@@ -41,7 +47,7 @@ public class SyncSubstitutionRulesMessage
 
     public SyncSubstitutionRulesMessage(final FriendlyByteBuf buf)
     {
-        final int ruleCount = buf.readVarInt();
+        final int ruleCount = readCount(buf, MAX_RULES, "Substitution-rule");
         this.rules = new ArrayList<>(ruleCount);
         for (int i = 0; i < ruleCount; i++)
         {
@@ -57,7 +63,7 @@ public class SyncSubstitutionRulesMessage
             }
         }
 
-        final int candidateCount = buf.readVarInt();
+        final int candidateCount = readCount(buf, MAX_RULES, "Candidate-rule");
         this.candidates = new ArrayList<>(candidateCount);
         for (int i = 0; i < candidateCount; i++)
         {
@@ -156,9 +162,19 @@ public class SyncSubstitutionRulesMessage
         });
     }
 
+    private static int readCount(final FriendlyByteBuf buf, final int max, final String what)
+    {
+        final int count = buf.readVarInt();
+        if (count < 0 || count > max)
+        {
+            throw new DecoderException(what + " count " + count + " out of range (max " + max + ")");
+        }
+        return count;
+    }
+
     private static Map<String, String> readStringMap(final FriendlyByteBuf buf)
     {
-        final int size = buf.readVarInt();
+        final int size = readCount(buf, MAX_PROPERTIES, "Property-map");
         if (size == 0)
         {
             return Map.of();

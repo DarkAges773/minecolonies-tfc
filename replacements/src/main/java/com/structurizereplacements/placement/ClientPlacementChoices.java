@@ -30,4 +30,14 @@ public final class ClientPlacementChoices
         current = (choices == null) ? Map.of() : Map.copyOf(choices);
         Network.sendChoicesToServer(current);
     }
+
+    /**
+     * Drop the local choices WITHOUT syncing — for disconnect, where there is no live connection to send
+     * on (the server clears its per-player copy itself on logout). Without this, stale picks survive into
+     * the next session: the preview substitutes but placement doesn't, until the GUI is touched again.
+     */
+    public static void clearLocal()
+    {
+        current = Map.of();
+    }
 }

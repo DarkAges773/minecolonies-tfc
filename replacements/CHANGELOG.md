@@ -11,6 +11,13 @@ All notable changes to this mod are documented here. The format is based on
 - **Multiplayer (dedicated servers) now works** — the active substitution ruleset is synced server → client on
   join and after `/reload`, so the build-wand preview and the *Replace* picker work on remote servers (they
   previously only worked in single-player, where client and server share the loaded rules).
+- **Stale picks after rejoining** — replacement choices are now cleared on disconnect, so after rejoining a
+  server the preview no longer shows substitutions that placement wouldn't apply.
+- **Duplicate *Replace* button** — the shape tool no longer stacks an extra *Replace* button each time its
+  block picker is used.
+- **Network hardening** — malformed/hostile packets with absurd element counts are now rejected at decode
+  instead of forcing huge allocations (could crash a server or client), and the choices message only accepts
+  the client → server direction.
 
 ## [0.1.37] - 2026-06-09
 
