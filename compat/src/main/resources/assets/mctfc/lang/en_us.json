@@ -5,5 +5,20 @@
   "gui.mctfc.field.harvestmode.fruiting": "Fruiting",
   "gui.mctfc.field.harvestmode.seeding": "Seeding",
   "gui.mctfc.field.harvestmode.tooltip": "Click to toggle. Fruiting: harvest ripe crops (produce) and any that went to seed. Seeding: let crops go to seed, then harvest for max seeds.",
-  "com.minecolonies.coremod.setting.mctfc:ore_threshold": "Ore restock threshold"
+  "com.minecolonies.coremod.setting.mctfc:ore_threshold": "Ore restock threshold",
+  "com.mctfc.research.smithing.bronze.name": "Bronze Smithing",
+  "com.mctfc.research.smithing.bronze.subtitle": "If it bends, hit it harder",
+  "com.mctfc.research.smithing.wrought_iron.name": "Ironworking",
+  "com.mctfc.research.smithing.wrought_iron.subtitle": "Strike while the iron is hot",
+  "com.mctfc.research.smithing.steel.name": "Steelworking",
+  "com.mctfc.research.smithing.steel.subtitle": "Nerves of steel, arms of oak",
+  "com.mctfc.research.smithing.black_steel.name": "Black Steel Smithing",
+  "com.mctfc.research.smithing.black_steel.subtitle": "Forged in darkness",
+  "com.mctfc.research.smithing.red_blue_steel.name": "Master Smithing",
+  "com.mctfc.research.smithing.red_blue_steel.subtitle": "The anvil sings in red and blue",
+  "com.mctfc.research.effects.smithing_bronze.description": "The Blacksmith can work Bronze-tier metals on the anvil",
+  "com.mctfc.research.effects.smithing_wrought_iron.description": "The Blacksmith can work Wrought Iron on the anvil",
+  "com.mctfc.research.effects.smithing_steel.description": "The Blacksmith can work Steel on the anvil",
+  "com.mctfc.research.effects.smithing_black_steel.description": "The Blacksmith can work Black Steel on the anvil",
+  "com.mctfc.research.effects.smithing_red_blue_steel.description": "The Blacksmith can work Red and Blue Steel on the anvil"
 }

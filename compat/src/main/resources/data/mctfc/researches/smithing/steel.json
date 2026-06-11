@@ -1,0 +1,28 @@
+{
+  "branch": "minecolonies:technology",
+  "costs": [
+    {
+      "type": "minecolonies:item_simple",
+      "item": "tfc:metal/anvil/steel",
+      "quantity": 1
+    }
+  ],
+  "effects": [
+    {
+      "id": "mctfc:effects/smithing_steel",
+      "level": 1
+    }
+  ],
+  "icon": "tfc:metal/anvil/steel",
+  "parentResearch": "mctfc:smithing/wrought_iron",
+  "requirements": [
+    {
+      "type": "minecolonies:single-building",
+      "building": "minecolonies:blacksmith",
+      "level": 3
+    }
+  ],
+  "researchLevel": 4,
+  "sortOrder": 1,
+  "subtitle": "com.mctfc.research.smithing.steel.subtitle"
+}

@@ -26,6 +26,14 @@ All notable changes to this mod are documented here. The format is based on
   stone) now yield TFC rich ore nuggets instead of vanilla ore blocks, scaling with hut level by metal age:
   L1 copper → L2 bronze (tin/bismuth/zinc) → L3 silver/gold → L4 iron → L5 nickel. Gives the colony miner a
   real reason to exist in a TFC world (TFC ore is rare, so miners otherwise just dig stone).
+- **Smithing researches + blacksmith anvil work** — five new researches in the University's Technology tab,
+  chained after the stock *Hitting Iron* research, each consuming a TFC anvil of its tier (bronze → wrought
+  iron → steel → black steel → red/blue steel) and requiring a blacksmith's hut at level 1–5 respectively. Each tier unlocks the colony Blacksmith to produce every TFC
+  anvil-smithed item of that tier — tool heads, sheets, double ingots/sheets, rods, shears, tuyeres, plated
+  blocks and so on (not finished tools — those are head + stick crafts); stone- and copper-tier anvil work
+  needs no research. Recipes cost exactly what the anvil work would (welding also consumes flux) and are
+  picked up automatically from the loaded TFC anvil/welding recipes, including ones added by other mods or
+  datapacks.
 
 ### Changed
 - **Builder fill block defaults to TFC loam dirt** — a new builder's hut *Fill Block* setting (used to fill

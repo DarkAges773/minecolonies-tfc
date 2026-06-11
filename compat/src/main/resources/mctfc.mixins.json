@@ -25,7 +25,8 @@
     "MixinCompatibilityManager",
     "MixinAbstractBuildingModule",
     "MixinAbstractBuilding",
-    "MixinSettingsModule"
+    "MixinSettingsModule",
+    "MixinCustomRecipeManager"
   ],
   "client": [
     "MixinWindowField"

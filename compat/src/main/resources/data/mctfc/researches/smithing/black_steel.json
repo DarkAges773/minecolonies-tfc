@@ -1,0 +1,28 @@
+{
+  "branch": "minecolonies:technology",
+  "costs": [
+    {
+      "type": "minecolonies:item_simple",
+      "item": "tfc:metal/anvil/black_steel",
+      "quantity": 1
+    }
+  ],
+  "effects": [
+    {
+      "id": "mctfc:effects/smithing_black_steel",
+      "level": 1
+    }
+  ],
+  "icon": "tfc:metal/anvil/black_steel",
+  "parentResearch": "mctfc:smithing/steel",
+  "requirements": [
+    {
+      "type": "minecolonies:single-building",
+      "building": "minecolonies:blacksmith",
+      "level": 4
+    }
+  ],
+  "researchLevel": 5,
+  "sortOrder": 1,
+  "subtitle": "com.mctfc.research.smithing.black_steel.subtitle"
+}

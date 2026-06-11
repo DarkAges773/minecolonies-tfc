@@ -485,6 +485,49 @@ Each table is a single 1-roll pool (one nugget per successful proc), mirroring t
 source, so the find should be worth it. Datapack-only — no code. Tune via the per-ore weights or vanilla's
 `luckyblockchance` config.
 
+## Blacksmith smiths TFC anvil products, gated by a Smithing research branch — DONE, in-world test pending
+
+Two halves: a datapack-only **research branch** and a code **recipe bridge**.
+
+**Research chain** (`mctfc:smithing/*`, [data/mctfc/researches/smithing/](../compat/src/main/resources/data/mctfc/researches/smithing/bronze.json)):
+five researches living in the **stock Technology branch** (`"branch": "minecolonies:technology"` — no new tab),
+chained under **Hitting Iron** (the stock research that unlocks the blacksmith hut) via `parentResearch`:
+hittingiron → bronze → wrought iron → steel → black steel → red/blue steel. The loader requires
+`researchLevel` = parent's + 1, so the chain runs levels 2–6 — exactly MineColonies' max depth of 6 (and 6 was
+only available because hittingiron sits at level 1; a deeper anchor would not fit). Each consumes the matching
+**TFC anvil** as its cost: bronze uses the `tfc:bronze_anvils` **item tag** (`item_tag` cost — any of the 3
+bronzes; there is **no copper research** — stone/copper-tier work is unlocked by default, see below), wrought
+iron / steel / black steel are `item_simple` single items, and the final tier is an `item_list` cost (red **or**
+blue steel anvil — they share no tag). Each tier also requires the **blacksmith's hut at level 1–5** via a
+`single-building` requirement (one hut at that level — deliberately not the cumulative `building` type, where
+two level-2 huts would satisfy "level 4"). Each research grants a custom **unlock effect**
+(`mctfc:effects/smithing_<tier>` — data-defined `{"effect": true}` files; descriptions via the auto-derived lang
+keys `com.mctfc.research.effects.<name>.description` in
+[en_us.json](../compat/src/main/resources/assets/mctfc/lang/en_us.json)). MineColonies' research tree is fully
+datapack-driven (`ResearchListener`, a `SimpleJsonResourceReloadListener` over `researches/` in all namespaces),
+so researches in our namespace merge straight into a stock branch.
+
+**Recipe bridge** ([AnvilRecipeBridge](../compat/src/main/java/com/mctfc/smithing/AnvilRecipeBridge.java) +
+[MixinCustomRecipeManager](../compat/src/main/java/com/mctfc/mixin/MixinCustomRecipeManager.java)): every
+`tfc:anvil` and `tfc:welding` recipe in the loaded recipe set becomes a **blacksmith** (`blacksmith_crafting`)
+`CustomRecipe`, research-gated via its `research-id` ← the unlock effect matching the recipe's **minimum anvil
+tier** (≤1 → **ungated**, stone/copper-tier work is craftable out of the box; 2 → bronze, 3 → wrought iron,
+4 → steel, 5 → black steel, 6 → red/blue). **Tools never appear by construction** — TFC smiths tool *heads* on the anvil (tool = head + stick in the grid), so the bridged set is
+exactly heads, sheets, double ingots/sheets, rods, shears, tuyeres, plated blocks, etc. Inputs are taken verbatim
+from the TFC recipe (first stack of each ingredient); **welding adds one `#tfc:flux`** item, mirroring the anvil
+flux slot, and same-item welding inputs merge into one count-2 entry. Heating the work piece and the forging
+minigame are abstracted away, like every other colony crafter's process. Works for *any* mod's TFC anvil recipes,
+not just TFC's own — and needs no per-item datapack maintenance.
+
+The injection seam (the hard-won bit): programmatic recipes must survive `CrafterRecipeListener.apply`'s
+`reset()` on every reload and be present before the recipe map syncs to clients. MineColonies'
+`DataPackSyncEventHandler` calls `CustomRecipeManager.resolveTemplates()` once per datapack sync — after the
+listener reset+reload, with the server `RecipeManager` loaded and tags bound, right before
+`sendCustomRecipeManagerPackets`. So the bridge injects from a `remap = false` TAIL mixin on `resolveTemplates`
+(re-runs are idempotent — `addRecipe` overwrites by recipe id; bails when no server, e.g. client-side calls).
+Recipe-gating semantics: `CustomRecipe.isUnlockEffectResearched` accepts a research id (completed-research check)
+*or* an effect id (effect-strength check) — we use effect ids, matching the stock `assistanthammerunlock` pattern.
+
 ## Non-falling ("mortared"/"cemented") cobble — DONE & verified
 
 TFC makes cobble collapse (gravity), which wrecks MineColonies cobble builds. `:compat` registers a
