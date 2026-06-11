@@ -331,6 +331,20 @@ sets a TFC block — e.g. a cemented cobble or any TFC stone — in the hut GUI.
 placement via the engine was reverted: it placed a substituted block but still *requested* vanilla cobblestone, which
 breaks in TFC.
 
+## Builder fill-block defaults to TFC loam dirt — DONE
+
+The **builder** fills solid-placeholder schematic blocks with the same configurable `FILL_BLOCK` hut setting (creative
+paste turns them into dirt; the builder uses the setting). Its stock default is **vanilla dirt** — unobtainable in a
+TFC world (and exactly what our `minecraft:dirt → tfc:dirt/loam` substitution rule maps away on the paste path), so a
+fresh builder's hut would request a block the colony can never supply.
+Fix: [MixinSettingsModule](../compat/src/main/java/com/mctfc/mixin/MixinSettingsModule.java) (`@Mixin(remap = false)`,
+`@ModifyVariable` on `SettingsModule#with`) swaps the registered default to **`tfc:dirt/loam`**. `with` is the single
+seam every module-producer default flows through; the shared `BuildingMiner.FILL_BLOCK` key is registered per building
+type with a different default `BlockSetting`, and matching on the **dirt** default uniquely picks out the builder's
+(the miner's cobblestone default is left alone — see the miner section above). Existing huts are unaffected:
+`SettingsModule#deserializeNBT` replaces the registered setting with the saved one wholesale, so only newly created
+huts pick up the loam default (players can still pick any other block in the hut GUI).
+
 ## Build areas are collapse-proof while being built (virtual TFC support) — DONE, in-world test pending
 
 TFC raw stone **collapses** (cave-ins) when mined unsupported, which wrecks any MineColonies schematic with an underground

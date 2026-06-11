@@ -27,6 +27,12 @@ All notable changes to this mod are documented here. The format is based on
   L1 copper → L2 bronze (tin/bismuth/zinc) → L3 silver/gold → L4 iron → L5 nickel. Gives the colony miner a
   real reason to exist in a TFC world (TFC ore is rare, so miners otherwise just dig stone).
 
+### Changed
+- **Builder fill block defaults to TFC loam dirt** — a new builder's hut *Fill Block* setting (used to fill
+  solid-placeholder schematic blocks) now defaults to TFC loam dirt instead of vanilla dirt, which is
+  unobtainable in a TFC world. Existing huts keep their saved setting; any block can still be picked in the
+  hut GUI.
+
 ## [0.1.0] - 2026-06-08
 First release. Requires Palette Swap for MineColonies (`structurizereplacements`) `1.20.1-0.1.0`+.
 

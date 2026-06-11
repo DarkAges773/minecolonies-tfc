@@ -24,7 +24,8 @@
     "MixinAbstractFurnaceBlockEntity",
     "MixinCompatibilityManager",
     "MixinAbstractBuildingModule",
-    "MixinAbstractBuilding"
+    "MixinAbstractBuilding",
+    "MixinSettingsModule"
   ],
   "client": [
     "MixinWindowField"
