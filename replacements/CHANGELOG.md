@@ -7,6 +7,8 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.1.42] - 2026-06-11
+
 ### Fixed
 - **Substitution broken in single-player (regression in 0.1.41)** — the active ruleset was wiped during
   single-player world load (the disconnect-cleanup ran on the load-time teardown and erased the rules the
