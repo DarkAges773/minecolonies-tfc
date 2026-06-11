@@ -30,9 +30,6 @@ import java.util.Map;
 @Mixin(AbstractBuilding.class)
 public class MixinAbstractBuilding implements PlacementChoiceHolder, MineshaftChoiceHolder
 {
-    @Unique private static final String SREP_KEY           = "structurizereplacements_choices";
-    @Unique private static final String SREP_MINESHAFT_KEY = "structurizereplacements_mineshaft_choices";
-
     @Unique private Map<Block, Block> structurizereplacements$choices;
     @Unique private Map<Block, Block> structurizereplacements$mineshaftChoices;
 
@@ -81,14 +78,14 @@ public class MixinAbstractBuilding implements PlacementChoiceHolder, MineshaftCh
         // independently — a building may have only one of them (e.g. the miner sets mineshaft picks but no
         // hut-building picks), so neither write may short-circuit the other.
         final CompoundTag tag = cir.getReturnValue();
-        ChoiceCodec.writeNbt(tag, SREP_KEY, structurizereplacements$choices);
-        ChoiceCodec.writeNbt(tag, SREP_MINESHAFT_KEY, structurizereplacements$mineshaftChoices);
+        ChoiceCodec.writeNbt(tag, ChoiceCodec.CHOICES_KEY, structurizereplacements$choices);
+        ChoiceCodec.writeNbt(tag, ChoiceCodec.MINESHAFT_CHOICES_KEY, structurizereplacements$mineshaftChoices);
     }
 
     @Inject(method = "deserializeNBT(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"), remap = false)
     private void structurizereplacements$readChoices(final CompoundTag tag, final CallbackInfo ci)
     {
-        this.structurizereplacements$choices = ChoiceCodec.readNbt(tag, SREP_KEY);
-        this.structurizereplacements$mineshaftChoices = ChoiceCodec.readNbt(tag, SREP_MINESHAFT_KEY);
+        this.structurizereplacements$choices = ChoiceCodec.readNbt(tag, ChoiceCodec.CHOICES_KEY);
+        this.structurizereplacements$mineshaftChoices = ChoiceCodec.readNbt(tag, ChoiceCodec.MINESHAFT_CHOICES_KEY);
     }
 }

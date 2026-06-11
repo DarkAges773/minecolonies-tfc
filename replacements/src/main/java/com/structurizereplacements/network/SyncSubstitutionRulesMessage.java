@@ -107,12 +107,21 @@ public class SyncSubstitutionRulesMessage
 
     public void handle(final Supplier<NetworkEvent.Context> ctx)
     {
-        ctx.get().enqueueWork(() -> {
+        final NetworkEvent.Context context = ctx.get();
+        context.enqueueWork(() -> {
+            // Single-player: the client shares the integrated server's loaded ruleset (same-JVM statics), so
+            // applying this sync is at best redundant and at worst clobbers the live rules with a stale/empty
+            // snapshot. Ignore it on a memory connection — the same thing TFC does ("Ignored … sync from
+            // logical server"). Dedicated servers (real connection) still apply it; that's the whole point.
+            if (context.getNetworkManager() != null && context.getNetworkManager().isMemoryConnection())
+            {
+                return;
+            }
             BlockSubstitutions.setRules(rules, candidates);
             StructurizeReplacements.LOGGER.info("Synced {} fixed rule(s), {} candidate rule(s) from the server.",
                     rules.size(), candidates.size());
         });
-        ctx.get().setPacketHandled(true);
+        context.setPacketHandled(true);
     }
 
     // --- buf helpers ----------------------------------------------------------------------------------------

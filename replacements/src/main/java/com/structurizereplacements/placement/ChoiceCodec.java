@@ -24,6 +24,12 @@ public final class ChoiceCodec
 {
     private ChoiceCodec() {}
 
+    /** NBT key for the per-building / work-order hut choice map. <b>Save format — do not change the value.</b> */
+    public static final String CHOICES_KEY = "structurizereplacements_choices";
+
+    /** NBT key for the miner's mineshaft choice map. <b>Save format — do not change the value.</b> */
+    public static final String MINESHAFT_CHOICES_KEY = "structurizereplacements_mineshaft_choices";
+
     public static void write(final FriendlyByteBuf buf, final Map<Block, Block> choices)
     {
         final Map<ResourceLocation, ResourceLocation> ids = new HashMap<>();
@@ -45,20 +51,42 @@ public final class ChoiceCodec
         });
     }
 
+    /**
+     * Read a choice map. <b>Underflow-safe by design</b>: when used as a buffer <i>trailer</i> (the
+     * MineColonies building-view sync appends it after MineColonies' own bytes), the writer and reader
+     * mixins live in a {@code required:false} config and can apply independently — a MineColonies update
+     * renaming only the writer's method would leave this reader running against a buffer that ends right
+     * where our trailer should begin. Rather than read past the end and crash <i>every</i> building-view
+     * sync (a client crash on colony load), degrade to whatever parsed cleanly: bail when the buffer is
+     * already drained, and stop on any truncation/misalignment. Harmless for the well-formed edit-packet
+     * path, which always carries the full count.
+     */
     public static Map<Block, Block> read(final FriendlyByteBuf buf)
     {
-        final int count = buf.readVarInt();
         final Map<Block, Block> map = new HashMap<>();
-        for (int i = 0; i < count; i++)
+        if (!buf.isReadable())
         {
-            final ResourceLocation fromId = buf.readResourceLocation();
-            final ResourceLocation toId = buf.readResourceLocation();
-            final Block from = ForgeRegistries.BLOCKS.containsKey(fromId) ? ForgeRegistries.BLOCKS.getValue(fromId) : null;
-            final Block to = ForgeRegistries.BLOCKS.containsKey(toId) ? ForgeRegistries.BLOCKS.getValue(toId) : null;
-            if (from != null && to != null)
+            return map;
+        }
+        try
+        {
+            final int count = buf.readVarInt();
+            for (int i = 0; i < count && buf.isReadable(); i++)
             {
-                map.put(from, to);
+                final ResourceLocation fromId = buf.readResourceLocation();
+                final ResourceLocation toId = buf.readResourceLocation();
+                final Block from = ForgeRegistries.BLOCKS.containsKey(fromId) ? ForgeRegistries.BLOCKS.getValue(fromId) : null;
+                final Block to = ForgeRegistries.BLOCKS.containsKey(toId) ? ForgeRegistries.BLOCKS.getValue(toId) : null;
+                if (from != null && to != null)
+                {
+                    map.put(from, to);
+                }
             }
+        }
+        catch (final RuntimeException ex)
+        {
+            // Truncated/misaligned trailer (e.g. asymmetric mixin application) — keep what parsed cleanly.
+            return map;
         }
         return map;
     }

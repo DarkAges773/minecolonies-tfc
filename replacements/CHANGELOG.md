@@ -7,6 +7,19 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+- **Substitution broken in single-player (regression in 0.1.41)** — the active ruleset was wiped during
+  single-player world load (the disconnect-cleanup ran on the load-time teardown and erased the rules the
+  datapack reload had just loaded), so no substitution applied: the build-wand *Replace* picker showed no
+  pools and datapack rules did nothing. Rules are now cleared only on a genuine remote disconnect.
+- **Build Options *Replace* picker on high-level buildings** — the picker now lists the correct upgrade
+  tier's blocks for buildings at level 10 or above (the next-level blueprint path was mis-constructed for
+  two-digit levels), and falls back to the current tier instead of showing an empty picker if MineColonies'
+  blueprint naming ever changes.
+- **MineColonies client-sync hardening** — the per-building choice data appended to MineColonies' building
+  view sync now degrades gracefully if a future MineColonies update desynchronizes it, instead of risking a
+  client crash on colony load.
+
 ## [0.1.41] - 2026-06-10
 
 ### Fixed

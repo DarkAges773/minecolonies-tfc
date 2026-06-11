@@ -34,7 +34,13 @@ public final class ClientForgeEvents
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event)
     {
         final Connection connection = event.getConnection();
-        if (connection == null || !connection.isMemoryConnection())
+        // Clear the synced ruleset ONLY for a confirmed REMOTE disconnect (non-null, non-memory). The old
+        // guard treated a null connection as "remote, clear it" — but LoggingOut also fires during the
+        // single-player world-LOAD teardown with a null connection, which wiped the rules the datapack reload
+        // had just loaded (the shared static the integrated server uses) → no substitution in SP. A memory
+        // connection (single-player play) must likewise never clear.
+        final boolean remote = connection != null && !connection.isMemoryConnection();
+        if (remote)
         {
             BlockSubstitutions.setRules(List.of(), List.of());
         }
