@@ -7,6 +7,8 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.2.48] - 2026-06-12
+
 ### Added
 - **SlimColonies support** — the full per-building integration (builder substitution, Build Options
   *Replace* picker, miner mineshaft palette, choice persistence/sync) now also works with the
