@@ -20,6 +20,7 @@ build
 # run directories
 run
 run-data
+run-server
 mcmodsrepo
 src/generated/resources/.cache
 

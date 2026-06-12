@@ -59,6 +59,10 @@ minecraft {
             property 'forge.enabledGameTestNamespaces', mod_id
         }
         server {
+            // Own working dir so client + server can run simultaneously (shared run/ collides on the
+            // logs/latest.log file lock on Windows). run-server/eula.txt + server.properties
+            // (online-mode=false for the offline Dev account) are pre-created, not generated.
+            workingDirectory project.file('run-server')
             property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
         }
