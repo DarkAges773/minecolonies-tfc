@@ -122,6 +122,23 @@ In `:replacements` (generic):
     restart between placement and building creation could lose unadopted staged choices, but adoption is now
     at creation (same tick), so in practice they persist from placement onward. Not yet covered:
     creative-anchor hut placement (`ISpecialCreativeHandlerAnchorBlock.setup`).
+  - **SlimColonies twin of Part B** — the [SlimColonies](https://www.curseforge.com/minecraft/mc-mods/slimcolonies)
+    fork (mod id `slimcolonies`, packages repackaged to `no.monopixel.slimcolonies.*`) gets the same
+    integration via a parallel copy: `integration.slimcolonies` + `mixin.slimcolonies` +
+    `structurizereplacements.slimcolonies.mixins.json` (`required:false`), compiled against
+    `curse.maven:slimcolonies-1353551` (**compileOnly only** — the forks can't coexist at runtime; to
+    dev-test, swap `:replacements`' `runtimeOnly minecolonies` for the slimcolonies artifact). Init is
+    `else if (isLoaded("slimcolonies"))` in the `StructurizeReplacements` ctor (the engine's
+    `ChoiceResolver` is single-slot; MineColonies wins if both are somehow present), and
+    `MixinBlueprintPlacementHandling` stages choices for either fork. The mixins can't be shared (a mixin
+    targets one concrete class), so they're duplicated with these **fork deltas** (verified against
+    1.20.1-17.4.1 with javap): SlimColonies predates the `ICommonBuilding` split, so the resolver/packet use
+    `IColony#getBuildingManager().getBuilding(pos)` → `IBuilding` (with `markDirty()` directly on it);
+    `SettingsModuleWindow` lives in `core.client.gui.modules` (no `.building` subpackage) and its ctor takes
+    `(String, IBuildingView, SettingsModuleView)` — the capture inject mirrors all three args; GUI frame
+    textures come from the `slimcolonies` asset namespace; the work-order `read` descriptor names the fork's
+    `IWorkManager` FQN. Everything else (member names, signatures, the `serializeToView(buf, fullSync)`
+    arity) is identical to MineColonies.
   - **Per-building editing in Build Options — DONE & verified.** A bottom-left "Replace" button on
     MineColonies' `WindowBuildBuilding` ([MixinWindowBuildBuilding](../replacements/src/main/java/com/structurizereplacements/mixin/minecolonies/MixinWindowBuildBuilding.java),
     ctor TAIL — note `onOpened` is inherited so can't be targeted; shadows `building` + `updateResources`)

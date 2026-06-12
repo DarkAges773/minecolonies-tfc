@@ -65,6 +65,9 @@ minecraft {
             // MineColonies-integration config (per-building choices, Build Options button).
             args '--mixin.config', 'structurizereplacements.mixins.json'
             args '--mixin.config', 'structurizereplacements.minecolonies.mixins.json'
+            // SlimColonies isn't in this run (it can't coexist with MineColonies), so this config just
+            // skips its absent targets — registered for parity with the jar manifest.
+            args '--mixin.config', 'structurizereplacements.slimcolonies.mixins.json'
             // Load BOTH our mods from their source sets. All third-party mods come from the
             // deobf dependencies on the runtime classpath.
             mods {

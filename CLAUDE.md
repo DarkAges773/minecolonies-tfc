@@ -8,7 +8,7 @@ A Gradle **multi-project** repo containing **two Forge 1.20.1 mods**:
 
 | Subproject | Mod id | Package | Purpose |
 |---|---|---|---|
-| `:replacements` | `structurizereplacements` | `com.structurizereplacements` | **Standalone** Structurize add-on: datapack-driven, explicit block/tag substitution (+ interactive GUI pools) when placing blueprints. **MineColonies is an OPTIONAL dependency** — when present, the builder/Build-Options per-building integration activates (`com.structurizereplacements.integration.minecolonies.*` + the optional `structurizereplacements.minecolonies.mixins.json` config); when absent, it's a pure Structurize substitution mod. No TFC dependency. |
+| `:replacements` | `structurizereplacements` | `com.structurizereplacements` | **Standalone** Structurize add-on: datapack-driven, explicit block/tag substitution (+ interactive GUI pools) when placing blueprints. **MineColonies is an OPTIONAL dependency** — when present, the builder/Build-Options per-building integration activates (`com.structurizereplacements.integration.minecolonies.*` + the optional `structurizereplacements.minecolonies.mixins.json` config); when absent, it's a pure Structurize substitution mod. The **SlimColonies** fork (mod id `slimcolonies`, packages `no.monopixel.slimcolonies.*`) is supported the same way via a parallel `integration.slimcolonies`/`mixin.slimcolonies` copy (see [docs/replacements-internals.md](docs/replacements-internals.md) for the fork deltas). No TFC dependency. |
 | `:compat` | `mctfc` | `com.mctfc` | **MineColonies × TerraFirmaCraft** bridge. Depends on `:replacements`; ships TFC substitution rules as a datapack and houses the MC↔TFC bridging (food/nutrition, farming, smithing, …) — including its own mixins (`mctfc.mixins.json`, currently the farmer-tilling bridge). |
 
 The split exists so the substitution engine (and its optional MineColonies builder integration) is
@@ -99,7 +99,7 @@ dependencies` first.
 
 SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging crash:
 
-- **`:replacements` owns TWO mixin configs**, both listed in its `MixinConfigs` jar manifest +
+- **`:replacements` owns THREE mixin configs**, all listed in its `MixinConfigs` jar manifest +
   MixinGradle's `mixin { config }`:
   - [structurizereplacements.mixins.json](replacements/src/main/resources/structurizereplacements.mixins.json)
     (`required:true`, package `com.structurizereplacements.mixin`) — the core Structurize mixins (always apply).
@@ -107,6 +107,9 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
     (**`required:false`**, package `com.structurizereplacements.mixin.minecolonies`) — the optional
     MineColonies-integration mixins. Mixin **skips** these when the MineColonies target classes are absent
     (same graceful-skip TFC relies on for its JEI/Sodium mixins), so the standalone (MC-absent) case is fine.
+  - [structurizereplacements.slimcolonies.mixins.json](replacements/src/main/resources/structurizereplacements.slimcolonies.mixins.json)
+    (**`required:false`**, package `com.structurizereplacements.mixin.slimcolonies`) — the same six mixins
+    retargeted at the SlimColonies fork (`no.monopixel.slimcolonies.*`); skipped when SlimColonies is absent.
 - Mixins targeting **another mod's own methods** (Structurize/MineColonies, not Minecraft) need
   **`remap = false`** on the injector — those names are stable and have no SRG mapping. See
   [MixinStructurePlacer](replacements/src/main/java/com/structurizereplacements/mixin/MixinStructurePlacer.java).

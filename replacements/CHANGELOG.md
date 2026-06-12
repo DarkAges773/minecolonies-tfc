@@ -7,6 +7,12 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **SlimColonies support** — the full per-building integration (builder substitution, Build Options
+  *Replace* picker, miner mineshaft palette, choice persistence/sync) now also works with the
+  [SlimColonies](https://www.curseforge.com/minecraft/mc-mods/slimcolonies) fork of MineColonies
+  (1.20.1-17.4+). Like MineColonies, it is an optional dependency — install either colony mod (or neither).
+
 ## [0.1.42] - 2026-06-11
 
 ### Fixed

@@ -6,6 +6,7 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.Ge
 import com.mojang.logging.LogUtils;
 import com.structurizereplacements.data.DefaultRulesDataPack;
 import com.structurizereplacements.integration.minecolonies.MineColoniesIntegration;
+import com.structurizereplacements.integration.slimcolonies.SlimColoniesIntegration;
 import com.structurizereplacements.network.Network;
 import com.structurizereplacements.placement.TwoTallPlantPlacementHandler;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -47,6 +48,13 @@ public class StructurizeReplacements
         {
             MineColoniesIntegration.init();
             LOGGER.info("Structurize Replacements: MineColonies integration enabled.");
+        }
+        // Same for the SlimColonies fork. else-if: the engine's ChoiceResolver is single-slot, and the two
+        // forks can't coexist at runtime anyway — if both are somehow present, MineColonies wins.
+        else if (ModList.get().isLoaded("slimcolonies"))
+        {
+            SlimColoniesIntegration.init();
+            LOGGER.info("Structurize Replacements: SlimColonies integration enabled.");
         }
         LOGGER.info("Structurize Replacements loaded.");
     }

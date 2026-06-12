@@ -22,8 +22,8 @@ import java.util.Map;
  * onto the resulting building.
  *
  * <p>Targets Structurize (always present), so it lives in the main config; it no-ops unless an
- * integration that consumes {@link StagedChoices} is loaded (currently only MineColonies), to avoid
- * staging choices nothing will take. {@code remap = false}: Structurize's own members.
+ * integration that consumes {@link StagedChoices} is loaded (MineColonies or its SlimColonies fork), to
+ * avoid staging choices nothing will take. {@code remap = false}: Structurize's own members.
  */
 @Mixin(BlueprintPlacementHandling.class)
 public class MixinBlueprintPlacementHandling
@@ -31,7 +31,8 @@ public class MixinBlueprintPlacementHandling
     @Inject(method = "process", at = @At("HEAD"), remap = false)
     private static void structurizereplacements$stageChoices(final Blueprint blueprint, final BuildToolPlacementMessage msg, final CallbackInfo ci)
     {
-        if (msg.player == null || !ModList.get().isLoaded("minecolonies"))
+        if (msg.player == null
+                || !(ModList.get().isLoaded("minecolonies") || ModList.get().isLoaded("slimcolonies")))
         {
             return;
         }

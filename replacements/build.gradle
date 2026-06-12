@@ -100,6 +100,11 @@ dependencies {
     // dev-test the MineColonies-absent (pure standalone) path.
     compileOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
     runtimeOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
+    // SlimColonies (a MineColonies fork, repackaged to no.monopixel.slimcolonies.*) is a SECOND optional
+    // integration target (integration.slimcolonies.* + the .slimcolonies.mixins.json config). compileOnly
+    // ONLY — the two forks can't coexist at runtime, so to dev-test this path swap the runtimeOnly
+    // minecolonies line above for: runtimeOnly fg.deobf("curse.maven:slimcolonies-1353551:${slimcolonies_file_id}")
+    compileOnly fg.deobf("curse.maven:slimcolonies-1353551:${slimcolonies_file_id}")
     // NOTE: Domum Ornamentum is a MANDATORY dependency of Structurize itself (not just MineColonies), so it
     // must stay even in a MineColonies-absent run — removing it crashes Structurize at load. (To dev-test
     // the MineColonies-absent path, comment out only the runtimeOnly minecolonies line above.)
@@ -117,6 +122,8 @@ mixin {
     // Optional MineColonies-integration mixins (config is required:false; Mixin skips them when the
     // MineColonies target classes are absent).
     config "${mod_id}.minecolonies.mixins.json"
+    // Same pattern for the SlimColonies fork (no.monopixel.slimcolonies.* targets).
+    config "${mod_id}.slimcolonies.mixins.json"
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -142,7 +149,7 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Title'  : project.name,
                 'Implementation-Version': project.jar.archiveVersion,
                 'Implementation-Vendor' : mod_authors,
-                'MixinConfigs'          : "${mod_id}.mixins.json,${mod_id}.minecolonies.mixins.json"
+                'MixinConfigs'          : "${mod_id}.mixins.json,${mod_id}.minecolonies.mixins.json,${mod_id}.slimcolonies.mixins.json"
         ])
     }
     finalizedBy 'reobfJar'
