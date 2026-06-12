@@ -6,7 +6,7 @@ import com.minecolonies.api.colony.buildings.ModBuildings;
 import com.minecolonies.api.colony.buildings.views.IBuildingView;
 import com.minecolonies.core.client.gui.modules.building.SettingsModuleWindow;
 import com.minecolonies.core.colony.buildings.moduleviews.SettingsModuleView;
-import com.structurizereplacements.integration.minecolonies.MineshaftSettingsListProvider;
+import com.structurizereplacements.integration.colony.MineshaftSettingsListProvider;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

@@ -8,7 +8,7 @@ A Gradle **multi-project** repo containing **two Forge 1.20.1 mods**:
 
 | Subproject | Mod id | Package | Purpose |
 |---|---|---|---|
-| `:replacements` | `structurizereplacements` | `com.structurizereplacements` | **Standalone** Structurize add-on: datapack-driven, explicit block/tag substitution (+ interactive GUI pools) when placing blueprints. **MineColonies is an OPTIONAL dependency** — when present, the builder/Build-Options per-building integration activates (`com.structurizereplacements.integration.minecolonies.*` + the optional `structurizereplacements.minecolonies.mixins.json` config); when absent, it's a pure Structurize substitution mod. The **SlimColonies** fork (mod id `slimcolonies`, packages `no.monopixel.slimcolonies.*`) is supported the same way via a parallel `integration.slimcolonies`/`mixin.slimcolonies` copy (see [docs/replacements-internals.md](docs/replacements-internals.md) for the fork deltas). No TFC dependency. |
+| `:replacements` | `structurizereplacements` | `com.structurizereplacements` | **Standalone** Structurize add-on: datapack-driven, explicit block/tag substitution (+ interactive GUI pools) when placing blueprints. **MineColonies is an OPTIONAL dependency** — when present, the builder/Build-Options per-building integration activates; when absent, it's a pure Structurize substitution mod. The **SlimColonies** fork (mod id `slimcolonies`, packages `no.monopixel.slimcolonies.*`) is supported the same way. Integration **logic** is fork-agnostic in `integration.colony` (routed through a `ColonyBridge`); each fork contributes only its bridge impl (`integration.minecolonies`/`integration.slimcolonies`) + its mixins/config (see [docs/replacements-internals.md](docs/replacements-internals.md) for the fork deltas). No TFC dependency. |
 | `:compat` | `mctfc` | `com.mctfc` | **MineColonies × TerraFirmaCraft** bridge. Depends on `:replacements`; ships TFC substitution rules as a datapack and houses the MC↔TFC bridging (food/nutrition, farming, smithing, …) — including its own mixins (`mctfc.mixins.json`, currently the farmer-tilling bridge). |
 
 The split exists so the substitution engine (and its optional MineColonies builder integration) is
@@ -78,14 +78,16 @@ Who depends on what: `:replacements` → Structurize + blockui (`implementation`
 `project(':replacements')` + the full stack (structurize/blockui/minecolonies/domum/tfc/patchouli) so
 the dev run loads everything.
 
-**Dev-run-only test mods** (`runtimeOnly` — NOT real mandatory deps): `:replacements` adds MineColonies
-(also `compileOnly`) + Domum Ornamentum + EMI so its standalone `runClient` exercises the **optional
-MineColonies integration** (Domum is MineColonies' mandatory dep). **To dev-test the MineColonies-absent
-path, comment out ONLY `:replacements`' `runtimeOnly minecolonies` line** (keep `domum_ornamentum` — it's a
-*mandatory dep of Structurize itself*, so removing it crashes Structurize with the misleading "mixin config
-could not be read" error). The game then loads, opens the build-wand GUI, logs the
-`minecolonies` mixin config skipping its targets (`@Mixin target … was not found`), and does not crash —
-**verified**. `:compat` adds EMI. (Note: `:replacements` ships **no active substitution rules** — the old
+**Dev-run-only test mods** (`runtimeOnly` — NOT real mandatory deps): `:replacements` adds ONE colony mod
+(picked by the `colonyMod` Gradle property) + Domum Ornamentum + EMI so its standalone `runClient` exercises
+the **optional colony integration** (Domum is MineColonies' mandatory dep). Select the colony mod with
+`gradlew :replacements:runClient -PcolonyMod=minecolonies|slim|none` — default `minecolonies`; `slim` runs
+the SlimColonies fork instead (they can't coexist in one run); `none` dev-tests the colony-mod-absent
+(pure standalone) path. In all cases keep `domum_ornamentum` — it's a *mandatory dep of Structurize itself*,
+so removing it crashes Structurize with the misleading "mixin config could not be read" error. With
+`-PcolonyMod=none` the game loads, opens the build-wand GUI, logs the colony mixin configs skipping their
+targets (`@Mixin target … was not found`), and does not crash — **verified** (pre-toggle, via the equivalent
+runtimeOnly removal). `:compat` adds EMI. (Note: `:replacements` ships **no active substitution rules** — the old
 `examples.json` is now copy-paste documentation in [docs/substitution-rule-examples.md](docs/substitution-rule-examples.md);
 drop a snippet into a datapack to exercise substitution in the standalone run.)
 
@@ -230,6 +232,12 @@ starts relying on a newer Palette Swap feature. With the MC-prefixed scheme a ba
 
 ## Conventions
 
+- **Colony-fork twin rule:** integration logic goes in the fork-agnostic
+  `com.structurizereplacements.integration.colony` package (via `ColonyBridge`) — never duplicated into a
+  fork package. Only the per-fork bridges (`MineColoniesBridge`/`SlimColoniesBridge`) and the six mixins
+  under `mixin.minecolonies`/`mixin.slimcolonies` are twins: **any change to one fork's bridge or mixins
+  must be mirrored to the other fork in the same change** (the four known API deltas are listed in
+  [docs/replacements-internals.md](docs/replacements-internals.md)).
 - Prefer public APIs / events; when reaching another mod's internals use a mixin (with `remap=false`
   for that mod's own members), not reflection.
 - Keep logic side-aware and data-driven (tags/datapack JSON) where possible.

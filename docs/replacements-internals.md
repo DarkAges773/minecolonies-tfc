@@ -110,35 +110,46 @@ In `:replacements` (generic):
     [StagedChoices](../replacements/src/main/java/com/structurizereplacements/placement/StagedChoices.java)
     keyed by `msg.pos`); **adopt staged onto the building at creation** (`RegisteredStructureManager#addNewBuilding`,
     [MixinRegisteredStructureManager](../replacements/src/main/java/com/structurizereplacements/mixin/minecolonies/MixinRegisteredStructureManager.java))
-    so it persists + syncs immediately at placement (not first build). The
-    [BuildingChoiceResolver](../replacements/src/main/java/com/structurizereplacements/integration/minecolonies/BuildingChoiceResolver.java)
+    so it persists + syncs immediately at placement (not first build). The shared
+    [ColonyChoiceResolver](../replacements/src/main/java/com/structurizereplacements/integration/colony/ColonyChoiceResolver.java)
     (registered as the `ChoiceResolver` by
-    [MineColoniesIntegration](../replacements/src/main/java/com/structurizereplacements/integration/minecolonies/MineColoniesIntegration.java)`#init`,
-    called from the guarded `StructurizeReplacements` ctor) resolves the building's choices: **server** via
-    `getColonyByPosFromWorld→getCommonBuildingManager().getBuilding(pos)` (+ adopt-staged fallback);
-    **client** via `IColonyManager.getBuildingView(dimension, pos)` (the chunk owning-colony cap that
-    `getColonyByPosFromWorld` relies on is NOT reliably synced client-side — use `getBuildingView`).
+    [ColonyIntegration](../replacements/src/main/java/com/structurizereplacements/integration/colony/ColonyIntegration.java)`#init`,
+    called via the fork bridge's `init()` from the guarded `StructurizeReplacements` ctor) resolves the
+    building's choices through the [ColonyBridge](../replacements/src/main/java/com/structurizereplacements/integration/colony/ColonyBridge.java):
+    **server** via `bridge.buildingAt` (MC: `getColonyByPosFromWorld→getCommonBuildingManager().getBuilding(pos)`)
+    (+ adopt-staged fallback); **client** via `bridge.buildingViewAt` (`IColonyManager.getBuildingView(dimension,
+    pos)` — the chunk owning-colony cap that `getColonyByPosFromWorld` relies on is NOT reliably synced
+    client-side, so the client must use `getBuildingView`).
     The MC mixins live in `structurizereplacements.minecolonies.mixins.json` (`required:false`). Caveat: a
     restart between placement and building creation could lose unadopted staged choices, but adoption is now
     at creation (same tick), so in practice they persist from placement onward. Not yet covered:
     creative-anchor hut placement (`ISpecialCreativeHandlerAnchorBlock.setup`).
-  - **SlimColonies twin of Part B** — the [SlimColonies](https://www.curseforge.com/minecraft/mc-mods/slimcolonies)
-    fork (mod id `slimcolonies`, packages repackaged to `no.monopixel.slimcolonies.*`) gets the same
-    integration via a parallel copy: `integration.slimcolonies` + `mixin.slimcolonies` +
-    `structurizereplacements.slimcolonies.mixins.json` (`required:false`), compiled against
-    `curse.maven:slimcolonies-1353551` (**compileOnly only** — the forks can't coexist at runtime; to
-    dev-test, swap `:replacements`' `runtimeOnly minecolonies` for the slimcolonies artifact). Init is
-    `else if (isLoaded("slimcolonies"))` in the `StructurizeReplacements` ctor (the engine's
-    `ChoiceResolver` is single-slot; MineColonies wins if both are somehow present), and
-    `MixinBlueprintPlacementHandling` stages choices for either fork. The mixins can't be shared (a mixin
-    targets one concrete class), so they're duplicated with these **fork deltas** (verified against
-    1.20.1-17.4.1 with javap): SlimColonies predates the `ICommonBuilding` split, so the resolver/packet use
+  - **The fork-agnostic bridge layer + SlimColonies twin.** All Part-B <i>logic</i> lives once in
+    `com.structurizereplacements.integration.colony` (resolver, network channel
+    `structurizereplacements:colony` + [SetBuildingChoicesMessage](../replacements/src/main/java/com/structurizereplacements/integration/colony/SetBuildingChoicesMessage.java),
+    both GUI choice contexts, the miner settings-list provider, the
+    [LevelPaths](../replacements/src/main/java/com/structurizereplacements/integration/colony/LevelPaths.java)
+    blueprint-path surgery) — fork-free, classloadable always; buildings/views are passed as `Object` and
+    cast to the mixed-in holder interfaces. Each fork contributes exactly TWO duplicated pieces: a
+    [ColonyBridge](../replacements/src/main/java/com/structurizereplacements/integration/colony/ColonyBridge.java)
+    impl ([MineColoniesBridge](../replacements/src/main/java/com/structurizereplacements/integration/minecolonies/MineColoniesBridge.java) /
+    [SlimColoniesBridge](../replacements/src/main/java/com/structurizereplacements/integration/slimcolonies/SlimColoniesBridge.java),
+    the only non-mixin classes touching fork types) and its six mixins + `required:false` mixin config
+    (mixins can't be shared — each targets one concrete class). **Twin rule: a change to one fork's
+    bridge/mixins is mirrored to the other in the same change; new logic goes in `integration.colony`.**
+    The [SlimColonies](https://www.curseforge.com/minecraft/mc-mods/slimcolonies) fork (mod id
+    `slimcolonies`, repackaged to `no.monopixel.slimcolonies.*`, compiled against
+    `curse.maven:slimcolonies-1353551`, compileOnly) inits via `else if (isLoaded("slimcolonies"))` in the
+    ctor (single-slot; MineColonies wins if both are somehow present);
+    `MixinBlueprintPlacementHandling` stages choices for either fork. The **four fork deltas** (verified
+    against 1.20.1-17.4.1 with javap): SlimColonies predates the `ICommonBuilding` split, so its bridge uses
     `IColony#getBuildingManager().getBuilding(pos)` → `IBuilding` (with `markDirty()` directly on it);
     `SettingsModuleWindow` lives in `core.client.gui.modules` (no `.building` subpackage) and its ctor takes
     `(String, IBuildingView, SettingsModuleView)` — the capture inject mirrors all three args; GUI frame
-    textures come from the `slimcolonies` asset namespace; the work-order `read` descriptor names the fork's
-    `IWorkManager` FQN. Everything else (member names, signatures, the `serializeToView(buf, fullSync)`
-    arity) is identical to MineColonies.
+    textures come from the `slimcolonies` asset namespace (`ColonyBridge#assetNamespace`); the work-order
+    `read` descriptor names the fork's `IWorkManager` FQN. Everything else (member names, signatures, the
+    `serializeToView(buf, fullSync)` arity) is identical to MineColonies. Dev-run selection:
+    `-PcolonyMod=minecolonies|slim|none` on `:replacements:runClient`.
   - **Per-building editing in Build Options — DONE & verified.** A bottom-left "Replace" button on
     MineColonies' `WindowBuildBuilding` ([MixinWindowBuildBuilding](../replacements/src/main/java/com/structurizereplacements/mixin/minecolonies/MixinWindowBuildBuilding.java),
     ctor TAIL — note `onOpened` is inherited so can't be targeted; shadows `building` + `updateResources`)
@@ -146,7 +157,7 @@ In `:replacements` (generic):
     ([WindowReplacements](../replacements/src/main/java/com/structurizereplacements/client/gui/WindowReplacements.java))
     is generalized over a [ReplacementChoiceContext](../replacements/src/main/java/com/structurizereplacements/client/gui/ReplacementChoiceContext.java):
     [BuildWandChoiceContext](../replacements/src/main/java/com/structurizereplacements/client/gui/BuildWandChoiceContext.java)
-    (global session picks) vs [BuildingChoiceContext](../replacements/src/main/java/com/structurizereplacements/integration/minecolonies/BuildingChoiceContext.java)
+    (global session picks) vs [BuildingChoiceContext](../replacements/src/main/java/com/structurizereplacements/integration/colony/BuildingChoiceContext.java)
     (one building — sources from the building's blueprint loaded via `StructurePacks.getBlueprintFuture`;
     current from the synced view; on pick: optimistic view update + `SetBuildingChoicesMessage`
     ([McNetwork](../replacements/src/main/java/com/structurizereplacements/integration/minecolonies/McNetwork.java),

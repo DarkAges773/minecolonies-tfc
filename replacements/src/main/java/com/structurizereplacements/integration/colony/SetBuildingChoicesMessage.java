@@ -1,10 +1,5 @@
-package com.structurizereplacements.integration.minecolonies;
+package com.structurizereplacements.integration.colony;
 
-import com.minecolonies.api.colony.IColony;
-import com.minecolonies.api.colony.IColonyManager;
-import com.minecolonies.api.colony.buildings.IBuilding;
-import com.minecolonies.api.colony.buildings.ICommonBuilding;
-import com.minecolonies.api.colony.permissions.Action;
 import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
@@ -20,10 +15,10 @@ import java.util.function.Supplier;
 
 /**
  * Client → server: set the replacement choices for a single building (the Build Options "Replace" GUI, or
- * the miner's mineshaft palette when {@code mineshaft} is true). The server resolves the colony/building at
- * {@code buildingPos} from the sender's level, applies the choices to the matching map, and
- * {@code markDirty()}s the building (persists to colony NBT + re-syncs the view). Per-building only — does
- * not touch the player's global session picks.
+ * the miner's mineshaft palette when {@code mineshaft} is true). The server resolves the building at
+ * {@code buildingPos} via the {@link ColonyBridge} (permission-checked), applies the choices to the
+ * matching map, and {@code markDirty()}s the building (persists to colony NBT + re-syncs the view).
+ * Per-building only — does not touch the player's global session picks.
  */
 public class SetBuildingChoicesMessage
 {
@@ -57,17 +52,13 @@ public class SetBuildingChoicesMessage
     {
         ctx.get().enqueueWork(() -> {
             final ServerPlayer sender = ctx.get().getSender();
-            if (sender == null)
+            final ColonyBridge bridge = ColonyIntegration.bridge();
+            if (sender == null || bridge == null || !bridge.canEdit(sender, buildingPos))
             {
                 return;
             }
             final ServerLevel level = sender.serverLevel();
-            final IColony colony = IColonyManager.getInstance().getColonyByPosFromWorld(level, buildingPos);
-            if (colony == null || !colony.getPermissions().hasPermission(sender, Action.MANAGE_HUTS))
-            {
-                return;
-            }
-            final ICommonBuilding building = colony.getCommonBuildingManager().getBuilding(buildingPos);
+            final Object building = bridge.buildingAt(level, buildingPos);
             final Map<Block, Block> applied = choices.isEmpty() ? null : choices;
             if (mineshaft)
             {
@@ -85,10 +76,7 @@ public class SetBuildingChoicesMessage
                 }
                 holder.setReplacementChoices(applied);
             }
-            if (building instanceof IBuilding persistent)
-            {
-                persistent.markDirty();
-            }
+            bridge.markDirty(building);
         });
         ctx.get().setPacketHandled(true);
     }

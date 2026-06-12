@@ -8,7 +8,8 @@ import com.minecolonies.api.colony.buildings.views.IBuildingView;
 import com.minecolonies.core.client.gui.WindowBuildBuilding;
 import com.structurizereplacements.client.gui.ButtonImageWithIcon;
 import com.structurizereplacements.client.gui.WindowReplacements;
-import com.structurizereplacements.integration.minecolonies.BuildingChoiceContext;
+import com.structurizereplacements.integration.colony.BuildingChoiceContext;
+import com.structurizereplacements.integration.colony.LevelPaths;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
@@ -97,30 +98,12 @@ public abstract class MixinWindowBuildBuilding
     /**
      * The blueprint path of the <i>target</i> level (current + 1 when upgradable, else current) — the same
      * next-level path {@code WindowBuildBuilding#updateResources} loads for its material list, so the picker
-     * lists the blocks about to be built rather than the current tier's.
-     *
-     * <p>This reconstructs MineColonies' level-naming convention ({@code "<name><level>.blueprint"}) by
-     * string surgery, which is a silent-wrong-behaviour dependency if that convention ever changes. So it is
-     * <b>defensive</b>: it only rewrites the level when the path actually ends with the current level number
-     * (which also fixes a latent two-digit bug — the old code chopped a single char, mangling level ≥ 10);
-     * otherwise it falls back to the current path. A wrong-but-valid current-tier list is an honest degrade;
-     * a corrupted path that loads nothing (an empty picker with no error) is not.
+     * lists the blocks about to be built rather than the current tier's. The defensive path surgery is
+     * shared ({@link LevelPaths#targetLevelPath}).
      */
     private String targetStructurePath()
     {
-        final String current = this.building.getStructurePath();
-        if (current == null || current.isEmpty() || !canBeUpgraded())
-        {
-            return current;
-        }
-        final int currentLevel = this.building.getBuildingLevel();
-        final String currentSuffix = Integer.toString(currentLevel);
-        final String base = current.replace(".blueprint", "");
-        if (!base.endsWith(currentSuffix))
-        {
-            // Naming convention not as expected — don't risk constructing a path that loads nothing.
-            return current;
-        }
-        return base.substring(0, base.length() - currentSuffix.length()) + (currentLevel + 1) + ".blueprint";
+        return LevelPaths.targetLevelPath(
+                this.building.getStructurePath(), this.building.getBuildingLevel(), canBeUpgraded());
     }
 }

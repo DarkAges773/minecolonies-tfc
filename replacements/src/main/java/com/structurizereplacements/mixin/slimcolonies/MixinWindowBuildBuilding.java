@@ -6,7 +6,8 @@ import com.ldtteam.blockui.views.DropDownList;
 import com.ldtteam.blockui.views.View;
 import com.structurizereplacements.client.gui.ButtonImageWithIcon;
 import com.structurizereplacements.client.gui.WindowReplacements;
-import com.structurizereplacements.integration.slimcolonies.BuildingChoiceContext;
+import com.structurizereplacements.integration.colony.BuildingChoiceContext;
+import com.structurizereplacements.integration.colony.LevelPaths;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import no.monopixel.slimcolonies.api.colony.buildings.views.IBuildingView;
@@ -89,25 +90,12 @@ public abstract class MixinWindowBuildBuilding
 
     /**
      * The blueprint path of the <i>target</i> level (current + 1 when upgradable, else current) — the same
-     * next-level path {@code WindowBuildBuilding#updateResources} loads for its material list. Defensive:
-     * only rewrites the level when the path actually ends with the current level number; otherwise falls
-     * back to the current path (an honest current-tier degrade beats a corrupted path that loads nothing).
+     * next-level path {@code WindowBuildBuilding#updateResources} loads for its material list. The defensive
+     * path surgery is shared ({@link LevelPaths#targetLevelPath}).
      */
     private String targetStructurePath()
     {
-        final String current = this.building.getStructurePath();
-        if (current == null || current.isEmpty() || !canBeUpgraded())
-        {
-            return current;
-        }
-        final int currentLevel = this.building.getBuildingLevel();
-        final String currentSuffix = Integer.toString(currentLevel);
-        final String base = current.replace(".blueprint", "");
-        if (!base.endsWith(currentSuffix))
-        {
-            // Naming convention not as expected — don't risk constructing a path that loads nothing.
-            return current;
-        }
-        return base.substring(0, base.length() - currentSuffix.length()) + (currentLevel + 1) + ".blueprint";
+        return LevelPaths.targetLevelPath(
+                this.building.getStructurePath(), this.building.getBuildingLevel(), canBeUpgraded());
     }
 }

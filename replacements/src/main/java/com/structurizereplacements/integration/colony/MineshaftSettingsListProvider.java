@@ -1,4 +1,4 @@
-package com.structurizereplacements.integration.slimcolonies;
+package com.structurizereplacements.integration.colony;
 
 import com.ldtteam.blockui.Alignment;
 import com.ldtteam.blockui.Pane;
@@ -11,14 +11,20 @@ import com.structurizereplacements.client.gui.ButtonImageWithIcon;
 import com.structurizereplacements.client.gui.WindowReplacements;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import no.monopixel.slimcolonies.api.colony.buildings.views.IBuildingView;
 
 /**
- * SlimColonies twin of the MineColonies {@code MineshaftSettingsListProvider} — see that class for the full
- * design rationale (row-recycling marker, native-row mimicry). Wraps the miner settings window's
- * {@link ScrollingList.DataProvider} to append one extra "Edit Mineshaft Palette" row; installed by
- * {@code MixinSettingsModuleWindow} (miner only). The mini-button frame texture comes from the
- * {@code slimcolonies} asset namespace (the fork renamed its assets along with its mod id).
+ * Wraps the miner settings window's {@link ScrollingList.DataProvider} to append <b>one extra row</b> at the
+ * bottom of the scrollable settings list: an "Edit Mineshaft Palette" button that opens the candidate-block
+ * picker scoped to the miner's mineshaft palette ({@link MineshaftChoiceContext}). Installed by the fork's
+ * {@code MixinSettingsModuleWindow} (miner only) via {@code @ModifyArg} on the list's {@code setDataProvider}
+ * call, so the real settings rows keep rendering through the colony mod's own provider ({@link #delegate}).
+ * {@code buildingView} is the fork's building view (passed through to the context); the mini-button frame
+ * texture is borrowed from the loaded fork's asset namespace ({@link ColonyBridge#assetNamespace}).
+ *
+ * <p>The extra row honours blockui's row-recycling: a row pane carries an {@code id} {@link Text} that the
+ * settings provider compares against the setting key to decide whether to rebuild a recycled pane. Our row
+ * stamps that field with {@link #MARKER} (never a real setting id) so a recycled <i>setting</i> row is
+ * rebuilt correctly, and we rebuild our own row only when the marker is absent.
  */
 public class MineshaftSettingsListProvider implements ScrollingList.DataProvider
 {
@@ -26,11 +32,11 @@ public class MineshaftSettingsListProvider implements ScrollingList.DataProvider
     private static final String LABEL  = "structurizereplacements.gui.replace.mineshaft.button";
 
     private final ScrollingList.DataProvider delegate;
-    private final IBuildingView buildingView;
+    private final Object buildingView;
     private final BOWindow parent;
 
     public MineshaftSettingsListProvider(final ScrollingList.DataProvider delegate,
-                                         final IBuildingView buildingView,
+                                         final Object buildingView,
                                          final BOWindow parent)
     {
         this.delegate = delegate;
@@ -122,12 +128,13 @@ public class MineshaftSettingsListProvider implements ScrollingList.DataProvider
         desc.setPosition(5, 5);
         box.addChild(desc);
 
-        // Action control — our replace icon over the fork's mini-button frame, the same icon-button style
-        // as the "Replace" button on the Build Options window (2px frame visible, icon fills the rest).
+        // Action control — our replace icon over the colony mod's mini-button frame, the same icon-button
+        // style as the "Replace" button on the Build Options window (2px frame visible, icon fills the rest).
         final ButtonImageWithIcon button = new ButtonImageWithIcon(
                 new ResourceLocation("structurizereplacements", "textures/gui/replace_button.png"), 2);
         button.setID("structurizereplacements:mineshaftPalette");
-        button.setImage(new ResourceLocation("slimcolonies", "textures/gui/builderhut/builder_button_mini.png"), false);
+        button.setImage(new ResourceLocation(ColonyIntegration.bridge().assetNamespace(),
+                "textures/gui/builderhut/builder_button_mini.png"), false);
         button.setSize(16, 16);
         button.setPosition(5, 24);
         button.setHandler(b -> new WindowReplacements(new MineshaftChoiceContext(buildingView), parent).open());

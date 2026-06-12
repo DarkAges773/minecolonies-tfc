@@ -92,19 +92,22 @@ dependencies {
     implementation fg.deobf("com.ldtteam:structurize:${structurize_version}")
     implementation fg.deobf("com.ldtteam:blockui:${blockui_version}")
 
-    // MineColonies is an OPTIONAL dependency (mods.toml: mandatory=false). The optional integration
-    // (com.structurizereplacements.integration.minecolonies.* + the .minecolonies.mixins.json config)
-    // compiles against it, but those classes/mixins only load when MineColonies is actually present.
-    // compileOnly so it isn't bundled; runtimeOnly so the dev runClient loads it and exercises the
-    // integration (Domum Ornamentum is MineColonies' mandatory dep). Remove the runtimeOnly lines to
-    // dev-test the MineColonies-absent (pure standalone) path.
+    // The colony mods are OPTIONAL dependencies (mods.toml: mandatory=false). The optional integration
+    // (shared logic in integration.colony + a per-fork bridge and mixin config) compiles against BOTH
+    // forks (compileOnly — never bundled); those classes/mixins only load when the matching mod is present.
     compileOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
-    runtimeOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
-    // SlimColonies (a MineColonies fork, repackaged to no.monopixel.slimcolonies.*) is a SECOND optional
-    // integration target (integration.slimcolonies.* + the .slimcolonies.mixins.json config). compileOnly
-    // ONLY — the two forks can't coexist at runtime, so to dev-test this path swap the runtimeOnly
-    // minecolonies line above for: runtimeOnly fg.deobf("curse.maven:slimcolonies-1353551:${slimcolonies_file_id}")
+    // SlimColonies: a MineColonies fork, repackaged to no.monopixel.slimcolonies.*.
     compileOnly fg.deobf("curse.maven:slimcolonies-1353551:${slimcolonies_file_id}")
+    // The dev runClient loads exactly ONE colony mod (they can't coexist at runtime), selected via
+    //   gradlew :replacements:runClient -PcolonyMod=minecolonies|slim|none
+    // default = minecolonies; 'none' dev-tests the colony-mod-absent (pure standalone) path.
+    // (Domum Ornamentum below stays in all cases — it's a mandatory dep of Structurize itself.)
+    def colonyMod = providers.gradleProperty('colonyMod').getOrElse('minecolonies')
+    if (colonyMod == 'slim' || colonyMod == 'slimcolonies') {
+        runtimeOnly fg.deobf("curse.maven:slimcolonies-1353551:${slimcolonies_file_id}")
+    } else if (colonyMod != 'none') {
+        runtimeOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
+    }
     // NOTE: Domum Ornamentum is a MANDATORY dependency of Structurize itself (not just MineColonies), so it
     // must stay even in a MineColonies-absent run — removing it crashes Structurize at load. (To dev-test
     // the MineColonies-absent path, comment out only the runtimeOnly minecolonies line above.)

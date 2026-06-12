@@ -1,4 +1,4 @@
-package com.structurizereplacements.integration.slimcolonies;
+package com.structurizereplacements.integration.colony;
 
 import com.ldtteam.structurize.blueprints.v1.Blueprint;
 import com.ldtteam.structurize.client.BlueprintHandler;
@@ -9,8 +9,6 @@ import com.structurizereplacements.client.gui.ReplacementChoiceContext;
 import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.world.level.block.Block;
-import no.monopixel.slimcolonies.api.colony.buildings.views.IBuildingView;
-import no.monopixel.slimcolonies.core.entity.ai.workers.util.MineNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,22 +19,34 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * SlimColonies twin of the MineColonies {@code MineshaftChoiceContext} — see that class for the full design
- * rationale. {@link ReplacementChoiceContext} for the miner hut's mineshaft palette (opened from the miner's
- * settings window): edits the miner's <b>separate</b> mineshaft palette ({@link MineshaftChoiceHolder}) and
- * aggregates the candidate blocks of <i>all</i> the mineshaft schematics the miner ever places (every
- * non-empty {@link MineNode.NodeType}), loaded from the hut's own structure pack.
+ * {@link ReplacementChoiceContext} for the miner hut's mineshaft palette (opened from the miner's settings
+ * window). Unlike {@link BuildingChoiceContext} — which edits one blueprint of one building — this edits the
+ * miner's <b>separate</b> mineshaft palette ({@link MineshaftChoiceHolder}) and aggregates the candidate
+ * blocks of <i>all</i> the mineshaft schematics the miner ever places
+ * ({@link ColonyBridge#mineshaftSchematics}: the main shaft plus the tunnel/crossroad/bend node types),
+ * loaded from the hut's own structure pack.
+ *
+ * <ul>
+ *   <li>{@link #sources()} — the union of distinct candidate blocks across all mineshaft blueprints, loaded
+ *       asynchronously (each blueprint future folds its blocks in as it resolves);</li>
+ *   <li>{@link #current()} — the building view's synced mineshaft choices;</li>
+ *   <li>{@link #choose}/{@link #reset} — optimistically update the view's mineshaft map and persist via
+ *       {@link ColonyNetwork#sendMineshaftChoices}. No tier toggle: mineshaft schematics are level-independent.</li>
+ * </ul>
+ *
+ * <p>Applied server-side by {@code ColonyChoiceResolver}: when the miner AI builds a mineshaft node, the
+ * node's miner work order resolves to this map via the claiming hut.
  */
 public class MineshaftChoiceContext implements ReplacementChoiceContext
 {
-    private final IBuildingView view;
+    private final Object view;
 
     private Runnable reloader = () -> {};
     /** Accumulated across the per-blueprint futures (all resolve on the client thread, so no syncing needed). */
     private final Set<Block> accumulated = new LinkedHashSet<>();
     private List<Block> sources = List.of();
 
-    public MineshaftChoiceContext(final IBuildingView view)
+    public MineshaftChoiceContext(final Object view)
     {
         this.view = view;
         loadMineshaftSources();
@@ -77,7 +87,7 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
         {
             holder.setMineshaftChoices(map.isEmpty() ? null : map);
         }
-        ScNetwork.sendMineshaftChoices(view.getPosition(), map);
+        ColonyNetwork.sendMineshaftChoices(ColonyIntegration.bridge().viewPosition(view), map);
         BlueprintHandler.getInstance().clearCache();
     }
 
@@ -88,7 +98,7 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
         {
             holder.setMineshaftChoices(null);
         }
-        ScNetwork.sendMineshaftChoices(view.getPosition(), Map.of());
+        ColonyNetwork.sendMineshaftChoices(ColonyIntegration.bridge().viewPosition(view), Map.of());
         BlueprintHandler.getInstance().clearCache();
     }
 
@@ -100,21 +110,11 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
 
     private void loadMineshaftSources()
     {
-        final String pack = view.getStructurePack();
-        // Distinct schematic paths the miner uses; NodeType carries the canonical names (LADDER_BACK/UNDEFINED
-        // are empty — skipped). Deriving from the enum means new node types are picked up automatically.
-        final Set<String> paths = new LinkedHashSet<>();
-        for (final MineNode.NodeType type : MineNode.NodeType.values())
+        final ColonyBridge bridge = ColonyIntegration.bridge();
+        final String pack = bridge.viewStructurePack(view);
+        for (final String name : bridge.mineshaftSchematics())
         {
-            final String name = type.getSchematicName();
-            if (name != null && !name.isEmpty())
-            {
-                paths.add(name + ".blueprint");
-            }
-        }
-        for (final String path : paths)
-        {
-            final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(pack, path);
+            final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(pack, name + ".blueprint");
             ClientFutureProcessor.queueBlueprint(new ClientFutureProcessor.BlueprintProcessingData(future, this::foldBlueprint));
         }
     }

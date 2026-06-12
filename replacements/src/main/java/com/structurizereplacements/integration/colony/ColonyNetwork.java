@@ -1,4 +1,4 @@
-package com.structurizereplacements.integration.slimcolonies;
+package com.structurizereplacements.integration.colony;
 
 import com.structurizereplacements.StructurizeReplacements;
 import net.minecraft.core.BlockPos;
@@ -10,19 +10,20 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.Map;
 
 /**
- * Network channel for the optional SlimColonies integration — the SlimColonies twin of {@code McNetwork}.
- * Carries per-building replacement edits from the Build Options GUI to the server. Separate from the
- * engine's core channel and registered only when SlimColonies is present (see
- * {@link SlimColoniesIntegration}); the build wand's global session picks use the core channel.
+ * Network channel for the colony-mod integration (one shared channel for whichever fork is loaded —
+ * the handler routes through {@link ColonyBridge}, so the packet itself is fork-agnostic). Carries
+ * per-building replacement edits from the Build Options GUI to the server. Separate from the engine's
+ * core channel and registered only when a colony mod is present (see {@link ColonyIntegration}); the
+ * build wand's global session picks use the core channel.
  */
-public final class ScNetwork
+public final class ColonyNetwork
 {
-    private ScNetwork() {}
+    private ColonyNetwork() {}
 
     private static final String PROTOCOL = "1";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(StructurizeReplacements.MODID, "slimcolonies"),
+            new ResourceLocation(StructurizeReplacements.MODID, "colony"),
             () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
     public static void register()

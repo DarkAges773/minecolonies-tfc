@@ -2,7 +2,7 @@ package com.structurizereplacements.mixin.slimcolonies;
 
 import com.ldtteam.blockui.views.BOWindow;
 import com.ldtteam.blockui.views.ScrollingList;
-import com.structurizereplacements.integration.slimcolonies.MineshaftSettingsListProvider;
+import com.structurizereplacements.integration.colony.MineshaftSettingsListProvider;
 import no.monopixel.slimcolonies.api.colony.buildings.ModBuildings;
 import no.monopixel.slimcolonies.api.colony.buildings.views.IBuildingView;
 import no.monopixel.slimcolonies.core.client.gui.modules.SettingsModuleWindow;

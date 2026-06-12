@@ -1,4 +1,4 @@
-package com.structurizereplacements.integration.slimcolonies;
+package com.structurizereplacements.integration.colony;
 
 import com.ldtteam.structurize.blueprints.v1.Blueprint;
 import com.ldtteam.structurize.client.BlueprintHandler;
@@ -9,7 +9,6 @@ import com.structurizereplacements.client.gui.ReplacementChoiceContext;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.world.level.block.Block;
-import no.monopixel.slimcolonies.api.colony.buildings.views.IBuildingView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,9 +19,9 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * SlimColonies twin of the MineColonies {@code BuildingChoiceContext} — see that class for the full
- * design rationale. {@link ReplacementChoiceContext} for the Build Options window: edits a single
- * SlimColonies building's replacement choices.
+ * {@link ReplacementChoiceContext} for the Build Options window: edits a single colony building's
+ * replacement choices ({@code view} is the fork's building view, supplied by the fork's
+ * {@code MixinWindowBuildBuilding}; colony API goes through the {@link ColonyBridge}).
  *
  * <ul>
  *   <li>{@link #sources()} — distinct candidate blocks in the blueprint that <i>will be built</i>
@@ -32,10 +31,15 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@link #choose} — optimistically update the view, send {@link SetBuildingChoicesMessage} to persist
  *       on the server, re-bake the preview, and refresh the Build Options material list.</li>
  * </ul>
+ *
+ * <p>The choice map is per-building (block → block), not per-level, so editing it for the next tier's blocks
+ * just augments the same map; only the <i>source list</i> must reflect the tier about to be built — hence the
+ * caller passes the resolved target {@code structurePack}/{@code structurePath} rather than the view's current
+ * ones (which would show the current tier and hide blocks new to the upgrade).
  */
 public class BuildingChoiceContext implements ReplacementChoiceContext
 {
-    private final IBuildingView view;
+    private final Object view;
     private final String targetPack;
     private final String targetPath;
     private final Runnable refreshMaterials;
@@ -46,7 +50,7 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
     private Runnable reloader = () -> {};
     private List<Block> sources = List.of();
 
-    public BuildingChoiceContext(final IBuildingView view,
+    public BuildingChoiceContext(final Object view,
                                  final String targetPack,
                                  final String targetPath,
                                  final Runnable refreshMaterials)
@@ -94,7 +98,7 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
         {
             holder.setReplacementChoices(map.isEmpty() ? null : map);
         }
-        ScNetwork.sendBuildingChoices(view.getPosition(), map);
+        ColonyNetwork.sendBuildingChoices(ColonyIntegration.bridge().viewPosition(view), map);
         BlueprintHandler.getInstance().clearCache();
         refreshMaterials.run();
     }
@@ -107,7 +111,7 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
         {
             holder.setReplacementChoices(null);
         }
-        ScNetwork.sendBuildingChoices(view.getPosition(), Map.of());
+        ColonyNetwork.sendBuildingChoices(ColonyIntegration.bridge().viewPosition(view), Map.of());
         BlueprintHandler.getInstance().clearCache();
         refreshMaterials.run();
     }
@@ -147,21 +151,12 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
         // the building's CURRENT tier: the view's structure path carries the original build-level digit (not
         // the upgraded level), so re-stamp it with the building's actual current level — same trailing-digit
         // scheme the colony mod uses to derive a level's blueprint.
-        final String pack = updateMode ? targetPack : view.getStructurePack();
-        final String path = updateMode ? targetPath : pathForLevel(view.getStructurePath(), view.getBuildingLevel());
+        final ColonyBridge bridge = ColonyIntegration.bridge();
+        final String pack = updateMode ? targetPack : bridge.viewStructurePack(view);
+        final String path = updateMode ? targetPath
+                : LevelPaths.pathForLevel(bridge.viewStructurePath(view), bridge.viewBuildingLevel(view));
         final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(pack, path);
         ClientFutureProcessor.queueBlueprint(new ClientFutureProcessor.BlueprintProcessingData(future, this::onBlueprintLoaded));
-    }
-
-    /** The blueprint path for a given level: the base path with its trailing level digit replaced by {@code level}. */
-    private static String pathForLevel(final String basePath, final int level)
-    {
-        if (basePath == null || basePath.isEmpty())
-        {
-            return basePath;
-        }
-        final String base = basePath.replace(".blueprint", "");
-        return base.substring(0, base.length() - 1) + level + ".blueprint";
     }
 
     private void onBlueprintLoaded(final Blueprint blueprint)
