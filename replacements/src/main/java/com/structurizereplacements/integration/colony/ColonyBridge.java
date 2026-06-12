@@ -63,4 +63,18 @@ public interface ColonyBridge
 
     /** The fork's asset namespace ({@code minecolonies} / {@code slimcolonies}) for borrowed GUI textures. */
     String assetNamespace();
+
+    /**
+     * Whether this colony mod's Domum Ornamentum placement handling ignores tile-entity materials: its
+     * {@code doesWorldStateMatchBlueprintState} compares only block <i>states</i>, and its placement skips
+     * the tile-entity write when the block state was already correct in the world. When true, the engine
+     * compensates (see {@code SubstitutedMatch} and {@code MixinStructurePlacer}'s enforcement): NBT-only
+     * DO substitutions would otherwise be invisible to the builder's scans and never reach the world.
+     * Defaults to false — MineColonies' (and Structurize's own) DO handlers compare materials natively,
+     * so the stock flow handles substituted DO blocks without help.
+     */
+    default boolean placementIgnoresDoMaterials()
+    {
+        return false;
+    }
 }

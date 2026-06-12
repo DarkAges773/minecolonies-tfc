@@ -160,12 +160,72 @@ In `:replacements` (generic):
     (global session picks) vs [BuildingChoiceContext](../replacements/src/main/java/com/structurizereplacements/integration/colony/BuildingChoiceContext.java)
     (one building — sources from the building's blueprint loaded via `StructurePacks.getBlueprintFuture`;
     current from the synced view; on pick: optimistic view update + `SetBuildingChoicesMessage`
-    ([McNetwork](../replacements/src/main/java/com/structurizereplacements/integration/minecolonies/McNetwork.java),
-    a separate channel registered only when MC is present) → server sets+`markDirty` (persist + re-sync) →
+    ([ColonyNetwork](../replacements/src/main/java/com/structurizereplacements/integration/colony/ColonyNetwork.java),
+    a separate shared channel registered only when a colony mod is present) → server sets+`markDirty` (persist + re-sync) →
     `updateResources()` + `clearCache()` refresh). Picks are **per-building only** (don't touch the session
     picks) and apply on the next build/upgrade. "Done" reopens the parent window (build tool / Build Options)
     instead of closing to the game.
 - **GUI toggle** in `WindowExtendedBuildTool` for per-placement opt-in.
+
+## Domum Ornamentum material substitution (gotchas that cost a bug each)
+
+[DomumMaterialRewriter](../replacements/src/main/java/com/structurizereplacements/substitution/DomumMaterialRewriter.java)
+swaps the material block(s) stored in DO "materialized" blocks' tile NBT. Hard-won specifics:
+
+- **The dynamic timber frame (`domum_ornamentum:plain` & friends) stores its materials in FOUR NBT keys**:
+  the base `textureData` compound, its own `originalTextureData` compound, and the `primaryBlock`/
+  `secondaryBlock` block-id strings. Its `DynamicTimberFrameBlockEntity.load()` derives the effective
+  materials from the latter three and **ignores `textureData`**; `getTextureData()` returns
+  `originalTextureData`. Rewriting `textureData` alone is a complete no-op for these blocks (wrong item
+  requested, original material placed) — the rewriter rewrites all four, and the world-vs-blueprint
+  material compare prefers `originalTextureData` (comparing the possibly-stale base map can disagree
+  forever → builder rebuild-loop).
+- **SlimColonies' `DoBlockPlacementHandler.doesWorldStateMatchBlueprintState` compares only block STATES**
+  (decompiled: `worldState.equals(blueprintState)` — the fork dropped MineColonies'/Structurize's
+  `compareBEData` call). Since a DO substitution changes only NBT, the builder's repair scan would skip
+  every substituted DO block as "already built". [MixinAbstractBlueprintIterator](../replacements/src/main/java/com/structurizereplacements/mixin/MixinAbstractBlueprintIterator.java)
+  therefore verifies the world block's DO materials itself (`DomumMaterialRewriter#materialsMatchWorld`) —
+  but **only when the substitution actually changed the blueprint tile tag** (reference inequality from
+  `BlockSubstitutions.apply`) **and the loaded fork declares it needs the compensation**
+  (`ColonyBridge#placementIgnoresDoMaterials`, true only on `SlimColoniesBridge`) — so core behavior on
+  MineColonies and in the standalone case is exactly the pre-workaround code path.
+- **SlimColonies' DO placement handler also SKIPS the tile-entity write when the block state was already
+  correct in the world** (diagnosed live: placement returned SUCCESS with the substituted tag in hand, but
+  `handleTileEntityPlacement` was never invoked — the handler bails when its `setBlockState` is a no-op).
+  An NBT-only substitution therefore never reached the world even after the scan fix. The engine now
+  self-heals in [MixinStructurePlacer](../replacements/src/main/java/com/structurizereplacements/mixin/MixinStructurePlacer.java)
+  (`handleBlockPlacement` RETURN): if a successful DO placement left the world materials unequal to the
+  substituted tag, it writes them via DO's own `IMateriallyTexturedBlockEntity#updateTextureDataWith`
+  (which also maps the dynamic frame's internal fields) + `sendBlockUpdated`. **Economy:** the re-texture
+  is paid — the substituted materialized item must be in the builder's inventory (else the result is
+  rewritten to `MISSING_ITEMS` so the builder requests it) and is consumed; the preceding removal refunded
+  the old item; creative placements are free. Note the DO material-equality compare prefers
+  `originalTextureData` (what the dynamic frame's `getTextureData()` returns) over the possibly-stale base
+  `textureData` — comparing the base map can disagree forever and rebuild-loop.
+- **`StructurePlacer#getResourceRequirements` calls the static match ITSELF** (separately from the
+  iterator scan that `MixinAbstractBlueprintIterator` covers), building its BlockInfo from the RAW
+  blueprint tag, and returns "needs nothing" for positions it deems already built. Missing that call site
+  cost a debugging marathon — and it bites on **every fork, vanilla MineColonies included** (verified
+  in-game on both): the comparator may be perfect, but raw-blueprint-vs-world compares equal for an
+  NBT-only substitution, so the substituted frame item never entered the builder's material list → the
+  colony AI's `hasListOfResInInvOrRequest` consistency check (item not in inventory NOR in the building's
+  resource bucket → `RECALC`) looped `LOAD_STRUCTURE→START_BUILDING` forever. Both call sites now route
+  through the shared
+  [SubstitutedMatch](../replacements/src/main/java/com/structurizereplacements/placement/SubstitutedMatch.java)
+  — the substitution-awareness is the fork-agnostic core fix; only the direct DO-material verification
+  inside it is SlimColonies-gated.
+  The paid enforcement (above) charges exactly the items the colony mod's own placement handler computes
+  (`PlacementHandlers.getHandler(...).getRequiredItems(...)` on the substituted tag), so the demanded stack
+  identity always agrees with what the request scan put into the material list.
+- The colony mods register their **own** DO placement handlers that take priority over Structurize's —
+  when debugging DO placement/match behavior, read `<fork>.core.placementhandlers.DoBlockPlacementHandler`,
+  not Structurize's.
+- **Red herring (cost a detour): SlimColonies' builder *scavenging***
+  (`builderscavengingintervalminutes` in `slimcolonies-server.toml`, default 2, 0 = off) makes idle
+  builders periodically "find" 1–5 of their needed materials — which looks exactly like substitution
+  conjuring items out of thin air / requests partially filling themselves. It applies to all materials and
+  has nothing to do with this mod. The refund economy itself is sound: item matching for DO frames proved
+  NBT-strict in testing, so refunded old-texture frames do NOT satisfy new-texture requirements.
 
 In `:compat`:
 - ~~Real TFC rule sets~~ — **DONE** (see [compat-features.md](compat-features.md) → "TFC default

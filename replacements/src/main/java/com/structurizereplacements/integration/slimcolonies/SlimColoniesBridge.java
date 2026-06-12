@@ -139,4 +139,16 @@ public final class SlimColoniesBridge implements ColonyBridge
     {
         return "slimcolonies";
     }
+
+    /**
+     * SlimColonies' {@code DoBlockPlacementHandler} dropped MineColonies' {@code compareBEData} call
+     * (decompiled: its match is {@code worldState.equals(blueprintState)}) and its placement bails before
+     * {@code handleTileEntityPlacement} when the block state was already correct — so the engine must
+     * verify and enforce DO materials itself for NBT-only substitutions.
+     */
+    @Override
+    public boolean placementIgnoresDoMaterials()
+    {
+        return true;
+    }
 }

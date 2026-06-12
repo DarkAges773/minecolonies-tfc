@@ -28,4 +28,15 @@ public final class ColonyIntegration
     {
         return bridge;
     }
+
+    /**
+     * Whether the loaded colony mod needs the engine's DO-material compensation (see
+     * {@link ColonyBridge#placementIgnoresDoMaterials}). False when no colony mod is loaded — Structurize's
+     * own DO handler compares materials natively.
+     */
+    public static boolean placementIgnoresDoMaterials()
+    {
+        final ColonyBridge b = bridge;
+        return b != null && b.placementIgnoresDoMaterials();
+    }
 }

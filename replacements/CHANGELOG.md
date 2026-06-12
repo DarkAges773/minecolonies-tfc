@@ -17,6 +17,21 @@ All notable changes to this mod are documented here. The format is based on
 - Per-building choice edits now travel on one shared network channel for both colony mods (previously a
   MineColonies-specific channel) — update client and server to the same mod version together.
 
+### Fixed
+- **Domum Ornamentum blocks (timber frames etc.) now follow replacement choices in builder
+  builds/repairs** (previously the builder skipped them on repairs — or looped forever recalculating
+  its material list — on MineColonies and SlimColonies alike). Three stacked fixes: the material
+  rewrite now covers all of the dynamic timber frame's NBT (it stores its materials outside the
+  `textureData` map the engine previously rewrote); every "already built?" decision — including the one
+  that builds the material list, which previously compared the raw, unsubstituted blueprint and so
+  never requested the swapped materials — is now substitution-aware, with DO materials verified
+  directly where the colony mod's DO placement handler compares only block states (SlimColonies); and
+  after a placement the engine verifies the world block actually received the substituted materials and
+  writes them itself when the colony mod's handler skipped the tile-entity write (SlimColonies skips it
+  whenever the block state was already correct). The re-texture is paid for like any other replacement:
+  the substituted materialized item appears in the builder's material list and is requested/consumed by
+  the builder, and the removal refunds the old-texture item; creative placements stay free.
+
 ## [0.1.42] - 2026-06-11
 
 ### Fixed
