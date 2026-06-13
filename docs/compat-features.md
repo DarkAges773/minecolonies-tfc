@@ -278,6 +278,44 @@ MineColonies' own food (`IMinecoloniesFoodItem`, no nerf) at `nutrition/1.2 ≈ 
 - **Config** ([Config](../compat/src/main/java/com/mctfc/Config.java)): `tfcFoodSaturationModifier` (default `1.0` = 100%,
   range 0–10), a live balance multiplier on the bridged value.
 
+## MineColonies foods become TFC foods — DONE, in-world test pending
+
+MineColonies registers ~60 of its own cooked dishes ([ModItemsInitializer](https://github.com/ldtteam/minecolonies),
+`ItemFood`/`ItemBowlFood`, all `IMinecoloniesFoodItem`) in three flat nutrition tiers (vanilla `FoodProperties`
+nutrition **5 / 7 / 9**). Out of the box they carry **no** TFC food data — they don't decay and add no TFC
+nutrients, so in a TFC world they're an inert "premium" supply that sidesteps TFC's whole food economy. This
+feature gives them real TFC food data, **datapack-only, no code**.
+
+- **Why a datapack suffices:** TFC's `ForgeEventHandler.attachItemCapabilities` (subscribed to
+  `AttachCapabilitiesEvent<ItemStack>`, fired for *every* stack from *any* mod) attaches the `FoodCapability` to
+  any item for which `FoodCapability.getDefinition(stack) != null` — i.e. any item matched by a `food_items`
+  definition's `ingredient` (item-agnostic). The definitions live in TFC's `DataManager` folder
+  **`tfc/food_items`** (`DataManager` = a `SimpleJsonResourceReloadListener` over `domain.getNamespace()+"/"+domain.getPath()`),
+  scanned across **all** namespaces — so files under `data/mctfc/tfc/food_items/` (note the doubled `tfc`) convert
+  MineColonies items with no Java at all.
+- **The pack** ([gen_tfc_food_items.sh](../compat/gen_tfc_food_items.sh) → `data/mctfc/tfc/food_items/*.json`, one
+  per dish): `hunger 4` (TFC standard) for all; **saturation by vanilla-nutrition tier** (n5 → 0.25, n7 → 0.75,
+  n9 → 1.25); per-dish `water` for soups/broths/teas; and per-dish nutrients assigned by what the dish *is*
+  (bread → grain, stew → protein/veg, cheese → dairy, …). Grouped by **vanilla nutrition**, not the
+  `IMinecoloniesFoodItem` tier — a few items (kebab, mutton_dinner) have a tier that disagrees with their
+  nutrition, and feed value tracks nutrition. Static defs (**not** `dynamic_bowl`: MineColonies' bowl foods are
+  pre-made meals, not TFC salad/soup-device output, so they need fixed stats).
+- **Calibrated to the nutrition bridge (the load-bearing bit):** the [MixinFoodUtils](../compat/src/main/java/com/mctfc/mixin/MixinFoodUtils.java)
+  `getFoodValue` HEAD-cancel fires for *any* `FoodCapability.has()` food, so the moment a MineColonies dish gains
+  the cap it is valued by `hunger × (1 + saturation) / 1.2` instead of MineColonies' un-nerfed `nutrition / 1.2`.
+  Keeping `hunger = 4` and the per-tier saturation above makes `4 × (1 + sat) == nutrition`, so **feed value is
+  unchanged** while the food now also decays and carries nutrients. (Re-tune the saturation column if the bridge
+  formula changes.)
+- **Decay knob & interactions:** `decay_modifier` is a single variable in the generator (default `1.0` = normal
+  TFC decay). Once converted, these dishes participate in the rest of the colony food stack — preserved in colony
+  storage by the `mctfc:colony_storage` rack trait ([FoodPreservation](../compat/src/main/java/com/mctfc/food/FoodPreservation.java)),
+  freshness-separated by the decay-aware stacking ([MixinInventoryCitizen](../compat/src/main/java/com/mctfc/mixin/MixinInventoryCitizen.java)),
+  and skipped when rotten / served FIFO ([MixinFoodUtils](../compat/src/main/java/com/mctfc/mixin/MixinFoodUtils.java)).
+- **Verify in-game:** TFC's `FoodCapability.markRecipeOutputsAsNonDecaying` (on `TagsUpdatedEvent`) marks recipe
+  result *templates* non-decaying; confirm a freshly cooked MineColonies dish begins decaying as intended (those
+  produced directly by the cook AI rather than a vanilla recipe should be fine), and that converted dishes feed
+  citizens as before. Re-run `gen_tfc_food_items.sh` if MineColonies' food set changes.
+
 <details><summary>Original tilling recon (kept for reference)</summary>
 
 The MineColonies farmer (`com.minecolonies.core.entity.ai.workers.production.agriculture.EntityAIWorkFarmer`)

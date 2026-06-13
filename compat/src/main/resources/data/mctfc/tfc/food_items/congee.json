@@ -1,0 +1,8 @@
+{
+  "ingredient": { "item": "minecolonies:congee" },
+  "hunger": 4,
+  "saturation": 0.75,
+  "water": 10,
+  "decay_modifier": 1.0,
+  "grain": 3
+}

@@ -1,0 +1,9 @@
+{
+  "ingredient": { "item": "minecolonies:hand_pie" },
+  "hunger": 4,
+  "saturation": 1.25,
+  "water": 0,
+  "decay_modifier": 1.0,
+  "grain": 2,
+  "protein": 2
+}

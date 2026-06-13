@@ -1,0 +1,8 @@
+{
+  "ingredient": { "item": "minecolonies:mint_tea" },
+  "hunger": 4,
+  "saturation": 0.25,
+  "water": 25,
+  "decay_modifier": 1.0,
+  "fruit": 0.5
+}

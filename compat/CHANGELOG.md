@@ -8,6 +8,12 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **MineColonies foods become TFC foods** — MineColonies' ~60 cooked dishes (cheeses, breads, soups, stews,
+  pies, pizzas, etc.) now carry full TFC food data: they **decay** like any TFC food, restore TFC hunger/water,
+  and add the five TFC nutrients (grain/fruit/vegetables/protein/dairy) chosen to fit each dish — so colony
+  meals count toward a citizen's TFC nutrition balance and integrate with the colony food-preservation, freshness
+  stacking and rotten-skipping behaviours. Datapack-only (`data/mctfc/tfc/food_items/`); saturation is calibrated
+  so each meal feeds citizens the same as before, and decay speed is a single knob in the generator.
 - **Smelter melts & casts TFC metal** — the Smelter worker now runs TFC metallurgy in its furnaces: it melts
   TFC ore into metal and casts it (ingots in molds; iron becomes a raw bloom), driven by the furnace's own
   fuel/heat. The hut's **Ores** and **Fuel** lists are now populated with **TFC ores and TFC fuels** (instead

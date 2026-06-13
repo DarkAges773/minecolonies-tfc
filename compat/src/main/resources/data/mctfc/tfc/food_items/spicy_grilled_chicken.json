@@ -1,0 +1,8 @@
+{
+  "ingredient": { "item": "minecolonies:spicy_grilled_chicken" },
+  "hunger": 4,
+  "saturation": 0.25,
+  "water": 0,
+  "decay_modifier": 1.0,
+  "protein": 2
+}

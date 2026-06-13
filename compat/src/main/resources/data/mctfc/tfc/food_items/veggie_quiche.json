@@ -1,0 +1,10 @@
+{
+  "ingredient": { "item": "minecolonies:veggie_quiche" },
+  "hunger": 4,
+  "saturation": 0.75,
+  "water": 0,
+  "decay_modifier": 1.0,
+  "grain": 0.5,
+  "vegetables": 2,
+  "dairy": 1
+}

@@ -1,0 +1,9 @@
+{
+  "ingredient": { "item": "minecolonies:cabochis" },
+  "hunger": 4,
+  "saturation": 0.75,
+  "water": 0,
+  "decay_modifier": 1.0,
+  "vegetables": 2.5,
+  "protein": 1
+}

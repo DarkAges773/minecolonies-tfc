@@ -1,0 +1,9 @@
+{
+  "ingredient": { "item": "minecolonies:meat_ravioli" },
+  "hunger": 4,
+  "saturation": 0.25,
+  "water": 0,
+  "decay_modifier": 1.0,
+  "grain": 1.5,
+  "protein": 1
+}
