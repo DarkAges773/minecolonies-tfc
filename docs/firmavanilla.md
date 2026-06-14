@@ -274,3 +274,39 @@ its alabaster bases and crafts coloured shapes from them:
   coloured tile: crafting (stairs ×8, slab ×6, wall ×6) + chisel (stair/slab; no wall) + stonecutting (×1/×2/×1).
 - No uncoloured shapes and no dye on shapes — matching TFC, where the uncoloured bases have no shapes and a shape's
   colour is carried by crafting/chiselling, not re-dyeing.
+
+## Patina palettes — extracted from vanilla copper (reusable LUTs)
+
+A small generator step that **extracts the copper oxidation palette** as a reusable luminance→colour LUT, one per
+vanilla weathering stage (`exposed`/`weathered`/`oxidized`). The LUTs are tooling assets usable to patina-ify any
+block; the first consumer is the patina'd copper bars below.
+
+**How (and why not subtraction).** The obvious idea is "weathered − copper_block" to isolate the green. Measured
+on the real 16×16 textures, copper's relief is ~80 % shared across stages (luminance correlation copper↔stage:
+exposed 0.78, weathered 0.83, oxidized 0.77) and the patina is a near-uniform colour shift (avg copper
+(192,107,79) → weathered (108,153,110) → oxidized (82,162,132); green-dominant pixel share 0 % → 92 % → 100 %). So
+a literal subtraction yields a near-flat teal field that's *coupled to copper's own brightness* — wrong the moment
+you add it onto a non-copper base. Instead we reuse the same **CLUT** machinery as the rest of the mod: sample each
+stage's own pixels with `BuildPaletteRamp` (256-entry luminance→avg-colour) — `copper_block` and subtraction not
+needed at all — and emit a normalized 256×16 ramp strip per stage to the tool root (tracked, like the grain masks):
+`tools/generate-textures/patina_{exposed,weathered,oxidized}.png`.
+
+**Reuse.** Feed any strip as a `lutBase` (identical to how the alabaster tiles consume
+`tfc:alabaster/bricks/<colour>`); the target block's luminance is repainted through the copper patina,
+brightness-correct on any base. Note: for a **16×16** target call `ClutSide(pattern, strip, w, h)` directly (not
+`ClutThrough`, which resizes the output to the strip's 256×16). The strips and the extraction step are documented
+in [input/README.md](../firmavanilla/tools/generate-textures/input/README.md) ("Patina palettes").
+
+## Patina'd copper bars — first LUT consumer
+
+TFC ships only **bright** copper bars (`tfc:metal/bars/copper`); these add the aged look. Per oxidation stage
+(`exposed`/`weathered`/`oxidized`) a block `firmavanilla:copper_bars/<stage>` — a vanilla
+[`IronBarsBlock`](../firmavanilla/src/main/java/com/firmavanilla/block/CopperBarsBlocks.java) (`Properties.copy(Blocks.IRON_BARS)`).
+The generator recolours **both** of TFC's bar textures through the stage's patina LUT: the grate
+(`metal/bars/copper`, transparency preserved — the CLUT copies alpha) and the smooth post `edge`
+(`metal/smooth/copper`), at native 16×16 via `ClutSide(tex, strip, 16, 16)`. The blockstate/models are a 1:1
+retexture of TFC's iron-bars **multipart** (six parts — `post`/`post_ends`/`cap`/`cap_alt`/`side`/`side_alt`,
+parenting `minecraft:block/iron_bars_*`), item is `item/generated` of the grate, loot drops self, and the blocks
+join `mineable/pickaxe`. Purely decorative — **no oxidation progression / scraping / waxing** (the LUTs only colour
+the texture; vanilla copper's `WeatheringCopper` mechanics aren't wired). The `exposed`/`weathered`/`oxidized` stage
+list is duplicated in `CopperBarsBlocks.java` (`STAGES`) and `generate.cs` (`COPPER_STAGES`); keep them in sync.

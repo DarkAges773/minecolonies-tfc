@@ -45,6 +45,13 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   (`firmavanilla:alabaster_tile_stairs/`, `alabaster_tile_slab/`, `alabaster_tile_wall/<colour>`); reuse the tile
   texture, join the vanilla `stairs`/`slabs`/`walls` tags. (Vanilla has no purpur wall, but the alabaster wall is
   provided anyway.)
+- **Patina palettes** — reusable luminance→colour LUTs extracted from vanilla copper's three weathering stages
+  (`exposed`/`weathered`/`oxidized`), written by the asset generator to
+  `tools/generate-textures/patina_{stage}.png` (256×16 ramp strips). Feed a strip to the CLUT to patina-ify a
+  block. Sampled straight from each stage (no subtraction, no `copper_block` needed).
+- **Patina'd copper bars** — `firmavanilla:copper_bars/{exposed,weathered,oxidized}`, TFC's bright copper bars
+  recoloured through the patina LUTs (grate + smooth-edge), as vanilla `IronBarsBlock`. The aged copper bars TFC
+  doesn't ship. Decorative only — no oxidation progression. Mine with a pickaxe; drops itself.
 - **Alabaster recipes — colouring matches TFC strictly.** The tile is chiselled from `tfc:alabaster/bricks`
   (in-world smooth chisel + table chisel-craft); the pillar is chiselled from the tile; shapes come off the tile
   via crafting (×8/×6/×6), chisel (stair/slab) and stonecutting (×1/×2/×1). **Dyeing** is TFC's sealed-barrel

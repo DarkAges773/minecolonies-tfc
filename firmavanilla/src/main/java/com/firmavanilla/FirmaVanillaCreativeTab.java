@@ -2,6 +2,7 @@ package com.firmavanilla;
 
 import com.firmavanilla.block.AlabasterBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
+import com.firmavanilla.block.CopperBarsBlocks;
 import com.firmavanilla.block.MortaredCobbleBlock;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.SandstoneBlocks;
@@ -66,6 +67,11 @@ public final class FirmaVanillaCreativeTab
                             output.accept(AlabasterBlocks.SLABS.get(i).get());
                             output.accept(AlabasterBlocks.WALLS.get(i).get());
                             output.accept(AlabasterBlocks.PILLARS.get(i).get());
+                        }
+                        // Patina'd copper bars, light -> heavy oxidation.
+                        for (final RegistryObject<Block> bars : CopperBarsBlocks.BARS)
+                        {
+                            output.accept(bars.get());
                         }
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {

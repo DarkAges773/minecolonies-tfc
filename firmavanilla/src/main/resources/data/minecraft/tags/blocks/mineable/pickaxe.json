@@ -189,6 +189,9 @@
     "firmavanilla:alabaster_tile_wall/blue",
     "firmavanilla:alabaster_tile_wall/purple",
     "firmavanilla:alabaster_tile_wall/magenta",
-    "firmavanilla:alabaster_tile_wall/pink"
+    "firmavanilla:alabaster_tile_wall/pink",
+    "firmavanilla:copper_bars/exposed",
+    "firmavanilla:copper_bars/weathered",
+    "firmavanilla:copper_bars/oxidized"
   ]
 }

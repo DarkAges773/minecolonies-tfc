@@ -35,6 +35,15 @@ input/tfc/alabaster_bricks/<colour>.png     (each dye colour's alabaster-brick C
 input/tfc/alabaster_bricks/uncolored.png    (the uncoloured alabaster-brick palette — for the base alabaster_tile)
 input/tfc/alabaster_raw/<colour>.png        (each dye colour's raw alabaster — composite source)
 input/tfc/alabaster_raw/uncolored.png       (the uncoloured raw alabaster — base alabaster_tile composite source)
+
+# patina palettes (extracted from vanilla copper weathering stages):
+input/vanilla/exposed_copper.png            (the "exposed" oxidation palette source)
+input/vanilla/weathered_copper.png          (the "weathered" oxidation palette source)
+input/vanilla/oxidized_copper.png           (the "oxidized" oxidation palette source)
+
+# patina'd copper bars (TFC copper bars recoloured through the patina LUTs):
+input/tfc/copper_bars/bars.png              (TFC's copper bars grate — tfc:block/metal/bars/copper)
+input/tfc/copper_bars/smooth.png            (TFC's smooth copper post edge — tfc:block/metal/smooth/copper)
 ```
 
 ## Extracting them from the dev dependency jars
@@ -65,6 +74,14 @@ come from `client-extra.jar`. The TFC alabaster palettes live at `assets/tfc/tex
 Also copy the **uncoloured** `assets/tfc/textures/block/alabaster/bricks.png` and `.../raw.png` to
 `input/tfc/alabaster_bricks/uncolored.png` and `input/tfc/alabaster_raw/uncolored.png` (the base `alabaster_tile`).
 
+**Patina palettes** — the vanilla `block/{exposed,weathered,oxidized}_copper.png` come from `client-extra.jar`
+above (the clean `copper_block.png` is **not** needed — the CLUT samples each stage's own pixels, no
+subtraction). The generator reads them and writes the reusable LUT strips `../patina_{stage}.png` (see below).
+
+**Copper bars** — TFC's `block/metal/bars/copper.png` (grate) and `block/metal/smooth/copper.png` (post edge) live
+in the TFC jar; copy them to `input/tfc/copper_bars/bars.png` and `input/tfc/copper_bars/smooth.png`. The generator
+recolours both through each patina LUT into `assets/firmavanilla/.../copper_bars/<stage>.png` (+ `_edge`).
+
 ## Running
 
 ```
@@ -87,3 +104,18 @@ exactly where flecks appear, then re-run the generator and it uses your edited m
 Each is auto-created the first time (and rebuilt only with `dotnet run generate.cs -- regen-mask`, or if the file
 is missing) from granite's tile structure — which every rock shares, since the CLUT preserves the pattern's
 luminance ordering, so one mask per pattern serves all 20 rocks.
+
+## Patina palettes (generated, reusable)
+
+The generator extracts a reusable **luminance → patina-colour LUT** from each of vanilla copper's three weathering
+stages and writes them to the tool root (tracked, alongside the grain masks):
+
+- `../patina_exposed.png` — copper barely turned (a faint green fleck amid the copper-brown ramp).
+- `../patina_weathered.png` — the classic teal/green patina ramp.
+- `../patina_oxidized.png` — fully oxidized teal→bright-green ramp.
+
+Each is a 256×16 strip: column *x* is the patina colour for source luminance *x* (the stage texture's own
+`luma min..max` remapped across the full width). It's self-contained — no `copper_block` and no subtraction; the
+ramp is sampled straight from the stage via `BuildPaletteRamp`. To **patina-ify any block** later, feed a strip
+to `ClutThrough(pattern, patinaStrip)` as the `lutBase` (exactly like the alabaster-brick palettes), and the
+target's luminance is repainted through the copper patina. Re-run the generator to refresh them.

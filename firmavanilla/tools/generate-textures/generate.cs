@@ -61,6 +61,9 @@ var BRICK_LUT_ROCKS = new HashSet<string> { "basalt", "claystone", "conglomerate
 var ALABASTER_COLORS = new[] { "white", "light_gray", "gray", "black", "brown", "red", "orange", "yellow",
     "lime", "green", "cyan", "light_blue", "blue", "purple", "magenta", "pink" };
 
+// Copper oxidation stages (drives the patina LUTs + the patina'd TFC copper bars), light->heavy patina.
+var COPPER_STAGES = new[] { "exposed", "weathered", "oxidized" };
+
 // Grain overlay on the tiles: the bright high-pass of each rock's `smooth` texture (its mineral flecks),
 // amplified and added onto the tile faces. Blur radius (smaller = sharper flecks), strength (intensity), and
 // the mask margin below the tile's mean luminance (grain lands on faces/highlights, not mortar/shadows).
@@ -493,8 +496,64 @@ foreach (var color in ALABASTER_COLORS)
     Console.WriteLine($"  alabaster_tile/{color} (+pillar, +stairs/slab/wall, +recipes)");
 }
 
+// --- patina palettes (extracted from vanilla copper weathering stages) ------------------------------
+// A reusable luminance->colour LUT per oxidation stage, sampled straight from vanilla's exposed/weathered/
+// oxidized copper (no subtraction, no copper_block needed — the stage texture's own pixels ARE the palette).
+// Emitted as a 256x16 ramp strip into the tool root (tracked, like grain_mask.png); feed any of these to
+// ClutThrough() as the lutBase to patina-ify an arbitrary block later. See input/README.md.
+int patina = 0;
+foreach (var stage in COPPER_STAGES)
+{
+    using var src = Load("vanilla", stage + "_copper.png");
+    Rgba32[] ramp = BuildPaletteRamp(src);
+    (int tMin, int tMax) = LumRange(src);
+    const int rw = 256, rh = 16;
+    using var strip = new Image<Rgba32>(rw, rh);
+    for (int x = 0; x < rw; x++)
+    {
+        float p = x / (float) (rw - 1);                                  // 0..1 across the strip
+        int tl = Math.Clamp((int) MathF.Round(tMin + p * (tMax - tMin)), 0, 255);
+        Rgba32 c = ramp[tl];
+        for (int y = 0; y < rh; y++) strip[x, y] = new Rgba32(c.R, c.G, c.B, 255);
+    }
+    strip.Save(Path.Combine(scriptDir, $"patina_{stage}.png"));
+    Console.WriteLine($"  patina_{stage}.png (luma {tMin}..{tMax})");
+    patina++;
+}
+
+// --- patina'd TFC copper bars (apply the extracted LUTs) --------------------------------------------
+// Recolour TFC's copper bars through each patina LUT strip: two textures per stage — the grate ("bars",
+// keeps its transparency) and the smooth post "edge". ClutSide reads the 256-wide strip as the ramp but
+// emits at the source's native 16x16 (transparent bar pixels keep their alpha). Models/blockstate mirror
+// TFC's iron-bars multipart; see CopperBarsBlocks.java.
+int copperBars = 0;
+{
+    using var barsSrc = Load("tfc", Path.Combine("copper_bars", "bars.png"));
+    using var smoothSrc = Load("tfc", Path.Combine("copper_bars", "smooth.png"));
+    string cbTexDir   = Path.Combine(resRoot, "assets", MODID, "textures", "block", "copper_bars");
+    string cbBsDir    = Path.Combine(resRoot, "assets", MODID, "blockstates", "copper_bars");
+    string cbModelDir = Path.Combine(resRoot, "assets", MODID, "models", "block", "copper_bars");
+    string cbItemDir  = Path.Combine(resRoot, "assets", MODID, "models", "item", "copper_bars");
+    string cbLootDir  = Path.Combine(resRoot, "data", MODID, "loot_tables", "blocks", "copper_bars");
+    foreach (var d in new[] { cbTexDir, cbBsDir, cbModelDir, cbItemDir, cbLootDir }) Directory.CreateDirectory(d);
+    foreach (var stage in COPPER_STAGES)
+    {
+        using var strip = Image.Load<Rgba32>(Path.Combine(scriptDir, $"patina_{stage}.png"));
+        using (var b = ClutSide(barsSrc, strip, barsSrc.Width, barsSrc.Height)) b.Save(Path.Combine(cbTexDir, $"{stage}.png"));
+        using (var e = ClutSide(smoothSrc, strip, smoothSrc.Width, smoothSrc.Height)) e.Save(Path.Combine(cbTexDir, $"{stage}_edge.png"));
+        // 6 part models (parent vanilla iron_bars_*), multipart blockstate, item + loot — mirror TFC's copper bars.
+        foreach (var part in new[] { "post", "post_ends", "cap", "cap_alt", "side", "side_alt" })
+            File.WriteAllText(Path.Combine(cbModelDir, $"{stage}_{part}.json"), CopperBarsModel(stage, part));
+        File.WriteAllText(Path.Combine(cbBsDir, $"{stage}.json"), CopperBarsBlockstate(stage));
+        File.WriteAllText(Path.Combine(cbItemDir, $"{stage}.json"), CopperBarsItem(stage));
+        File.WriteAllText(Path.Combine(cbLootDir, $"{stage}.json"), CopperBarsLoot(stage));
+        copperBars++;
+    }
+    Console.WriteLine($"  copper bars: {copperBars} stages (grate + edge + models/blockstate/item/loot)");
+}
+
 foreach (var (_, pair) in motifSources) { pair.relief.Dispose(); pair.flat.Dispose(); }
-Console.WriteLine($"Done: {done} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants written to {resRoot}");
+Console.WriteLine($"Done: {done} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants + {patina} patina palettes + {copperBars} copper-bar stages written to {resRoot}");
 
 // ---- helpers --------------------------------------------------------------
 
@@ -759,7 +818,8 @@ string MineableTag()
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_pillar/{c}\""))
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_stairs/{c}\""))
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_slab/{c}\""))
-        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_wall/{c}\""));
+        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_wall/{c}\""))
+        .Concat(COPPER_STAGES.Select(s => $"    \"{MODID}:copper_bars/{s}\""));
     return ValuesTag(ids);
 }
 
@@ -773,6 +833,46 @@ string ValuesTag(IEnumerable<string> ids) =>
 string ShapeTag(string rockKind, string alabKind) => ValuesTag(
     ROCKS.Select(r => $"    \"{MODID}:{rockKind}/{r}\"")
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:{alabKind}/{c}\"")));
+
+// ---- copper-bars JSON emitters (one patina'd retexture of TFC's iron-bars multipart per stage) ----
+// One part model: parent the vanilla iron_bars_<part>, point bars/particle at our recoloured grate and edge
+// at our recoloured smooth copper.
+// render_type cutout_mipped (Forge) — vanilla registers iron bars on that layer in code; our blocks don't get
+// that registration, so without it the grate's transparent pixels render opaque. Data-driven via the model.
+string CopperBarsModel(string stage, string part) =>
+    $$$"""
+    {"parent":"minecraft:block/iron_bars_{{{part}}}","render_type":"minecraft:cutout_mipped","textures":{"particle":"{{{MODID}}}:block/copper_bars/{{{stage}}}","bars":"{{{MODID}}}:block/copper_bars/{{{stage}}}","edge":"{{{MODID}}}:block/copper_bars/{{{stage}}}_edge"}}
+    """;
+
+// Multipart blockstate — identical topology to TFC's metal/bars/copper, retargeted at our per-stage models.
+string CopperBarsBlockstate(string stage)
+{
+    string m(string part) => $"{MODID}:block/copper_bars/{stage}_{part}";
+    return $$$"""
+    {"multipart":[
+    {"apply":{"model":"{{{m("post_ends")}}}"}},
+    {"when":{"north":false,"south":false,"east":false,"west":false},"apply":{"model":"{{{m("post")}}}"}},
+    {"when":{"north":true,"south":false,"east":false,"west":false},"apply":{"model":"{{{m("cap")}}}"}},
+    {"when":{"north":false,"south":false,"east":true,"west":false},"apply":{"model":"{{{m("cap")}}}","y":90}},
+    {"when":{"north":false,"south":true,"east":false,"west":false},"apply":{"model":"{{{m("cap_alt")}}}"}},
+    {"when":{"north":false,"south":false,"east":false,"west":true},"apply":{"model":"{{{m("cap_alt")}}}","y":90}},
+    {"when":{"north":true},"apply":{"model":"{{{m("side")}}}"}},
+    {"when":{"east":true},"apply":{"model":"{{{m("side")}}}","y":90}},
+    {"when":{"south":true},"apply":{"model":"{{{m("side_alt")}}}"}},
+    {"when":{"west":true},"apply":{"model":"{{{m("side_alt")}}}","y":90}}
+    ]}
+    """;
+}
+
+string CopperBarsItem(string stage) =>
+    $$$"""
+    {"parent":"item/generated","textures":{"layer0":"{{{MODID}}}:block/copper_bars/{{{stage}}}"}}
+    """;
+
+string CopperBarsLoot(string stage) =>
+    $$$"""
+    {"type":"minecraft:block","pools":[{"name":"loot_pool","rolls":1,"entries":[{"type":"minecraft:item","name":"{{{MODID}}}:copper_bars/{{{stage}}}"}],"conditions":[{"condition":"minecraft:survives_explosion"}]}]}
+    """;
 
 // ---- bookshelf JSON emitters ----------------------------------------------
 
