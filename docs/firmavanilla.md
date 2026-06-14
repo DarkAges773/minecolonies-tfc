@@ -252,3 +252,9 @@ everywhere, since alabaster has no mortar grooves to protect. Strength is the si
 (start 1.0). The pillar's side and `_top` faces both ramp through the same alabaster-brick palette. Join
 `mineable/pickaxe`. **Recipes deferred** for now. The colour list (vanilla DyeColor order) is duplicated in
 `AlabasterBlocks.java` and `generate.cs`; keep them in sync.
+
+**Shapes.** Off the alabaster tile, each colour also gets `alabaster_tile_stairs/`, `alabaster_tile_slab/` and
+`alabaster_tile_wall/<colour>` (`StairBlock`/`SlabBlock`/`WallBlock`), reusing the tile texture on every face via
+the same generic shape emitters as the rock tiles (`StairsBlockstate`/`SlabBlockstate`/`WallBlockstate`, now
+parameterised by `kind`/`baseKind`). They join the vanilla `stairs`/`slabs`/`walls` tags. Vanilla ships no purpur
+wall, but the alabaster wall is provided anyway (it just uses the tile texture). Recipes deferred, like the tile.

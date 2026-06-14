@@ -139,9 +139,9 @@ File.WriteAllText(Path.Combine(mineableDir, "pickaxe.json"), MineableTag());
 
 // Vanilla shape tags so our tile stairs/slabs/walls behave like vanilla ones (notably minecraft:walls, which
 // the wall connection logic keys off). Additive (replace:false).
-WriteTag("minecraft", "blocks", "stairs", ShapeTag("tile_stairs"));
-WriteTag("minecraft", "blocks", "slabs", ShapeTag("tile_slab"));
-WriteTag("minecraft", "blocks", "walls", ShapeTag("tile_wall"));
+WriteTag("minecraft", "blocks", "stairs", ShapeTag("tile_stairs", "alabaster_tile_stairs"));
+WriteTag("minecraft", "blocks", "slabs", ShapeTag("tile_slab", "alabaster_tile_slab"));
+WriteTag("minecraft", "blocks", "walls", ShapeTag("tile_wall", "alabaster_tile_wall"));
 
 // ---- decorative bookshelves (no images; models reference each source mod's textures directly) ----------
 // TFC woods are always present; AFC/Beneath woods only exist when those mods are loaded (the block code
@@ -312,18 +312,18 @@ foreach (var rock in ROCKS)
         ToolCraft($"{MODID}:tiles/{rock}", "tfc:hammers", $"{MODID}:cracked_tiles/{rock}"));
 
     // Stairs / slab / wall off the plain tiles (no new textures — all reference block/tiles/<rock>).
-    File.WriteAllText(Path.Combine(stDirs.bs, rock + ".json"), StairsBlockstate(rock));
-    foreach (var (suffix, body) in StairsModels(rock)) File.WriteAllText(Path.Combine(stDirs.model, rock + suffix + ".json"), body);
+    File.WriteAllText(Path.Combine(stDirs.bs, rock + ".json"), StairsBlockstate("tile_stairs", rock));
+    foreach (var (suffix, body) in StairsModels("tiles", rock)) File.WriteAllText(Path.Combine(stDirs.model, rock + suffix + ".json"), body);
     File.WriteAllText(Path.Combine(stDirs.item, rock + ".json"), ItemParent("tile_stairs", rock, ""));
     File.WriteAllText(Path.Combine(stDirs.loot, rock + ".json"), SelfLoot("tile_stairs", rock));
 
-    File.WriteAllText(Path.Combine(slDirs.bs, rock + ".json"), SlabBlockstate(rock));
-    foreach (var (suffix, body) in SlabModels(rock)) File.WriteAllText(Path.Combine(slDirs.model, rock + suffix + ".json"), body);
+    File.WriteAllText(Path.Combine(slDirs.bs, rock + ".json"), SlabBlockstate("tile_slab", "tiles", rock));
+    foreach (var (suffix, body) in SlabModels("tiles", rock)) File.WriteAllText(Path.Combine(slDirs.model, rock + suffix + ".json"), body);
     File.WriteAllText(Path.Combine(slDirs.item, rock + ".json"), ItemParent("tile_slab", rock, ""));
-    File.WriteAllText(Path.Combine(slDirs.loot, rock + ".json"), SlabLoot(rock));
+    File.WriteAllText(Path.Combine(slDirs.loot, rock + ".json"), SlabLoot("tile_slab", rock));
 
-    File.WriteAllText(Path.Combine(wlDirs.bs, rock + ".json"), WallBlockstate(rock));
-    foreach (var (suffix, body) in WallModels(rock)) File.WriteAllText(Path.Combine(wlDirs.model, rock + suffix + ".json"), body);
+    File.WriteAllText(Path.Combine(wlDirs.bs, rock + ".json"), WallBlockstate("tile_wall", rock));
+    foreach (var (suffix, body) in WallModels("tiles", rock)) File.WriteAllText(Path.Combine(wlDirs.model, rock + suffix + ".json"), body);
     File.WriteAllText(Path.Combine(wlDirs.item, rock + ".json"), ItemParent("tile_wall", rock, "_inventory"));
     File.WriteAllText(Path.Combine(wlDirs.loot, rock + ".json"), SelfLoot("tile_wall", rock));
 
@@ -352,20 +352,28 @@ crackedMask.Dispose();
 
 // ---- alabaster tile + pillar (CLUT: vanilla purpur recoloured through each TFC alabaster-brick colour) ------
 // purpur_block -> alabaster_tile/<colour> (cube_all); purpur_pillar (+_top) -> alabaster_pillar/<colour>
-// (cube_column). No grain — alabaster is a smooth, uniform stone. Recipes deferred.
+// (cube_column). The tile is then composited with raw alabaster through the hand-authored tiles_mask.png:
+// mask white = keep the generated tile (the brick seams), black = show raw alabaster (the panel faces); grey
+// blends. Pillar isn't covered by the (tile-shaped) mask. Recipes deferred.
 var alTileDirs = TileDirs("alabaster_tile", withRecipe: false);
 var alPillarDirs = TileDirs("alabaster_pillar", withRecipe: false);
+// Shapes off the alabaster tile (stairs/slab/wall) — reuse the tile texture, no recipes for now.
+var alStDirs = DerivedDirs("alabaster_tile_stairs");
+var alSlDirs = DerivedDirs("alabaster_tile_slab");
+var alWlDirs = DerivedDirs("alabaster_tile_wall");
 using var purpurBlock = Load("vanilla", "purpur_block.png");
 using var purpurPillar = Load("vanilla", "purpur_pillar.png");
 using var purpurPillarTop = Load("vanilla", "purpur_pillar_top.png");
+using var tilesMask = Image.Load<Rgba32>(Path.Combine(scriptDir, "tiles_mask.png"));   // hand-authored, tracked
 int alab = 0;
 foreach (var color in ALABASTER_COLORS)
 {
     using var lut = Load("tfc", Path.Combine("alabaster_bricks", color + ".png"));
-    using var raw = Load("tfc", Path.Combine("alabaster_raw", color + ".png"));   // detail-stamp source (no mask)
+    using var raw = Load("tfc", Path.Combine("alabaster_raw", color + ".png"));
     using (var t = ClutThrough(purpurBlock, lut))
     {
         GrainOverlay(t, raw, ALABASTER_GRAIN_STRENGTH, null);
+        MaskComposite(t, raw, tilesMask);   // raw alabaster on the panel faces (mask black), generated seams (white)
         t.Save(Path.Combine(alTileDirs.tex, color + ".png"));
     }
     using (var s = ClutThrough(purpurPillar, lut))
@@ -388,8 +396,24 @@ foreach (var color in ALABASTER_COLORS)
     File.WriteAllText(Path.Combine(alPillarDirs.model, color + ".json"), PillarModel(color));
     File.WriteAllText(Path.Combine(alPillarDirs.item, color + ".json"), TilesItemModel("alabaster_pillar", color));
     File.WriteAllText(Path.Combine(alPillarDirs.loot, color + ".json"), TilesLoot("alabaster_pillar", color));
+
+    // Stairs / slab / wall off the alabaster tile — same emitters as the rock tiles, base texture alabaster_tile/<colour>.
+    File.WriteAllText(Path.Combine(alStDirs.bs, color + ".json"), StairsBlockstate("alabaster_tile_stairs", color));
+    foreach (var (suffix, body) in StairsModels("alabaster_tile", color)) File.WriteAllText(Path.Combine(alStDirs.model, color + suffix + ".json"), body);
+    File.WriteAllText(Path.Combine(alStDirs.item, color + ".json"), ItemParent("alabaster_tile_stairs", color, ""));
+    File.WriteAllText(Path.Combine(alStDirs.loot, color + ".json"), SelfLoot("alabaster_tile_stairs", color));
+
+    File.WriteAllText(Path.Combine(alSlDirs.bs, color + ".json"), SlabBlockstate("alabaster_tile_slab", "alabaster_tile", color));
+    foreach (var (suffix, body) in SlabModels("alabaster_tile", color)) File.WriteAllText(Path.Combine(alSlDirs.model, color + suffix + ".json"), body);
+    File.WriteAllText(Path.Combine(alSlDirs.item, color + ".json"), ItemParent("alabaster_tile_slab", color, ""));
+    File.WriteAllText(Path.Combine(alSlDirs.loot, color + ".json"), SlabLoot("alabaster_tile_slab", color));
+
+    File.WriteAllText(Path.Combine(alWlDirs.bs, color + ".json"), WallBlockstate("alabaster_tile_wall", color));
+    foreach (var (suffix, body) in WallModels("alabaster_tile", color)) File.WriteAllText(Path.Combine(alWlDirs.model, color + suffix + ".json"), body);
+    File.WriteAllText(Path.Combine(alWlDirs.item, color + ".json"), ItemParent("alabaster_tile_wall", color, "_inventory"));
+    File.WriteAllText(Path.Combine(alWlDirs.loot, color + ".json"), SelfLoot("alabaster_tile_wall", color));
     alab++;
-    Console.WriteLine($"  alabaster_tile/{color} + alabaster_pillar/{color}");
+    Console.WriteLine($"  alabaster_tile/{color} (+pillar, +stairs/slab/wall)");
 }
 
 foreach (var (_, pair) in motifSources) { pair.relief.Dispose(); pair.flat.Dispose(); }
@@ -505,6 +529,25 @@ Rgba32[] BuildPaletteRamp(Image<Rgba32> tex)
 }
 
 int Lum(int r, int g, int b) => Math.Clamp((int) Math.Round(0.299 * r + 0.587 * g + 0.114 * b), 0, 255);
+
+// Composite `rawSrc` under `tile` via a hand-authored mask: per pixel lerp from raw (mask black) to the generated
+// tile (mask white) by the mask's luminance, so grey mask values blend the two. Result written back into `tile`.
+void MaskComposite(Image<Rgba32> tile, Image<Rgba32> rawSrc, Image<Rgba32> maskSrc)
+{
+    int w = tile.Width, h = tile.Height;
+    using var raw = (rawSrc.Width == w && rawSrc.Height == h) ? rawSrc.Clone() : rawSrc.Clone(c => c.Resize(w, h));
+    using var mk = (maskSrc.Width == w && maskSrc.Height == h) ? maskSrc.Clone() : maskSrc.Clone(c => c.Resize(w, h));
+    for (int y = 0; y < h; y++) for (int x = 0; x < w; x++)
+    {
+        float m = Lum(mk[x, y].R, mk[x, y].G, mk[x, y].B) / 255f;   // 1 = white = generated tile, 0 = black = raw
+        Rgba32 t = tile[x, y], r = raw[x, y];
+        tile[x, y] = new Rgba32(
+            (byte) Math.Clamp((int) MathF.Round(r.R + (t.R - r.R) * m), 0, 255),
+            (byte) Math.Clamp((int) MathF.Round(r.G + (t.G - r.G) * m), 0, 255),
+            (byte) Math.Clamp((int) MathF.Round(r.B + (t.B - r.B) * m), 0, 255),
+            t.A);
+    }
+}
 
 // Overlay a source texture's bright grain onto a tile: the positive high-pass of `grainSrc` (grain - blur, bright
 // parts only), amplified by `strength` and added. `maskSrc` gates where it lands (white = apply, black = skip);
@@ -635,7 +678,10 @@ string MineableTag()
         .Concat(ROCKS.Select(r => $"    \"{MODID}:tile_slab/{r}\""))
         .Concat(ROCKS.Select(r => $"    \"{MODID}:tile_wall/{r}\""))
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile/{c}\""))
-        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_pillar/{c}\""));
+        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_pillar/{c}\""))
+        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_stairs/{c}\""))
+        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_slab/{c}\""))
+        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_wall/{c}\""));
     return ValuesTag(ids);
 }
 
@@ -643,9 +689,12 @@ string MineableTag()
 string ValuesTag(IEnumerable<string> ids) =>
     "{\n  \"replace\": false,\n  \"values\": [\n" + string.Join(",\n", ids) + "\n  ]\n}\n";
 
-// A vanilla shape tag (minecraft:blocks/{stairs|slabs|walls}) listing this rock-tile shape for all rocks, so
-// our variants behave like vanilla ones (wall connection logic keys off minecraft:walls, etc.).
-string ShapeTag(string kind) => ValuesTag(ROCKS.Select(r => $"    \"{MODID}:{kind}/{r}\""));
+// A vanilla shape tag (minecraft:blocks/{stairs|slabs|walls}) listing both the rock-tile shape (all rocks) and the
+// alabaster-tile shape (all colours), so our variants behave like vanilla ones (wall connection keys off
+// minecraft:walls, etc.).
+string ShapeTag(string rockKind, string alabKind) => ValuesTag(
+    ROCKS.Select(r => $"    \"{MODID}:{rockKind}/{r}\"")
+        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:{alabKind}/{c}\"")));
 
 // ---- bookshelf JSON emitters ----------------------------------------------
 
@@ -816,9 +865,9 @@ string ItemParent(string kind, string rock, string suffix) =>
 string SelfLoot(string kind, string rock) => TilesLoot(kind, rock);
 
 // --- stairs ---
-(string suffix, string body)[] StairsModels(string rock)
+(string suffix, string body)[] StairsModels(string baseKind, string rock)
 {
-    string tex = $$"""{ "bottom": "{{MODID}}:block/tiles/{{rock}}", "top": "{{MODID}}:block/tiles/{{rock}}", "side": "{{MODID}}:block/tiles/{{rock}}" }""";
+    string tex = $$"""{ "bottom": "{{MODID}}:block/{{baseKind}}/{{rock}}", "top": "{{MODID}}:block/{{baseKind}}/{{rock}}", "side": "{{MODID}}:block/{{baseKind}}/{{rock}}" }""";
     return new[]
     {
         ("",       $$"""{ "parent": "minecraft:block/stairs",       "textures": {{tex}} }"""),
@@ -827,58 +876,58 @@ string SelfLoot(string kind, string rock) => TilesLoot(kind, rock);
     };
 }
 
-string StairsBlockstate(string rock) =>
+string StairsBlockstate(string kind, string rock) =>
     $$"""
     {
       "variants": {
-        "facing=east,half=bottom,shape=straight":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}" },
-        "facing=west,half=bottom,shape=straight":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}", "y": 180, "uvlock": true },
-        "facing=south,half=bottom,shape=straight":    { "model": "{{MODID}}:block/tile_stairs/{{rock}}", "y": 90, "uvlock": true },
-        "facing=north,half=bottom,shape=straight":    { "model": "{{MODID}}:block/tile_stairs/{{rock}}", "y": 270, "uvlock": true },
-        "facing=east,half=bottom,shape=outer_right":  { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer" },
-        "facing=west,half=bottom,shape=outer_right":  { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "y": 180, "uvlock": true },
-        "facing=south,half=bottom,shape=outer_right": { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "y": 90, "uvlock": true },
-        "facing=north,half=bottom,shape=outer_right": { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "y": 270, "uvlock": true },
-        "facing=east,half=bottom,shape=outer_left":   { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "y": 270, "uvlock": true },
-        "facing=west,half=bottom,shape=outer_left":   { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "y": 90, "uvlock": true },
-        "facing=south,half=bottom,shape=outer_left":  { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer" },
-        "facing=north,half=bottom,shape=outer_left":  { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "y": 180, "uvlock": true },
-        "facing=east,half=bottom,shape=inner_right":  { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner" },
-        "facing=west,half=bottom,shape=inner_right":  { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "y": 180, "uvlock": true },
-        "facing=south,half=bottom,shape=inner_right": { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "y": 90, "uvlock": true },
-        "facing=north,half=bottom,shape=inner_right": { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "y": 270, "uvlock": true },
-        "facing=east,half=bottom,shape=inner_left":   { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "y": 270, "uvlock": true },
-        "facing=west,half=bottom,shape=inner_left":   { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "y": 90, "uvlock": true },
-        "facing=south,half=bottom,shape=inner_left":  { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner" },
-        "facing=north,half=bottom,shape=inner_left":  { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "y": 180, "uvlock": true },
-        "facing=east,half=top,shape=straight":        { "model": "{{MODID}}:block/tile_stairs/{{rock}}", "x": 180, "uvlock": true },
-        "facing=west,half=top,shape=straight":        { "model": "{{MODID}}:block/tile_stairs/{{rock}}", "x": 180, "y": 180, "uvlock": true },
-        "facing=south,half=top,shape=straight":       { "model": "{{MODID}}:block/tile_stairs/{{rock}}", "x": 180, "y": 90, "uvlock": true },
-        "facing=north,half=top,shape=straight":       { "model": "{{MODID}}:block/tile_stairs/{{rock}}", "x": 180, "y": 270, "uvlock": true },
-        "facing=east,half=top,shape=outer_right":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "x": 180, "y": 90, "uvlock": true },
-        "facing=west,half=top,shape=outer_right":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "x": 180, "y": 270, "uvlock": true },
-        "facing=south,half=top,shape=outer_right":    { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "x": 180, "uvlock": true },
-        "facing=north,half=top,shape=outer_right":    { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "x": 180, "y": 180, "uvlock": true },
-        "facing=east,half=top,shape=outer_left":      { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "x": 180, "uvlock": true },
-        "facing=west,half=top,shape=outer_left":      { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "x": 180, "y": 180, "uvlock": true },
-        "facing=south,half=top,shape=outer_left":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "x": 180, "y": 90, "uvlock": true },
-        "facing=north,half=top,shape=outer_left":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}_outer", "x": 180, "y": 270, "uvlock": true },
-        "facing=east,half=top,shape=inner_right":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "x": 180, "y": 90, "uvlock": true },
-        "facing=west,half=top,shape=inner_right":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "x": 180, "y": 270, "uvlock": true },
-        "facing=south,half=top,shape=inner_right":    { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "x": 180, "uvlock": true },
-        "facing=north,half=top,shape=inner_right":    { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "x": 180, "y": 180, "uvlock": true },
-        "facing=east,half=top,shape=inner_left":      { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "x": 180, "uvlock": true },
-        "facing=west,half=top,shape=inner_left":      { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "x": 180, "y": 180, "uvlock": true },
-        "facing=south,half=top,shape=inner_left":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "x": 180, "y": 90, "uvlock": true },
-        "facing=north,half=top,shape=inner_left":     { "model": "{{MODID}}:block/tile_stairs/{{rock}}_inner", "x": 180, "y": 270, "uvlock": true }
+        "facing=east,half=bottom,shape=straight":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}" },
+        "facing=west,half=bottom,shape=straight":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}", "y": 180, "uvlock": true },
+        "facing=south,half=bottom,shape=straight":    { "model": "{{MODID}}:block/{{kind}}/{{rock}}", "y": 90, "uvlock": true },
+        "facing=north,half=bottom,shape=straight":    { "model": "{{MODID}}:block/{{kind}}/{{rock}}", "y": 270, "uvlock": true },
+        "facing=east,half=bottom,shape=outer_right":  { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer" },
+        "facing=west,half=bottom,shape=outer_right":  { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "y": 180, "uvlock": true },
+        "facing=south,half=bottom,shape=outer_right": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "y": 90, "uvlock": true },
+        "facing=north,half=bottom,shape=outer_right": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "y": 270, "uvlock": true },
+        "facing=east,half=bottom,shape=outer_left":   { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "y": 270, "uvlock": true },
+        "facing=west,half=bottom,shape=outer_left":   { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "y": 90, "uvlock": true },
+        "facing=south,half=bottom,shape=outer_left":  { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer" },
+        "facing=north,half=bottom,shape=outer_left":  { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "y": 180, "uvlock": true },
+        "facing=east,half=bottom,shape=inner_right":  { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner" },
+        "facing=west,half=bottom,shape=inner_right":  { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "y": 180, "uvlock": true },
+        "facing=south,half=bottom,shape=inner_right": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "y": 90, "uvlock": true },
+        "facing=north,half=bottom,shape=inner_right": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "y": 270, "uvlock": true },
+        "facing=east,half=bottom,shape=inner_left":   { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "y": 270, "uvlock": true },
+        "facing=west,half=bottom,shape=inner_left":   { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "y": 90, "uvlock": true },
+        "facing=south,half=bottom,shape=inner_left":  { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner" },
+        "facing=north,half=bottom,shape=inner_left":  { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "y": 180, "uvlock": true },
+        "facing=east,half=top,shape=straight":        { "model": "{{MODID}}:block/{{kind}}/{{rock}}", "x": 180, "uvlock": true },
+        "facing=west,half=top,shape=straight":        { "model": "{{MODID}}:block/{{kind}}/{{rock}}", "x": 180, "y": 180, "uvlock": true },
+        "facing=south,half=top,shape=straight":       { "model": "{{MODID}}:block/{{kind}}/{{rock}}", "x": 180, "y": 90, "uvlock": true },
+        "facing=north,half=top,shape=straight":       { "model": "{{MODID}}:block/{{kind}}/{{rock}}", "x": 180, "y": 270, "uvlock": true },
+        "facing=east,half=top,shape=outer_right":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "x": 180, "y": 90, "uvlock": true },
+        "facing=west,half=top,shape=outer_right":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "x": 180, "y": 270, "uvlock": true },
+        "facing=south,half=top,shape=outer_right":    { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "x": 180, "uvlock": true },
+        "facing=north,half=top,shape=outer_right":    { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "x": 180, "y": 180, "uvlock": true },
+        "facing=east,half=top,shape=outer_left":      { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "x": 180, "uvlock": true },
+        "facing=west,half=top,shape=outer_left":      { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "x": 180, "y": 180, "uvlock": true },
+        "facing=south,half=top,shape=outer_left":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "x": 180, "y": 90, "uvlock": true },
+        "facing=north,half=top,shape=outer_left":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}_outer", "x": 180, "y": 270, "uvlock": true },
+        "facing=east,half=top,shape=inner_right":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "x": 180, "y": 90, "uvlock": true },
+        "facing=west,half=top,shape=inner_right":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "x": 180, "y": 270, "uvlock": true },
+        "facing=south,half=top,shape=inner_right":    { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "x": 180, "uvlock": true },
+        "facing=north,half=top,shape=inner_right":    { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "x": 180, "y": 180, "uvlock": true },
+        "facing=east,half=top,shape=inner_left":      { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "x": 180, "uvlock": true },
+        "facing=west,half=top,shape=inner_left":      { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "x": 180, "y": 180, "uvlock": true },
+        "facing=south,half=top,shape=inner_left":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "x": 180, "y": 90, "uvlock": true },
+        "facing=north,half=top,shape=inner_left":     { "model": "{{MODID}}:block/{{kind}}/{{rock}}_inner", "x": 180, "y": 270, "uvlock": true }
       }
     }
     """;
 
 // --- slab ---
-(string suffix, string body)[] SlabModels(string rock)
+(string suffix, string body)[] SlabModels(string baseKind, string rock)
 {
-    string tex = $$"""{ "bottom": "{{MODID}}:block/tiles/{{rock}}", "top": "{{MODID}}:block/tiles/{{rock}}", "side": "{{MODID}}:block/tiles/{{rock}}" }""";
+    string tex = $$"""{ "bottom": "{{MODID}}:block/{{baseKind}}/{{rock}}", "top": "{{MODID}}:block/{{baseKind}}/{{rock}}", "side": "{{MODID}}:block/{{baseKind}}/{{rock}}" }""";
     return new[]
     {
         ("",     $$"""{ "parent": "minecraft:block/slab",     "textures": {{tex}} }"""),
@@ -886,18 +935,18 @@ string StairsBlockstate(string rock) =>
     };
 }
 
-string SlabBlockstate(string rock) =>
+string SlabBlockstate(string kind, string baseKind, string rock) =>
     $$"""
     {
       "variants": {
-        "type=bottom": { "model": "{{MODID}}:block/tile_slab/{{rock}}" },
-        "type=top":    { "model": "{{MODID}}:block/tile_slab/{{rock}}_top" },
-        "type=double": { "model": "{{MODID}}:block/tiles/{{rock}}" }
+        "type=bottom": { "model": "{{MODID}}:block/{{kind}}/{{rock}}" },
+        "type=top":    { "model": "{{MODID}}:block/{{kind}}/{{rock}}_top" },
+        "type=double": { "model": "{{MODID}}:block/{{baseKind}}/{{rock}}" }
       }
     }
     """;
 
-string SlabLoot(string rock) =>
+string SlabLoot(string kind, string rock) =>
     $$"""
     {
       "type": "minecraft:block",
@@ -907,12 +956,12 @@ string SlabLoot(string rock) =>
           "entries": [
             {
               "type": "minecraft:item",
-              "name": "{{MODID}}:tile_slab/{{rock}}",
+              "name": "{{MODID}}:{{kind}}/{{rock}}",
               "functions": [
                 {
                   "function": "minecraft:set_count",
                   "conditions": [
-                    { "condition": "minecraft:block_state_property", "block": "{{MODID}}:tile_slab/{{rock}}", "properties": { "type": "double" } }
+                    { "condition": "minecraft:block_state_property", "block": "{{MODID}}:{{kind}}/{{rock}}", "properties": { "type": "double" } }
                   ],
                   "count": 2,
                   "add": false
@@ -927,9 +976,9 @@ string SlabLoot(string rock) =>
     """;
 
 // --- wall ---
-(string suffix, string body)[] WallModels(string rock)
+(string suffix, string body)[] WallModels(string baseKind, string rock)
 {
-    string tex = $$"""{ "wall": "{{MODID}}:block/tiles/{{rock}}" }""";
+    string tex = $$"""{ "wall": "{{MODID}}:block/{{baseKind}}/{{rock}}" }""";
     return new[]
     {
         ("_post",      $$"""{ "parent": "minecraft:block/template_wall_post",      "textures": {{tex}} }"""),
@@ -939,19 +988,19 @@ string SlabLoot(string rock) =>
     };
 }
 
-string WallBlockstate(string rock) =>
+string WallBlockstate(string kind, string rock) =>
     $$"""
     {
       "multipart": [
-        { "when": { "up": "true" }, "apply": { "model": "{{MODID}}:block/tile_wall/{{rock}}_post" } },
-        { "when": { "north": "low" }, "apply": { "model": "{{MODID}}:block/tile_wall/{{rock}}_side", "uvlock": true } },
-        { "when": { "east": "low" },  "apply": { "model": "{{MODID}}:block/tile_wall/{{rock}}_side", "y": 90, "uvlock": true } },
-        { "when": { "south": "low" }, "apply": { "model": "{{MODID}}:block/tile_wall/{{rock}}_side", "y": 180, "uvlock": true } },
-        { "when": { "west": "low" },  "apply": { "model": "{{MODID}}:block/tile_wall/{{rock}}_side", "y": 270, "uvlock": true } },
-        { "when": { "north": "tall" }, "apply": { "model": "{{MODID}}:block/tile_wall/{{rock}}_side_tall", "uvlock": true } },
-        { "when": { "east": "tall" },  "apply": { "model": "{{MODID}}:block/tile_wall/{{rock}}_side_tall", "y": 90, "uvlock": true } },
-        { "when": { "south": "tall" }, "apply": { "model": "{{MODID}}:block/tile_wall/{{rock}}_side_tall", "y": 180, "uvlock": true } },
-        { "when": { "west": "tall" },  "apply": { "model": "{{MODID}}:block/tile_wall/{{rock}}_side_tall", "y": 270, "uvlock": true } }
+        { "when": { "up": "true" }, "apply": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_post" } },
+        { "when": { "north": "low" }, "apply": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_side", "uvlock": true } },
+        { "when": { "east": "low" },  "apply": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_side", "y": 90, "uvlock": true } },
+        { "when": { "south": "low" }, "apply": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_side", "y": 180, "uvlock": true } },
+        { "when": { "west": "low" },  "apply": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_side", "y": 270, "uvlock": true } },
+        { "when": { "north": "tall" }, "apply": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_side_tall", "uvlock": true } },
+        { "when": { "east": "tall" },  "apply": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_side_tall", "y": 90, "uvlock": true } },
+        { "when": { "south": "tall" }, "apply": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_side_tall", "y": 180, "uvlock": true } },
+        { "when": { "west": "tall" },  "apply": { "model": "{{MODID}}:block/{{kind}}/{{rock}}_side_tall", "y": 270, "uvlock": true } }
       ]
     }
     """;

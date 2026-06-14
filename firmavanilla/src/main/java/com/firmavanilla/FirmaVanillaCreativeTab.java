@@ -56,10 +56,13 @@ public final class FirmaVanillaCreativeTab
                             output.accept(TileBlocks.WALLS.get(i).get());
                             output.accept(TileBlocks.CRACKED.get(i).get());
                         }
-                        // Alabaster: each colour's tile then its pillar.
+                        // Alabaster: each colour's tile, its shape family, then its pillar.
                         for (int i = 0; i < AlabasterBlocks.TILES.size(); i++)
                         {
                             output.accept(AlabasterBlocks.TILES.get(i).get());
+                            output.accept(AlabasterBlocks.STAIRS.get(i).get());
+                            output.accept(AlabasterBlocks.SLABS.get(i).get());
+                            output.accept(AlabasterBlocks.WALLS.get(i).get());
                             output.accept(AlabasterBlocks.PILLARS.get(i).get());
                         }
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())

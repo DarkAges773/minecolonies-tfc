@@ -20,6 +20,22 @@
     "firmavanilla:tile_wall/rhyolite",
     "firmavanilla:tile_wall/schist",
     "firmavanilla:tile_wall/shale",
-    "firmavanilla:tile_wall/slate"
+    "firmavanilla:tile_wall/slate",
+    "firmavanilla:alabaster_tile_wall/white",
+    "firmavanilla:alabaster_tile_wall/light_gray",
+    "firmavanilla:alabaster_tile_wall/gray",
+    "firmavanilla:alabaster_tile_wall/black",
+    "firmavanilla:alabaster_tile_wall/brown",
+    "firmavanilla:alabaster_tile_wall/red",
+    "firmavanilla:alabaster_tile_wall/orange",
+    "firmavanilla:alabaster_tile_wall/yellow",
+    "firmavanilla:alabaster_tile_wall/lime",
+    "firmavanilla:alabaster_tile_wall/green",
+    "firmavanilla:alabaster_tile_wall/cyan",
+    "firmavanilla:alabaster_tile_wall/light_blue",
+    "firmavanilla:alabaster_tile_wall/blue",
+    "firmavanilla:alabaster_tile_wall/purple",
+    "firmavanilla:alabaster_tile_wall/magenta",
+    "firmavanilla:alabaster_tile_wall/pink"
   ]
 }

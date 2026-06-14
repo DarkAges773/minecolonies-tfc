@@ -41,3 +41,7 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   through each colour's `tfc:alabaster/bricks/<colour>` palette, then a detail-stamp pass adding that colour's
   raw-alabaster stone speckle, a form TFC doesn't ship. `firmavanilla:alabaster_tile/<colour>` (full cube, from
   purpur block) and `alabaster_pillar/<colour>` (`RotatedPillarBlock`, from purpur pillar). Recipes deferred.
+- **Alabaster tile shapes** — stairs, slab and wall off the alabaster tile, per colour
+  (`firmavanilla:alabaster_tile_stairs/`, `alabaster_tile_slab/`, `alabaster_tile_wall/<colour>`); reuse the tile
+  texture, join the vanilla `stairs`/`slabs`/`walls` tags. (Vanilla has no purpur wall, but the alabaster wall is
+  provided anyway.) Recipes deferred.

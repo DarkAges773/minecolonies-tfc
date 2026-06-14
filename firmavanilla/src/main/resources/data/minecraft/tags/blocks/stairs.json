@@ -20,6 +20,22 @@
     "firmavanilla:tile_stairs/rhyolite",
     "firmavanilla:tile_stairs/schist",
     "firmavanilla:tile_stairs/shale",
-    "firmavanilla:tile_stairs/slate"
+    "firmavanilla:tile_stairs/slate",
+    "firmavanilla:alabaster_tile_stairs/white",
+    "firmavanilla:alabaster_tile_stairs/light_gray",
+    "firmavanilla:alabaster_tile_stairs/gray",
+    "firmavanilla:alabaster_tile_stairs/black",
+    "firmavanilla:alabaster_tile_stairs/brown",
+    "firmavanilla:alabaster_tile_stairs/red",
+    "firmavanilla:alabaster_tile_stairs/orange",
+    "firmavanilla:alabaster_tile_stairs/yellow",
+    "firmavanilla:alabaster_tile_stairs/lime",
+    "firmavanilla:alabaster_tile_stairs/green",
+    "firmavanilla:alabaster_tile_stairs/cyan",
+    "firmavanilla:alabaster_tile_stairs/light_blue",
+    "firmavanilla:alabaster_tile_stairs/blue",
+    "firmavanilla:alabaster_tile_stairs/purple",
+    "firmavanilla:alabaster_tile_stairs/magenta",
+    "firmavanilla:alabaster_tile_stairs/pink"
   ]
 }

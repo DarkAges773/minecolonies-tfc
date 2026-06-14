@@ -6,6 +6,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -35,16 +38,24 @@ public final class AlabasterBlocks
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, FirmaVanilla.MODID);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, FirmaVanilla.MODID);
 
-    /** Tile (full cube) and pillar block per colour, in {@link #COLORS} order. */
+    /** Tile (full cube), pillar, and the tile's stairs/slab/wall shapes per colour, in {@link #COLORS} order. */
     public static final List<RegistryObject<Block>> TILES = new ArrayList<>();
     public static final List<RegistryObject<Block>> PILLARS = new ArrayList<>();
+    public static final List<RegistryObject<Block>> STAIRS = new ArrayList<>();
+    public static final List<RegistryObject<Block>> SLABS = new ArrayList<>();
+    public static final List<RegistryObject<Block>> WALLS = new ArrayList<>();
 
     static
     {
         for (final String color : COLORS)
         {
-            TILES.add(register("alabaster_tile/" + color, () -> new Block(props())));
+            final RegistryObject<Block> tile = register("alabaster_tile/" + color, () -> new Block(props()));
+            TILES.add(tile);
             PILLARS.add(register("alabaster_pillar/" + color, () -> new RotatedPillarBlock(props())));
+            // Shapes off the tile (Forge's Supplier ctor — the tile isn't built yet at registration time).
+            STAIRS.add(register("alabaster_tile_stairs/" + color, () -> new StairBlock(() -> tile.get().defaultBlockState(), props())));
+            SLABS.add(register("alabaster_tile_slab/" + color, () -> new SlabBlock(props())));
+            WALLS.add(register("alabaster_tile_wall/" + color, () -> new WallBlock(props())));
         }
     }
 
