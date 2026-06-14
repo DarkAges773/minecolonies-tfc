@@ -94,10 +94,11 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    // TerraFirmaCraft is the only mandatory mod dependency. The block code references no TFC Java types (it
-    // works purely through tag ids like tfc:mortar), so TFC is runtimeOnly — needed on the dev classpath but
-    // not at compile. Patchouli is TFC's own mandatory dep; without it FML refuses to load TFC.
-    runtimeOnly fg.deobf("curse.maven:terrafirmacraft-302973:${tfc_file_id}")
+    // TerraFirmaCraft is the only mandatory mod dependency, and now a COMPILE dependency: the copper-bars
+    // weathering feature references TFC types/blocks (e.g. copying tfc:metal/bars/copper's properties and
+    // dropping/placing its item), so we need it at compile time, not just on the dev classpath. Patchouli is
+    // TFC's own mandatory dep; without it FML refuses to load TFC.
+    implementation fg.deobf("curse.maven:terrafirmacraft-302973:${tfc_file_id}")
     runtimeOnly fg.deobf("curse.maven:patchouli-306770:${patchouli_file_id}")
     // Dev-run-only: recipe/item viewer + block info HUD for testing (not real dependencies).
     runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")

@@ -49,9 +49,12 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   (`exposed`/`weathered`/`oxidized`), written by the asset generator to
   `tools/generate-textures/patina_{stage}.png` (256×16 ramp strips). Feed a strip to the CLUT to patina-ify a
   block. Sampled straight from each stage (no subtraction, no `copper_block` needed).
-- **Patina'd copper bars** — `firmavanilla:copper_bars/{exposed,weathered,oxidized}`, TFC's bright copper bars
-  recoloured through the patina LUTs (grate + smooth-edge), as vanilla `IronBarsBlock`. The aged copper bars TFC
-  doesn't ship. Decorative only — no oxidation progression. Mine with a pickaxe; drops itself.
+- **Weathering copper bars** — TFC's copper bars given vanilla copper's **full lifecycle**: they oxidise over time
+  (`unaffected`→`exposed`→`weathered`→`oxidized`), scrape back a stage with an axe, wax with honeycomb (waxed twins
+  for every stage), wax off with an axe, and de-oxidise when struck by lightning. TFC's own copper-bars item places
+  them and they drop it back, so existing copper bars just start aging — no new bright item, no conversion. The aged
+  stages are recoloured through the extracted patina LUTs; mine with a pickaxe. (Implemented with no mixin — by
+  splicing into vanilla's `WeatheringCopper`/`HoneycombItem` maps.)
 - **Alabaster recipes — colouring matches TFC strictly.** The tile is chiselled from `tfc:alabaster/bricks`
   (in-world smooth chisel + table chisel-craft); the pillar is chiselled from the tile; shapes come off the tile
   via crafting (×8/×6/×6), chisel (stair/slab) and stonecutting (×1/×2/×1). **Dyeing** is TFC's sealed-barrel

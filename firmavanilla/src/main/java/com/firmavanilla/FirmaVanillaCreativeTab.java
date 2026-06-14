@@ -68,8 +68,12 @@ public final class FirmaVanillaCreativeTab
                             output.accept(AlabasterBlocks.WALLS.get(i).get());
                             output.accept(AlabasterBlocks.PILLARS.get(i).get());
                         }
-                        // Patina'd copper bars, light -> heavy oxidation.
-                        for (final RegistryObject<Block> bars : CopperBarsBlocks.BARS)
+                        // Weathering copper bars: the aged stages (the bright stage uses TFC's item), then waxed twins.
+                        for (final RegistryObject<Block> bars : CopperBarsBlocks.WEATHERING)
+                        {
+                            if (bars.get().asItem() != net.minecraft.world.item.Items.AIR) output.accept(bars.get());
+                        }
+                        for (final RegistryObject<Block> bars : CopperBarsBlocks.WAXED)
                         {
                             output.accept(bars.get());
                         }

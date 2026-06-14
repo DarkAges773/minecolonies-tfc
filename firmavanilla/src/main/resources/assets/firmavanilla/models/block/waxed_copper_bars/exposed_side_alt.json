@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/iron_bars_side_alt","render_type":"minecraft:cutout_mipped","textures":{"particle":"firmavanilla:block/copper_bars/exposed","bars":"firmavanilla:block/copper_bars/exposed","edge":"firmavanilla:block/copper_bars/exposed_edge"}}

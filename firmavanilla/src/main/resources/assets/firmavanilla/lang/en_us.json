@@ -230,7 +230,12 @@
   "block.firmavanilla.alabaster_tile_wall.purple": "Purple Alabaster Tile Wall",
   "block.firmavanilla.alabaster_tile_wall.magenta": "Magenta Alabaster Tile Wall",
   "block.firmavanilla.alabaster_tile_wall.pink": "Pink Alabaster Tile Wall",
+  "block.firmavanilla.copper_bars.unaffected": "Copper Bars",
   "block.firmavanilla.copper_bars.exposed": "Exposed Copper Bars",
   "block.firmavanilla.copper_bars.weathered": "Weathered Copper Bars",
-  "block.firmavanilla.copper_bars.oxidized": "Oxidized Copper Bars"
+  "block.firmavanilla.copper_bars.oxidized": "Oxidized Copper Bars",
+  "block.firmavanilla.waxed_copper_bars.unaffected": "Waxed Copper Bars",
+  "block.firmavanilla.waxed_copper_bars.exposed": "Waxed Exposed Copper Bars",
+  "block.firmavanilla.waxed_copper_bars.weathered": "Waxed Weathered Copper Bars",
+  "block.firmavanilla.waxed_copper_bars.oxidized": "Waxed Oxidized Copper Bars"
 }

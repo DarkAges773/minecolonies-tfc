@@ -61,8 +61,10 @@ var BRICK_LUT_ROCKS = new HashSet<string> { "basalt", "claystone", "conglomerate
 var ALABASTER_COLORS = new[] { "white", "light_gray", "gray", "black", "brown", "red", "orange", "yellow",
     "lime", "green", "cyan", "light_blue", "blue", "purple", "magenta", "pink" };
 
-// Copper oxidation stages (drives the patina LUTs + the patina'd TFC copper bars), light->heavy patina.
+// Copper oxidation stages that get a patina LUT (the 3 aged stages — the bright base has no patina).
 var COPPER_STAGES = new[] { "exposed", "weathered", "oxidized" };
+// All four weather stages of the copper bars (WeatherState order), bright base first.
+var BAR_STAGES = new[] { "unaffected", "exposed", "weathered", "oxidized" };
 
 // Grain overlay on the tiles: the bright high-pass of each rock's `smooth` texture (its mineral flecks),
 // amplified and added onto the tile faces. Blur radius (smaller = sharper flecks), strength (intensity), and
@@ -521,35 +523,49 @@ foreach (var stage in COPPER_STAGES)
     patina++;
 }
 
-// --- patina'd TFC copper bars (apply the extracted LUTs) --------------------------------------------
-// Recolour TFC's copper bars through each patina LUT strip: two textures per stage — the grate ("bars",
-// keeps its transparency) and the smooth post "edge". ClutSide reads the 256-wide strip as the ramp but
-// emits at the source's native 16x16 (transparent bar pixels keep their alpha). Models/blockstate mirror
-// TFC's iron-bars multipart; see CopperBarsBlocks.java.
+// --- weathering TFC copper bars (vanilla copper lifecycle) ------------------------------------------
+// Eight blocks: the 4 weather stages copper_bars/<stage> + their 4 waxed twins waxed_copper_bars/<stage>,
+// for unaffected/exposed/weathered/oxidized. Stage 0 (unaffected) reuses TFC's own copper-bar textures
+// verbatim (identity, no LUT); the 3 aged stages recolour the grate + smooth "edge" through the patina LUTs
+// (ClutSide reads the 256-wide strip as ramp, emits at native 16x16, transparent bar pixels keep alpha). The
+// waxed twins reuse the same 4 textures (vanilla waxed copper looks identical). Models/blockstate mirror TFC's
+// iron-bars multipart. The bright stage has no item (TFC's copper bars item stands in) and drops the TFC item.
+// See CopperBarsBlocks.java + weathering/WeatheringMaps.java.
 int copperBars = 0;
 {
     using var barsSrc = Load("tfc", Path.Combine("copper_bars", "bars.png"));
     using var smoothSrc = Load("tfc", Path.Combine("copper_bars", "smooth.png"));
-    string cbTexDir   = Path.Combine(resRoot, "assets", MODID, "textures", "block", "copper_bars");
-    string cbBsDir    = Path.Combine(resRoot, "assets", MODID, "blockstates", "copper_bars");
-    string cbModelDir = Path.Combine(resRoot, "assets", MODID, "models", "block", "copper_bars");
-    string cbItemDir  = Path.Combine(resRoot, "assets", MODID, "models", "item", "copper_bars");
-    string cbLootDir  = Path.Combine(resRoot, "data", MODID, "loot_tables", "blocks", "copper_bars");
-    foreach (var d in new[] { cbTexDir, cbBsDir, cbModelDir, cbItemDir, cbLootDir }) Directory.CreateDirectory(d);
-    foreach (var stage in COPPER_STAGES)
+    string cbTexDir = Path.Combine(resRoot, "assets", MODID, "textures", "block", "copper_bars");
+    Directory.CreateDirectory(cbTexDir);
+    barsSrc.Save(Path.Combine(cbTexDir, "unaffected.png"));            // bright = TFC's copper bars verbatim
+    smoothSrc.Save(Path.Combine(cbTexDir, "unaffected_edge.png"));
+    foreach (var stage in COPPER_STAGES)                              // exposed/weathered/oxidized via the LUTs
     {
         using var strip = Image.Load<Rgba32>(Path.Combine(scriptDir, $"patina_{stage}.png"));
         using (var b = ClutSide(barsSrc, strip, barsSrc.Width, barsSrc.Height)) b.Save(Path.Combine(cbTexDir, $"{stage}.png"));
         using (var e = ClutSide(smoothSrc, strip, smoothSrc.Width, smoothSrc.Height)) e.Save(Path.Combine(cbTexDir, $"{stage}_edge.png"));
-        // 6 part models (parent vanilla iron_bars_*), multipart blockstate, item + loot — mirror TFC's copper bars.
-        foreach (var part in new[] { "post", "post_ends", "cap", "cap_alt", "side", "side_alt" })
-            File.WriteAllText(Path.Combine(cbModelDir, $"{stage}_{part}.json"), CopperBarsModel(stage, part));
-        File.WriteAllText(Path.Combine(cbBsDir, $"{stage}.json"), CopperBarsBlockstate(stage));
-        File.WriteAllText(Path.Combine(cbItemDir, $"{stage}.json"), CopperBarsItem(stage));
-        File.WriteAllText(Path.Combine(cbLootDir, $"{stage}.json"), CopperBarsLoot(stage));
-        copperBars++;
     }
-    Console.WriteLine($"  copper bars: {copperBars} stages (grate + edge + models/blockstate/item/loot)");
+    foreach (var kind in new[] { "copper_bars", "waxed_copper_bars" })
+    {
+        string cbBsDir = Path.Combine(resRoot, "assets", MODID, "blockstates", kind);
+        string cbModelDir = Path.Combine(resRoot, "assets", MODID, "models", "block", kind);
+        string cbItemDir = Path.Combine(resRoot, "assets", MODID, "models", "item", kind);
+        string cbLootDir = Path.Combine(resRoot, "data", MODID, "loot_tables", "blocks", kind);
+        foreach (var d in new[] { cbBsDir, cbModelDir, cbItemDir, cbLootDir }) Directory.CreateDirectory(d);
+        foreach (var stage in BAR_STAGES)
+        {
+            foreach (var part in new[] { "post", "post_ends", "cap", "cap_alt", "side", "side_alt" })
+                File.WriteAllText(Path.Combine(cbModelDir, $"{stage}_{part}.json"), CopperBarsModel(stage, part));
+            File.WriteAllText(Path.Combine(cbBsDir, $"{stage}.json"), CopperBarsBlockstate(kind, stage));
+            bool brightWeathering = kind == "copper_bars" && stage == "unaffected";
+            if (!brightWeathering) File.WriteAllText(Path.Combine(cbItemDir, $"{stage}.json"), CopperBarsItem(stage));
+            // Bright stage drops TFC's copper bars (no item of its own); every other block drops itself.
+            File.WriteAllText(Path.Combine(cbLootDir, $"{stage}.json"),
+                CopperBarsLootDrop(brightWeathering ? "tfc:metal/bars/copper" : $"{MODID}:{kind}/{stage}"));
+            copperBars++;
+        }
+    }
+    Console.WriteLine($"  weathering copper bars: {copperBars} blocks (4 stages x2 kinds) + 4 grate/edge textures");
 }
 
 foreach (var (_, pair) in motifSources) { pair.relief.Dispose(); pair.flat.Dispose(); }
@@ -819,7 +835,8 @@ string MineableTag()
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_stairs/{c}\""))
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_slab/{c}\""))
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_wall/{c}\""))
-        .Concat(COPPER_STAGES.Select(s => $"    \"{MODID}:copper_bars/{s}\""));
+        .Concat(BAR_STAGES.Select(s => $"    \"{MODID}:copper_bars/{s}\""))
+        .Concat(BAR_STAGES.Select(s => $"    \"{MODID}:waxed_copper_bars/{s}\""));
     return ValuesTag(ids);
 }
 
@@ -844,10 +861,10 @@ string CopperBarsModel(string stage, string part) =>
     {"parent":"minecraft:block/iron_bars_{{{part}}}","render_type":"minecraft:cutout_mipped","textures":{"particle":"{{{MODID}}}:block/copper_bars/{{{stage}}}","bars":"{{{MODID}}}:block/copper_bars/{{{stage}}}","edge":"{{{MODID}}}:block/copper_bars/{{{stage}}}_edge"}}
     """;
 
-// Multipart blockstate — identical topology to TFC's metal/bars/copper, retargeted at our per-stage models.
-string CopperBarsBlockstate(string stage)
+// Multipart blockstate — identical topology to TFC's metal/bars/copper, retargeted at our per-kind/stage models.
+string CopperBarsBlockstate(string kind, string stage)
 {
-    string m(string part) => $"{MODID}:block/copper_bars/{stage}_{part}";
+    string m(string part) => $"{MODID}:block/{kind}/{stage}_{part}";
     return $$$"""
     {"multipart":[
     {"apply":{"model":"{{{m("post_ends")}}}"}},
@@ -869,9 +886,10 @@ string CopperBarsItem(string stage) =>
     {"parent":"item/generated","textures":{"layer0":"{{{MODID}}}:block/copper_bars/{{{stage}}}"}}
     """;
 
-string CopperBarsLoot(string stage) =>
+// Loot that drops a single given item id (self for most stages; the bright weathering stage drops TFC's bars).
+string CopperBarsLootDrop(string itemId) =>
     $$$"""
-    {"type":"minecraft:block","pools":[{"name":"loot_pool","rolls":1,"entries":[{"type":"minecraft:item","name":"{{{MODID}}}:copper_bars/{{{stage}}}"}],"conditions":[{"condition":"minecraft:survives_explosion"}]}]}
+    {"type":"minecraft:block","pools":[{"name":"loot_pool","rolls":1,"entries":[{"type":"minecraft:item","name":"{{{itemId}}}"}],"conditions":[{"condition":"minecraft:survives_explosion"}]}]}
     """;
 
 // ---- bookshelf JSON emitters ----------------------------------------------
