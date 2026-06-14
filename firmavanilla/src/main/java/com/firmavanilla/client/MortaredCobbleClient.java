@@ -1,7 +1,7 @@
-package com.mctfc.client;
+package com.firmavanilla.client;
 
-import com.mctfc.MineColoniesTFC;
-import com.mctfc.block.MortaredCobbleBlock;
+import com.firmavanilla.FirmaVanilla;
+import com.firmavanilla.block.MortaredCobbleBlock;
 import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
@@ -22,7 +22,7 @@ import java.util.Map;
  *
  * <p>(The model bakery logs a "missing model" for each twin while loading — harmless; we overwrite it here.)
  */
-@Mod.EventBusSubscriber(modid = MineColoniesTFC.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = FirmaVanilla.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class MortaredCobbleClient
 {
     private MortaredCobbleClient() {}
@@ -31,7 +31,7 @@ public final class MortaredCobbleClient
     public static void onModifyBakingResult(final ModelEvent.ModifyBakingResult event)
     {
         final Map<ResourceLocation, BakedModel> models = event.getModels();
-        for (final Map.Entry<Block, MortaredCobbleBlock> entry : com.mctfc.block.MortaredCobbleRegistry.twins().entrySet())
+        for (final Map.Entry<Block, MortaredCobbleBlock> entry : com.firmavanilla.block.MortaredCobbleRegistry.twins().entrySet())
         {
             final Block source = entry.getKey();
             final MortaredCobbleBlock twin = entry.getValue();

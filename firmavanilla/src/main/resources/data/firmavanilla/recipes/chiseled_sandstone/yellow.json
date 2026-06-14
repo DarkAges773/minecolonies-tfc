@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "S", "S" ],
+  "key": { "S": { "item": "tfc:cut_sandstone/yellow_slab" } },
+  "result": { "item": "firmavanilla:chiseled_sandstone/yellow" }
+}

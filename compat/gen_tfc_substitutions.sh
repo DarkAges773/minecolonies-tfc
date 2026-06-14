@@ -49,7 +49,7 @@ for form in raw bricks smooth mossy_bricks cracked_bricks; do
     for r in $ROCKS; do echo "tfc:rock/$form/${r}_${suf}"; done | emit_tag "$TAGS/rock/${form}_${suf}.json"
   done
 done
-# cobble + mossy_cobble: full block is the non-falling mortared twin (reuse mctfc:mortared_cobblestone);
+# cobble + mossy_cobble: full block is the non-falling mortared twin (reuse firmavanilla:mortared_cobblestone);
 # only the stairs/slab/wall sub-forms (which don't landslide) get plain-TFC pools here.
 for form in cobble mossy_cobble; do
   for suf in stairs slab wall; do
@@ -72,6 +72,8 @@ for form in raw_sandstone smooth_sandstone cut_sandstone; do
     for c in $SAND_COLORS; do echo "tfc:$form/${c}_${suf}"; done | emit_tag "$TAGS/sandstone/${short}_${suf}.json"
   done
 done
+# chiseled sandstone is firmavanilla's (TFC ships none) — a pool of all 7 generated colours.
+for c in $SAND_COLORS; do echo "firmavanilla:chiseled_sandstone/$c"; done | emit_tag "$TAGS/sandstone/chiseled.json"
 # sand candidate-pool tag (all TFC colored sands)
 for c in $SAND_COLORS; do echo "tfc:sand/$c"; done | emit_tag "$TAGS/sand.json"
 
@@ -317,13 +319,13 @@ D=dacite
 fixed "minecraft:stone"                    "tfc:rock/raw/$D"
 fixed "minecraft:stone_stairs"             "tfc:rock/raw/${D}_stairs"
 fixed "minecraft:stone_slab"               "tfc:rock/raw/${D}_slab"
-# cobblestone -> non-falling mortared dacite cobble
-fixed "minecraft:cobblestone"              "mctfc:mortared/tfc/rock/cobble/$D"
+# cobblestone -> non-falling mortared dacite cobble (firmavanilla mod's runtime twin)
+fixed "minecraft:cobblestone"              "firmavanilla:mortared/tfc/rock/cobble/$D"
 fixed "minecraft:cobblestone_stairs"       "tfc:rock/cobble/${D}_stairs"
 fixed "minecraft:cobblestone_slab"         "tfc:rock/cobble/${D}_slab"
 fixed "minecraft:cobblestone_wall"         "tfc:rock/cobble/${D}_wall"
-# mossy cobblestone -> non-falling mortared dacite mossy cobble
-fixed "minecraft:mossy_cobblestone"        "mctfc:mortared/tfc/rock/mossy_cobble/$D"
+# mossy cobblestone -> non-falling mortared dacite mossy cobble (firmavanilla mod's runtime twin)
+fixed "minecraft:mossy_cobblestone"        "firmavanilla:mortared/tfc/rock/mossy_cobble/$D"
 fixed "minecraft:mossy_cobblestone_stairs" "tfc:rock/mossy_cobble/${D}_stairs"
 fixed "minecraft:mossy_cobblestone_slab"   "tfc:rock/mossy_cobble/${D}_slab"
 fixed "minecraft:mossy_cobblestone_wall"   "tfc:rock/mossy_cobble/${D}_wall"
@@ -363,7 +365,7 @@ done
 
 # candidate pools (player re-picks the rock per form, keyed on the converted TFC block)
 # cobble + mossy_cobble full blocks resolve to a mortared twin -> the mortared pool offers the rock choice
-pool "mctfc:mortared_cobblestone"
+pool "firmavanilla:mortared_cobblestone"
 for form in raw raw_stairs raw_slab raw_wall \
             cobble_stairs cobble_slab cobble_wall \
             mossy_cobble_stairs mossy_cobble_slab mossy_cobble_wall \
@@ -379,14 +381,15 @@ write_file "$SUB/tfc_stone.json" "TFC stone substitutions: vanilla stone family 
 # --- SANDSTONE + SAND rules -------------------------------------------------
 # Vanilla sandstone is INACCESSIBLE in TFC (TFC ships its own colored sandstones), so implicitly convert it to
 # the matching TFC color (normal -> yellow, red -> red) and offer the colored pool to re-pick. TFC has no
-# chiseled sandstone, so chiseled -> cut.
+# chiseled sandstone, so chiseled -> firmavanilla:chiseled_sandstone/<color> (generated per color from the
+# vanilla creeper/wither relief recoloured onto TFC's cut sandstone; see the firmavanilla mod).
 sandstone_rules() { # $1 = vanilla prefix ("" or "red_"), $2 = TFC color
   local v=$1 c=$2
   fixed "minecraft:${v}sandstone"                "tfc:raw_sandstone/$c"
   fixed "minecraft:${v}sandstone_stairs"         "tfc:raw_sandstone/${c}_stairs"
   fixed "minecraft:${v}sandstone_slab"           "tfc:raw_sandstone/${c}_slab"
   fixed "minecraft:${v}sandstone_wall"           "tfc:raw_sandstone/${c}_wall"
-  fixed "minecraft:chiseled_${v}sandstone"       "tfc:cut_sandstone/$c"          # no TFC chiseled -> cut
+  fixed "minecraft:chiseled_${v}sandstone"       "firmavanilla:chiseled_sandstone/$c"  # TFC has none -> firmavanilla's
   fixed "minecraft:cut_${v}sandstone"            "tfc:cut_sandstone/$c"
   fixed "minecraft:cut_${v}sandstone_slab"       "tfc:cut_sandstone/${c}_slab"
   fixed "minecraft:smooth_${v}sandstone"         "tfc:smooth_sandstone/$c"
@@ -396,7 +399,7 @@ sandstone_rules() { # $1 = vanilla prefix ("" or "red_"), $2 = TFC color
 sandstone_rules ""   yellow
 sandstone_rules red_ red
 # pools keyed on the converted TFC block, so the player can re-pick any color/form
-for form in raw raw_stairs raw_slab raw_wall cut cut_slab smooth smooth_stairs smooth_slab; do
+for form in raw raw_stairs raw_slab raw_wall cut cut_slab smooth smooth_stairs smooth_slab chiseled; do
   pool "mctfc:subst/sandstone/$form"
 done
 # sand -> matching TFC colored sand (normal -> yellow, red -> red) + pool of all colors
@@ -450,8 +453,8 @@ write_file "$SUB/tfc_mud.json" "TFC mud substitutions: vanilla mud bricks (+stai
 # building materials here (additive, replace:false). 'default' is referenced by most components (panels,
 # bricks, framed, fences, fence_gates, posts, pillars, doors, trapdoors, timber-frames); slab/stairs/wall
 # _materials are independent lists, so extend those too. Only FULL-cube materials (DO skins are full blocks);
-# falling cobble is excluded — cobblestone substitutes to the runtime mortared twins, which MortaredCobbleData
-# adds to these same DO tags.
+# falling cobble is excluded — cobblestone substitutes to the runtime mortared twins (firmavanilla mod), which
+# its MortaredCobbleData adds to these same DO tags.
 DOTAGS="$RESROOT/data/domum_ornamentum/tags/blocks"
 mkdir -p "$DOTAGS"
 do_materials() { # every TFC full-block building material we substitute to

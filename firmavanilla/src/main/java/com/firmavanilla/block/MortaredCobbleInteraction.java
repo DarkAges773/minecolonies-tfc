@@ -1,6 +1,6 @@
-package com.mctfc.block;
+package com.firmavanilla.block;
 
-import com.mctfc.MineColoniesTFC;
+import com.firmavanilla.FirmaVanilla;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -21,7 +21,7 @@ import net.minecraftforge.fml.common.Mod;
  * {@link MortaredCobbleBlock} twin, consuming {@value #MORTAR_COST} mortar (mirrors the crafting cost).
  * Works for any cobble we registered a twin for.
  */
-@Mod.EventBusSubscriber(modid = MineColoniesTFC.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@Mod.EventBusSubscriber(modid = FirmaVanilla.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class MortaredCobbleInteraction
 {
     private MortaredCobbleInteraction() {}

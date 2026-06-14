@@ -1,6 +1,6 @@
-package com.mctfc.block;
+package com.firmavanilla.block;
 
-import com.mctfc.MineColoniesTFC;
+import com.firmavanilla.FirmaVanilla;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -14,16 +14,16 @@ import java.util.Map;
 
 /**
  * Scans the block registry at registration time and creates a non-falling {@link MortaredCobbleBlock}
- * twin for every "cobble" block already registered (vanilla, TFC, and any mod loaded before {@code mctfc}
- * — which, since this mod is ordered AFTER tfc/minecolonies, includes the whole TFC rock set).
+ * twin for every "cobble" block already registered (vanilla, TFC, and any mod loaded before
+ * {@code firmavanilla} — which, since this mod is ordered AFTER tfc, includes the whole TFC rock set).
  *
- * <p>Twins are registered under {@code mctfc:mortared/<source-namespace>/<source-path>}. The
- * {@link #SOURCE_TO_TWIN} map drives the runtime-generated {@code mctfc:mortared_cobblestone} tag, the
- * mortar recipes, and the client model delegation.
+ * <p>Twins are registered under {@code firmavanilla:mortared/<source-namespace>/<source-path>}. The
+ * {@link #SOURCE_TO_TWIN} map drives the runtime-generated {@code firmavanilla:mortared_cobblestone} tag,
+ * the mortar recipes, and the client model delegation.
  *
- * <p><b>Limitation:</b> the scan only sees blocks registered before {@code mctfc}; a mod that adds cobble
- * and loads <i>after</i> us won't be covered (Minecraft freezes block registration before tags load, so a
- * tag-driven scan isn't possible).
+ * <p><b>Limitation:</b> the scan only sees blocks registered before {@code firmavanilla}; a mod that adds
+ * cobble and loads <i>after</i> us won't be covered (Minecraft freezes block registration before tags load,
+ * so a tag-driven scan isn't possible).
  */
 public final class MortaredCobbleRegistry
 {
@@ -73,7 +73,7 @@ public final class MortaredCobbleRegistry
             ForgeRegistries.BLOCKS.register(twinId(sourceId), twin);
             SOURCE_TO_TWIN.put(source, twin);
         }
-        MineColoniesTFC.LOGGER.info("Registered {} non-falling cobble twin(s).", SOURCE_TO_TWIN.size());
+        FirmaVanilla.LOGGER.info("Registered {} non-falling cobble twin(s).", SOURCE_TO_TWIN.size());
     }
 
     private static void registerItems()
@@ -89,10 +89,10 @@ public final class MortaredCobbleRegistry
         }
     }
 
-    /** {@code mctfc:mortared/<ns>/<path>} — unique and stable per source block. */
+    /** {@code firmavanilla:mortared/<ns>/<path>} — unique and stable per source block. */
     public static ResourceLocation twinId(final ResourceLocation sourceId)
     {
-        return new ResourceLocation(MineColoniesTFC.MODID, "mortared/" + sourceId.getNamespace() + "/" + sourceId.getPath());
+        return new ResourceLocation(FirmaVanilla.MODID, "mortared/" + sourceId.getNamespace() + "/" + sourceId.getPath());
     }
 
     /**

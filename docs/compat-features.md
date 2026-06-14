@@ -28,17 +28,21 @@ vanilla block, pool on the TFC-result tag) — never a fixed `to` + `to_tag` on 
 - **Stone** ([tfc_stone.json](../compat/src/main/resources/data/mctfc/block_substitutions/tfc_stone.json)): vanilla
   stone family → **dacite** forms (closest look) — `stone→raw`, `stone_bricks→bricks`, `smooth_stone→smooth`,
   mossy/cracked/chiseled likewise, all with stairs/slabs/walls. Cobble and mossy-cobble map to the **non-falling
-  mortared dacite twin** (`mctfc:mortared/tfc/rock/.../dacite`) so builds survive TFC gravity; their stairs/slabs/
-  walls (which don't landslide) use plain TFC. `minecraft:stone_button` → `tfc:rock/button/dacite`. Vanilla
+  mortared dacite twin** (`firmavanilla:mortared/tfc/rock/.../dacite`, from the firmavanilla mod) so builds
+  survive TFC gravity; their stairs/slabs/walls (which don't landslide) use plain TFC.
+  `minecraft:stone_button` → `tfc:rock/button/dacite`. Vanilla
   **granite/diorite/andesite** (which are real TFC rock types) map to the **same** rock — plain → `tfc:rock/raw/<rock>`,
   polished → `tfc:rock/smooth/<rock>` (+ stairs/slabs/walls). Per-form candidate pools let the player pick any
-  TFC rock — the cobble/mossy-cobble full-block pick reuses the runtime `mctfc:mortared_cobblestone` pool, and
+  TFC rock — the cobble/mossy-cobble full-block pick reuses the runtime `firmavanilla:mortared_cobblestone` pool, and
   granite/diorite/andesite reuse the existing `raw`/`smooth` pools.
 - **Sandstone** ([tfc_sandstone.json](../compat/src/main/resources/data/mctfc/block_substitutions/tfc_sandstone.json)):
   **pool-only, no implicit swap** — vanilla sandstone is accessible in TFC so it stays the default, but every
   variant (normal + red, raw/cut/smooth + stairs/slabs/walls) offers a *Replace* pool of TFC colored sandstones
   (`tfc:{raw,smooth,cut}_sandstone/<color>`, all 7 colors) of the matching form. This is the `from` → `to_tag`
-  pattern (pool keyed directly on the vanilla block, since nothing converts it first).
+  pattern (pool keyed directly on the vanilla block, since nothing converts it first). **Chiseled** sandstone
+  (which TFC lacks) instead maps to the firmavanilla mod's `firmavanilla:chiseled_sandstone/<color>` blocks
+  (vanilla creeper/wither relief recoloured onto TFC's cut sandstone) + a `mctfc:subst/sandstone/chiseled`
+  re-pick pool — see [docs/firmavanilla.md](firmavanilla.md).
 - **Pool tags** live under `data/mctfc/tags/blocks/subst/{wood,rock}/*.json` (one per form, listing every TFC
   variant). The rule files and tags are emitted by [gen_tfc_substitutions.sh](../compat/gen_tfc_substitutions.sh)
   (re-run if TFC's rock/wood set changes); they're plain static JSON, so `/reload`-able and editable. Validated:
@@ -651,57 +655,24 @@ listener reset+reload, with the server `RecipeManager` loaded and tags bound, ri
 Recipe-gating semantics: `CustomRecipe.isUnlockEffectResearched` accepts a research id (completed-research check)
 *or* an effect id (effect-strength check) — we use effect ids, matching the stock `assistanthammerunlock` pattern.
 
-## Non-falling ("mortared"/"cemented") cobble — DONE & verified
+## Non-falling ("mortared"/"cemented") cobble — MOVED to firmavanilla
 
-TFC makes cobble collapse (gravity), which wrecks MineColonies cobble builds. `:compat` registers a
-**non-falling twin** of every cobble block and substitutes builds onto it.
-
-- **Why a twin block, not a property/mixin:** TFC's falling is **tag-gated** — `tfc:can_landslide` lists
-  `minecraft:cobblestone`/`mossy_cobblestone` and every `tfc:rock/cobble|mossy_cobble/<rock>`, checked per
-  *block* (not per state). You can't add a blockstate property to an existing block (its `StateDefinition`
-  is frozen at construction), and even if you could, TFC reads the tag, not a property. So the surgical
-  fix is a separate block that simply isn't in `can_landslide`. (Same technique as MehVahdJukaar's
-  StoneZone/Moonlight: registry scan + naming detection + runtime-generated assets.)
-- **Scan + register** ([MortaredCobbleRegistry](../compat/src/main/java/com/mctfc/block/MortaredCobbleRegistry.java)):
-  on `RegisterEvent`, iterate `ForgeRegistries.BLOCKS` and register a
-  [MortaredCobbleBlock](../compat/src/main/java/com/mctfc/block/MortaredCobbleBlock.java) (`extends Block`,
-  `Properties.copy(source)`, drops self, name "Mortared &lt;source&gt;") + a
-  [MortaredCobbleBlockItem](../compat/src/main/java/com/mctfc/block/MortaredCobbleBlockItem.java) per cobble,
-  id `mctfc:mortared/<source-ns>/<source-path>`. **Detection is a name heuristic** (`isCobble`: path ends
-  `cobblestone` or contains a `cobble/` segment, minus `_stairs/_slab/_wall/_button/_pressure_plate` and
-  `infested`) — tags are unavailable at registration; the heuristic is anchored to reproduce
-  `forge:cobblestone/normal`. **Only sees blocks registered before `mctfc`** (mods.toml orders it AFTER
-  tfc) — a cobble mod loading after us isn't covered.
-- **Client model delegation** ([MortaredCobbleClient](../compat/src/main/java/com/mctfc/client/MortaredCobbleClient.java)):
-  twins ship no blockstate/model JSON, so `ModelEvent.ModifyBakingResult` repoints each twin's baked block
-  + item model at its source's. The bakery logs a benign "missing model" per twin during load — expected,
-  overwritten here. (`getModels()` is keyed by `ResourceLocation`, not `ModelResourceLocation`.)
-- **Runtime data pack** ([GeneratedDataPack](../compat/src/main/java/com/mctfc/data/GeneratedDataPack.java) +
-  [MortaredCobbleData](../compat/src/main/java/com/mctfc/data/MortaredCobbleData.java)): the twins are dynamic
-  so the tag/recipes can't be static JSON. At `AddPackFindersEvent` (twins already registered) we serve an
-  in-memory **forced built-in** `SERVER_DATA` pack with `mctfc:mortared_cobblestone` (all twins) + a
-  **shaped** recipe per twin (the cobble surrounded by 4 `#tfc:mortar`, cross pattern). The pack also makes
-  twins behave/identify like normal cobble by adding `#mctfc:mortared_cobblestone` (tag-of-tags) to the
-  block tags real cobble sits in — `minecraft:mineable/pickaxe`, `forge:cobblestone/normal`,
-  `tfc:can_carve`, `tfc:toughness_2` — but deliberately **not** `tfc:can_landslide` (that's the gravity
-  we're escaping).
-- **In-world conversion** ([MortaredCobbleInteraction](../compat/src/main/java/com/mctfc/block/MortaredCobbleInteraction.java),
-  Forge bus): right-click a cobble holding `#tfc:mortar` → swap to its twin, consume 4 mortar (free in
-  creative). Cancels the interaction; server-authoritative.
-- **Substitution** is plain datapack (see "TFC default substitutions" above):
-  [tfc_stone.json](../compat/src/main/resources/data/mctfc/block_substitutions/tfc_stone.json) fixes
-  `minecraft:cobblestone → mctfc:mortared/tfc/rock/cobble/dacite` (the non-falling dacite twin) and offers the
-  `mctfc:mortared_cobblestone` pool keyed on that converted twin, so the player re-picks the rock via the Replace
-  GUI. **Gotcha:** the fixed default and the pool must have **distinct sources** (fixed on `minecraft:cobblestone`,
-  pool on the `mctfc:mortared_cobblestone` tag that matches the *converted* twin) — a fixed `to` and a `to_tag` on
-  the *same* source shadows the pool under converted-block semantics.
+The cemented-cobble twin system (registry scan, runtime data pack, model delegation, in-world mortar
+conversion) now lives in the standalone **firmavanilla** mod, which `:compat` hard-depends on — see
+[docs/firmavanilla.md](firmavanilla.md). `:compat` still owns the **substitution** side (plain datapack, see
+"TFC default substitutions" above): [tfc_stone.json](../compat/src/main/resources/data/mctfc/block_substitutions/tfc_stone.json)
+fixes `minecraft:cobblestone → firmavanilla:mortared/tfc/rock/cobble/dacite` (the non-falling dacite twin) and
+offers the `firmavanilla:mortared_cobblestone` pool keyed on that converted twin, so the player re-picks the
+rock via the Replace GUI. **Gotcha:** the fixed default and the pool must have **distinct sources** (fixed on
+`minecraft:cobblestone`, pool on the `firmavanilla:mortared_cobblestone` tag that matches the *converted* twin)
+— a fixed `to` and a `to_tag` on the *same* source shadows the pool under converted-block semantics.
 
 ## Vanilla furnaces made decorative — DONE
 
 TFC overhauls smelting/cooking (firepit/forge/bloomery/…), so the vanilla furnace, smoker and blast furnace
 shouldn't be usable to bypass it — but MineColonies blueprints still place them.
 [VanillaFurnaceHandler](../compat/src/main/java/com/mctfc/block/VanillaFurnaceHandler.java) (Forge bus,
-annotation-registered like [MortaredCobbleInteraction](../compat/src/main/java/com/mctfc/block/MortaredCobbleInteraction.java))
+annotation-registered like firmavanilla's [MortaredCobbleInteraction](../firmavanilla/src/main/java/com/firmavanilla/block/MortaredCobbleInteraction.java))
 cancels `PlayerInteractEvent.RightClickBlock` for the **three exact vanilla blocks** (`Blocks.FURNACE/SMOKER/
 BLAST_FURNACE` — not `AbstractFurnaceBlock`, so modded furnaces are untouched) so their GUI never opens.
 **Two dead ends, both verified in-game:** (1) cancelling only when not sneaking leaks the GUI on a sneak-click
@@ -741,7 +712,7 @@ To ship data that should apply **only when an optional mod is present**, registe
 its `<thatmod>:*` rules never load or warn. [BeneathDataPack](../compat/src/main/java/com/mctfc/data/BeneathDataPack.java)
 does this for **Beneath** (`beneath`): a `PathPackResources` rooted at the jar sub-folder
 [beneath_datapack/](../compat/src/main/resources/beneath_datapack/) (its own `pack.mcmeta` + `data/mctfc/block_substitutions/beneath.json`),
-forced-on `SERVER_DATA`, same mechanism as [MortaredCobbleData](../compat/src/main/java/com/mctfc/data/MortaredCobbleData.java)
+forced-on `SERVER_DATA`, same mechanism as firmavanilla's [MortaredCobbleData](../firmavanilla/src/main/java/com/firmavanilla/data/MortaredCobbleData.java)
 but conditional + static files. Registered from the mod ctor. Beneath itself is a **dev-run dependency**
 (`implementation fg.deobf("curse.maven:beneath-1113980:7400831")` in [compat/build.gradle](../compat/build.gradle)).
 Its `beneath.json` maps the vanilla **nether woods 1:1 to Beneath's crimson/warped wood** (planks/log→`wood/log`,

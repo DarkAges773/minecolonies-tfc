@@ -1,10 +1,10 @@
-package com.mctfc.data;
+package com.firmavanilla.data;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.mctfc.MineColoniesTFC;
-import com.mctfc.block.MortaredCobbleBlock;
-import com.mctfc.block.MortaredCobbleRegistry;
+import com.firmavanilla.FirmaVanilla;
+import com.firmavanilla.block.MortaredCobbleBlock;
+import com.firmavanilla.block.MortaredCobbleRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
@@ -18,10 +18,10 @@ import java.util.Map;
 
 /**
  * Builds and registers the runtime {@link GeneratedDataPack} that backs the cobble twins: the
- * {@code mctfc:mortared_cobblestone} block tag (every twin) and a {@code <source cobble> + tfc:mortar}
- * shapeless recipe per twin. Built at {@code AddPackFindersEvent} time, when the twin set is already
- * registered. The substitution rule itself ({@code minecraft:cobblestone -> #mctfc:mortared_cobblestone})
- * ships as a normal static datapack file.
+ * {@code firmavanilla:mortared_cobblestone} block tag (every twin) and a {@code <source cobble> + tfc:mortar}
+ * shaped recipe per twin. Built at {@code AddPackFindersEvent} time, when the twin set is already
+ * registered. The substitution rule itself ({@code minecraft:cobblestone -> #firmavanilla:mortared_cobblestone})
+ * ships as a normal static datapack file (in the MC×TFC bridge).
  */
 public final class MortaredCobbleData
 {
@@ -40,8 +40,8 @@ public final class MortaredCobbleData
         event.addRepositorySource(consumer ->
         {
             final Pack created = Pack.readMetaAndCreate(
-                    "mctfc_generated",
-                    Component.literal("MineColonies x TFC generated data"),
+                    "firmavanilla_generated",
+                    Component.literal("TFC Vanilla Building Blocks generated data"),
                     true, // forced on — it carries the cobble-twin tag + recipes
                     id -> pack,
                     PackType.SERVER_DATA,
@@ -56,7 +56,7 @@ public final class MortaredCobbleData
 
     private static GeneratedDataPack build()
     {
-        final GeneratedDataPack pack = new GeneratedDataPack("mctfc_generated");
+        final GeneratedDataPack pack = new GeneratedDataPack("firmavanilla_generated");
         final JsonArray tagValues = new JsonArray();
 
         for (final Map.Entry<Block, MortaredCobbleBlock> entry : MortaredCobbleRegistry.twins().entrySet())
@@ -75,11 +75,12 @@ public final class MortaredCobbleData
         final JsonObject tag = new JsonObject();
         tag.addProperty("replace", false);
         tag.add("values", tagValues);
-        pack.putJson(MineColoniesTFC.MODID, TAG_PATH, tag.toString());
+        pack.putJson(FirmaVanilla.MODID, TAG_PATH, tag.toString());
 
-        // Make the twins behave/identify like normal cobble (minus gravity): add #mctfc:mortared_cobblestone
-        // to the same block tags real cobble is in. NOT tfc:can_landslide — that's the falling we're avoiding.
-        final String mortaredRef = "#" + MineColoniesTFC.MODID + ":mortared_cobblestone";
+        // Make the twins behave/identify like normal cobble (minus gravity): add
+        // #firmavanilla:mortared_cobblestone to the same block tags real cobble is in. NOT tfc:can_landslide
+        // — that's the falling we're avoiding.
+        final String mortaredRef = "#" + FirmaVanilla.MODID + ":mortared_cobblestone";
         joinTag(pack, "minecraft", "mineable/pickaxe", mortaredRef); // proper pickaxe mining
         joinTag(pack, "forge", "cobblestone/normal", mortaredRef);   // counts as cobblestone for recipes/mods
         joinTag(pack, "tfc", "can_carve", mortaredRef);              // TFC chisel/carving
@@ -87,14 +88,14 @@ public final class MortaredCobbleData
 
         // Make the twins legal Domum Ornamentum skins so a DO block skinned with cobblestone (substituted to a
         // mortared twin) passes DO's valid-skins check. 'default' covers most components; slab/stairs/wall are
-        // independent lists. Tags resolve transitively, so #mctfc:mortared_cobblestone members count as members
-        // of these DO tags.
+        // independent lists. Tags resolve transitively, so #firmavanilla:mortared_cobblestone members count as
+        // members of these DO tags. (Harmless when DO is absent — the tag files just go unread.)
         for (final String doTag : new String[] {"default", "slab_materials", "stairs_materials", "wall_materials"})
         {
             joinTag(pack, "domum_ornamentum", doTag, mortaredRef);
         }
 
-        MineColoniesTFC.LOGGER.info("Generated mortared-cobble data: {} twin(s) tagged + recipes.", tagValues.size());
+        FirmaVanilla.LOGGER.info("Generated mortared-cobble data: {} twin(s) tagged + recipes.", tagValues.size());
         return pack;
     }
 

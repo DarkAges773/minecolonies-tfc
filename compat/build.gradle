@@ -22,8 +22,9 @@ plugins {
 // SRG-named mixins (e.g. Patchouli's AccessorScreen) fail to apply in the official-mapped dev env.
 apply plugin: 'org.spongepowered.mixin'
 
-// Needed so the run config below can reference project(':replacements').sourceSets.main.
+// Needed so the run config below can reference project(':replacements')/.../firmavanilla).sourceSets.main.
 evaluationDependsOn(':replacements')
+evaluationDependsOn(':firmavanilla')
 
 def mod_id = 'mctfc'
 def mod_name = 'MineColonies x TerraFirmaCraft'
@@ -48,6 +49,10 @@ base { archivesName = mod_id }
 // lower bound of the structurizereplacements dependency in mods.toml. Must carry the MC prefix to be a real
 // bound, since with the <mcversion>-<semver> scheme a bare "[0.1,)" is satisfied by any 1.20.1-* version.
 def replacements_min = "${minecraft_version}-0.1.0".toString()
+// Minimum :firmavanilla (TFC Vanilla Building Blocks) release this build requires — the lower bound of the
+// firmavanilla dependency in mods.toml. Bump MANUALLY when mctfc starts relying on newer firmavanilla blocks.
+// Must carry the MC prefix (a bare "[0.1,)" is satisfied by any 1.20.1-* under the <mcversion>-<semver> scheme).
+def firmavanilla_min = "${minecraft_version}-0.1.0".toString()
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
@@ -76,6 +81,9 @@ minecraft {
                 }
                 structurizereplacements {
                     source project(':replacements').sourceSets.main
+                }
+                firmavanilla {
+                    source project(':firmavanilla').sourceSets.main
                 }
             }
         }
@@ -113,6 +121,9 @@ dependencies {
 
     // The substitution engine (our standalone mod).
     implementation project(':replacements')
+    // The decorative TFC building blocks (cemented cobble + chiseled sandstone …) that our substitution
+    // rules target. Hard dependency: mctfc points blueprints at firmavanilla:* blocks.
+    implementation project(':firmavanilla')
 
     // Full mod stack for the dev runtime. Declared explicitly so FML reliably finds every mod jar.
     // Structurize is compile-scope: the builder mixins reference Structurize types (Blueprint, etc.).
@@ -157,7 +168,7 @@ tasks.named('processResources', ProcessResources).configure {
             loader_version_range: loader_version_range,
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: full_version,
             mod_authors: mod_authors, mod_description: mod_description,
-            replacements_min: replacements_min,
+            replacements_min: replacements_min, firmavanilla_min: firmavanilla_min,
     ]
     inputs.properties replaceProperties
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {

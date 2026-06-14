@@ -16,8 +16,15 @@ All notable changes to this mod are documented here. The format is based on
 - **The Waiter no longer hoards a stack of food** — when fetching food to serve, the Waiter pulled a full stack
   (64) into its own inventory, which (unlike colony storage) isn't covered by food preservation, so the surplus
   decayed in hand. It now carries `diningHallWorkerCarry` (default 16) per trip.
+- **Cemented cobblestone moved to a dedicated mod** — the non-falling "cemented" cobblestone blocks are now
+  provided by the new **TFC Vanilla Building Blocks** (`firmavanilla`) companion, a **required dependency** of
+  this mod. Behaviour is unchanged (craft with mortar / right-click to convert); only the block ids moved
+  namespace (`mctfc:mortared/…` → `firmavanilla:mortared/…`).
 
 ### Added
+- **Chiseled sandstone in TFC colours** — blueprints using chiseled sandstone now place a real chiseled block
+  in one of TFC's 7 sand colours (with a *Replace* pool to re-pick the colour), instead of degrading to flat
+  cut sandstone. Provided by the new `firmavanilla` dependency.
 - **MineColonies foods become TFC foods** — MineColonies' ~60 cooked dishes (cheeses, breads, soups, stews,
   pies, pizzas, etc.) now carry full TFC food data: they **decay** like any TFC food, restore TFC hunger/water,
   and add the five TFC nutrients (grain/fruit/vegetables/protein/dairy) chosen to fit each dish — so colony

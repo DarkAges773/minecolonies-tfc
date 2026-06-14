@@ -18,7 +18,9 @@ plugins {
 
 rootProject.name = 'minecolonies-tfc'
 
-// :replacements - standalone Structurize block-substitution mod (no MineColonies/TFC dependency).
-// :compat       - MineColonies x TerraFirmaCraft bridge; depends on :replacements, ships TFC rules.
+// :replacements  - standalone Structurize block-substitution mod (no MineColonies/TFC dependency).
+// :firmavanilla  - standalone TFC-palette decorative blocks (vanilla building-block variants); TFC-only.
+// :compat        - MineColonies x TerraFirmaCraft bridge; depends on :replacements + :firmavanilla, ships TFC rules.
 include 'replacements'
+include 'firmavanilla'
 include 'compat'

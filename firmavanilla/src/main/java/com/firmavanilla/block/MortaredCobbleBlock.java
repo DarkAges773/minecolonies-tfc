@@ -1,4 +1,4 @@
-package com.mctfc.block;
+package com.firmavanilla.block;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -18,7 +18,7 @@ import java.util.List;
  * is deliberately <b>not</b> a member of {@code tfc:can_landslide} — so TFC's gravity never applies to it.
  *
  * <p>Intended as a substitution target so MineColonies builds keep cobble constructions that would be
- * infeasible under TFC's collapsing cobble. Drops itself; named "Mortared &lt;source&gt;".
+ * infeasible under TFC's collapsing cobble. Drops itself; named "Cemented &lt;source&gt;".
  */
 public class MortaredCobbleBlock extends Block
 {
@@ -39,7 +39,7 @@ public class MortaredCobbleBlock extends Block
     @Override
     public @NotNull MutableComponent getName()
     {
-        return Component.translatable("block.mctfc.mortared_cobblestone", source.getName());
+        return Component.translatable("block.firmavanilla.mortared_cobblestone", source.getName());
     }
 
     @Override

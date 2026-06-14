@@ -3,7 +3,6 @@ package com.mctfc;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.AddType;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.BlockGrassPathPlacementHandler;
-import com.mctfc.block.MortaredCobbleRegistry;
 import com.mctfc.furnace.FurnaceBehaviors;
 import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.settings.BuildingSettings;
@@ -16,7 +15,6 @@ import com.minecolonies.core.entity.ai.workers.crafting.EntityAIWorkSmelter;
 import com.mctfc.data.AfcDataPack;
 import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.FirmaLifeDataPack;
-import com.mctfc.data.MortaredCobbleData;
 import com.mctfc.food.FoodPreservation;
 import com.mctfc.network.McFarmingNetwork;
 import com.mctfc.placement.TfcSoilPlacementHandler;
@@ -46,14 +44,6 @@ public class MineColoniesTFC
     {
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         final IEventBus modBus = context.getModEventBus();
-        // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
-        // collapsing cobble doesn't wreck MineColonies builds). Substitution targets these via the
-        // mctfc:mortared_cobblestone tag.
-        modBus.addListener(MortaredCobbleRegistry::onRegister);
-        // Creative tab holding the mortared-cobble twins. Beyond being grabbable, this is what makes them
-        // discoverable by MineColonies (its item pickers — incl. the miner fill-block setting — only see
-        // items that appear in some creative tab).
-        MctfcCreativeTab.TABS.register(modBus);
         // Per-furnace process store: attach our FurnaceProcess capability to every vanilla furnace BE so an
         // in-progress TFC operation (ore + mold + finish tick + carried fuel) persists with the furnace.
         FurnaceProcessCapability.init(modBus);
@@ -68,8 +58,6 @@ public class MineColoniesTFC
         // Seed a default minimum-stock of 1 stack of ingot molds on a fresh Smeltery (molds stack to 16), so it
         // keeps molds for casting out of the box. MixinAbstractBuilding applies this at first build (level 1).
         BuildingStockSeeds.register(b -> b instanceof BuildingSmeltery, SmelterRecipes::defaultMoldStack, 1);
-        // Runtime data pack: the mctfc:mortared_cobblestone tag (every twin) + a mortar recipe per twin.
-        modBus.addListener(MortaredCobbleData::onAddPackFinders);
         // Optional built-in datapack: enabled only when the 'beneath' mod is present (Beneath-specific rules).
         modBus.addListener(BeneathDataPack::onAddPackFinders);
         // Optional built-in datapack: enabled only when ArborFirmaCraft ('afc') is present — AFC wood overrides
