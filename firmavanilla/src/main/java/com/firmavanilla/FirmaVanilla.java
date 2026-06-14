@@ -1,5 +1,6 @@
 package com.firmavanilla;
 
+import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.data.MortaredCobbleData;
@@ -29,6 +30,8 @@ public class FirmaVanilla
         final IEventBus modBus = context.getModEventBus();
         // Static decorative blocks: chiseled sandstone in TFC's seven sand colours (the form TFC lacks).
         SandstoneBlocks.init(modBus);
+        // Decorative full-block bookshelves (enchanting power) per wood — TFC always, AFC/Beneath when present.
+        BookshelfBlocks.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.

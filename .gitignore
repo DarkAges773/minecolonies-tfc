@@ -39,8 +39,12 @@ CLAUDE.local.md
 # Files from Forge MDK
 forge*changelog.txt
 
-# firmavanilla texture-generator inputs: third-party Mojang/TFC textures used only as generator source,
-# not redistributed. The README (extraction instructions) IS tracked; the PNG folders are not.
+# firmavanilla texture-generator inputs: third-party source textures used only to (re)generate, not
+# redistributed — all git-ignored (incl. bookshelf_overlay.png, which is derived from vanilla's bookshelf.png).
+# The README documents what each one is and how to obtain it; the generated derivatives under
+# src/main/resources are what ship.
 firmavanilla/tools/generate-textures/input/vanilla/
 firmavanilla/tools/generate-textures/input/tfc/
+firmavanilla/tools/generate-textures/input/afc/
+firmavanilla/tools/generate-textures/input/beneath/
 firmavanilla/tools/generate-textures/_preview/

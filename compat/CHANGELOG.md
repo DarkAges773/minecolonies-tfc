@@ -25,6 +25,16 @@ All notable changes to this mod are documented here. The format is based on
 - **Chiseled sandstone in TFC colours** — blueprints using chiseled sandstone now place a real chiseled block
   in one of TFC's 7 sand colours (with a *Replace* pool to re-pick the colour), instead of degrading to flat
   cut sandstone. Provided by the new `firmavanilla` dependency.
+- **Decorative bookshelves substitution** — `minecraft:bookshelf` now substitutes to a per-wood decorative
+  bookshelf with enchanting power (`firmavanilla:bookshelf/<wood>`, oak default + an any-wood *Replace* pool),
+  re-adding the bookshelf swap that was previously dropped for lack of a TFC target. AFC/Beneath woods join the
+  pool when those mods are present. The decorative bookshelves are also registered into MineColonies'
+  `tier2blocks` + `reduceable_product_excluded` tags and Domum Ornamentum's `slab_materials` tag (matching the
+  vanilla bookshelf), so the colony builder and DO handle them correctly.
+
+### Removed
+- The recipe that restored a craftable vanilla `minecraft:bookshelf` in a TFC world — the decorative
+  TFC-wood bookshelves (above) replace it.
 - **MineColonies foods become TFC foods** — MineColonies' ~60 cooked dishes (cheeses, breads, soups, stews,
   pies, pizzas, etc.) now carry full TFC food data: they **decay** like any TFC food, restore TFC hunger/water,
   and add the five TFC nutrients (grain/fruit/vegetables/protein/dairy) chosen to fit each dish — so colony

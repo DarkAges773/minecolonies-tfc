@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "LLL", "BBB", "LLL" ],
+  "key": {
+    "L": { "item": "tfc:wood/lumber/willow" },
+    "B": { "item": "minecraft:book" }
+  },
+  "result": { "item": "firmavanilla:bookshelf/willow" }
+}

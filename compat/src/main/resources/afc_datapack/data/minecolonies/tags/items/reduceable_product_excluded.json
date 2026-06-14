@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:bookshelf/baobab",
+    "firmavanilla:bookshelf/cypress",
+    "firmavanilla:bookshelf/eucalyptus",
+    "firmavanilla:bookshelf/fig",
+    "firmavanilla:bookshelf/hevea",
+    "firmavanilla:bookshelf/ipe",
+    "firmavanilla:bookshelf/ironwood",
+    "firmavanilla:bookshelf/mahogany",
+    "firmavanilla:bookshelf/teak",
+    "firmavanilla:bookshelf/tualang"
+  ]
+}

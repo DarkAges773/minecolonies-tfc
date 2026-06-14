@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "afc:block/wood/planks/teak",
+    "side": "firmavanilla:block/bookshelf/teak"
+  }
+}

@@ -286,6 +286,26 @@
     "tfc:cut_sandstone/white",
     "tfc:raw_sandstone/yellow",
     "tfc:smooth_sandstone/yellow",
-    "tfc:cut_sandstone/yellow"
+    "tfc:cut_sandstone/yellow",
+    "firmavanilla:bookshelf/acacia",
+    "firmavanilla:bookshelf/ash",
+    "firmavanilla:bookshelf/aspen",
+    "firmavanilla:bookshelf/birch",
+    "firmavanilla:bookshelf/blackwood",
+    "firmavanilla:bookshelf/chestnut",
+    "firmavanilla:bookshelf/douglas_fir",
+    "firmavanilla:bookshelf/hickory",
+    "firmavanilla:bookshelf/kapok",
+    "firmavanilla:bookshelf/mangrove",
+    "firmavanilla:bookshelf/maple",
+    "firmavanilla:bookshelf/oak",
+    "firmavanilla:bookshelf/palm",
+    "firmavanilla:bookshelf/pine",
+    "firmavanilla:bookshelf/rosewood",
+    "firmavanilla:bookshelf/sequoia",
+    "firmavanilla:bookshelf/spruce",
+    "firmavanilla:bookshelf/sycamore",
+    "firmavanilla:bookshelf/white_cedar",
+    "firmavanilla:bookshelf/willow"
   ]
 }

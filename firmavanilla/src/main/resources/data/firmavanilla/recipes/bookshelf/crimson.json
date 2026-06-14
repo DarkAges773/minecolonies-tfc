@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+      "conditions": [ { "type": "forge:mod_loaded", "modid": "beneath" } ],
+  "pattern": [ "LLL", "BBB", "LLL" ],
+  "key": {
+    "L": { "item": "beneath:wood/lumber/crimson" },
+    "B": { "item": "minecraft:book" }
+  },
+  "result": { "item": "firmavanilla:bookshelf/crimson" }
+}

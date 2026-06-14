@@ -1,5 +1,6 @@
 package com.firmavanilla;
 
+import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.MortaredCobbleBlock;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.SandstoneBlocks;
@@ -39,6 +40,10 @@ public final class FirmaVanillaCreativeTab
                         for (final RegistryObject<Block> chiseled : SandstoneBlocks.CHISELED_SANDSTONE)
                         {
                             output.accept(chiseled.get());
+                        }
+                        for (final RegistryObject<Block> bookshelf : BookshelfBlocks.ALL)
+                        {
+                            output.accept(bookshelf.get());
                         }
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {
