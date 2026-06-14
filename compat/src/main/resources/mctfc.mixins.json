@@ -26,7 +26,10 @@
     "MixinAbstractBuildingModule",
     "MixinAbstractBuilding",
     "MixinSettingsModule",
-    "MixinCustomRecipeManager"
+    "MixinCustomRecipeManager",
+    "MixinRecipeStorage",
+    "MixinRestaurantMenuModule",
+    "MixinEntityAIWorkCook"
   ],
   "client": [
     "MixinWindowField"

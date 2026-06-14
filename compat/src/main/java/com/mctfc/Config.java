@@ -45,6 +45,22 @@ public class Config
             .comment("Extra effective fuel temperature (in C) added by building level for TFC furnace workers (e.g. the Smelter), one concrete entry per level: index 0 = level 1, index 1 = level 2, and so on. A fuel can run an operation only when its temperature plus this bonus reaches what the operation needs, so higher-level huts melt hotter metals with the same fuel. Default [0, 15, 30, 45, 60]: coal (1415C) reaches nickel (1453C) at level 4 (+45), charcoal (1350C) never does, and wood never reaches copper. A building level beyond the list uses the last entry; an empty list disables the bonus.")
             .defineList("furnaceFuelTempBonusByLevel", List.of(0, 15, 30, 45, 60), o -> o instanceof Integer i && i >= 0);
 
+    private static final ForgeConfigSpec.DoubleValue DINING_HALL_STOCK_PER_CITIZEN = BUILDER
+            .comment("How many of EACH menu food the dining hall (Restaurant) tries to keep in stock, per colony citizen. Vanilla MineColonies targets maxStackSize x building level (e.g. 160 of every dish), which makes the Chef bulk-cook far more perishable TFC food than the colony eats — so it rots. This scales the target to the number of eaters instead. The per-item target is clamped to [diningHallStockMin, diningHallStockMax]. Read live (config reload).")
+            .defineInRange("diningHallStockPerCitizen", 0.5, 0.0, 16.0);
+
+    private static final ForgeConfigSpec.IntValue DINING_HALL_STOCK_MIN = BUILDER
+            .comment("Lower bound on the dining hall's per-menu-item food target, so even a tiny colony keeps a small buffer.")
+            .defineInRange("diningHallStockMin", 4, 0, 1024);
+
+    private static final ForgeConfigSpec.IntValue DINING_HALL_STOCK_MAX = BUILDER
+            .comment("Upper bound on the dining hall's per-menu-item food target, so a large colony never hoards a rotting pile of any single dish.")
+            .defineInRange("diningHallStockMax", 16, 1, 1024);
+
+    private static final ForgeConfigSpec.IntValue DINING_HALL_WORKER_CARRY = BUILDER
+            .comment("How much food the dining hall's Waiter pulls from storage into its own inventory per trip (vanilla grabs a full stack of 64). The Waiter's inventory is not colony storage, so it is NOT covered by the colony food-preservation trait — anything it over-carries decays in hand. Keep this modest.")
+            .defineInRange("diningHallWorkerCarry", 16, 1, 64);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     /** Fertilize once the crop's primary nutrient is below this (0..1). */
@@ -67,6 +83,18 @@ public class Config
 
     /** Effective-fuel-temperature bonus (C) per building level, index 0 = level 1. Read live by {@link com.mctfc.furnace.FurnaceFuel}. */
     public static List<Integer> furnaceFuelTempBonusByLevel = List.of(0, 15, 30, 45, 60);
+
+    /** Dining hall per-menu-item food stock target, per colony citizen (clamped to [min,max]). Read by {@code MixinRestaurantMenuModule}. */
+    public static double diningHallStockPerCitizen = 0.5;
+
+    /** Lower bound on the dining hall's per-menu-item food target. */
+    public static int diningHallStockMin = 4;
+
+    /** Upper bound on the dining hall's per-menu-item food target. */
+    public static int diningHallStockMax = 16;
+
+    /** How much food the Waiter carries from storage per trip (vs vanilla's full stack). Read by {@code MixinEntityAIWorkCook}. */
+    public static int diningHallWorkerCarry = 16;
 
     /**
      * The effective-temperature bonus for a furnace worker's building level (1-based), from
@@ -92,5 +120,9 @@ public class Config
         tfcFoodSaturationModifier = TFC_FOOD_SATURATION_MODIFIER.get().floatValue();
         keepColonyLightsLit = KEEP_COLONY_LIGHTS_LIT.get();
         furnaceFuelTempBonusByLevel = new ArrayList<>(FURNACE_FUEL_TEMP_BONUS_BY_LEVEL.get());
+        diningHallStockPerCitizen = DINING_HALL_STOCK_PER_CITIZEN.get();
+        diningHallStockMin = DINING_HALL_STOCK_MIN.get();
+        diningHallStockMax = DINING_HALL_STOCK_MAX.get();
+        diningHallWorkerCarry = DINING_HALL_WORKER_CARRY.get();
     }
 }

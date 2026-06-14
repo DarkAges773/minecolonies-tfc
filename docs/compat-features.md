@@ -314,7 +314,92 @@ feature gives them real TFC food data, **datapack-only, no code**.
 - **Verify in-game:** TFC's `FoodCapability.markRecipeOutputsAsNonDecaying` (on `TagsUpdatedEvent`) marks recipe
   result *templates* non-decaying; confirm a freshly cooked MineColonies dish begins decaying as intended (those
   produced directly by the cook AI rather than a vanilla recipe should be fine), and that converted dishes feed
-  citizens as before. Re-run `gen_tfc_food_items.sh` if MineColonies' food set changes.
+  citizens as before. Re-run `gen_tfc_food_items.sh` if MineColonies' food set changes. *(Confirmed in-game: the
+  datapack makes MineColonies foods decay.)*
+
+### Crafting carries ingredient freshness (copy_oldest_food)
+
+Once MineColonies dishes decay, cooking must not *refresh* them — a meal made from a half-spoiled ingredient
+should come out correspondingly aged (TFC's `copy_oldest_food`: interpolate the output's creation date toward the
+oldest ingredient's). TFC applies that **only** inside `Recipe#assemble(CraftingContainer)`, which neither
+MineColonies path reaches the same way, so this is split by who crafts:
+
+- **Player crafting → datapack.** MineColonies' food recipes (which we rewrite to use TFC ingredients anyway) are
+  authored as TFC advanced-crafting recipes carrying the modifier, so a player at a table runs TFC's real
+  `assemble`. Pattern (overrides the stock recipe by sitting at the same `data/minecolonies/recipes/<path>.json`):
+  ```jsonc
+  { "type": "tfc:advanced_shapeless_crafting",   // or tfc:advanced_shaped_crafting (adds "pattern"/"key")
+    "ingredients": [ /* TFC ingredients */ ],
+    "result": { "stack": { "item": "minecolonies:flatbread" }, "modifiers": ["tfc:copy_oldest_food"] } }
+  ```
+  (`ItemStackProvider` reads `stack` + `modifiers`; with a `stack` present, `getResultItem()` is non-empty — the
+  modifier applied to an empty input is a no-op — so MineColonies still sees a normal output for discovery.)
+- **Worker crafting → code (the one place datapack can't reach).** `RecipeStorage` caches
+  `primaryOutput = recipe.getPrimaryOutput()` and `fullfillRecipeAndCopy` (the single chokepoint — every
+  `fullfillRecipe` overload delegates to it) inserts *copies* of it; it never builds a `CraftingContainer` or calls
+  `assemble`, so the recipe's modifiers are dead for workers. [MixinRecipeStorage](../compat/src/main/java/com/mctfc/mixin/MixinRecipeStorage.java)
+  fixes both modifier effects on TFC-food outputs. A `@Redirect` on the `extractItem` calls records each consumed
+  TFC-food ingredient (a thread-local list cleared at method HEAD — the actual extracted stacks, since
+  `getCleanedInput`'s `ItemStorage`s are caps-blind), the HEAD inject also stashes the level, and a `@Redirect` on
+  the `getPrimaryOutput()` call feeding `insertCraftedItems` swaps in a fixed-up *copy* (cached template stays
+  clean), branching on the output's `FoodDefinition.getHandlerType()`:
+  - **static food** (e.g. our MineColonies dishes) → carry decay from the oldest ingredient
+    ([CraftedFoodDecay](../compat/src/main/java/com/mctfc/food/CraftedFoodDecay.java)`#carryDecay` →
+    `FoodCapability.updateFoodFromAllPrevious`). Matches the player path's `copy_oldest_food`.
+  - **dynamic food** (TFC sandwiches, …) → the cached output is unrealized (`FoodData.EMPTY`); `#realizeFromRecipe`
+    looks the recipe back up by `RecipeStorage#getRecipeSource()`, builds a throwaway 3×3 `TransientCraftingContainer`
+    from the captured ingredients, and calls `CraftingRecipe#assemble` — running the `meal` modifier so the food
+    comes out with its real, ingredient-derived nutrition (fresh, as TFC does for a hand-crafted meal). Any failure
+    (unresolvable recipe, non-crafting type, wrong result item) falls back to the cached output. Because
+    `AdvancedShaped/ShapelessRecipe#assemble` doesn't re-validate the grid and `meal` reads the input flat, a flat
+    container suffices — so this is general across **any** crafting-table dynamic food (TFC's or an add-on's), not
+    just sandwiches.
+  - Gated to no-op unless the output is a TFC food. Non-food crafting is untouched.
+- **Scope:** the `RecipeStorage` path is *all* colony crafters (Baker, cook-assistant, …) and covers crafting-table
+  dynamic foods (sandwiches). **Not** covered: the cook's *furnace* output (`extractFromFurnace`, separate from
+  `RecipeStorage`) and **dynamic foods made in TFC devices** — salads (TFC salad GUI) and soups (`tfc:pot`) — both
+  of which belong with the Cook→TFC conversion (`docs/tfc-furnace-workers.md` §6).
+
+**Knives match damage-agnostically (so the crafter doesn't stall on a worn knife).** The sandwich recipe wears a
+TFC knife each craft (`tfc:damage_inputs_shaped_crafting`), and tool durability lives in the item's `Damage` NBT.
+MineColonies matches recipe inputs with `matchNBT = true`, and for an item with no registered "checked NBT keys"
+([`ItemStackUtils#compareItemStacksIgnoreStackSize`](https://github.com/ldtteam/minecolonies)) it compares the
+**full** tag — so a once-damaged knife (now carrying a `Damage` tag) stops matching the recipe's fresh-knife input.
+The crafter then can't see its own knife, makes exactly **one** craft, and stalls *without requesting* (its only
+knife is the unmatchable damaged one). [ToolNbtMatching](../compat/src/main/java/com/mctfc/crafting/ToolNbtMatching.java)
+registers every item in the **`tfc:knives` tag** into `ItemStackUtils.CHECKED_NBT_KEYS` with an **empty** key set
+(⇒ the comparison ignores all NBT for it, so any-damage knife matches), on `TagsUpdatedEvent` (fires after the
+datapack listener that owns the map has cleared+reloaded it, so it survives `/reload`). Tag-driven, because
+MineColonies' own `compatibility` datapack format is item-id-only (no tags); `putIfAbsent` so a MineColonies-shipped
+entry would win. The bread/fillings need no such fix — their freshness is in caps, not `getTag()`, so they already
+match. Extend the same way for other damageable TFC tools used as colony-crafting ingredients.
+
+## Dining hall stocks food to demand (not by the stackful) — DONE, in-world test pending
+
+TFC food decays, but MineColonies' dining hall (Restaurant) was built for inert food: [RestaurantMenuModule](https://github.com/ldtteam/minecolonies)`#onColonyTick`
+requests each **menu** item up to `target = itemStack.getMaxStackSize() × getExpectedStock()`, and the dining hall
+registers `getExpectedStock = buildingLevel`. For 32-stacking TFC food at a level-5 hut that's **160 of every dish**,
+which the Chef dutifully bulk-cooks into storage where it rots. (The request itself is a `MinimumStack` of
+`min(STACKSIZE, maxStackSize, delta)` with minCount 1 — the "1–32" you see for 32-stack food; the Chef fulfils up to
+that.) The same `maxStackSize × getExpectedStock()` also feeds `alterItemsToBeKept` (the keep/don't-dump amount).
+
+[MixinRestaurantMenuModule](../compat/src/main/java/com/mctfc/mixin/MixinRestaurantMenuModule.java) replaces the
+stack-size-driven target with a **demand-scaled** one: per menu item, `clamp(round(citizens × perCitizen), min, max)`
+(config `diningHallStockPerCitizen` 0.5 / `diningHallStockMin` 4 / `diningHallStockMax` 16). Mechanism (vanilla Mixin,
+no MixinExtras): `getExpectedStock` HEAD-cancellable → return the demand target; and two `@Redirect`s drop the
+`getMaxStackSize()` **factor** to 1 — the target site (`onColonyTick` ordinal 0) and the keep sites
+(`alterItemsToBeKept`) — leaving the per-request batch-cap `getMaxStackSize()` (ordinal 1) intact, so
+`target = 1 × demand = demand`. All gated on the module's `canCook` flag, so **only the dining hall** changes; the
+netherminer menu (the other `RestaurantMenuModule`, `canCook=false`) keeps vanilla behaviour. `getBuilding()` is
+reached by casting `this` (it's inherited from `AbstractBuildingModule` — the Mixin AP can't `@Shadow` inherited
+members).
+
+**The Waiter doesn't hoard a stack either.** `EntityAIWorkCook#checkForImportantJobs` pulls food into the worker's
+own inventory in `STACKSIZE` (64) batches (`needsCurrently = new Tuple<>(predicate, STACKSIZE)`, for citizens and
+players). The worker inventory isn't a colony rack, so the `colony_storage` preservation trait doesn't cover it —
+over-carried food rots in hand. [MixinEntityAIWorkCook](../compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkCook.java)
+caps that gather at `Config.diningHallWorkerCarry` (default 16) via `@ModifyConstant` on the inlined `64` (the only
+`64` in that method, from the compile-time-constant `STACKSIZE`).
 
 <details><summary>Original tilling recon (kept for reference)</summary>
 
