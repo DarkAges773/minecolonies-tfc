@@ -1,0 +1,1 @@
+{ "type": "tfc:barrel_sealed", "input_item": { "ingredient": { "item": "firmavanilla:alabaster_pillar" } }, "input_fluid": { "ingredient": "tfc:lime_dye", "amount": 25 }, "output_item": { "item": "firmavanilla:alabaster_pillar/lime" }, "duration": 1000 }

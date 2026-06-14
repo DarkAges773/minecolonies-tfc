@@ -328,12 +328,12 @@ foreach (var rock in ROCKS)
     File.WriteAllText(Path.Combine(wlDirs.loot, rock + ".json"), SelfLoot("tile_wall", rock));
 
     // Shape recipes — crafting + stonecutting off the plain tile, matching TFC's brick-shape counts.
-    File.WriteAllText(Path.Combine(stDirs.rec, rock + ".json"), ShapeCraft("tile_stairs", rock, "[ \"X  \", \"XX \", \"XXX\" ]", 8));
-    File.WriteAllText(Path.Combine(stDirs.rec, rock + "_stonecutting.json"), ShapeStonecut("tile_stairs", rock, 1));
-    File.WriteAllText(Path.Combine(slDirs.rec, rock + ".json"), ShapeCraft("tile_slab", rock, "[ \"XXX\" ]", 6));
-    File.WriteAllText(Path.Combine(slDirs.rec, rock + "_stonecutting.json"), ShapeStonecut("tile_slab", rock, 2));
-    File.WriteAllText(Path.Combine(wlDirs.rec, rock + ".json"), ShapeCraft("tile_wall", rock, "[ \"XXX\", \"XXX\" ]", 6));
-    File.WriteAllText(Path.Combine(wlDirs.rec, rock + "_stonecutting.json"), ShapeStonecut("tile_wall", rock, 1));
+    File.WriteAllText(Path.Combine(stDirs.rec, rock + ".json"), ShapeCraft("tiles", "tile_stairs", rock, "[ \"X  \", \"XX \", \"XXX\" ]", 8));
+    File.WriteAllText(Path.Combine(stDirs.rec, rock + "_stonecutting.json"), ShapeStonecut("tiles", "tile_stairs", rock, 1));
+    File.WriteAllText(Path.Combine(slDirs.rec, rock + ".json"), ShapeCraft("tiles", "tile_slab", rock, "[ \"XXX\" ]", 6));
+    File.WriteAllText(Path.Combine(slDirs.rec, rock + "_stonecutting.json"), ShapeStonecut("tiles", "tile_slab", rock, 2));
+    File.WriteAllText(Path.Combine(wlDirs.rec, rock + ".json"), ShapeCraft("tiles", "tile_wall", rock, "[ \"XXX\", \"XXX\" ]", 6));
+    File.WriteAllText(Path.Combine(wlDirs.rec, rock + "_stonecutting.json"), ShapeStonecut("tiles", "tile_wall", rock, 1));
 
     // TFC chisel paths: chiseled rock -> tile (smooth), tile -> stairs (stair) / slab (slab). No chisel for walls.
     File.WriteAllText(Path.Combine(chiselRoot, "smooth", rock + "_tiles.json"),
@@ -355,8 +355,8 @@ crackedMask.Dispose();
 // (cube_column). The tile is then composited with raw alabaster through the hand-authored tiles_mask.png:
 // mask white = keep the generated tile (the brick seams), black = show raw alabaster (the panel faces); grey
 // blends. Pillar isn't covered by the (tile-shaped) mask. Recipes deferred.
-var alTileDirs = TileDirs("alabaster_tile", withRecipe: false);
-var alPillarDirs = TileDirs("alabaster_pillar", withRecipe: false);
+var alTileDirs = TileDirs("alabaster_tile", withRecipe: true);
+var alPillarDirs = TileDirs("alabaster_pillar", withRecipe: true);
 // Shapes off the alabaster tile (stairs/slab/wall) — reuse the tile texture, no recipes for now.
 var alStDirs = DerivedDirs("alabaster_tile_stairs");
 var alSlDirs = DerivedDirs("alabaster_tile_slab");
@@ -365,6 +365,56 @@ using var purpurBlock = Load("vanilla", "purpur_block.png");
 using var purpurPillar = Load("vanilla", "purpur_pillar.png");
 using var purpurPillarTop = Load("vanilla", "purpur_pillar_top.png");
 using var tilesMask = Image.Load<Rgba32>(Path.Combine(scriptDir, "tiles_mask.png"));   // hand-authored, tracked
+
+// Uncoloured base tile (firmavanilla:alabaster_tile, no colour) — TFC's alabaster/bricks tier, the dyeable base.
+// Same pipeline as the coloured tiles, from the uncoloured alabaster bricks + raw. Chiselled from uncoloured
+// bricks; dyed (in a barrel) into the 16 colours below.
+string alAsset = Path.Combine(resRoot, "assets", MODID);
+string alData = Path.Combine(resRoot, "data", MODID);
+using (var ubLut = Load("tfc", Path.Combine("alabaster_bricks", "uncolored.png")))
+using (var ubRaw = Load("tfc", Path.Combine("alabaster_raw", "uncolored.png")))
+using (var ut = ClutThrough(purpurBlock, ubLut))
+{
+    GrainOverlay(ut, ubRaw, ALABASTER_GRAIN_STRENGTH, null);
+    MaskComposite(ut, ubRaw, tilesMask);
+    ut.Save(Path.Combine(alAsset, "textures", "block", "alabaster_tile.png"));
+}
+File.WriteAllText(Path.Combine(alAsset, "blockstates", "alabaster_tile.json"),
+    $$"""{ "variants": { "": { "model": "{{MODID}}:block/alabaster_tile" } } }""");
+File.WriteAllText(Path.Combine(alAsset, "models", "block", "alabaster_tile.json"),
+    $$"""{ "parent": "minecraft:block/cube_all", "textures": { "all": "{{MODID}}:block/alabaster_tile" } }""");
+File.WriteAllText(Path.Combine(alAsset, "models", "item", "alabaster_tile.json"),
+    $$"""{ "parent": "{{MODID}}:block/alabaster_tile" }""");
+File.WriteAllText(Path.Combine(alData, "loot_tables", "blocks", "alabaster_tile.json"),
+    $$"""{ "type": "minecraft:block", "pools": [ { "rolls": 1, "entries": [ { "type": "minecraft:item", "name": "{{MODID}}:alabaster_tile" } ], "conditions": [ { "condition": "minecraft:survives_explosion" } ] } ] }""");
+// Uncoloured tile from uncoloured bricks: in-world smooth chisel + table chisel-craft (no dye — it IS the base).
+File.WriteAllText(Path.Combine(chiselRoot, "smooth", "alabaster_uncolored_tile.json"),
+    ChiselRecipe("tfc:alabaster/bricks", $"{MODID}:alabaster_tile", "smooth"));
+File.WriteAllText(Path.Combine(alTileDirs.rec, "uncolored.json"),
+    ToolCraft("tfc:alabaster/bricks", "tfc:chisels", $"{MODID}:alabaster_tile"));
+
+// Uncoloured base pillar (firmavanilla:alabaster_pillar, no colour) — also a dyeable base, like the tile.
+// Chiselled from the uncoloured tile; dyed (barrel) into the 16 colours below.
+using (var ubLut = Load("tfc", Path.Combine("alabaster_bricks", "uncolored.png")))
+using (var ubRaw = Load("tfc", Path.Combine("alabaster_raw", "uncolored.png")))
+{
+    using (var s = ClutThrough(purpurPillar, ubLut)) { GrainOverlay(s, ubRaw, ALABASTER_GRAIN_STRENGTH, null); s.Save(Path.Combine(alAsset, "textures", "block", "alabaster_pillar.png")); }
+    using (var top = ClutThrough(purpurPillarTop, ubLut)) { GrainOverlay(top, ubRaw, ALABASTER_GRAIN_STRENGTH, null); top.Save(Path.Combine(alAsset, "textures", "block", "alabaster_pillar_top.png")); }
+}
+File.WriteAllText(Path.Combine(alAsset, "blockstates", "alabaster_pillar.json"),
+    $$"""{ "variants": { "axis=x": { "model": "{{MODID}}:block/alabaster_pillar", "x": 90, "y": 90 }, "axis=y": { "model": "{{MODID}}:block/alabaster_pillar" }, "axis=z": { "model": "{{MODID}}:block/alabaster_pillar", "x": 90 } } }""");
+File.WriteAllText(Path.Combine(alAsset, "models", "block", "alabaster_pillar.json"),
+    $$"""{ "parent": "minecraft:block/cube_column", "textures": { "end": "{{MODID}}:block/alabaster_pillar_top", "side": "{{MODID}}:block/alabaster_pillar" } }""");
+File.WriteAllText(Path.Combine(alAsset, "models", "item", "alabaster_pillar.json"),
+    $$"""{ "parent": "{{MODID}}:block/alabaster_pillar" }""");
+File.WriteAllText(Path.Combine(alData, "loot_tables", "blocks", "alabaster_pillar.json"),
+    $$"""{ "type": "minecraft:block", "pools": [ { "rolls": 1, "entries": [ { "type": "minecraft:item", "name": "{{MODID}}:alabaster_pillar" } ], "conditions": [ { "condition": "minecraft:survives_explosion" } ] } ] }""");
+// Uncoloured pillar from the uncoloured tile: in-world smooth chisel + table chisel-craft.
+File.WriteAllText(Path.Combine(chiselRoot, "smooth", "alabaster_uncolored_pillar.json"),
+    ChiselRecipe($"{MODID}:alabaster_tile", $"{MODID}:alabaster_pillar", "smooth"));
+File.WriteAllText(Path.Combine(alPillarDirs.rec, "uncolored.json"),
+    ToolCraft($"{MODID}:alabaster_tile", "tfc:chisels", $"{MODID}:alabaster_pillar"));
+
 int alab = 0;
 foreach (var color in ALABASTER_COLORS)
 {
@@ -412,8 +462,35 @@ foreach (var color in ALABASTER_COLORS)
     foreach (var (suffix, body) in WallModels("alabaster_tile", color)) File.WriteAllText(Path.Combine(alWlDirs.model, color + suffix + ".json"), body);
     File.WriteAllText(Path.Combine(alWlDirs.item, color + ".json"), ItemParent("alabaster_tile_wall", color, "_inventory"));
     File.WriteAllText(Path.Combine(alWlDirs.loot, color + ".json"), SelfLoot("alabaster_tile_wall", color));
+
+    // --- recipes (match TFC alabaster coloring strictly) ---
+    // Coloured tile: chisel the coloured bricks (in-world smooth + table chisel-craft), OR dye the uncoloured tile.
+    File.WriteAllText(Path.Combine(chiselRoot, "smooth", "alabaster_" + color + "_tile.json"),
+        ChiselRecipe($"tfc:alabaster/bricks/{color}", $"{MODID}:alabaster_tile/{color}", "smooth"));
+    File.WriteAllText(Path.Combine(alTileDirs.rec, color + ".json"),
+        ToolCraft($"tfc:alabaster/bricks/{color}", "tfc:chisels", $"{MODID}:alabaster_tile/{color}"));
+    File.WriteAllText(Path.Combine(alTileDirs.rec, color + "_dye.json"),
+        BarrelDye($"{MODID}:alabaster_tile", color, $"{MODID}:alabaster_tile/{color}"));
+    // Pillar from the tile: in-world smooth chisel + table chisel-craft; OR dye the uncoloured pillar (like the tile).
+    File.WriteAllText(Path.Combine(chiselRoot, "smooth", "alabaster_" + color + "_pillar.json"),
+        ChiselRecipe($"{MODID}:alabaster_tile/{color}", $"{MODID}:alabaster_pillar/{color}", "smooth"));
+    File.WriteAllText(Path.Combine(alPillarDirs.rec, color + ".json"),
+        ToolCraft($"{MODID}:alabaster_tile/{color}", "tfc:chisels", $"{MODID}:alabaster_pillar/{color}"));
+    File.WriteAllText(Path.Combine(alPillarDirs.rec, color + "_dye.json"),
+        BarrelDye($"{MODID}:alabaster_pillar", color, $"{MODID}:alabaster_pillar/{color}"));
+    // Shapes off the tile: chisel (stair/slab; no wall), crafting + stonecutting (all three).
+    File.WriteAllText(Path.Combine(chiselRoot, "stair", "alabaster_" + color + "_stairs.json"),
+        ChiselRecipe($"{MODID}:alabaster_tile/{color}", $"{MODID}:alabaster_tile_stairs/{color}", "stair"));
+    File.WriteAllText(Path.Combine(chiselRoot, "slab", "alabaster_" + color + "_slab.json"),
+        ChiselRecipe($"{MODID}:alabaster_tile/{color}", $"{MODID}:alabaster_tile_slab/{color}", "slab", $"{MODID}:alabaster_tile_slab/{color}"));
+    File.WriteAllText(Path.Combine(alStDirs.rec, color + ".json"), ShapeCraft("alabaster_tile", "alabaster_tile_stairs", color, "[ \"X  \", \"XX \", \"XXX\" ]", 8));
+    File.WriteAllText(Path.Combine(alStDirs.rec, color + "_stonecutting.json"), ShapeStonecut("alabaster_tile", "alabaster_tile_stairs", color, 1));
+    File.WriteAllText(Path.Combine(alSlDirs.rec, color + ".json"), ShapeCraft("alabaster_tile", "alabaster_tile_slab", color, "[ \"XXX\" ]", 6));
+    File.WriteAllText(Path.Combine(alSlDirs.rec, color + "_stonecutting.json"), ShapeStonecut("alabaster_tile", "alabaster_tile_slab", color, 2));
+    File.WriteAllText(Path.Combine(alWlDirs.rec, color + ".json"), ShapeCraft("alabaster_tile", "alabaster_tile_wall", color, "[ \"XXX\", \"XXX\" ]", 6));
+    File.WriteAllText(Path.Combine(alWlDirs.rec, color + "_stonecutting.json"), ShapeStonecut("alabaster_tile", "alabaster_tile_wall", color, 1));
     alab++;
-    Console.WriteLine($"  alabaster_tile/{color} (+pillar, +stairs/slab/wall)");
+    Console.WriteLine($"  alabaster_tile/{color} (+pillar, +stairs/slab/wall, +recipes)");
 }
 
 foreach (var (_, pair) in motifSources) { pair.relief.Dispose(); pair.flat.Dispose(); }
@@ -677,6 +754,7 @@ string MineableTag()
         .Concat(ROCKS.Select(r => $"    \"{MODID}:tile_stairs/{r}\""))
         .Concat(ROCKS.Select(r => $"    \"{MODID}:tile_slab/{r}\""))
         .Concat(ROCKS.Select(r => $"    \"{MODID}:tile_wall/{r}\""))
+        .Concat(new[] { $"    \"{MODID}:alabaster_tile\"", $"    \"{MODID}:alabaster_pillar\"" })
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile/{c}\""))
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_pillar/{c}\""))
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_stairs/{c}\""))
@@ -825,6 +903,11 @@ string ToolCraft(string ingredient, string toolTag, string result) =>
     }
     """;
 
+// TFC sealed-barrel dye: the (uncoloured) base item + 25 mB of a colour's dye fluid -> the coloured item.
+// Matches TFC's data/tfc/recipes/barrel/dye/* for alabaster exactly (duration 1000).
+string BarrelDye(string inputItem, string color, string outputItem) =>
+    $$"""{ "type": "tfc:barrel_sealed", "input_item": { "ingredient": { "item": "{{inputItem}}" } }, "input_fluid": { "ingredient": "tfc:{{color}}_dye", "amount": 25 }, "output_item": { "item": "{{outputItem}}" }, "duration": 1000 }""";
+
 // TFC chisel recipe (block-in-world conversion). `mode` is smooth/stair/slab; `extraDrop` (slab mode) drops a
 // spare slab so a full block yields two. Matches TFC's own data/tfc/recipes/chisel/* exactly.
 string ChiselRecipe(string ingredient, string result, string mode, string extraDrop = null) =>
@@ -832,24 +915,24 @@ string ChiselRecipe(string ingredient, string result, string mode, string extraD
         ? $$"""{ "type": "tfc:chisel", "ingredient": "{{ingredient}}", "result": "{{result}}", "mode": "{{mode}}" }"""
         : $$"""{ "type": "tfc:chisel", "ingredient": "{{ingredient}}", "result": "{{result}}", "mode": "{{mode}}", "extra_drop": { "item": "{{extraDrop}}" } }""";
 
-// Shape crafting (off the plain tile) — `patternJson` is the recipe grid; counts match TFC's brick shapes
-// (stairs 8, slab 6, wall 6). Key 'X' is the plain tile.
-string ShapeCraft(string kind, string rock, string patternJson, int count) =>
+// Shape crafting off the base block `baseKind/<rock>` — `patternJson` is the recipe grid; counts match TFC's
+// brick shapes (stairs 8, slab 6, wall 6). Key 'X' is the base block.
+string ShapeCraft(string baseKind, string kind, string rock, string patternJson, int count) =>
     $$"""
     {
       "type": "minecraft:crafting_shaped",
       "pattern": {{patternJson}},
-      "key": { "X": { "item": "{{MODID}}:tiles/{{rock}}" } },
+      "key": { "X": { "item": "{{MODID}}:{{baseKind}}/{{rock}}" } },
       "result": { "item": "{{MODID}}:{{kind}}/{{rock}}", "count": {{count}} }
     }
     """;
 
-// Shape stonecutting (off the plain tile) — counts match TFC (stairs 1, slab 2, wall 1).
-string ShapeStonecut(string kind, string rock, int count) =>
+// Shape stonecutting off the base block `baseKind/<rock>` — counts match TFC (stairs 1, slab 2, wall 1).
+string ShapeStonecut(string baseKind, string kind, string rock, int count) =>
     $$"""
     {
       "type": "minecraft:stonecutting",
-      "ingredient": { "item": "{{MODID}}:tiles/{{rock}}" },
+      "ingredient": { "item": "{{MODID}}:{{baseKind}}/{{rock}}" },
       "result": "{{MODID}}:{{kind}}/{{rock}}",
       "count": {{count}}
     }

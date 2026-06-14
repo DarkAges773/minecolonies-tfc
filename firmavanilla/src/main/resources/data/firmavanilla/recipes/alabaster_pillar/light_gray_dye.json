@@ -1,0 +1,1 @@
+{ "type": "tfc:barrel_sealed", "input_item": { "ingredient": { "item": "firmavanilla:alabaster_pillar" } }, "input_fluid": { "ingredient": "tfc:light_gray_dye", "amount": 25 }, "output_item": { "item": "firmavanilla:alabaster_pillar/light_gray" }, "duration": 1000 }

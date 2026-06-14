@@ -147,6 +147,7 @@
   "block.firmavanilla.tile_wall.shale": "Shale Tile Wall",
   "block.firmavanilla.tile_wall.slate": "Slate Tile Wall",
 
+  "block.firmavanilla.alabaster_tile": "Alabaster Tile",
   "block.firmavanilla.alabaster_tile.white": "White Alabaster Tile",
   "block.firmavanilla.alabaster_tile.light_gray": "Light Gray Alabaster Tile",
   "block.firmavanilla.alabaster_tile.gray": "Gray Alabaster Tile",
@@ -163,6 +164,7 @@
   "block.firmavanilla.alabaster_tile.purple": "Purple Alabaster Tile",
   "block.firmavanilla.alabaster_tile.magenta": "Magenta Alabaster Tile",
   "block.firmavanilla.alabaster_tile.pink": "Pink Alabaster Tile",
+  "block.firmavanilla.alabaster_pillar": "Alabaster Pillar",
   "block.firmavanilla.alabaster_pillar.white": "White Alabaster Pillar",
   "block.firmavanilla.alabaster_pillar.light_gray": "Light Gray Alabaster Pillar",
   "block.firmavanilla.alabaster_pillar.gray": "Gray Alabaster Pillar",

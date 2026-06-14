@@ -250,11 +250,27 @@ colour's natural stone speckle — lifted from its **raw alabaster** (`tfc:alaba
 and both pillar faces. Unlike the rocks this pass is **mask-less** (`GrainOverlay(..., null)`): the speckle lands
 everywhere, since alabaster has no mortar grooves to protect. Strength is the single `ALABASTER_GRAIN_STRENGTH`
 (start 1.0). The pillar's side and `_top` faces both ramp through the same alabaster-brick palette. Join
-`mineable/pickaxe`. **Recipes deferred** for now. The colour list (vanilla DyeColor order) is duplicated in
-`AlabasterBlocks.java` and `generate.cs`; keep them in sync.
+`mineable/pickaxe`. The colour list (vanilla DyeColor order) is duplicated in `AlabasterBlocks.java` and
+`generate.cs`; keep them in sync.
+
+There are also **uncoloured bases** `firmavanilla:alabaster_tile` and `alabaster_pillar` (no colour segment, like
+TFC's `tfc:alabaster/bricks`), generated from the uncoloured alabaster bricks/raw. Both are dyeable bases (see
+Recipes).
 
 **Shapes.** Off the alabaster tile, each colour also gets `alabaster_tile_stairs/`, `alabaster_tile_slab/` and
 `alabaster_tile_wall/<colour>` (`StairBlock`/`SlabBlock`/`WallBlock`), reusing the tile texture on every face via
 the same generic shape emitters as the rock tiles (`StairsBlockstate`/`SlabBlockstate`/`WallBlockstate`, now
 parameterised by `kind`/`baseKind`). They join the vanilla `stairs`/`slabs`/`walls` tags. Vanilla ships no purpur
-wall, but the alabaster wall is provided anyway (it just uses the tile texture). Recipes deferred, like the tile.
+wall, but the alabaster wall is provided anyway (it just uses the tile texture).
+
+**Recipes — colouring matches TFC strictly.** Colour enters at the **tile** and flows outward, exactly as TFC dyes
+its alabaster bases and crafts coloured shapes from them:
+- **Tile** ← chisel `tfc:alabaster/bricks(/<colour>)` (in-world `tfc:chisel` smooth + table
+  `tfc:damage_inputs_shapeless_crafting` with `tfc:chisels`), uncoloured and per-colour.
+- **Dyeing** (like TFC's `barrel/dye/*_alabaster`): sealed barrel, the uncoloured **tile or pillar** + 25 mB
+  `tfc:<colour>_dye` → the coloured one, duration 1000. Both the tile and pillar are dyeable full-block bases;
+  shapes are **never** dyed (TFC dyes only base forms).
+- **Pillar** ← chisel the tile (smooth, in-world + table) **or** dye the uncoloured pillar. **Shapes** ← off the
+  coloured tile: crafting (stairs ×8, slab ×6, wall ×6) + chisel (stair/slab; no wall) + stonecutting (×1/×2/×1).
+- No uncoloured shapes and no dye on shapes — matching TFC, where the uncoloured bases have no shapes and a shape's
+  colour is carried by crafting/chiselling, not re-dyeing.

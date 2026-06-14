@@ -38,6 +38,11 @@ public final class AlabasterBlocks
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, FirmaVanilla.MODID);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, FirmaVanilla.MODID);
 
+    /** Uncoloured base tile (TFC's {@code alabaster/bricks} tier) — the dyeable base; id {@code alabaster_tile}. */
+    public static final RegistryObject<Block> UNCOLORED_TILE = register("alabaster_tile", () -> new Block(props()));
+    /** Uncoloured base pillar — also a dyeable base (id {@code alabaster_pillar}). */
+    public static final RegistryObject<Block> UNCOLORED_PILLAR = register("alabaster_pillar", () -> new RotatedPillarBlock(props()));
+
     /** Tile (full cube), pillar, and the tile's stairs/slab/wall shapes per colour, in {@link #COLORS} order. */
     public static final List<RegistryObject<Block>> TILES = new ArrayList<>();
     public static final List<RegistryObject<Block>> PILLARS = new ArrayList<>();

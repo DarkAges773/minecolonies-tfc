@@ -1,0 +1,11 @@
+{
+  "type": "tfc:damage_inputs_shapeless_crafting",
+  "recipe": {
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+      { "item": "tfc:alabaster/bricks/magenta" },
+      { "tag": "tfc:chisels" }
+    ],
+    "result": { "item": "firmavanilla:alabaster_tile/magenta" }
+  }
+}

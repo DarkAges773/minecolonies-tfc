@@ -37,11 +37,17 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   consumed). Cracked tile: a plain tile + a hammer (`tfc:hammers`), mirroring TFC cracked bricks. Shapes ship all
   three paths TFC gives its bricks: crafting (stairs ×8, slab ×6, wall ×6) + stonecutting (stairs ×1, slab ×2,
   wall ×1) off the tile, plus chisel stair/slab modes (walls have no TFC chisel mode).
-- **Alabaster tile + pillar** in all 16 TFC dye colours — vanilla's purpur block / pillar recoloured (CLUT)
-  through each colour's `tfc:alabaster/bricks/<colour>` palette, then a detail-stamp pass adding that colour's
-  raw-alabaster stone speckle, a form TFC doesn't ship. `firmavanilla:alabaster_tile/<colour>` (full cube, from
-  purpur block) and `alabaster_pillar/<colour>` (`RotatedPillarBlock`, from purpur pillar). Recipes deferred.
+- **Alabaster tile + pillar** in all 16 TFC dye colours, plus **uncoloured bases** (`firmavanilla:alabaster_tile`
+  and `alabaster_pillar`) — vanilla's purpur block / pillar recoloured (CLUT) through each colour's
+  `tfc:alabaster/bricks/<colour>` palette + composited with raw alabaster, a form TFC doesn't ship.
+  `firmavanilla:alabaster_tile/<colour>` (full cube) and `alabaster_pillar/<colour>` (`RotatedPillarBlock`).
 - **Alabaster tile shapes** — stairs, slab and wall off the alabaster tile, per colour
   (`firmavanilla:alabaster_tile_stairs/`, `alabaster_tile_slab/`, `alabaster_tile_wall/<colour>`); reuse the tile
   texture, join the vanilla `stairs`/`slabs`/`walls` tags. (Vanilla has no purpur wall, but the alabaster wall is
-  provided anyway.) Recipes deferred.
+  provided anyway.)
+- **Alabaster recipes — colouring matches TFC strictly.** The tile is chiselled from `tfc:alabaster/bricks`
+  (in-world smooth chisel + table chisel-craft); the pillar is chiselled from the tile; shapes come off the tile
+  via crafting (×8/×6/×6), chisel (stair/slab) and stonecutting (×1/×2/×1). **Dyeing** is TFC's sealed-barrel
+  recipe exactly — uncoloured **tile or pillar** + 25 mB `tfc:<colour>_dye` → the coloured one (both are dyeable
+  bases). Shapes are **not** dyed and have no uncoloured variant — their colour comes from crafting/chiselling a
+  coloured tile, mirroring TFC's "only the base is dyed" rule.

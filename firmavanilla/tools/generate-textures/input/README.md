@@ -32,7 +32,9 @@ input/vanilla/purpur_block.png              (the tile pattern)
 input/vanilla/purpur_pillar.png             (the pillar side pattern)
 input/vanilla/purpur_pillar_top.png         (the pillar end pattern)
 input/tfc/alabaster_bricks/<colour>.png     (each dye colour's alabaster-brick CLUT palette)
-input/tfc/alabaster_raw/<colour>.png        (each dye colour's raw alabaster — detail-stamp source)
+input/tfc/alabaster_bricks/uncolored.png    (the uncoloured alabaster-brick palette — for the base alabaster_tile)
+input/tfc/alabaster_raw/<colour>.png        (each dye colour's raw alabaster — composite source)
+input/tfc/alabaster_raw/uncolored.png       (the uncoloured raw alabaster — base alabaster_tile composite source)
 ```
 
 ## Extracting them from the dev dependency jars
@@ -60,6 +62,8 @@ and `.../rock/bricks/<rock>.png` in the TFC jar; copy each to `input/tfc/rock_sm
 come from `client-extra.jar`. The TFC alabaster palettes live at `assets/tfc/textures/block/alabaster/bricks/<colour>.png`
 (CLUT palette) and `.../alabaster/raw/<colour>.png` (detail-stamp source) in the TFC jar; copy each to
 `input/tfc/alabaster_bricks/<colour>.png` and `input/tfc/alabaster_raw/<colour>.png`. Colour list is in `generate.cs`.
+Also copy the **uncoloured** `assets/tfc/textures/block/alabaster/bricks.png` and `.../raw.png` to
+`input/tfc/alabaster_bricks/uncolored.png` and `input/tfc/alabaster_raw/uncolored.png` (the base `alabaster_tile`).
 
 ## Running
 
