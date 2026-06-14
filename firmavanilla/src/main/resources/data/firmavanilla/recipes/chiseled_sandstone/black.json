@@ -1,6 +1,11 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [ "S", "S" ],
-  "key": { "S": { "item": "tfc:cut_sandstone/black_slab" } },
-  "result": { "item": "firmavanilla:chiseled_sandstone/black" }
+  "type": "tfc:damage_inputs_shapeless_crafting",
+  "recipe": {
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+      { "item": "tfc:cut_sandstone/black" },
+      { "tag": "tfc:chisels" }
+    ],
+    "result": { "item": "firmavanilla:chiseled_sandstone/black" }
+  }
 }

@@ -20,6 +20,12 @@ input/tfc/cut_sandstone/{black,brown,green,pink,red,white,yellow}.png   (the TFC
 # decorative bookshelves:
 input/vanilla/bookshelf_overlay.png         (book-spine pixels lifted from vanilla bookshelf.png, transparent elsewhere)
 input/{tfc,afc,beneath}/bookshelf_empty/<wood>.png   (third-party — each wood's empty bookshelf frame)
+
+# rock tiles (plain + cracked), per TFC rock:
+input/vanilla/deepslate_tiles.png           (the plain tile pattern)
+input/vanilla/cracked_deepslate_tiles.png   (the cracked tile pattern)
+input/tfc/rock_smooth/<rock>.png            (each rock's smooth texture — default CLUT ramp + grain source)
+input/tfc/rock_bricks/<rock>.png            (each rock's bricks texture — CLUT ramp for BRICK_LUT_ROCKS + plain-tiles recipe)
 ```
 
 ## Extracting them from the dev dependency jars
@@ -38,9 +44,30 @@ TFC jar under `~/.gradle/caches/modules-2/files-2.1/curse.maven/terrafirmacraft-
 TFC / AFC (`arborfirmacraft-877545`) / Beneath (`beneath-1113980`) jars. Copy each to
 `input/<ns>/bookshelf_empty/<wood>.png` (drop the `_bookshelf_empty` suffix). Wood lists are in `generate.cs`.
 
+**Rock tiles** — the vanilla patterns `block/deepslate_tiles.png` and `block/cracked_deepslate_tiles.png` come
+from the vanilla `client-extra.jar` above. The TFC rock textures live at `assets/tfc/textures/block/rock/smooth/<rock>.png`
+and `.../rock/bricks/<rock>.png` in the TFC jar; copy each to `input/tfc/rock_smooth/<rock>.png` and
+`input/tfc/rock_bricks/<rock>.png`. Rock list is in `generate.cs`.
+
 ## Running
 
 ```
 cd firmavanilla/tools/generate-textures
 dotnet run generate.cs          # needs the .NET 10 SDK
 ```
+
+## Grain masks (editable)
+
+The rock-tiles grain (mineral flecks added onto the tile faces) is gated by a 16×16 control map: **white = grain
+applied** (tile faces), **black = skipped** (mortar grooves / shadows). There are **two**, one per tile pattern:
+
+- `../grain_mask.png` — for the **plain** tiles (`deepslate_tiles` layout).
+- `../grain_mask_cracked.png` — for the **cracked** tiles (`cracked_deepslate_tiles` layout); its black pixels
+  also follow the crack lines, so grain (and chalk's seam-darken) skip the cracks instead of painting over them.
+
+Both are tracked, hand-editable files (NOT under `input/`): paint pixels black/white in any editor to control
+exactly where flecks appear, then re-run the generator and it uses your edited masks as-is.
+
+Each is auto-created the first time (and rebuilt only with `dotnet run generate.cs -- regen-mask`, or if the file
+is missing) from granite's tile structure — which every rock shares, since the CLUT preserves the pattern's
+luminance ordering, so one mask per pattern serves all 20 rocks.

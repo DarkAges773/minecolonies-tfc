@@ -4,6 +4,7 @@ import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.MortaredCobbleBlock;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.SandstoneBlocks;
+import com.firmavanilla.block.TileBlocks;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -44,6 +45,15 @@ public final class FirmaVanillaCreativeTab
                         for (final RegistryObject<Block> bookshelf : BookshelfBlocks.ALL)
                         {
                             output.accept(bookshelf.get());
+                        }
+                        // Per rock, group the plain tile with its shape family, then the cracked tile.
+                        for (int i = 0; i < TileBlocks.ALL.size(); i++)
+                        {
+                            output.accept(TileBlocks.ALL.get(i).get());
+                            output.accept(TileBlocks.STAIRS.get(i).get());
+                            output.accept(TileBlocks.SLABS.get(i).get());
+                            output.accept(TileBlocks.WALLS.get(i).get());
+                            output.accept(TileBlocks.CRACKED.get(i).get());
                         }
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {

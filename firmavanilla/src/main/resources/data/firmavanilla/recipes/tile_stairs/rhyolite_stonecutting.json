@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/rhyolite" },
+  "result": "firmavanilla:tile_stairs/rhyolite",
+  "count": 1
+}

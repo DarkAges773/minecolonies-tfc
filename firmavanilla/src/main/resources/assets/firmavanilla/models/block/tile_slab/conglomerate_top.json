@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/slab_top", "textures": { "bottom": "firmavanilla:block/tiles/conglomerate", "top": "firmavanilla:block/tiles/conglomerate", "side": "firmavanilla:block/tiles/conglomerate" } }

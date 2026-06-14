@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/gneiss" },
+  "result": "firmavanilla:tile_slab/gneiss",
+  "count": 2
+}

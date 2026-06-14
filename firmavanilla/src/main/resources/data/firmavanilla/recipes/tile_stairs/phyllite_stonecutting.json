@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/phyllite" },
+  "result": "firmavanilla:tile_stairs/phyllite",
+  "count": 1
+}

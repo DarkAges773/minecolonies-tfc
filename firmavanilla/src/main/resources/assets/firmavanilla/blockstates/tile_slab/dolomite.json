@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/tile_slab/dolomite" },
+    "type=top":    { "model": "firmavanilla:block/tile_slab/dolomite_top" },
+    "type=double": { "model": "firmavanilla:block/tiles/dolomite" }
+  }
+}

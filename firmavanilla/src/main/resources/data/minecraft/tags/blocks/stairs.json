@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:tile_stairs/andesite",
+    "firmavanilla:tile_stairs/basalt",
+    "firmavanilla:tile_stairs/chalk",
+    "firmavanilla:tile_stairs/chert",
+    "firmavanilla:tile_stairs/claystone",
+    "firmavanilla:tile_stairs/conglomerate",
+    "firmavanilla:tile_stairs/dacite",
+    "firmavanilla:tile_stairs/diorite",
+    "firmavanilla:tile_stairs/dolomite",
+    "firmavanilla:tile_stairs/gabbro",
+    "firmavanilla:tile_stairs/gneiss",
+    "firmavanilla:tile_stairs/granite",
+    "firmavanilla:tile_stairs/limestone",
+    "firmavanilla:tile_stairs/marble",
+    "firmavanilla:tile_stairs/phyllite",
+    "firmavanilla:tile_stairs/quartzite",
+    "firmavanilla:tile_stairs/rhyolite",
+    "firmavanilla:tile_stairs/schist",
+    "firmavanilla:tile_stairs/shale",
+    "firmavanilla:tile_stairs/slate"
+  ]
+}

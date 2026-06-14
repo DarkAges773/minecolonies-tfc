@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/chalk" },
+  "result": "firmavanilla:tile_slab/chalk",
+  "count": 2
+}

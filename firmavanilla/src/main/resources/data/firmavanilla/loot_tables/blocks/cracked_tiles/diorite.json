@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [ { "type": "minecraft:item", "name": "firmavanilla:cracked_tiles/diorite" } ],
+      "conditions": [ { "condition": "minecraft:survives_explosion" } ]
+    }
+  ]
+}

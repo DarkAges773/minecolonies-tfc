@@ -1,0 +1,1 @@
+{ "type": "tfc:chisel", "ingredient": "firmavanilla:tiles/diorite", "result": "firmavanilla:tile_slab/diorite", "mode": "slab", "extra_drop": { "item": "firmavanilla:tile_slab/diorite" } }

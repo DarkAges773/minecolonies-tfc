@@ -47,4 +47,6 @@ firmavanilla/tools/generate-textures/input/vanilla/
 firmavanilla/tools/generate-textures/input/tfc/
 firmavanilla/tools/generate-textures/input/afc/
 firmavanilla/tools/generate-textures/input/beneath/
-firmavanilla/tools/generate-textures/_preview/
+# Generator preview scratch — upscaled comparison renders, never shipped. Global pattern so it's ignored
+# wherever it lands (firmavanilla/tools/... and firmavanilla/src/tools/...).
+**/_preview/

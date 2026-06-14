@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/tile_slab/gneiss" },
+    "type=top":    { "model": "firmavanilla:block/tile_slab/gneiss_top" },
+    "type=double": { "model": "firmavanilla:block/tiles/gneiss" }
+  }
+}

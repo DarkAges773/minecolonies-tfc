@@ -1,0 +1,1 @@
+{ "type": "tfc:chisel", "ingredient": "firmavanilla:tiles/shale", "result": "firmavanilla:tile_slab/shale", "mode": "slab", "extra_drop": { "item": "firmavanilla:tile_slab/shale" } }

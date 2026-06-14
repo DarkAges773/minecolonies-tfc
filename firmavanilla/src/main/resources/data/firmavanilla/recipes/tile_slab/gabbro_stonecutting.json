@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/gabbro" },
+  "result": "firmavanilla:tile_slab/gabbro",
+  "count": 2
+}

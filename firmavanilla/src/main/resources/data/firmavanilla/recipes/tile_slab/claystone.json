@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "XXX" ],
+  "key": { "X": { "item": "firmavanilla:tiles/claystone" } },
+  "result": { "item": "firmavanilla:tile_slab/claystone", "count": 6 }
+}

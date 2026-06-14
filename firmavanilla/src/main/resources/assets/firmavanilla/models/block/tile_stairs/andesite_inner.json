@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/inner_stairs", "textures": { "bottom": "firmavanilla:block/tiles/andesite", "top": "firmavanilla:block/tiles/andesite", "side": "firmavanilla:block/tiles/andesite" } }

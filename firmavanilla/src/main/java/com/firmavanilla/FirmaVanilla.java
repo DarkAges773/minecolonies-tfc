@@ -3,6 +3,7 @@ package com.firmavanilla;
 import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.SandstoneBlocks;
+import com.firmavanilla.block.TileBlocks;
 import com.firmavanilla.data.MortaredCobbleData;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -32,6 +33,8 @@ public class FirmaVanilla
         SandstoneBlocks.init(modBus);
         // Decorative full-block bookshelves (enchanting power) per wood — TFC always, AFC/Beneath when present.
         BookshelfBlocks.init(modBus);
+        // Decorative "tiles" blocks (deepslate-tiles style) per TFC rock — CLUT-generated textures.
+        TileBlocks.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.

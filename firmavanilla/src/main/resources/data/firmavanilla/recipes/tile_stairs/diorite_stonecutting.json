@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/diorite" },
+  "result": "firmavanilla:tile_stairs/diorite",
+  "count": 1
+}

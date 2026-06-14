@@ -15,11 +15,25 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   cobble while holding mortar to convert in place.
 - **Chiseled sandstone** in all 7 TFC sand colours (black/brown/green/pink/red/white/yellow) — the form TFC
   doesn't ship. Each wears one of vanilla's two chiseled reliefs (creeper face or wither motif), recoloured
-  onto TFC's matching cut-sandstone texture by the bundled .NET asset generator. Craftable from 2 TFC
-  cut-sandstone slabs.
+  onto TFC's matching cut-sandstone texture by the bundled .NET asset generator. Made the TFC way — cut sandstone
+  + a chisel → chiseled sandstone, at a crafting table (`tfc:chisels`, tool damaged not consumed) or by
+  chiselling the cut block in-world.
 - **Decorative bookshelves** per wood — a full-block, enchanting-power bookshelf (the vanilla
   `minecraft:bookshelf` equivalent, which TFC/AFC/Beneath don't add; they only have the chiseled 6-slot one).
   Vanilla-style books on the sides (overlaid on each wood's frame) with planks on top/bottom. Covers TFC's 20
   woods always, plus AFC (10) and Beneath (crimson/warped) when those mods are present. Crafted from 6 lumber +
   3 books; drops 3 books (or itself with Silk Touch); carries the same tags as a vanilla bookshelf
   (`enchantment_power_provider`, `mineable/axe`, `forge:bookshelves`).
+- **Rock tiles** (proof of concept) — deepslate-tiles-style blocks for each of TFC's 20 rock types, in **plain**
+  (`firmavanilla:tiles/<rock>`) and **cracked** (`firmavanilla:cracked_tiles/<rock>`) variants. The texture is
+  CLUT-generated (vanilla `deepslate_tiles` / `cracked_deepslate_tiles` tile pattern recoloured through each
+  rock's TFC palette) with each rock's own bright mineral grain (high-pass of its smooth texture) overlaid on the
+  faces. No blueprint substitution wiring yet.
+- **Rock tile shapes** — stairs, slab and wall for each rock (`firmavanilla:tile_stairs/`, `tile_slab/`,
+  `tile_wall/<rock>`), off the plain tiles, matching vanilla's deepslate-tile family; join the vanilla
+  `stairs`/`slabs`/`walls` tags. Reuse the plain tile texture (no new images).
+- **Recipes match TFC's rock-block paths** (firmavanilla depends on TFC). Plain tile: in-world chisel of TFC's
+  `chiseled` rock (smooth mode) **or** a table craft of chiseled + a chisel (`tfc:chisels`, tool damaged not
+  consumed). Cracked tile: a plain tile + a hammer (`tfc:hammers`), mirroring TFC cracked bricks. Shapes ship all
+  three paths TFC gives its bricks: crafting (stairs ×8, slab ×6, wall ×6) + stonecutting (stairs ×1, slab ×2,
+  wall ×1) off the tile, plus chisel stair/slab modes (walls have no TFC chisel mode).

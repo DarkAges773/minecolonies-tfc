@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/tile_slab/marble" },
+    "type=top":    { "model": "firmavanilla:block/tile_slab/marble_top" },
+    "type=double": { "model": "firmavanilla:block/tiles/marble" }
+  }
+}

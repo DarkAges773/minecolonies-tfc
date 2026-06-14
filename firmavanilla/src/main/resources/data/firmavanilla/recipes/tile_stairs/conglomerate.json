@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "X  ", "XX ", "XXX" ],
+  "key": { "X": { "item": "firmavanilla:tiles/conglomerate" } },
+  "result": { "item": "firmavanilla:tile_stairs/conglomerate", "count": 8 }
+}

@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/limestone" },
+  "result": "firmavanilla:tile_stairs/limestone",
+  "count": 1
+}

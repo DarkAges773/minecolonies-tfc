@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/tile_slab/phyllite" },
+    "type=top":    { "model": "firmavanilla:block/tile_slab/phyllite_top" },
+    "type=double": { "model": "firmavanilla:block/tiles/phyllite" }
+  }
+}

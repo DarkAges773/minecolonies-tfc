@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/schist" },
+  "result": "firmavanilla:tile_stairs/schist",
+  "count": 1
+}

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/tile_slab/andesite" },
+    "type=top":    { "model": "firmavanilla:block/tile_slab/andesite_top" },
+    "type=double": { "model": "firmavanilla:block/tiles/andesite" }
+  }
+}

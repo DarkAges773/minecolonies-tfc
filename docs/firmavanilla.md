@@ -84,7 +84,9 @@ chiseled** form, so `:compat` used to degrade `minecraft:chiseled_sandstone` →
   `chiseled_sandstone` → `firmavanilla:chiseled_sandstone/yellow`, `chiseled_red_sandstone` →
   `firmavanilla:chiseled_sandstone/red`, plus a `mctfc:subst/sandstone/chiseled` re-pick pool (all 7) so the
   player can pick any colour in the Replace GUI.
-- **Recipe:** two `tfc:cut_sandstone/<colour>_slab` stacked → the chiseled block (mirrors vanilla).
+- **Recipes (TFC chisel pattern):** `tfc:cut_sandstone/<colour>` + a chisel → the chiseled block — both at a
+  crafting table (`tfc:damage_inputs_shapeless_crafting` with the `tfc:chisels` tag, tool damaged not consumed)
+  and **in-world** (`tfc:chisel` smooth mode; TFC ships no sandstone chisel, so cut sandstone is free to claim).
 
 ### Asset generator (`tools/generate-textures`)
 
@@ -168,3 +170,68 @@ wood — block id `firmavanilla:bookshelf/<wood>`.
   side texture (overlay composited over each empty frame via ImageSharp) plus blockstate / model / item-model /
   recipe / tag JSON (the three vanilla-matching tags) for every wood. The wood lists are duplicated in
   `BookshelfBlocks.java` and `generate.cs`; keep them in sync.
+
+---
+
+## Rock tiles — per TFC rock (proof of concept)
+
+A deepslate-tiles-style "tiles" block for each of TFC's 20 rock types, in **two variants** per rock:
+`firmavanilla:tiles/<rock>` (plain) and `firmavanilla:cracked_tiles/<rock>` (cracked). Both are plain full cubes
+(`Properties.copy(Blocks.STONE_BRICKS)`, drop self). See
+[TileBlocks](../firmavanilla/src/main/java/com/firmavanilla/block/TileBlocks.java).
+
+The plain tile extends TFC's own `bricks → chiseled` smooth-chisel chain one step — both **in-world**
+(chisel the `tfc:rock/chiseled/<rock>` block, smooth mode) and at a **crafting table** (chiseled + a chisel,
+`tfc:damage_inputs_shapeless_crafting` with the `tfc:chisels` tag — the tool is damaged, not consumed; mirrors
+TFC's own `bricks + chisel → chiseled`). The **cracked** tile mirrors TFC cracked bricks: a plain tile + a hammer
+(`tfc:hammers` tag, same damaged-tool craft). firmavanilla hard-depends on TFC, so these recipes always load.
+
+The texture combines **two** generated layers:
+
+1. **CLUT base** — the vanilla tile *pattern* (`deepslate_tiles` for plain, `cracked_deepslate_tiles` for cracked)
+   recoloured (luminance-normalized palette remap — see the chiseled-sandstone section) through each rock's TFC
+   *palette*. The ramp source is per-rock: most rocks ramp from the flatter `tfc:rock/smooth/<rock>` (cleaner
+   colour, stronger grain, softer seams), but the few in `BRICK_LUT_ROCKS` (basalt, claystone, conglomerate,
+   granite) ramp from `tfc:rock/bricks/<rock>` for its built-in dark-mortar seam contrast. Move a rock between
+   the two looks by adding/removing it from that one set. Normalization makes it hold across the full range —
+   light **marble** stays white, dark **basalt** blue-grey — all carrying the same tile layout.
+2. **Grain overlay** (`GrainOverlay`) — each rock's own bright mineral flecks, lifted from its
+   `tfc:rock/smooth/<rock>` texture as a **bright high-pass** (`max(0, smooth − blur(smooth))`, σ=0.8),
+   amplified (`GRAIN_STRENGTH` ×1.5, granite ×1.2 via `GRAIN_STRENGTH_GRANITE`) and *added* onto the tile
+   **faces** only. Faces vs mortar is a **hand-editable mask** — one per tile pattern:
+   `tools/generate-textures/grain_mask.png` (plain) and `grain_mask_cracked.png` (cracked, whose black pixels also
+   follow the crack lines so grain/seam-darken skip the cracks). White = grain, black = skip; auto-built from
+   granite's tile structure (shared by every rock, since the CLUT preserves the pattern's luminance ordering) and
+   reused across all 20; rebuild with `dotnet run generate.cs -- regen-mask`. The grain self-scales: speckled rocks
+   (granite) get visible grain, near-uniform rocks (marble) almost none — both correct, since it's the rock's
+   *real* grain.
+
+`cube_all` model, our generated texture on every face.
+
+### Shapes (stairs / slab / wall)
+
+Off the **plain** tiles, each rock also gets the full vanilla deepslate-tile shape family —
+`firmavanilla:tile_stairs/<rock>`, `tile_slab/<rock>`, `tile_wall/<rock>` (`StairBlock`/`SlabBlock`/`WallBlock`,
+same `STONE_BRICKS` properties). These add **no textures**: their blockstates/models reference the plain
+`block/tiles/<rock>` texture on every face, so the generator emits only JSON (blockstate, the vanilla
+`stairs`/`slab`/`wall` model templates, item model, loot — slabs with the double-count drop). They join the vanilla
+`minecraft:blocks/{stairs,slabs,walls}` tags (walls need it for connection logic) and `mineable/pickaxe`. Cracked
+tiles get **no** shapes (plain only).
+
+**Recipes — all three paths TFC ships for its brick shapes** (crafting + stonecutting + chisel), off the plain
+tile, with TFC's counts:
+
+| Shape | Crafting | Stonecutting | Chisel |
+|---|---|---|---|
+| `tile_stairs` | `X␣␣/XX␣/XXX` → 8 | ×1 | tile, **stair** mode |
+| `tile_slab` | `XXX` → 6 | ×2 | tile, **slab** mode (spare-slab `extra_drop`) |
+| `tile_wall` | `XXX/XXX` → 6 | ×1 | — (TFC has no chisel-wall mode) |
+
+The plain tile and the cracked tile are made the TFC tool-craft way (see above — chiseled + chisel; tile + hammer),
+not stonecut. Chisel JSON lives in `data/firmavanilla/recipes/chisel/{smooth,stair,slab}/` as `tfc:chisel` recipes;
+the shape craft/stonecut under `recipes/tile_{stairs,slab,wall}/`; the tile/cracked tool-crafts under
+`recipes/{tiles,cracked_tiles}/`.
+
+**Status:** plain + cracked full blocks, plus stairs/slab/wall off the plain tiles. **No** `:compat` substitution
+wiring yet (deliberate proof of concept). The rock list is duplicated in `TileBlocks.java` and `generate.cs`; keep
+them in sync.

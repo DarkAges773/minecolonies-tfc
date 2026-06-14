@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/tile_slab/dacite" },
+    "type=top":    { "model": "firmavanilla:block/tile_slab/dacite_top" },
+    "type=double": { "model": "firmavanilla:block/tiles/dacite" }
+  }
+}

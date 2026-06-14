@@ -1,0 +1,11 @@
+{
+  "type": "tfc:damage_inputs_shapeless_crafting",
+  "recipe": {
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+      { "item": "firmavanilla:tiles/marble" },
+      { "tag": "tfc:hammers" }
+    ],
+    "result": { "item": "firmavanilla:cracked_tiles/marble" }
+  }
+}

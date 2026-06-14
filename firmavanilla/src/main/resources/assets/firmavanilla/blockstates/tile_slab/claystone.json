@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/tile_slab/claystone" },
+    "type=top":    { "model": "firmavanilla:block/tile_slab/claystone_top" },
+    "type=double": { "model": "firmavanilla:block/tiles/claystone" }
+  }
+}
