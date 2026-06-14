@@ -37,3 +37,7 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   consumed). Cracked tile: a plain tile + a hammer (`tfc:hammers`), mirroring TFC cracked bricks. Shapes ship all
   three paths TFC gives its bricks: crafting (stairs ×8, slab ×6, wall ×6) + stonecutting (stairs ×1, slab ×2,
   wall ×1) off the tile, plus chisel stair/slab modes (walls have no TFC chisel mode).
+- **Alabaster tile + pillar** in all 16 TFC dye colours — vanilla's purpur block / pillar recoloured (CLUT)
+  through each colour's `tfc:alabaster/bricks/<colour>` palette, then a detail-stamp pass adding that colour's
+  raw-alabaster stone speckle, a form TFC doesn't ship. `firmavanilla:alabaster_tile/<colour>` (full cube, from
+  purpur block) and `alabaster_pillar/<colour>` (`RotatedPillarBlock`, from purpur pillar). Recipes deferred.

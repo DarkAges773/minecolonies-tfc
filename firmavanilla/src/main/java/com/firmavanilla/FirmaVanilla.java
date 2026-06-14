@@ -1,5 +1,6 @@
 package com.firmavanilla;
 
+import com.firmavanilla.block.AlabasterBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.SandstoneBlocks;
@@ -35,6 +36,8 @@ public class FirmaVanilla
         BookshelfBlocks.init(modBus);
         // Decorative "tiles" blocks (deepslate-tiles style) per TFC rock — CLUT-generated textures.
         TileBlocks.init(modBus);
+        // Alabaster tile + pillar (purpur recoloured) in TFC's 16 dye colours — CLUT-generated textures.
+        AlabasterBlocks.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.

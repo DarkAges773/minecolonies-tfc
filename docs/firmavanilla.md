@@ -235,3 +235,20 @@ the shape craft/stonecut under `recipes/tile_{stairs,slab,wall}/`; the tile/crac
 **Status:** plain + cracked full blocks, plus stairs/slab/wall off the plain tiles. **No** `:compat` substitution
 wiring yet (deliberate proof of concept). The rock list is duplicated in `TileBlocks.java` and `generate.cs`; keep
 them in sync.
+
+## Alabaster tile + pillar — per TFC dye colour
+
+Vanilla's **purpur** block and pillar recoloured (CLUT — same luminance-normalized palette remap as the rock
+tiles) through each of TFC's **16 alabaster dye colours**' `tfc:alabaster/bricks/<colour>` palette — a form TFC
+doesn't ship. Per colour: `firmavanilla:alabaster_tile/<colour>` (full cube `cube_all`, from `purpur_block`) and
+`firmavanilla:alabaster_pillar/<colour>` (a `RotatedPillarBlock` `cube_column`, from `purpur_pillar` + `_top`).
+Both `Properties.copy(Blocks.STONE_BRICKS)`. See
+[AlabasterBlocks](../firmavanilla/src/main/java/com/firmavanilla/block/AlabasterBlocks.java).
+
+After the CLUT, a **detail-stamp** pass (the same `GrainOverlay` high-pass used by the rock tiles) adds each
+colour's natural stone speckle — lifted from its **raw alabaster** (`tfc:alabaster/raw/<colour>`) — over the tile
+and both pillar faces. Unlike the rocks this pass is **mask-less** (`GrainOverlay(..., null)`): the speckle lands
+everywhere, since alabaster has no mortar grooves to protect. Strength is the single `ALABASTER_GRAIN_STRENGTH`
+(start 1.0). The pillar's side and `_top` faces both ramp through the same alabaster-brick palette. Join
+`mineable/pickaxe`. **Recipes deferred** for now. The colour list (vanilla DyeColor order) is duplicated in
+`AlabasterBlocks.java` and `generate.cs`; keep them in sync.

@@ -26,6 +26,13 @@ input/vanilla/deepslate_tiles.png           (the plain tile pattern)
 input/vanilla/cracked_deepslate_tiles.png   (the cracked tile pattern)
 input/tfc/rock_smooth/<rock>.png            (each rock's smooth texture — default CLUT ramp + grain source)
 input/tfc/rock_bricks/<rock>.png            (each rock's bricks texture — CLUT ramp for BRICK_LUT_ROCKS + plain-tiles recipe)
+
+# alabaster tile + pillar (purpur recoloured), per TFC dye colour:
+input/vanilla/purpur_block.png              (the tile pattern)
+input/vanilla/purpur_pillar.png             (the pillar side pattern)
+input/vanilla/purpur_pillar_top.png         (the pillar end pattern)
+input/tfc/alabaster_bricks/<colour>.png     (each dye colour's alabaster-brick CLUT palette)
+input/tfc/alabaster_raw/<colour>.png        (each dye colour's raw alabaster — detail-stamp source)
 ```
 
 ## Extracting them from the dev dependency jars
@@ -48,6 +55,11 @@ TFC / AFC (`arborfirmacraft-877545`) / Beneath (`beneath-1113980`) jars. Copy ea
 from the vanilla `client-extra.jar` above. The TFC rock textures live at `assets/tfc/textures/block/rock/smooth/<rock>.png`
 and `.../rock/bricks/<rock>.png` in the TFC jar; copy each to `input/tfc/rock_smooth/<rock>.png` and
 `input/tfc/rock_bricks/<rock>.png`. Rock list is in `generate.cs`.
+
+**Alabaster** — the vanilla `block/purpur_block.png`, `block/purpur_pillar.png`, `block/purpur_pillar_top.png`
+come from `client-extra.jar`. The TFC alabaster palettes live at `assets/tfc/textures/block/alabaster/bricks/<colour>.png`
+(CLUT palette) and `.../alabaster/raw/<colour>.png` (detail-stamp source) in the TFC jar; copy each to
+`input/tfc/alabaster_bricks/<colour>.png` and `input/tfc/alabaster_raw/<colour>.png`. Colour list is in `generate.cs`.
 
 ## Running
 

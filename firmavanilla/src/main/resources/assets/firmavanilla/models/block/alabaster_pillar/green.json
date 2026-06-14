@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "firmavanilla:block/alabaster_pillar/green_top",
+    "side": "firmavanilla:block/alabaster_pillar/green"
+  }
+}

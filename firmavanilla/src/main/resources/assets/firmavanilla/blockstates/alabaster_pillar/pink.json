@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=x": { "model": "firmavanilla:block/alabaster_pillar/pink", "x": 90, "y": 90 },
+    "axis=y": { "model": "firmavanilla:block/alabaster_pillar/pink" },
+    "axis=z": { "model": "firmavanilla:block/alabaster_pillar/pink", "x": 90 }
+  }
+}

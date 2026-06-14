@@ -56,6 +56,11 @@ var ROCKS = new[] { "andesite", "basalt", "chalk", "chert", "claystone", "conglo
 // seams). These few read better with `rock_bricks`' built-in mortar contrast, so ramp them from bricks instead.
 var BRICK_LUT_ROCKS = new HashSet<string> { "basalt", "claystone", "conglomerate", "granite" };
 
+// TFC's 16 alabaster dye colours, for the purpur-derived alabaster tile + pillar (CLUT through each colour's
+// alabaster-brick palette). Order = vanilla DyeColor (drives the creative tab).
+var ALABASTER_COLORS = new[] { "white", "light_gray", "gray", "black", "brown", "red", "orange", "yellow",
+    "lime", "green", "cyan", "light_blue", "blue", "purple", "magenta", "pink" };
+
 // Grain overlay on the tiles: the bright high-pass of each rock's `smooth` texture (its mineral flecks),
 // amplified and added onto the tile faces. Blur radius (smaller = sharper flecks), strength (intensity), and
 // the mask margin below the tile's mean luminance (grain lands on faces/highlights, not mortar/shadows).
@@ -63,6 +68,9 @@ const float GRAIN_BLUR = 0.8f;
 const float GRAIN_STRENGTH = 1.5f;          // default per-rock grain amplification
 const float GRAIN_STRENGTH_GRANITE = 1.2f;  // granite is already speckled -> a touch less
 const int GRAIN_MARGIN = 12;
+// Alabaster detail pass: the bright high-pass of each colour's raw alabaster, stamped onto the CLUT'd tile/pillar
+// (no mask — applies everywhere). Tune this one number for more/less stone speckle.
+const float ALABASTER_GRAIN_STRENGTH = 1.0f;
 // Chalk's brick palette is so light/low-contrast that its tile seams nearly vanish after the CLUT. Deepen the
 // mask's mortar (black) pixels for chalk only to restore seam contrast. <1 darkens; 1.0 = off.
 const float SEAM_DARKEN_CHALK = 1.0f;
@@ -274,6 +282,14 @@ Image<Rgba32> RenderTile(string rock, Image<Rgba32> pattern, Image<Rgba32> mask)
     return side;
 }
 
+// Plain CLUT (no grain): repaint `pattern` through `lutBase`'s palette ramp at the LUT's resolution. Caller
+// owns/disposes the returned image. Used for the alabaster tiles/pillars (purpur recoloured per alabaster brick).
+Image<Rgba32> ClutThrough(Image<Rgba32> pattern, Image<Rgba32> lutBase)
+{
+    using var src = pattern.Clone(c => c.Resize(lutBase.Width, lutBase.Height));
+    return ClutSide(src, lutBase, lutBase.Width, lutBase.Height);
+}
+
 int tiles = 0;
 foreach (var rock in ROCKS)
 {
@@ -333,8 +349,51 @@ foreach (var rock in ROCKS)
 
 grainMask.Dispose();
 crackedMask.Dispose();
+
+// ---- alabaster tile + pillar (CLUT: vanilla purpur recoloured through each TFC alabaster-brick colour) ------
+// purpur_block -> alabaster_tile/<colour> (cube_all); purpur_pillar (+_top) -> alabaster_pillar/<colour>
+// (cube_column). No grain — alabaster is a smooth, uniform stone. Recipes deferred.
+var alTileDirs = TileDirs("alabaster_tile", withRecipe: false);
+var alPillarDirs = TileDirs("alabaster_pillar", withRecipe: false);
+using var purpurBlock = Load("vanilla", "purpur_block.png");
+using var purpurPillar = Load("vanilla", "purpur_pillar.png");
+using var purpurPillarTop = Load("vanilla", "purpur_pillar_top.png");
+int alab = 0;
+foreach (var color in ALABASTER_COLORS)
+{
+    using var lut = Load("tfc", Path.Combine("alabaster_bricks", color + ".png"));
+    using var raw = Load("tfc", Path.Combine("alabaster_raw", color + ".png"));   // detail-stamp source (no mask)
+    using (var t = ClutThrough(purpurBlock, lut))
+    {
+        GrainOverlay(t, raw, ALABASTER_GRAIN_STRENGTH, null);
+        t.Save(Path.Combine(alTileDirs.tex, color + ".png"));
+    }
+    using (var s = ClutThrough(purpurPillar, lut))
+    {
+        GrainOverlay(s, raw, ALABASTER_GRAIN_STRENGTH, null);
+        s.Save(Path.Combine(alPillarDirs.tex, color + ".png"));
+    }
+    using (var top = ClutThrough(purpurPillarTop, lut))
+    {
+        GrainOverlay(top, raw, ALABASTER_GRAIN_STRENGTH, null);
+        top.Save(Path.Combine(alPillarDirs.tex, color + "_top.png"));
+    }
+
+    File.WriteAllText(Path.Combine(alTileDirs.bs, color + ".json"), TilesBlockstate("alabaster_tile", color));
+    File.WriteAllText(Path.Combine(alTileDirs.model, color + ".json"), TilesModel("alabaster_tile", color));
+    File.WriteAllText(Path.Combine(alTileDirs.item, color + ".json"), TilesItemModel("alabaster_tile", color));
+    File.WriteAllText(Path.Combine(alTileDirs.loot, color + ".json"), TilesLoot("alabaster_tile", color));
+
+    File.WriteAllText(Path.Combine(alPillarDirs.bs, color + ".json"), PillarBlockstate(color));
+    File.WriteAllText(Path.Combine(alPillarDirs.model, color + ".json"), PillarModel(color));
+    File.WriteAllText(Path.Combine(alPillarDirs.item, color + ".json"), TilesItemModel("alabaster_pillar", color));
+    File.WriteAllText(Path.Combine(alPillarDirs.loot, color + ".json"), TilesLoot("alabaster_pillar", color));
+    alab++;
+    Console.WriteLine($"  alabaster_tile/{color} + alabaster_pillar/{color}");
+}
+
 foreach (var (_, pair) in motifSources) { pair.relief.Dispose(); pair.flat.Dispose(); }
-Console.WriteLine($"Done: {done} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles variants written to {resRoot}");
+Console.WriteLine($"Done: {done} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants written to {resRoot}");
 
 // ---- helpers --------------------------------------------------------------
 
@@ -447,19 +506,23 @@ Rgba32[] BuildPaletteRamp(Image<Rgba32> tex)
 
 int Lum(int r, int g, int b) => Math.Clamp((int) Math.Round(0.299 * r + 0.587 * g + 0.114 * b), 0, 255);
 
-// Overlay a rock's bright mineral grain onto the tile faces: the positive high-pass of its smooth texture
-// (smooth - blur, bright parts only), amplified by GRAIN_STRENGTH and added — masked to pixels at/above
-// (tile mean luminance - GRAIN_MARGIN) so it lands on faces/highlights and stays out of the mortar/shadows.
-void GrainOverlay(Image<Rgba32> tile, Image<Rgba32> smoothSrc, float strength, Image<Rgba32> maskSrc)
+// Overlay a source texture's bright grain onto a tile: the positive high-pass of `grainSrc` (grain - blur, bright
+// parts only), amplified by `strength` and added. `maskSrc` gates where it lands (white = apply, black = skip);
+// pass null to stamp everywhere (no masking — used by the alabaster detail pass off raw alabaster).
+void GrainOverlay(Image<Rgba32> tile, Image<Rgba32> grainSrc, float strength, Image<Rgba32> maskSrc)
 {
     int w = tile.Width, h = tile.Height;
-    using var sm = (smoothSrc.Width == w && smoothSrc.Height == h) ? smoothSrc.Clone() : smoothSrc.Clone(c => c.Resize(w, h));
+    using var sm = (grainSrc.Width == w && grainSrc.Height == h) ? grainSrc.Clone() : grainSrc.Clone(c => c.Resize(w, h));
     using var blur = sm.Clone(c => c.GaussianBlur(GRAIN_BLUR));
-    using var mk = (maskSrc.Width == w && maskSrc.Height == h) ? maskSrc.Clone() : maskSrc.Clone(c => c.Resize(w, h));
+    Image<Rgba32> mk = maskSrc == null ? null
+        : ((maskSrc.Width == w && maskSrc.Height == h) ? maskSrc.Clone() : maskSrc.Clone(c => c.Resize(w, h)));
     for (int y = 0; y < h; y++) for (int x = 0; x < w; x++)
     {
-        Rgba32 m = mk[x, y];
-        if (m.A < 128 || Lum(m.R, m.G, m.B) < 128) continue;   // mask black/transparent = skip (mortar/shadows)
+        if (mk != null)
+        {
+            Rgba32 m = mk[x, y];
+            if (m.A < 128 || Lum(m.R, m.G, m.B) < 128) continue;   // mask black/transparent = skip (mortar/shadows)
+        }
         Rgba32 t = tile[x, y], s = sm[x, y], b = blur[x, y];
         tile[x, y] = new Rgba32(
             (byte) Math.Clamp(t.R + (int) MathF.Round(Math.Max(0, s.R - b.R) * strength), 0, 255),
@@ -467,6 +530,7 @@ void GrainOverlay(Image<Rgba32> tile, Image<Rgba32> smoothSrc, float strength, I
             (byte) Math.Clamp(t.B + (int) MathF.Round(Math.Max(0, s.B - b.B) * strength), 0, 255),
             t.A);
     }
+    mk?.Dispose();
 }
 
 // Darken a tile's mortar pixels (mask black) by `factor` to deepen the seams — uses the same grain mask, the
@@ -569,7 +633,9 @@ string MineableTag()
         .Concat(ROCKS.Select(r => $"    \"{MODID}:cracked_tiles/{r}\""))
         .Concat(ROCKS.Select(r => $"    \"{MODID}:tile_stairs/{r}\""))
         .Concat(ROCKS.Select(r => $"    \"{MODID}:tile_slab/{r}\""))
-        .Concat(ROCKS.Select(r => $"    \"{MODID}:tile_wall/{r}\""));
+        .Concat(ROCKS.Select(r => $"    \"{MODID}:tile_wall/{r}\""))
+        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile/{c}\""))
+        .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_pillar/{c}\""));
     return ValuesTag(ids);
 }
 
@@ -667,6 +733,29 @@ string TilesLoot(string kind, string rock) =>
           "conditions": [ { "condition": "minecraft:survives_explosion" } ]
         }
       ]
+    }
+    """;
+
+// Pillar (cube_column, RotatedPillarBlock) — axis variants like vanilla purpur_pillar; `_top` texture on the ends.
+string PillarBlockstate(string color) =>
+    $$"""
+    {
+      "variants": {
+        "axis=x": { "model": "{{MODID}}:block/alabaster_pillar/{{color}}", "x": 90, "y": 90 },
+        "axis=y": { "model": "{{MODID}}:block/alabaster_pillar/{{color}}" },
+        "axis=z": { "model": "{{MODID}}:block/alabaster_pillar/{{color}}", "x": 90 }
+      }
+    }
+    """;
+
+string PillarModel(string color) =>
+    $$"""
+    {
+      "parent": "minecraft:block/cube_column",
+      "textures": {
+        "end": "{{MODID}}:block/alabaster_pillar/{{color}}_top",
+        "side": "{{MODID}}:block/alabaster_pillar/{{color}}"
+      }
     }
     """;
 
