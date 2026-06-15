@@ -297,6 +297,11 @@ brightness-correct on any base. Note: for a **16×16** target call `ClutSide(pat
 `ClutThrough`, which resizes the output to the strip's 256×16). The strips and the extraction step are documented
 in [input/README.md](../firmavanilla/tools/generate-textures/input/README.md) ("Patina palettes").
 
+For ad-hoc use outside the generator there's a **self-contained CLI** —
+[`tools/patina/`](../firmavanilla/tools/patina/) (`dotnet run patina.cs -- <texture> [outDir]`) — that bundles the
+LUT strips and writes the `exposed`/`weathered`/`oxidized` variants of any input texture, plus an `extract`
+subcommand to rebuild the LUTs from vanilla copper. Same CLUT technique; no dependency on `generate-textures`.
+
 ## Weathering copper — TFC copper forms with vanilla's full copper lifecycle
 
 TFC's copper blocks are bright and **non-aging**. This gives **six TFC copper forms** the complete vanilla copper
