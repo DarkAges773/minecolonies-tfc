@@ -25,6 +25,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -68,28 +69,45 @@ public final class CopperWeathering
 
     static
     {
-        registerForm("bars", tfc("metal/bars/copper"),
+        // TFC-bridged forms: TFC ships the bright block, so its item places ours and ours has no item of its own.
+        registerForm("bars", tfc("metal/bars/copper"), tfc("metal/bars/copper"),
                 (st, p) -> new WeatheringCopperBarsBlock(st, tfc("metal/bars/copper"), p),
                 IronBarsBlock::new);
-        registerForm("block", tfc("metal/block/copper"),
+        registerForm("block", tfc("metal/block/copper"), tfc("metal/block/copper"),
                 (st, p) -> new WeatheringCopperCubeBlock(st, tfc("metal/block/copper"), p),
                 Block::new);
-        registerForm("block_stairs", tfc("metal/block/copper_stairs"),
+        registerForm("block_stairs", tfc("metal/block/copper_stairs"), tfc("metal/block/copper_stairs"),
                 (st, p) -> new WeatheringCopperStairBlock(st, tfc("metal/block/copper_stairs"), () -> copperBlock(st).defaultBlockState(), p),
                 p -> new StairBlock(() -> Blocks.COPPER_BLOCK.defaultBlockState(), p));
-        registerForm("block_slab", tfc("metal/block/copper_slab"),
+        registerForm("block_slab", tfc("metal/block/copper_slab"), tfc("metal/block/copper_slab"),
                 (st, p) -> new WeatheringCopperSlabBlock(st, tfc("metal/block/copper_slab"), p),
                 SlabBlock::new);
-        registerForm("chain", tfc("metal/chain/copper"),
+        registerForm("chain", tfc("metal/chain/copper"), tfc("metal/chain/copper"),
                 (st, p) -> new WeatheringCopperChainBlock(st, tfc("metal/chain/copper"), p),
                 TFCChainBlock::new);
-        registerForm("trapdoor", tfc("metal/trapdoor/copper"),
+        registerForm("trapdoor", tfc("metal/trapdoor/copper"), tfc("metal/trapdoor/copper"),
                 (st, p) -> new WeatheringCopperTrapDoorBlock(st, tfc("metal/trapdoor/copper"), p),
                 p -> new TrapDoorBlock(p, BlockSetType.IRON));
+        // Cut forms: no TFC equivalent (firmavanilla-only). Bright stage has its own item; cut from the plated block
+        // via saw + stonecutter. Properties copied from TFC's plated block (same material); no placement swap.
+        registerForm("cut", tfc("metal/block/copper"), null,
+                (st, p) -> new WeatheringCopperCubeBlock(st, null, p),
+                Block::new);
+        registerForm("cut_stairs", tfc("metal/block/copper_stairs"), null,
+                (st, p) -> new WeatheringCopperStairBlock(st, null, () -> cutCopper(st).defaultBlockState(), p),
+                p -> new StairBlock(() -> Blocks.CUT_COPPER.defaultBlockState(), p));
+        registerForm("cut_slab", tfc("metal/block/copper_slab"), null,
+                (st, p) -> new WeatheringCopperSlabBlock(st, null, p),
+                SlabBlock::new);
     }
 
-    /** Register {@code copper_<idBase>/<stage>} (weathering, bright has no item) + {@code waxed_copper_<idBase>/<stage>}. */
-    private static void registerForm(final String idBase, final ResourceLocation tfcSource,
+    /**
+     * Register {@code copper_<idBase>/<stage>} (weathering) + {@code waxed_copper_<idBase>/<stage>}. Properties are
+     * copied from {@code propsSource}. When {@code tfcBridge} is non-null the bright stage stands in for that TFC
+     * block: it gets no item of its own and TFC's block placement-swaps to it; when null (cut forms) every stage is
+     * a normal item with no swap.
+     */
+    private static void registerForm(final String idBase, final ResourceLocation propsSource, @Nullable final ResourceLocation tfcBridge,
             final BiFunction<WeatherState, BlockBehaviour.Properties, Block> weatheringFactory,
             final Function<BlockBehaviour.Properties, Block> waxedFactory)
     {
@@ -99,13 +117,13 @@ public final class CopperWeathering
         {
             final WeatherState st = STAGES[i];
             final String stage = STAGE_NAMES[i];
-            final boolean bright = st == WeatherState.UNAFFECTED;
-            weathering.add(register("copper_" + idBase + "/" + stage, () -> weatheringFactory.apply(st, props(tfcSource)), !bright));
-            waxed.add(register("waxed_copper_" + idBase + "/" + stage, () -> waxedFactory.apply(props(tfcSource)), true));
+            final boolean itemless = tfcBridge != null && st == WeatherState.UNAFFECTED; // only a bridged bright stage has no item
+            weathering.add(register("copper_" + idBase + "/" + stage, () -> weatheringFactory.apply(st, props(propsSource)), !itemless));
+            waxed.add(register("waxed_copper_" + idBase + "/" + stage, () -> waxedFactory.apply(props(propsSource)), true));
         }
         WEATHERING.put(idBase, weathering);
         WAXED.put(idBase, waxed);
-        PLACEMENT_SOURCES.put(tfcSource, weathering.get(0));
+        if (tfcBridge != null) PLACEMENT_SOURCES.put(tfcBridge, weathering.get(0));
     }
 
     private static ResourceLocation tfc(final String path) { return new ResourceLocation("tfc", path); }
@@ -119,6 +137,18 @@ public final class CopperWeathering
             case EXPOSED -> Blocks.EXPOSED_COPPER;
             case WEATHERED -> Blocks.WEATHERED_COPPER;
             case OXIDIZED -> Blocks.OXIDIZED_COPPER;
+        };
+    }
+
+    /** Vanilla cut-copper block for a stage (the cut-stairs' base state). */
+    private static Block cutCopper(final WeatherState st)
+    {
+        return switch (st)
+        {
+            case UNAFFECTED -> Blocks.CUT_COPPER;
+            case EXPOSED -> Blocks.EXPOSED_CUT_COPPER;
+            case WEATHERED -> Blocks.WEATHERED_CUT_COPPER;
+            case OXIDIZED -> Blocks.OXIDIZED_CUT_COPPER;
         };
     }
 

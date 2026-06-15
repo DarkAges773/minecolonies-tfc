@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/waxed_copper_cut_slab/exposed" },
+    "type=top":    { "model": "firmavanilla:block/waxed_copper_cut_slab/exposed_top" },
+    "type=double": { "model": "firmavanilla:block/waxed_copper_cut/exposed" }
+  }
+}

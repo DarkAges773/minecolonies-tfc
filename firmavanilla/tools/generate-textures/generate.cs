@@ -660,6 +660,66 @@ int copperForms = 0;
         }
     }
 
+    // 3b) CUT copper block (cube) — vanilla cut-copper textures; firmavanilla-only (no TFC bridge), so every stage
+    //     is a normal item. The unwaxed cut block is cut from the plated block of the same stage via saw + stonecutter.
+    foreach (var kind in new[] { "copper_cut", "waxed_copper_cut" })
+    {
+        string bs = A("blockstates", kind), md = A("models", "block", kind), it = A("models", "item", kind);
+        foreach (var d in new[] { bs, md, it }) Directory.CreateDirectory(d);
+        foreach (var stage in BAR_STAGES)
+        {
+            File.WriteAllText(Path.Combine(md, stage + ".json"), CubeAllModel(CutCopperTex(stage)));
+            File.WriteAllText(Path.Combine(bs, stage + ".json"), CubeVariant(kind, stage));
+            File.WriteAllText(Path.Combine(it, stage + ".json"), ParentItem($"{kind}/{stage}"));
+            Common(kind, stage, false, "", 100); // self loot + heating for every stage (no TFC bridge)
+            if (kind == "copper_cut")
+            {
+                string plated = stage == "unaffected" ? "tfc:metal/block/copper" : $"{MODID}:copper_block/{stage}";
+                Directory.CreateDirectory(D("recipes", "saw", kind));
+                File.WriteAllText(Path.Combine(D("recipes", "saw", kind), stage + ".json"),
+                    ToolCraft(plated, "tfc:saws", $"{MODID}:{kind}/{stage}"));
+                Directory.CreateDirectory(D("recipes", "stonecutting", kind));
+                File.WriteAllText(Path.Combine(D("recipes", "stonecutting", kind), stage + ".json"),
+                    Stonecutting(plated, $"{MODID}:{kind}/{stage}", 1));
+            }
+            copperForms++;
+        }
+    }
+
+    // 3c) CUT copper stairs + slab — vanilla cut-copper; crafted from the cut block of the same stage (like plated).
+    foreach (var (kind, baseKind, models, pattern, count, melt) in new[]
+    {
+        ("copper_cut_stairs", "copper_cut", "stairs", "[ \"X  \", \"XX \", \"XXX\" ]", 8, 75),
+        ("waxed_copper_cut_stairs", "waxed_copper_cut", "stairs", "[ \"X  \", \"XX \", \"XXX\" ]", 8, 75),
+        ("copper_cut_slab", "copper_cut", "slab", "[ \"XXX\" ]", 6, 50),
+        ("waxed_copper_cut_slab", "waxed_copper_cut", "slab", "[ \"XXX\" ]", 6, 50),
+    })
+    {
+        string bs = A("blockstates", kind), md = A("models", "block", kind), it = A("models", "item", kind);
+        foreach (var d in new[] { bs, md, it }) Directory.CreateDirectory(d);
+        foreach (var stage in BAR_STAGES)
+        {
+            if (models == "stairs")
+            {
+                foreach (var (suffix, body) in StairModelsTex(CutCopperTex(stage)))
+                    File.WriteAllText(Path.Combine(md, stage + suffix + ".json"), body);
+                File.WriteAllText(Path.Combine(bs, stage + ".json"), StairsBlockstate(kind, stage));
+            }
+            else
+            {
+                foreach (var (suffix, body) in SlabModelsTex(CutCopperTex(stage)))
+                    File.WriteAllText(Path.Combine(md, stage + suffix + ".json"), body);
+                File.WriteAllText(Path.Combine(bs, stage + ".json"), SlabBlockstate(kind, baseKind, stage));
+            }
+            File.WriteAllText(Path.Combine(it, stage + ".json"), ParentItem($"{kind}/{stage}"));
+            Directory.CreateDirectory(D("recipes", "crafting", kind));
+            File.WriteAllText(Path.Combine(D("recipes", "crafting", kind), stage + ".json"),
+                ShapedFromBlock($"{MODID}:{baseKind}/{stage}", $"{MODID}:{kind}/{stage}", pattern, count));
+            Common(kind, stage, false, "", melt);
+            copperForms++;
+        }
+    }
+
     // 4) chain — TFC chain textures recoloured through the patina LUTs (block + item; unaffected = verbatim).
     {
         string blkTex = A("textures", "block", "copper_chain"), itmTex = A("textures", "item", "copper_chain");
@@ -989,7 +1049,9 @@ string MineableTag()
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_wall/{c}\""))
         .Concat(new[] { "copper_bars", "waxed_copper_bars", "copper_block", "waxed_copper_block",
                         "copper_block_stairs", "waxed_copper_block_stairs", "copper_block_slab", "waxed_copper_block_slab",
-                        "copper_chain", "waxed_copper_chain", "copper_trapdoor", "waxed_copper_trapdoor" }
+                        "copper_chain", "waxed_copper_chain", "copper_trapdoor", "waxed_copper_trapdoor",
+                        "copper_cut", "waxed_copper_cut", "copper_cut_stairs", "waxed_copper_cut_stairs",
+                        "copper_cut_slab", "waxed_copper_cut_slab" }
             .SelectMany(kind => BAR_STAGES.Select(s => $"    \"{MODID}:{kind}/{s}\"")));
     return ValuesTag(ids);
 }
@@ -1064,6 +1126,12 @@ string ShapedFromBlock(string fromItem, string result, string pattern, int count
 // Vanilla plain copper-block texture id for a weather stage (TFC's plated block is the smooth full block, so it
 // maps to copper_block/exposed_copper/… — NOT the lined cut_copper). Stairs/slabs reuse this on every face.
 string CopperBlockTex(string stage) => "minecraft:block/" + (stage == "unaffected" ? "copper_block" : $"{stage}_copper");
+// Vanilla cut-copper texture id for a weather stage (the firmavanilla "cut" forms).
+string CutCopperTex(string stage) => "minecraft:block/" + (stage == "unaffected" ? "cut_copper" : $"{stage}_cut_copper");
+
+// Vanilla stonecutting recipe (full ids).
+string Stonecutting(string ingredient, string result, int count) =>
+    $$$"""{"type":"minecraft:stonecutting","ingredient":{"item":"{{{ingredient}}}"},"result":"{{{result}}}","count":{{{count}}}}""";
 
 string CubeAllModel(string tex) => $$"""{ "parent": "minecraft:block/cube_all", "textures": { "all": "{{tex}}" } }""";
 string CubeVariant(string kind, string stage) => $$"""{ "variants": { "": { "model": "{{MODID}}:block/{{kind}}/{{stage}}" } } }""";

@@ -49,6 +49,11 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   (`exposed`/`weathered`/`oxidized`), written by the asset generator to
   `tools/generate-textures/patina_{stage}.png` (256×16 ramp strips). Feed a strip to the CLUT to patina-ify a
   block. Sampled straight from each stage (no subtraction, no `copper_block` needed).
+- **Cut copper (plated) blocks** — a **cut** version of the plated block + its stairs and slab (vanilla cut-copper
+  textures), the cut forms TFC doesn't ship. Cut from the plated block of the same weather stage via a **TFC saw**
+  (`tfc:saws`) **and** a **stonecutter** (vanilla `minecraft:stonecutting`); stairs/slabs craft from the cut block
+  (×8/×6). They oxidise / scrape / wax / melt exactly like the plated set. Unlike the TFC-bridged forms these are
+  firmavanilla-only, so the bright stage has its own item (no TFC bridging).
 - **Weathering copper** — six TFC copper forms given vanilla copper's **full lifecycle**: copper **bars**, the
   **plated block** + its **stairs** and **slab**, copper **chains**, and copper **trapdoors**. Each oxidises over time
   (`unaffected`→`exposed`→`weathered`→`oxidized`), scrapes back a stage with an axe, waxes with honeycomb (waxed twin

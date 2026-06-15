@@ -308,18 +308,30 @@ for `unaffected`/`exposed`/`weathered`/`oxidized`), all registered by
 [`CopperWeathering`](../firmavanilla/src/main/java/com/firmavanilla/block/CopperWeathering.java), each
 `Properties.copy(<its TFC source block>)`:
 
-| Form id | TFC source | Block type | Melt (mB) |
+| Form id | TFC source / bridge | Block type | Melt (mB) |
 |---|---|---|---|
 | `bars` | `metal/bars/copper` | `IronBarsBlock` | 25 |
 | `block` | `metal/block/copper` | `Block` (cube) | 100 |
 | `block_stairs` | `metal/block/copper_stairs` | `StairBlock` | 75 |
 | `block_slab` | `metal/block/copper_slab` | `SlabBlock` | 50 |
-| `chain` | `metal/chain/copper` | `ChainBlock` | 6 |
+| `chain` | `metal/chain/copper` | `TFCChainBlock` | 6 |
 | `trapdoor` | `metal/trapdoor/copper` | `TrapDoorBlock` (`BlockSetType.IRON`) | 200 |
+| `cut` | — (props from plated block) | `Block` (cube) | 100 |
+| `cut_stairs` | — | `StairBlock` | 75 |
+| `cut_slab` | — | `SlabBlock` | 50 |
 
 The four weather stages are `WeatheringCopper*Block` classes (each extends the vanilla block type + `implements
 WeatheringCopper`, random-tick wiring copied from `WeatheringCopperFullBlock`); the waxed twins are plain vanilla
-blocks (waxed copper never ages). That's **48 blocks** total (6 forms × 8).
+blocks (waxed copper never ages). That's **72 blocks** total (9 forms × 8).
+
+The **`cut`** forms are firmavanilla-only — TFC has no cut copper. `registerForm` takes a `propsSource` (always, for
+`Properties.copy`) and a nullable `tfcBridge`: bridged forms (the first six) give the bright stage no item and
+placement-swap TFC's block to it; the cut forms pass `tfcBridge = null`, so **every** stage is a normal firmavanilla
+item with self-loot and no swap. A cut block is **cut from the plated block of the same stage** via a TFC saw
+(`tfc:damage_inputs_shapeless_crafting` with the `tfc:saws` tag) **and** a vanilla `minecraft:stonecutting` recipe;
+the bright cut block cuts from TFC's `metal/block/copper`, the aged ones from our `copper_block/<stage>`. Cut
+stairs/slabs are crafted from the cut block (same as the plated set). Cut textures are the vanilla **cut-copper**
+series (`minecraft:block/<stage>_cut_copper`) — no generation.
 
 **Textures.**
 - `bars`, `chain`, `trapdoor` — TFC's own textures recoloured through the patina LUTs (`ClutSide(tex, strip, w, h)`,
