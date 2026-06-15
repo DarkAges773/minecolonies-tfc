@@ -1,0 +1,1 @@
+{"variants":{"hanging=false,lit=false":{"model":"firmavanilla:block/soul_lamp/bronze_off"},"hanging=true,lit=false":{"model":"firmavanilla:block/soul_lamp/bronze_hanging_off"},"hanging=false,lit=true":{"model":"firmavanilla:block/soul_lamp/bronze_on"},"hanging=true,lit=true":{"model":"firmavanilla:block/soul_lamp/bronze_hanging_on"}}}

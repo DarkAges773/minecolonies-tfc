@@ -6,6 +6,7 @@ import com.firmavanilla.block.CopperWeathering;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.PrismarineDeposits;
 import com.firmavanilla.block.SandstoneBlocks;
+import com.firmavanilla.block.SoulLamps;
 import com.firmavanilla.block.TileBlocks;
 import com.firmavanilla.data.MortaredCobbleData;
 import com.mojang.logging.LogUtils;
@@ -46,6 +47,9 @@ public class FirmaVanilla
         // Prismarine gravel deposits per TFC rock — a TFC-style (pan/sluice) source for the otherwise
         // unreachable vanilla prismarine family. Generated on the deep-ocean floor via a tfc:soil_disc feature.
         PrismarineDeposits.init(modBus);
+        // "Soul" variants of TFC's metal lamps (teal glow, dimmer light) — reuse TFC's lamp block-entity, convert
+        // to/from the normal lamp via a catalyst tag / burn-out. The Forge-bus interaction self-subscribes.
+        SoulLamps.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.

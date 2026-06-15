@@ -48,6 +48,14 @@ input/tfc/copper_chain/block.png            (TFC's copper chain block — tfc:bl
 input/tfc/copper_chain/item.png             (TFC's copper chain item — tfc:item/metal/chain/copper)
 input/tfc/copper_trapdoor/door.png          (TFC's copper trapdoor — tfc:block/metal/trapdoor/copper)
 # (the plated block + stairs + slab reuse VANILLA cut-copper textures — nothing to extract)
+
+# soul lamps (TFC lamp glass recoloured through vanilla SOUL FIRE's palette via CLUT):
+input/tfc/lamp.png                          (TFC's lit lamp glass — tfc:block/lamp, animated 16x48)
+input/tfc/lamp.png.mcmeta                   (its animation metadata — copied verbatim to soul_lamp.png.mcmeta)
+input/tfc/lamp_off.png                      (TFC's unlit lamp glass — tfc:block/lamp_off)
+input/vanilla/soul_fire_0.png              (the soul-fire palette source for the CLUT recolour)
+input/tfc/lamp_item/<metal>.png             (each metal's lamp ITEM texture — tfc:item/metal/lamp/<metal>, 9 metals)
+# (../soul_lantern_item_overlay.png — the hand-extracted soul-glass overlay for the item icon — is a TRACKED tool-root file, not under input/)
 ```
 
 ## Extracting them from the dev dependency jars

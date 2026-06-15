@@ -261,6 +261,15 @@
     "firmavanilla:waxed_copper_cut_slab/unaffected",
     "firmavanilla:waxed_copper_cut_slab/exposed",
     "firmavanilla:waxed_copper_cut_slab/weathered",
-    "firmavanilla:waxed_copper_cut_slab/oxidized"
+    "firmavanilla:waxed_copper_cut_slab/oxidized",
+    "firmavanilla:soul_lamp/copper",
+    "firmavanilla:soul_lamp/bronze",
+    "firmavanilla:soul_lamp/bismuth_bronze",
+    "firmavanilla:soul_lamp/black_bronze",
+    "firmavanilla:soul_lamp/wrought_iron",
+    "firmavanilla:soul_lamp/steel",
+    "firmavanilla:soul_lamp/black_steel",
+    "firmavanilla:soul_lamp/blue_steel",
+    "firmavanilla:soul_lamp/red_steel"
   ]
 }

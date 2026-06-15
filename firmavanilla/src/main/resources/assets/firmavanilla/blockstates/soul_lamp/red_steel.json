@@ -1,0 +1,1 @@
+{"variants":{"hanging=false,lit=false":{"model":"firmavanilla:block/soul_lamp/red_steel_off"},"hanging=true,lit=false":{"model":"firmavanilla:block/soul_lamp/red_steel_hanging_off"},"hanging=false,lit=true":{"model":"firmavanilla:block/soul_lamp/red_steel_on"},"hanging=true,lit=true":{"model":"firmavanilla:block/soul_lamp/red_steel_hanging_on"}}}

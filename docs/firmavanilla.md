@@ -419,3 +419,60 @@ item models (`item/pan/prismarine/<rock>_{full,half}` + a shared `result`) aren'
 models, so they're registered as additional models in
 [`PrismarineClient`](../firmavanilla/src/main/java/com/firmavanilla/client/PrismarineClient.java) (mirroring TFC's
 `ClientEventHandler`) — otherwise TFC's pan renderer shows the missing-model placeholder while panning.
+
+## Soul lamps — soul-lantern variant of every TFC metal lamp
+
+A teal, dimmer "soul" twin of each TFC metal lamp (all 9 metals), the vanilla lantern→soul-lantern idea applied
+to TFC's fuel-burning lamps. Registered by
+[`SoulLamps`](../firmavanilla/src/main/java/com/firmavanilla/block/SoulLamps.java); **mixin-free**.
+
+- **Behaviour is TFC's, inherited wholesale.** [`SoulLampBlock`](../firmavanilla/src/main/java/com/firmavanilla/block/SoulLampBlock.java)
+  `extends` TFC's `LampBlock`, and `SoulLamps#props` **copies the real `tfc:metal/lamp/<metal>` block's properties**
+  at registration (`BlockBehaviour.Properties.copy(...)`, the same pattern the cemented-cobble twins use — TFC
+  loads first, so its lamp is already in the registry) then wires `ExtendedProperties.blockEntity(TFCBlockEntities.LAMP)`.
+  So it *shares* TFC's `LampBlockEntity` and inherits **every** lamp property per metal (strength / sound /
+  map-color / push-reaction / random-ticks / occlusion / no-tool-requirement) — nothing lamp-related is
+  hand-authored, and it tracks any future TFC change. The **only** override is `lightLevel(lit ? 10 : 0)`
+  (soul-lantern parity), plus the burn-out revert. The item is TFC's `LampBlockItem` (carries fuel NBT). **No
+  `validBlocks` mixin needed** — verified that 1.20.1
+  Forge's BE place/load/tick paths (`setBlockEntity`/`promotePendingBlockEntity`/`BlockEntityType.create`) don't
+  gate on `BlockEntityType.isValid`, so reusing TFC's `LAMP` type for our blocks just works.
+- **Convert a finished lamp** (`#firmavanilla:soul_lamp_catalyst`, datapack-overridable, seeded `tfc:powder/sulfur`
+  + `tfc:powder/native_copper`):
+  - **Right-click** a normal TFC lamp holding a catalyst item →
+    [`SoulLampInteraction`](../firmavanilla/src/main/java/com/firmavanilla/block/SoulLampInteraction.java)
+    (Forge `RightClickBlock`) swaps it to the soul lamp, copying the block-entity NBT (fuel) and `LIT`/`HANGING`,
+    consuming one item (free in creative). Holding a powder does nothing in TFC's own lamp `use()`, so this is
+    safe to intercept.
+  - **Crafting**: shapeless lamp + catalyst → soul lamp (empty; the right-click path is the fuel-preserving one).
+- **Fuel validity — the gotcha that breaks lighting.** A TFC `LampFuel` only works in the lamps its
+  `valid_lamps` lists, and `LampBlockEntity.getFuel()` returns null otherwise — so a lamp not covered has fuel in
+  its tank but reads as empty and **can't be lit**. olive_oil + tallow use the `#tfc:lamps` *block tag* and lava is
+  explicit to `blue_steel`. So `generate.cs` adds all 9 soul lamps to `tfc:lamps` (merged tag) and ships a
+  `data/firmavanilla/tfc/lamp_fuels/soul_lava.json` entry (lava → `soul_lamp/blue_steel`, mirroring TFC's
+  tier-gating). Without these the soul lamps fuel but never light.
+- **Burns back to normal.** TFC's `LampBlockEntity#checkHasRanOut` flips `LIT` false on empty — and it runs from
+  **both** `randomTick` *and* `use()` (a right-click re-checks fuel), so `SoulLampBlock` wraps **both** and reverts
+  to the matching normal lamp on the lit→unlit transition. Key guard: only revert when the **tank is empty** (a
+  real burn-out) — a manual shift-toggle-*off* leaves fuel in the lamp and must stay soul. A never-lit lamp, or a
+  lava lamp that never empties, is left alone. (A burn-out that happens while the chunk is unloaded — via
+  `fluidTankChanged` on reload — isn't caught by these two hooks; that residual edge would need a
+  `checkHasRanOut` mixin, deliberately not added.) The normal↔soul block maps are resolved at `FMLCommonSetup`.
+  Light **10** while lit.
+- **Melting** mirrors TFC's lamp heating recipes exactly — `recipes/heating/soul_lamp/<metal>.json` melts to the
+  same fluid/temperature, amount 100 (note wrought-iron → `cast_iron`, like TFC). **Crucially it also needs an
+  `item_heat`** (`data/firmavanilla/tfc/item_heats/soul_lamp/<metal>.json`, `heat_capacity` 2.857 + per-metal
+  forging/welding temps, mirroring TFC) — without it the item can't gain temperature, the melt never fires, and
+  TFC's `SelfTests` errors ("ingredient to a heating recipe without a heat definition").
+- **Item name/icon**: TFC's `LampBlockItem` appends `.filled` to the description id when fuelled, so soul lamps
+  ship `block.firmavanilla.soul_lamp.<metal>.filled` lang keys too (else a filled lamp shows the raw key). The
+  item is flat `item/generated` (a 3D block-model item renders blank in the GUI, which TFC sidesteps the same
+  way); the icon is TFC's lamp item texture with a hand-extracted soul-glass overlay (`soul_lantern_item_overlay.png`,
+  a tracked 16×16 in the tool root) composited over it — one overlay serves all metals, the metal body keeps
+  each metal's colour.
+- **Block glass (the teal)**: blockstates/models reuse TFC's `block/lamp` + `lamp_hanging` geometry, binding
+  `#metal` to each metal's `tfc:block/metal/smooth/<metal>` and `#lamp` to a shared **soul** glass pair —
+  `generate.cs` recolours TFC's own `lamp`/`lamp_off` glass via **CLUT through vanilla `soul_fire_0`'s palette**
+  (so the teal carries soul-fire's real tones, not a flat hue shift; the lit glass keeps its 3-frame `.mcmeta`,
+  the off glass is darkened since CLUT normalises each input's range). One glass pair serves all 9 metals. Loot
+  drops self with `tfc:copy_fluid` (keeps fuel on break, like TFC); `minecraft:mineable/pickaxe`.

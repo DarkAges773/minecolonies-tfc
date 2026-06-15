@@ -7,6 +7,7 @@ import com.firmavanilla.block.MortaredCobbleBlock;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.PrismarineDeposits;
 import com.firmavanilla.block.SandstoneBlocks;
+import com.firmavanilla.block.SoulLamps;
 import com.firmavanilla.block.TileBlocks;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -85,6 +86,11 @@ public final class FirmaVanillaCreativeTab
                         for (final RegistryObject<Block> deposit : PrismarineDeposits.ALL)
                         {
                             output.accept(deposit.get());
+                        }
+                        // Soul lamp variants (one per TFC metal).
+                        for (final RegistryObject<Block> soulLamp : SoulLamps.SOUL)
+                        {
+                            output.accept(soulLamp.get());
                         }
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {

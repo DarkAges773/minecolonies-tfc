@@ -81,3 +81,12 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   **glow in the dark** (full-bright overlay element via Forge `forge_data`) without emitting any light. The deposit
   blocks carry the same tags as TFC's own deposits (`forge:gravel`, `mineable/shovel`, `tfc:can_landslide` so they
   collapse like gravel, `tfc:ore_deposits`). This is the mod's first worldgen feature.
+- **Soul lamps** — a soul-lantern-style **teal** variant of every TFC metal lamp (all 9 metals). They reuse TFC's
+  lamp block-entity, so they fuel / light / fill / break / **melt** exactly like a normal lamp (fuel kept on
+  break; melts to the same metal at the same temperature), but glow teal and emit a **dimmer light (10**, like a
+  vanilla soul lantern). **Convert a finished lamp**: right-click a
+  normal TFC lamp holding any item in `#firmavanilla:soul_lamp_catalyst` (seeded with TFC **sulfur** + **native
+  copper** powder, datapack-overridable) — preserving its lit state and fuel — or craft a lamp with a catalyst
+  item. A soul lamp **burns back to a normal lamp when its fuel runs out** (a lava-fuelled one never empties, so
+  it stays soul). The teal glass is a hue-shift of TFC's own lamp texture (animation preserved); no mixin (reuses
+  TFC's lamp block-entity + a Forge right-click event).
