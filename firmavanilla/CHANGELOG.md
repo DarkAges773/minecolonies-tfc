@@ -49,13 +49,16 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   (`exposed`/`weathered`/`oxidized`), written by the asset generator to
   `tools/generate-textures/patina_{stage}.png` (256×16 ramp strips). Feed a strip to the CLUT to patina-ify a
   block. Sampled straight from each stage (no subtraction, no `copper_block` needed).
-- **Weathering copper bars** — TFC's copper bars given vanilla copper's **full lifecycle**: they oxidise over time
-  (`unaffected`→`exposed`→`weathered`→`oxidized`), scrape back a stage with an axe, wax with honeycomb (waxed twins
-  for every stage), wax off with an axe, and de-oxidise when struck by lightning. TFC's own copper-bars item places
-  them and they drop it back, so existing copper bars just start aging — no new bright item, no conversion. The aged
-  stages are recoloured through the extracted patina LUTs; mine with a pickaxe. They also **melt** like TFC's
-  copper bars (25 mB `tfc:metal/copper` at 1080 °C), so they stay part of TFC's metallurgy loop. (Implemented with
-  no mixin — by splicing into vanilla's `WeatheringCopper`/`HoneycombItem` maps.)
+- **Weathering copper** — six TFC copper forms given vanilla copper's **full lifecycle**: copper **bars**, the
+  **plated block** + its **stairs** and **slab**, copper **chains**, and copper **trapdoors**. Each oxidises over time
+  (`unaffected`→`exposed`→`weathered`→`oxidized`), scrapes back a stage with an axe, waxes with honeycomb (waxed twin
+  for every stage), waxes off with an axe, and de-oxidises when struck by lightning. TFC's own item for each places
+  it and it drops that item back, so existing TFC copper just starts aging — no new bright items, no conversions. The
+  plated block/stairs/slab reuse vanilla plain copper-block textures; bars/chains/trapdoors are recoloured through the
+  extracted patina LUTs. Mine with a pickaxe; each **melts** like its TFC source (bars 25 / block 100 / stairs 75 /
+  slab 50 / chain 6 / trapdoor 200 mB `tfc:metal/copper` at 1080 °C). The plated stairs/slab are craftable from the
+  plated block of the same weather stage (mirroring TFC's recipe, ×8/×6). (No mixin — by splicing into vanilla's
+  `WeatheringCopper`/`HoneycombItem` maps.)
 - **Alabaster recipes — colouring matches TFC strictly.** The tile is chiselled from `tfc:alabaster/bricks`
   (in-world smooth chisel + table chisel-craft); the pillar is chiselled from the tile; shapes come off the tile
   via crafting (×8/×6/×6), chisel (stair/slab) and stonecutting (×1/×2/×1). **Dyeing** is TFC's sealed-barrel

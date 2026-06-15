@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/waxed_copper_block_slab/unaffected" },
+    "type=top":    { "model": "firmavanilla:block/waxed_copper_block_slab/unaffected_top" },
+    "type=double": { "model": "firmavanilla:block/waxed_copper_block/unaffected" }
+  }
+}

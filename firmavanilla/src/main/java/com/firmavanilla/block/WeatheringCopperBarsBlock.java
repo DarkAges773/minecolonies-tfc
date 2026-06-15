@@ -1,11 +1,11 @@
 package com.firmavanilla.block;
 
+import com.firmavanilla.weathering.WeatheringClone;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.IronBarsBlock;
@@ -13,32 +13,24 @@ import net.minecraft.world.level.block.WeatheringCopper;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.registries.ForgeRegistries;
 
 /**
- * Copper bars that oxidise like vanilla copper. Identical wiring to {@link net.minecraft.world.level.block.WeatheringCopperFullBlock}
- * (random-tick oxidation via {@link WeatheringCopper}/{@code ChangeOverTimeBlock}), but extends {@link IronBarsBlock}
- * so it keeps the bar shape/connections. Axe-scraping, honeycomb-waxing and lightning de-oxidation all work
- * automatically because our blocks are spliced into vanilla's copper maps (see
- * {@link com.firmavanilla.weathering.WeatheringMaps}) and Forge's {@code AxeItem}/{@code HoneycombItem}/{@code LightningBolt}
- * read those maps.
- *
- * <p>The {@code UNAFFECTED} (bright) stage has <b>no item of its own</b> — it stands in for TFC's
- * {@code tfc:metal/bars/copper}: that item places this block (via a placement-swap event), this block's loot drops
- * the TFC item, and pick-block ({@link #getCloneItemStack}) returns it too. So bright firmavanilla copper bars are
- * indistinguishable from TFC's, while the aged stages are our own items.
+ * Copper bars that oxidise like vanilla copper — an {@link IronBarsBlock} that {@code implements WeatheringCopper}
+ * (random-tick wiring copied from {@code WeatheringCopperFullBlock}). One of the {@code WeatheringCopper*Block}
+ * family; see {@link com.firmavanilla.weathering.WeatheringMaps} for how the lifecycle is wired with no mixin and
+ * {@link com.firmavanilla.block.CopperWeathering} for registration.
  */
 public class WeatheringCopperBarsBlock extends IronBarsBlock implements WeatheringCopper
 {
-    /** TFC's copper bars — the item the bright (UNAFFECTED) stage stands in for. */
-    public static final ResourceLocation TFC_COPPER_BARS = new ResourceLocation("tfc", "metal/bars/copper");
-
     private final WeatheringCopper.WeatherState age;
+    /** The TFC item the bright (UNAFFECTED) stage stands in for (this stage has no item of its own). */
+    private final ResourceLocation tfcItem;
 
-    public WeatheringCopperBarsBlock(final WeatheringCopper.WeatherState age, final BlockBehaviour.Properties properties)
+    public WeatheringCopperBarsBlock(final WeatheringCopper.WeatherState age, final ResourceLocation tfcItem, final BlockBehaviour.Properties properties)
     {
         super(properties);
         this.age = age;
+        this.tfcItem = tfcItem;
     }
 
     @Override
@@ -59,15 +51,9 @@ public class WeatheringCopperBarsBlock extends IronBarsBlock implements Weatheri
         return this.age;
     }
 
-    /** Pick-block on the bright stage yields TFC's copper bars item (this stage has no item of its own). */
     @Override
     public ItemStack getCloneItemStack(final BlockState state, final HitResult target, final BlockGetter level, final BlockPos pos, final Player player)
     {
-        if (this.age == WeatheringCopper.WeatherState.UNAFFECTED)
-        {
-            final Item tfc = ForgeRegistries.ITEMS.getValue(TFC_COPPER_BARS);
-            if (tfc != null) return new ItemStack(tfc);
-        }
-        return super.getCloneItemStack(state, target, level, pos, player);
+        return WeatheringClone.unaffectedOr(this.age, this.tfcItem, super.getCloneItemStack(state, target, level, pos, player));
     }
 }

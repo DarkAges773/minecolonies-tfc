@@ -574,8 +574,154 @@ int copperBars = 0;
     Console.WriteLine($"  weathering copper bars: {copperBars} blocks (4 stages x2 kinds) + 4 grate/edge textures");
 }
 
+// --- weathering copper: plated block + stairs/slab (vanilla cut-copper textures, no generation) and chains +
+//     trapdoors (TFC textures recoloured through the patina LUTs). Same 8-block-per-form layout as the bars. ---
+int copperForms = 0;
+{
+    string A(params string[] p) => Path.Combine(new[] { resRoot, "assets", MODID }.Concat(p).ToArray());
+    string D(params string[] p) => Path.Combine(new[] { resRoot, "data", MODID }.Concat(p).ToArray());
+    // Shared loot (bright stage drops its TFC item; others self) + melt recipe (skip the itemless bright stage).
+    void Common(string kind, string stage, bool bright, string tfcItem, int melt)
+    {
+        Directory.CreateDirectory(D("loot_tables", "blocks", kind));
+        File.WriteAllText(Path.Combine(D("loot_tables", "blocks", kind), stage + ".json"),
+            CopperBarsLootDrop(bright ? tfcItem : $"{MODID}:{kind}/{stage}"));
+        if (!bright)
+        {
+            Directory.CreateDirectory(D("recipes", "heating", kind));
+            File.WriteAllText(Path.Combine(D("recipes", "heating", kind), stage + ".json"),
+                HeatingMelt($"{MODID}:{kind}/{stage}", "tfc:metal/copper", melt, 1080));
+        }
+    }
+
+    // 1) plated block (cube) — vanilla cut-copper textures.
+    foreach (var kind in new[] { "copper_block", "waxed_copper_block" })
+    {
+        string bs = A("blockstates", kind), md = A("models", "block", kind), it = A("models", "item", kind);
+        foreach (var d in new[] { bs, md, it }) Directory.CreateDirectory(d);
+        foreach (var stage in BAR_STAGES)
+        {
+            bool bright = kind == "copper_block" && stage == "unaffected";
+            File.WriteAllText(Path.Combine(md, stage + ".json"), CubeAllModel(CopperBlockTex(stage)));
+            File.WriteAllText(Path.Combine(bs, stage + ".json"), CubeVariant(kind, stage));
+            if (!bright) File.WriteAllText(Path.Combine(it, stage + ".json"), ParentItem($"{kind}/{stage}"));
+            Common(kind, stage, bright, "tfc:metal/block/copper", 100);
+            copperForms++;
+        }
+    }
+
+    // 2) plated stairs — vanilla copper-block textures; reuse StairsBlockstate (item parents the straight model).
+    //    Crafted from the matching plated block of the same stage (mirrors TFC's copper_block→stairs, per stage).
+    foreach (var kind in new[] { "copper_block_stairs", "waxed_copper_block_stairs" })
+    {
+        string baseKind = kind == "copper_block_stairs" ? "copper_block" : "waxed_copper_block";
+        string bs = A("blockstates", kind), md = A("models", "block", kind), it = A("models", "item", kind);
+        foreach (var d in new[] { bs, md, it }) Directory.CreateDirectory(d);
+        foreach (var stage in BAR_STAGES)
+        {
+            bool bright = kind == "copper_block_stairs" && stage == "unaffected";
+            foreach (var (suffix, body) in StairModelsTex(CopperBlockTex(stage)))
+                File.WriteAllText(Path.Combine(md, stage + suffix + ".json"), body);
+            File.WriteAllText(Path.Combine(bs, stage + ".json"), StairsBlockstate(kind, stage));
+            if (!bright)
+            {
+                File.WriteAllText(Path.Combine(it, stage + ".json"), ParentItem($"{kind}/{stage}"));
+                Directory.CreateDirectory(D("recipes", "crafting", kind));
+                File.WriteAllText(Path.Combine(D("recipes", "crafting", kind), stage + ".json"),
+                    ShapedFromBlock($"{MODID}:{baseKind}/{stage}", $"{MODID}:{kind}/{stage}", "[ \"X  \", \"XX \", \"XXX\" ]", 8));
+            }
+            Common(kind, stage, bright, "tfc:metal/block/copper_stairs", 75);
+            copperForms++;
+        }
+    }
+
+    // 3) plated slab — vanilla copper-block textures; reuse SlabBlockstate (double = the cube of the same kind family).
+    //    Crafted from the matching plated block of the same stage (mirrors TFC's copper_block→slab, per stage).
+    foreach (var kind in new[] { "copper_block_slab", "waxed_copper_block_slab" })
+    {
+        string baseKind = kind == "copper_block_slab" ? "copper_block" : "waxed_copper_block";
+        string bs = A("blockstates", kind), md = A("models", "block", kind), it = A("models", "item", kind);
+        foreach (var d in new[] { bs, md, it }) Directory.CreateDirectory(d);
+        foreach (var stage in BAR_STAGES)
+        {
+            bool bright = kind == "copper_block_slab" && stage == "unaffected";
+            foreach (var (suffix, body) in SlabModelsTex(CopperBlockTex(stage)))
+                File.WriteAllText(Path.Combine(md, stage + suffix + ".json"), body);
+            File.WriteAllText(Path.Combine(bs, stage + ".json"), SlabBlockstate(kind, baseKind, stage));
+            if (!bright)
+            {
+                File.WriteAllText(Path.Combine(it, stage + ".json"), ParentItem($"{kind}/{stage}"));
+                Directory.CreateDirectory(D("recipes", "crafting", kind));
+                File.WriteAllText(Path.Combine(D("recipes", "crafting", kind), stage + ".json"),
+                    ShapedFromBlock($"{MODID}:{baseKind}/{stage}", $"{MODID}:{kind}/{stage}", "[ \"XXX\" ]", 6));
+            }
+            Common(kind, stage, bright, "tfc:metal/block/copper_slab", 50);
+            copperForms++;
+        }
+    }
+
+    // 4) chain — TFC chain textures recoloured through the patina LUTs (block + item; unaffected = verbatim).
+    {
+        string blkTex = A("textures", "block", "copper_chain"), itmTex = A("textures", "item", "copper_chain");
+        Directory.CreateDirectory(blkTex); Directory.CreateDirectory(itmTex);
+        using var chBlk = Load("tfc", Path.Combine("copper_chain", "block.png"));
+        using var chItm = Load("tfc", Path.Combine("copper_chain", "item.png"));
+        chBlk.Save(Path.Combine(blkTex, "unaffected.png"));
+        chItm.Save(Path.Combine(itmTex, "unaffected.png"));
+        foreach (var stage in COPPER_STAGES)
+        {
+            using var strip = Image.Load<Rgba32>(Path.Combine(scriptDir, $"patina_{stage}.png"));
+            using (var b = ClutSide(chBlk, strip, chBlk.Width, chBlk.Height)) b.Save(Path.Combine(blkTex, $"{stage}.png"));
+            using (var i = ClutSide(chItm, strip, chItm.Width, chItm.Height)) i.Save(Path.Combine(itmTex, $"{stage}.png"));
+        }
+    }
+    foreach (var kind in new[] { "copper_chain", "waxed_copper_chain" })
+    {
+        string bs = A("blockstates", kind), md = A("models", "block", kind), it = A("models", "item", kind);
+        foreach (var d in new[] { bs, md, it }) Directory.CreateDirectory(d);
+        foreach (var stage in BAR_STAGES)
+        {
+            bool bright = kind == "copper_chain" && stage == "unaffected";
+            File.WriteAllText(Path.Combine(md, stage + ".json"), ChainModelTex($"{MODID}:block/copper_chain/{stage}"));
+            File.WriteAllText(Path.Combine(bs, stage + ".json"), ChainBlockstate(kind, stage));
+            if (!bright) File.WriteAllText(Path.Combine(it, stage + ".json"), GeneratedItem($"{MODID}:item/copper_chain/{stage}"));
+            Common(kind, stage, bright, "tfc:metal/chain/copper", 6);
+            copperForms++;
+        }
+    }
+
+    // 5) trapdoor — TFC trapdoor texture recoloured through the patina LUTs (unaffected = verbatim).
+    {
+        string tdTex = A("textures", "block", "copper_trapdoor");
+        Directory.CreateDirectory(tdTex);
+        using var td = Load("tfc", Path.Combine("copper_trapdoor", "door.png"));
+        td.Save(Path.Combine(tdTex, "unaffected.png"));
+        foreach (var stage in COPPER_STAGES)
+        {
+            using var strip = Image.Load<Rgba32>(Path.Combine(scriptDir, $"patina_{stage}.png"));
+            using (var d = ClutSide(td, strip, td.Width, td.Height)) d.Save(Path.Combine(tdTex, $"{stage}.png"));
+        }
+    }
+    foreach (var kind in new[] { "copper_trapdoor", "waxed_copper_trapdoor" })
+    {
+        string bs = A("blockstates", kind), md = A("models", "block", kind), it = A("models", "item", kind);
+        foreach (var d in new[] { bs, md, it }) Directory.CreateDirectory(d);
+        foreach (var stage in BAR_STAGES)
+        {
+            bool bright = kind == "copper_trapdoor" && stage == "unaffected";
+            foreach (var (suffix, body) in TrapdoorModelsTex($"{MODID}:block/copper_trapdoor/{stage}"))
+                File.WriteAllText(Path.Combine(md, stage + suffix + ".json"), body);
+            File.WriteAllText(Path.Combine(bs, stage + ".json"), TrapdoorBlockstate(kind, stage));
+            if (!bright) File.WriteAllText(Path.Combine(it, stage + ".json"), ParentItem($"{kind}/{stage}_bottom"));
+            Common(kind, stage, bright, "tfc:metal/trapdoor/copper", 200);
+            copperForms++;
+        }
+    }
+    Console.WriteLine($"  weathering copper forms (block/stairs/slab/chain/trapdoor): {copperForms} blocks");
+}
+
 foreach (var (_, pair) in motifSources) { pair.relief.Dispose(); pair.flat.Dispose(); }
-Console.WriteLine($"Done: {done} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants + {patina} patina palettes + {copperBars} copper-bar stages written to {resRoot}");
+Console.WriteLine($"Done: {done} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants + {patina} patina palettes + {copperBars} copper-bar stages + {copperForms} copper-form blocks written to {resRoot}");
 
 // ---- helpers --------------------------------------------------------------
 
@@ -841,8 +987,10 @@ string MineableTag()
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_stairs/{c}\""))
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_slab/{c}\""))
         .Concat(ALABASTER_COLORS.Select(c => $"    \"{MODID}:alabaster_tile_wall/{c}\""))
-        .Concat(BAR_STAGES.Select(s => $"    \"{MODID}:copper_bars/{s}\""))
-        .Concat(BAR_STAGES.Select(s => $"    \"{MODID}:waxed_copper_bars/{s}\""));
+        .Concat(new[] { "copper_bars", "waxed_copper_bars", "copper_block", "waxed_copper_block",
+                        "copper_block_stairs", "waxed_copper_block_stairs", "copper_block_slab", "waxed_copper_block_slab",
+                        "copper_chain", "waxed_copper_chain", "copper_trapdoor", "waxed_copper_trapdoor" }
+            .SelectMany(kind => BAR_STAGES.Select(s => $"    \"{MODID}:{kind}/{s}\"")));
     return ValuesTag(ids);
 }
 
@@ -904,6 +1052,86 @@ string HeatingMelt(string itemId, string fluid, int amount, int temperature) =>
     $$$"""
     {"type":"tfc:heating","ingredient":{"item":"{{{itemId}}}"},"result_fluid":{"fluid":"{{{fluid}}}","amount":{{{amount}}}},"temperature":{{{temperature}}}}
     """;
+
+// Plain shaped crafting — mirrors TFC's metal block→stairs/slab recipes: `pattern` (X = `fromItem`) → `result`×count.
+string ShapedFromBlock(string fromItem, string result, string pattern, int count) =>
+    $$$"""{"type":"minecraft:crafting_shaped","pattern":{{{pattern}}},"key":{"X":{"item":"{{{fromItem}}}"}},"result":{"item":"{{{result}}}","count":{{{count}}}}}""";
+
+// ---- weathering-copper form emitters (block/stairs/slab reuse vanilla cut-copper textures; chain/trapdoor use a
+//      generated patina texture). The big StairsBlockstate/SlabBlockstate emitters above are reused (they only
+//      reference model paths), so these supply only the texture-bearing models. ----
+
+// Vanilla plain copper-block texture id for a weather stage (TFC's plated block is the smooth full block, so it
+// maps to copper_block/exposed_copper/… — NOT the lined cut_copper). Stairs/slabs reuse this on every face.
+string CopperBlockTex(string stage) => "minecraft:block/" + (stage == "unaffected" ? "copper_block" : $"{stage}_copper");
+
+string CubeAllModel(string tex) => $$"""{ "parent": "minecraft:block/cube_all", "textures": { "all": "{{tex}}" } }""";
+string CubeVariant(string kind, string stage) => $$"""{ "variants": { "": { "model": "{{MODID}}:block/{{kind}}/{{stage}}" } } }""";
+string ParentItem(string modelPath) => $$"""{ "parent": "{{MODID}}:block/{{modelPath}}" }""";
+string GeneratedItem(string tex) => $$"""{ "parent": "item/generated", "textures": { "layer0": "{{tex}}" } }""";
+
+(string suffix, string body)[] StairModelsTex(string tex)
+{
+    string t = $$"""{ "bottom": "{{tex}}", "top": "{{tex}}", "side": "{{tex}}" }""";
+    return new[]
+    {
+        ("",       $$"""{ "parent": "minecraft:block/stairs",       "textures": {{t}} }"""),
+        ("_inner", $$"""{ "parent": "minecraft:block/inner_stairs", "textures": {{t}} }"""),
+        ("_outer", $$"""{ "parent": "minecraft:block/outer_stairs", "textures": {{t}} }"""),
+    };
+}
+
+(string suffix, string body)[] SlabModelsTex(string tex)
+{
+    string t = $$"""{ "bottom": "{{tex}}", "top": "{{tex}}", "side": "{{tex}}" }""";
+    return new[]
+    {
+        ("",     $$"""{ "parent": "minecraft:block/slab",     "textures": {{t}} }"""),
+        ("_top", $$"""{ "parent": "minecraft:block/slab_top", "textures": {{t}} }"""),
+    };
+}
+
+string ChainModelTex(string tex) => $$"""{ "parent": "minecraft:block/chain", "render_type": "minecraft:cutout_mipped", "textures": { "all": "{{tex}}", "particle": "{{tex}}" } }""";
+string ChainBlockstate(string kind, string stage)
+{
+    string m = $"{MODID}:block/{kind}/{stage}";
+    return $$"""{ "variants": { "axis=x": { "model": "{{m}}", "x": 90, "y": 90 }, "axis=y": { "model": "{{m}}" }, "axis=z": { "model": "{{m}}", "x": 90 } } }""";
+}
+
+(string suffix, string body)[] TrapdoorModelsTex(string tex) => new[]
+{
+    ("_bottom", $$"""{ "parent": "minecraft:block/template_orientable_trapdoor_bottom", "render_type": "minecraft:cutout", "textures": { "texture": "{{tex}}" } }"""),
+    ("_top",    $$"""{ "parent": "minecraft:block/template_orientable_trapdoor_top",    "render_type": "minecraft:cutout", "textures": { "texture": "{{tex}}" } }"""),
+    ("_open",   $$"""{ "parent": "minecraft:block/template_orientable_trapdoor_open",   "render_type": "minecraft:cutout", "textures": { "texture": "{{tex}}" } }"""),
+};
+
+// Orientable trapdoor blockstate — mirrors TFC's metal/trapdoor/copper, retargeted at our per-kind/stage models.
+string TrapdoorBlockstate(string kind, string stage)
+{
+    string b = $"{MODID}:block/{kind}/{stage}_bottom", t = $"{MODID}:block/{kind}/{stage}_top", o = $"{MODID}:block/{kind}/{stage}_open";
+    return $$"""
+    {
+      "variants": {
+        "facing=north,half=bottom,open=false": { "model": "{{b}}" },
+        "facing=south,half=bottom,open=false": { "model": "{{b}}", "y": 180 },
+        "facing=east,half=bottom,open=false":  { "model": "{{b}}", "y": 90 },
+        "facing=west,half=bottom,open=false":  { "model": "{{b}}", "y": 270 },
+        "facing=north,half=top,open=false":    { "model": "{{t}}" },
+        "facing=south,half=top,open=false":    { "model": "{{t}}", "y": 180 },
+        "facing=east,half=top,open=false":     { "model": "{{t}}", "y": 90 },
+        "facing=west,half=top,open=false":     { "model": "{{t}}", "y": 270 },
+        "facing=north,half=bottom,open=true":  { "model": "{{o}}" },
+        "facing=south,half=bottom,open=true":  { "model": "{{o}}", "y": 180 },
+        "facing=east,half=bottom,open=true":   { "model": "{{o}}", "y": 90 },
+        "facing=west,half=bottom,open=true":   { "model": "{{o}}", "y": 270 },
+        "facing=north,half=top,open=true":     { "model": "{{o}}", "x": 180, "y": 180 },
+        "facing=south,half=top,open=true":     { "model": "{{o}}", "x": 180, "y": 0 },
+        "facing=east,half=top,open=true":      { "model": "{{o}}", "x": 180, "y": 270 },
+        "facing=west,half=top,open=true":      { "model": "{{o}}", "x": 180, "y": 90 }
+      }
+    }
+    """;
+}
 
 // ---- bookshelf JSON emitters ----------------------------------------------
 

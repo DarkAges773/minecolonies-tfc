@@ -297,45 +297,64 @@ brightness-correct on any base. Note: for a **16×16** target call `ClutSide(pat
 `ClutThrough`, which resizes the output to the strip's 256×16). The strips and the extraction step are documented
 in [input/README.md](../firmavanilla/tools/generate-textures/input/README.md) ("Patina palettes").
 
-## Weathering copper bars — TFC copper bars with vanilla's full copper lifecycle
+## Weathering copper — TFC copper forms with vanilla's full copper lifecycle
 
-TFC ships only **bright, non-aging** copper bars (`tfc:metal/bars/copper`). This gives them the complete vanilla
-copper experience — **oxidation over time, axe-scraping, honeycomb-waxing, axe wax-off, lightning de-oxidation,
-neighbour-influence** — the **first consumer** of the extracted patina LUTs.
+TFC's copper blocks are bright and **non-aging**. This gives **six TFC copper forms** the complete vanilla copper
+experience — **oxidation over time, axe-scraping, honeycomb-waxing, axe wax-off, lightning de-oxidation,
+neighbour-influence** — and is the consumer of the extracted patina LUTs.
 
-**Eight blocks** ([CopperBarsBlocks](../firmavanilla/src/main/java/com/firmavanilla/block/CopperBarsBlocks.java)),
-all bar-shaped, `Properties.copy(tfc:metal/bars/copper)`:
-- the four weather stages `firmavanilla:copper_bars/<stage>` (`unaffected`/`exposed`/`weathered`/`oxidized`) —
-  [`WeatheringCopperBarsBlock`](../firmavanilla/src/main/java/com/firmavanilla/block/WeatheringCopperBarsBlock.java),
-  an `IronBarsBlock` that `implements WeatheringCopper` (random-tick wiring copied from vanilla's
-  `WeatheringCopperFullBlock`);
-- their four waxed twins `firmavanilla:waxed_copper_bars/<stage>` — plain `IronBarsBlock` (waxed copper never ages).
+**Forms** (each a "set" of 4 weather stages `copper_<form>/<stage>` + 4 waxed twins `waxed_copper_<form>/<stage>`,
+for `unaffected`/`exposed`/`weathered`/`oxidized`), all registered by
+[`CopperWeathering`](../firmavanilla/src/main/java/com/firmavanilla/block/CopperWeathering.java), each
+`Properties.copy(<its TFC source block>)`:
 
-**Textures.** Stage 0 (`unaffected`) reuses TFC's copper-bar textures verbatim (identity, no LUT); the three aged
-stages recolour the grate + smooth `edge` through the patina LUTs (`ClutSide(tex, strip, 16, 16)`, alpha preserved).
-The waxed twins reuse the same four textures (vanilla waxed copper is visually identical). Models/blockstate are a
-1:1 retexture of TFC's iron-bars **multipart** (six parts, `render_type: cutout_mipped`, parenting
-`minecraft:block/iron_bars_*`); 8 blockstates, 48 part models, mineable/pickaxe.
+| Form id | TFC source | Block type | Melt (mB) |
+|---|---|---|---|
+| `bars` | `metal/bars/copper` | `IronBarsBlock` | 25 |
+| `block` | `metal/block/copper` | `Block` (cube) | 100 |
+| `block_stairs` | `metal/block/copper_stairs` | `StairBlock` | 75 |
+| `block_slab` | `metal/block/copper_slab` | `SlabBlock` | 50 |
+| `chain` | `metal/chain/copper` | `ChainBlock` | 6 |
+| `trapdoor` | `metal/trapdoor/copper` | `TrapDoorBlock` (`BlockSetType.IRON`) | 200 |
 
-**Melting.** Every bar item (the 3 aged stages + 4 waxed twins) gets a `tfc:heating` recipe mirroring TFC's copper
-bars — **25 mB `tfc:metal/copper` at 1080 °C** — so they melt down like any TFC metal. The bright stage has no item
-of its own (it's TFC's), so it's covered by TFC's existing recipe. Note: TFC's heating schema puts `temperature` at
-the recipe top level, a sibling of `result_fluid` (not inside it).
+The four weather stages are `WeatheringCopper*Block` classes (each extends the vanilla block type + `implements
+WeatheringCopper`, random-tick wiring copied from `WeatheringCopperFullBlock`); the waxed twins are plain vanilla
+blocks (waxed copper never ages). That's **48 blocks** total (6 forms × 8).
 
-**How the mechanics work — no mixin.** Every vanilla copper mechanic keys off three static `Supplier<BiMap>` tables
-(`WeatheringCopper.NEXT_BY_BLOCK` + its inverse drive oxidation/scrape/`getFirst`/lightning; `HoneycombItem`'s
-`WAXABLES` + inverse drive wax-on/wax-off). [`WeatheringMaps`](../firmavanilla/src/main/java/com/firmavanilla/weathering/WeatheringMaps.java)
+**Textures.**
+- `bars`, `chain`, `trapdoor` — TFC's own textures recoloured through the patina LUTs (`ClutSide(tex, strip, w, h)`,
+  alpha preserved); `unaffected` = the TFC texture verbatim. (Bars also recolour a smooth `edge`; chain also recolours
+  its separate item texture.) Transparent forms set Forge `render_type` on their models: bars/chain
+  `cutout_mipped`, trapdoor `cutout` (else the grate/links/gaps render opaque).
+- `block`, `block_stairs`, `block_slab` — **no generation**: they reuse vanilla's **plain copper-block** textures
+  (`minecraft:block/copper_block`, `exposed_copper`, `weathered_copper`, `oxidized_copper`) — the smooth full block,
+  matching TFC's plated block (not the lined `cut_copper`). The stairs/slabs put that same texture on every face. The
+  big `StairsBlockstate`/`SlabBlockstate` emitters are reused as-is (they only reference model paths); only
+  texture-bearing models are supplied per stage.
+
+Waxed twins reuse the unwaxed textures (vanilla waxed copper is visually identical). All 48 blocks join
+`mineable/pickaxe`.
+
+**Recipes.** Every itemised block gets a `tfc:heating` recipe mirroring its TFC source's amount (see table) at
+1080 °C, so they melt like any TFC metal. The plated **stairs/slab** are also craftable from the plated **block** of
+the *same weather stage* (mirroring TFC's `copper_block`→stairs/slab `crafting_shaped`, ×8 / ×6) — per aged stage and
+per waxed stage. The bright (UNAFFECTED) stage has no item of its own (it's TFC's), so TFC's existing heating + craft
+recipes cover it. Note: TFC's heating schema puts `temperature` at the recipe top level, a sibling of `result_fluid`.
+
+**How the mechanics work — no mixin.** Every vanilla copper mechanic keys off static `Supplier<BiMap>` tables
+(`WeatheringCopper.NEXT_BY_BLOCK` + inverse drive oxidation/scrape/`getFirst`/lightning; `HoneycombItem.WAXABLES` +
+inverse drive wax-on/wax-off). [`WeatheringMaps`](../firmavanilla/src/main/java/com/firmavanilla/weathering/WeatheringMaps.java)
 **splices our block→block links into those maps** at `FMLCommonSetupEvent` — it finds each field by *probing its
-contents* (which map sends `COPPER_BLOCK`→`EXPOSED_COPPER`, obfuscation-proof, no SRG/AT), rebuilds it with
-vanilla + our entries, and overwrites it via `Unsafe` (defeats `final`). Then Forge's own `AxeItem`/`HoneycombItem`/
-`LightningBolt` do everything for free; our weathering blocks just `implements WeatheringCopper` (waxed don't, so
-lightning skips them). This is the reusable workflow core — future weathering sets are just more `addOxidationStep`/
-`addWax` calls.
+contents* (which map sends `COPPER_BLOCK`→`EXPOSED_COPPER`, obfuscation-proof, no SRG/AT), rebuilds it with vanilla +
+our entries, and overwrites via `Unsafe` (defeats `final`). Then Forge's own `AxeItem`/`HoneycombItem`/`LightningBolt`
+do everything for free; our weathering blocks just `implements WeatheringCopper` (waxed don't, so lightning skips
+them). **This is the reusable workflow core** — a new weathering form is one `CopperWeathering.registerForm(...)` call
+(it auto-wires the oxidation chain, wax pairs, and placement swap).
 
-**Stage 0 is bridged to TFC, not duplicated.** The bright weathering block has **no item of its own**: TFC's
-`metal/bars/copper` item *places* our `copper_bars/unaffected` (a `BlockEvent.EntityPlaceEvent` swap in
-`CopperBarsBlocks`), the block's loot + pick-block (`getCloneItemStack`) both yield the TFC item, so TFC's copper
-bars simply start aging with **no duplicate item**. The three aged stages and all four waxed twins have their own
-items (drop themselves). The stage list is duplicated in `CopperBarsBlocks.java` (`STAGE_NAMES`) and `generate.cs`
-(`BAR_STAGES`); keep them in sync. **TFC is now a compile-time dep** of `:firmavanilla` for this (see its
-`build.gradle`); the mod stays mixin-free.
+**Stage 0 is bridged to TFC, not duplicated.** Each form's bright block has **no item of its own**: TFC's matching
+item places it (one shared `BlockEvent.EntityPlaceEvent` listener swaps any registered TFC source block for our
+bright block, carrying over every shared property — facing/half/open/type/axis/waterlogged), the block's loot +
+pick-block (`getCloneItemStack`) yield the TFC item, so existing TFC copper simply starts aging with **no duplicate
+items, no conversion recipes**. The aged + waxed stages have their own items. The stage list is duplicated in
+`CopperWeathering.java` (`STAGE_NAMES`) and `generate.cs` (`BAR_STAGES`); keep them in sync. **TFC is a compile-time
+dep** of `:firmavanilla` for this (see its `build.gradle`); the mod stays mixin-free.

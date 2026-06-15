@@ -2,7 +2,7 @@ package com.firmavanilla;
 
 import com.firmavanilla.block.AlabasterBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
-import com.firmavanilla.block.CopperBarsBlocks;
+import com.firmavanilla.block.CopperWeathering;
 import com.firmavanilla.block.MortaredCobbleBlock;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.SandstoneBlocks;
@@ -68,14 +68,17 @@ public final class FirmaVanillaCreativeTab
                             output.accept(AlabasterBlocks.WALLS.get(i).get());
                             output.accept(AlabasterBlocks.PILLARS.get(i).get());
                         }
-                        // Weathering copper bars: the aged stages (the bright stage uses TFC's item), then waxed twins.
-                        for (final RegistryObject<Block> bars : CopperBarsBlocks.WEATHERING)
+                        // Weathering copper forms: each form's aged stages (bright uses TFC's item), then its waxed twins.
+                        for (final String form : CopperWeathering.WEATHERING.keySet())
                         {
-                            if (bars.get().asItem() != net.minecraft.world.item.Items.AIR) output.accept(bars.get());
-                        }
-                        for (final RegistryObject<Block> bars : CopperBarsBlocks.WAXED)
-                        {
-                            output.accept(bars.get());
+                            for (final RegistryObject<Block> b : CopperWeathering.WEATHERING.get(form))
+                            {
+                                if (b.get().asItem() != net.minecraft.world.item.Items.AIR) output.accept(b.get());
+                            }
+                            for (final RegistryObject<Block> b : CopperWeathering.WAXED.get(form))
+                            {
+                                output.accept(b.get());
+                            }
                         }
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {

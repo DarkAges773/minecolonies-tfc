@@ -41,9 +41,13 @@ input/vanilla/exposed_copper.png            (the "exposed" oxidation palette sou
 input/vanilla/weathered_copper.png          (the "weathered" oxidation palette source)
 input/vanilla/oxidized_copper.png           (the "oxidized" oxidation palette source)
 
-# patina'd copper bars (TFC copper bars recoloured through the patina LUTs):
+# weathering copper bars / chains / trapdoors (TFC textures recoloured through the patina LUTs):
 input/tfc/copper_bars/bars.png              (TFC's copper bars grate — tfc:block/metal/bars/copper)
 input/tfc/copper_bars/smooth.png            (TFC's smooth copper post edge — tfc:block/metal/smooth/copper)
+input/tfc/copper_chain/block.png            (TFC's copper chain block — tfc:block/metal/chain/copper)
+input/tfc/copper_chain/item.png             (TFC's copper chain item — tfc:item/metal/chain/copper)
+input/tfc/copper_trapdoor/door.png          (TFC's copper trapdoor — tfc:block/metal/trapdoor/copper)
+# (the plated block + stairs + slab reuse VANILLA cut-copper textures — nothing to extract)
 ```
 
 ## Extracting them from the dev dependency jars

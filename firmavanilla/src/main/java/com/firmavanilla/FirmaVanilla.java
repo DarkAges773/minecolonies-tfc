@@ -2,7 +2,7 @@ package com.firmavanilla;
 
 import com.firmavanilla.block.AlabasterBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
-import com.firmavanilla.block.CopperBarsBlocks;
+import com.firmavanilla.block.CopperWeathering;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.block.TileBlocks;
@@ -39,8 +39,9 @@ public class FirmaVanilla
         TileBlocks.init(modBus);
         // Alabaster tile + pillar (purpur recoloured) in TFC's 16 dye colours — CLUT-generated textures.
         AlabasterBlocks.init(modBus);
-        // Patina'd copper bars (TFC copper bars recoloured through the extracted copper-oxidation LUTs).
-        CopperBarsBlocks.init(modBus);
+        // Weathering copper forms (bars, plated block + stairs/slab, chains, trapdoors) — TFC's copper given
+        // vanilla copper's oxidation/scrape/wax/lightning lifecycle, by splicing into vanilla's copper maps.
+        CopperWeathering.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.
