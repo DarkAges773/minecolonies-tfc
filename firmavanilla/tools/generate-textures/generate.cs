@@ -551,7 +551,8 @@ int copperBars = 0;
         string cbModelDir = Path.Combine(resRoot, "assets", MODID, "models", "block", kind);
         string cbItemDir = Path.Combine(resRoot, "assets", MODID, "models", "item", kind);
         string cbLootDir = Path.Combine(resRoot, "data", MODID, "loot_tables", "blocks", kind);
-        foreach (var d in new[] { cbBsDir, cbModelDir, cbItemDir, cbLootDir }) Directory.CreateDirectory(d);
+        string cbHeatDir = Path.Combine(resRoot, "data", MODID, "recipes", "heating", kind);
+        foreach (var d in new[] { cbBsDir, cbModelDir, cbItemDir, cbLootDir, cbHeatDir }) Directory.CreateDirectory(d);
         foreach (var stage in BAR_STAGES)
         {
             foreach (var part in new[] { "post", "post_ends", "cap", "cap_alt", "side", "side_alt" })
@@ -562,6 +563,11 @@ int copperBars = 0;
             // Bright stage drops TFC's copper bars (no item of its own); every other block drops itself.
             File.WriteAllText(Path.Combine(cbLootDir, $"{stage}.json"),
                 CopperBarsLootDrop(brightWeathering ? "tfc:metal/bars/copper" : $"{MODID}:{kind}/{stage}"));
+            // Melting: mirror TFC's copper bars (25 mB tfc:metal/copper at 1080°C). The bright stage uses TFC's
+            // item, which already has TFC's heating recipe — skip it (no firmavanilla item to key on).
+            if (!brightWeathering)
+                File.WriteAllText(Path.Combine(cbHeatDir, $"{stage}.json"),
+                    HeatingMelt($"{MODID}:{kind}/{stage}", "tfc:metal/copper", 25, 1080));
             copperBars++;
         }
     }
@@ -890,6 +896,13 @@ string CopperBarsItem(string stage) =>
 string CopperBarsLootDrop(string itemId) =>
     $$$"""
     {"type":"minecraft:block","pools":[{"name":"loot_pool","rolls":1,"entries":[{"type":"minecraft:item","name":"{{{itemId}}}"}],"conditions":[{"condition":"minecraft:survives_explosion"}]}]}
+    """;
+
+// TFC heating recipe: melt an item into a fluid at a temperature (mirrors TFC's metal-bar melts). NOTE the
+// `temperature` is a TOP-LEVEL field (sibling of result_fluid), not inside it — matching TFC's own recipes.
+string HeatingMelt(string itemId, string fluid, int amount, int temperature) =>
+    $$$"""
+    {"type":"tfc:heating","ingredient":{"item":"{{{itemId}}}"},"result_fluid":{"fluid":"{{{fluid}}}","amount":{{{amount}}}},"temperature":{{{temperature}}}}
     """;
 
 // ---- bookshelf JSON emitters ----------------------------------------------

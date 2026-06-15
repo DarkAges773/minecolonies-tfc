@@ -53,8 +53,9 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   (`unaffected`→`exposed`→`weathered`→`oxidized`), scrape back a stage with an axe, wax with honeycomb (waxed twins
   for every stage), wax off with an axe, and de-oxidise when struck by lightning. TFC's own copper-bars item places
   them and they drop it back, so existing copper bars just start aging — no new bright item, no conversion. The aged
-  stages are recoloured through the extracted patina LUTs; mine with a pickaxe. (Implemented with no mixin — by
-  splicing into vanilla's `WeatheringCopper`/`HoneycombItem` maps.)
+  stages are recoloured through the extracted patina LUTs; mine with a pickaxe. They also **melt** like TFC's
+  copper bars (25 mB `tfc:metal/copper` at 1080 °C), so they stay part of TFC's metallurgy loop. (Implemented with
+  no mixin — by splicing into vanilla's `WeatheringCopper`/`HoneycombItem` maps.)
 - **Alabaster recipes — colouring matches TFC strictly.** The tile is chiselled from `tfc:alabaster/bricks`
   (in-world smooth chisel + table chisel-craft); the pillar is chiselled from the tile; shapes come off the tile
   via crafting (×8/×6/×6), chisel (stair/slab) and stonecutting (×1/×2/×1). **Dyeing** is TFC's sealed-barrel

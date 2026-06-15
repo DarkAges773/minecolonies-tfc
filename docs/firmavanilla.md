@@ -317,6 +317,11 @@ The waxed twins reuse the same four textures (vanilla waxed copper is visually i
 1:1 retexture of TFC's iron-bars **multipart** (six parts, `render_type: cutout_mipped`, parenting
 `minecraft:block/iron_bars_*`); 8 blockstates, 48 part models, mineable/pickaxe.
 
+**Melting.** Every bar item (the 3 aged stages + 4 waxed twins) gets a `tfc:heating` recipe mirroring TFC's copper
+bars — **25 mB `tfc:metal/copper` at 1080 °C** — so they melt down like any TFC metal. The bright stage has no item
+of its own (it's TFC's), so it's covered by TFC's existing recipe. Note: TFC's heating schema puts `temperature` at
+the recipe top level, a sibling of `result_fluid` (not inside it).
+
 **How the mechanics work — no mixin.** Every vanilla copper mechanic keys off three static `Supplier<BiMap>` tables
 (`WeatheringCopper.NEXT_BY_BLOCK` + its inverse drive oxidation/scrape/`getFirst`/lightning; `HoneycombItem`'s
 `WAXABLES` + inverse drive wax-on/wax-off). [`WeatheringMaps`](../firmavanilla/src/main/java/com/firmavanilla/weathering/WeatheringMaps.java)
