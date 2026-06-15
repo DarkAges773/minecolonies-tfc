@@ -375,3 +375,47 @@ pick-block (`getCloneItemStack`) yield the TFC item, so existing TFC copper simp
 items, no conversion recipes**. The aged + waxed stages have their own items. The stage list is duplicated in
 `CopperWeathering.java` (`STAGE_NAMES`) and `generate.cs` (`BAR_STAGES`); keep them in sync. **TFC is a compile-time
 dep** of `:firmavanilla` for this (see its `build.gradle`); the mod stays mixin-free.
+
+## Prismarine deposits — a TFC-style source for the vanilla prismarine family
+
+TFC leaves vanilla's prismarine blocks **and their recipes** intact, but never generates guardians or ocean
+monuments — so prismarine **shards** and **crystals** (the recipe inputs) are simply unreachable. This adds a
+TFC-native way to get them, mirroring TFC's own `native_copper` ore deposits **exactly** — and is the mod's first
+worldgen feature. Registered by
+[`PrismarineDeposits`](../firmavanilla/src/main/java/com/firmavanilla/block/PrismarineDeposits.java); all the
+JSON (blockstates/models/loot/panning/sluicing/worldgen/tags) is machine-generated in `generate.cs`.
+
+**The acquisition loop (no mixin — entirely datapack-driven):**
+1. **One deposit block per TFC rock** — `firmavanilla:deposit/prismarine/<rock>` (20), a plain non-falling
+   `Block` with gravel properties, exactly like TFC's deposit block.
+2. **Worldgen** — a `tfc:soil_disc` configured feature (`firmavanilla:prismarine_deposit`) swaps each
+   `tfc:rock/gravel/<rock>` for the matching deposit; a placed feature (`rarity_filter` chance 6 +
+   `OCEAN_FLOOR_WG` + `tfc:biome`) is appended to TFC's **empty** `#tfc:in_biome/soil_discs/deep_ocean` and
+   `deep_ocean_trench` tags (the biome `features` lists already reference those tags, so TFC's chunk generator
+   runs them). Because all TFC gravel is per-rock, the per-rock deposit blends into the floor automatically; like
+   TFC's own deposits it appears **only where the floor exposes gravel**, so density tracks the deep-ocean
+   gravel cover.
+3. **Pan / sluice** — TFC's data-driven `panning`/`sluicing` managers, populated under our namespace at
+   `data/firmavanilla/tfc/{panning,sluicing}/deposits/prismarine_<rock>.json` (TFC scans all namespaces). Both
+   reference one fishing-type loot table per rock: **prismarine shard** (common ~0.45), **prismarine crystals**
+   (rare ~0.12), loose-rock filler — one item per wash. The block-break loot drops the deposit itself (carry it
+   to a pan/sluice). The vanilla recipes then build block / bricks / dark prismarine / sea lantern.
+
+**Textures — one animated overlay, no per-rock art.** Each deposit's block model is `parent: tfc:block/ore` with
+`all` = that rock's `tfc:block/rock/gravel/<rock>` and `overlay` = a **single** hand-made
+`firmavanilla:block/deposit/prismarine` crystal sheen, layered over the gravel by the model engine (TFC's own
+trick). The pan-stage item models likewise reference TFC's gravel + vanilla `prismarine` via the `tfc:item/pan/*`
+parents. So the only bespoke art is that one overlay — a **tracked, animated** input, `prismarine_overlay.png` in
+the generator's tool root (a 16×64 four-frame strip). The generator copies it verbatim to the deposit texture and
+writes its `.mcmeta` (frame timing/sequence mirroring vanilla `prismarine`); the input stays in the tool root, so
+the copy never clobbers it. To restyle the deposits, edit `prismarine_overlay.png` and re-run the generator.
+
+The block model is **inlined** (not `parent: tfc:block/ore`) — a gravel cube plus a coplanar overlay cube — so the
+**overlay element alone** can carry Forge `forge_data` `{block_light:15, sky_light:15}`, making the crystals
+**glow in the dark** (full-bright) with **no actual light emission** and no on/off state. Both share
+`render_type: cutout_mipped` — required because TFC sets its own deposits' render layer in code (which we can't
+reuse) and the default solid layer would render the overlay's transparent pixels as opaque black. The pan-stage
+item models (`item/pan/prismarine/<rock>_{full,half}` + a shared `result`) aren't blockstate/registered-item
+models, so they're registered as additional models in
+[`PrismarineClient`](../firmavanilla/src/main/java/com/firmavanilla/client/PrismarineClient.java) (mirroring TFC's
+`ClientEventHandler`) — otherwise TFC's pan renderer shows the missing-model placeholder while panning.

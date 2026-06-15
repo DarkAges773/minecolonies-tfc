@@ -5,6 +5,7 @@ import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.CopperWeathering;
 import com.firmavanilla.block.MortaredCobbleBlock;
 import com.firmavanilla.block.MortaredCobbleRegistry;
+import com.firmavanilla.block.PrismarineDeposits;
 import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.block.TileBlocks;
 import net.minecraft.core.registries.Registries;
@@ -79,6 +80,11 @@ public final class FirmaVanillaCreativeTab
                             {
                                 output.accept(b.get());
                             }
+                        }
+                        // Prismarine gravel deposits (one per rock).
+                        for (final RegistryObject<Block> deposit : PrismarineDeposits.ALL)
+                        {
+                            output.accept(deposit.get());
                         }
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {

@@ -70,3 +70,14 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   recipe exactly — uncoloured **tile or pillar** + 25 mB `tfc:<colour>_dye` → the coloured one (both are dyeable
   bases). Shapes are **not** dyed and have no uncoloured variant — their colour comes from crafting/chiselling a
   coloured tile, mirroring TFC's "only the base is dyed" rule.
+- **Prismarine deposits** — a TFC-style way to obtain the vanilla **prismarine family**, which TFC leaves intact
+  but makes unreachable (no guardians/monuments → no shards or crystals). One panable/sluiceable gravel deposit
+  block per TFC rock (`firmavanilla:deposit/prismarine/<rock>`) generates on the **deep-ocean** and
+  **deep-ocean-trench** floor (a `tfc:soil_disc` swapping that rock's gravel, like TFC's own ore deposits). Mine
+  it, then **pan or sluice** it for prismarine **shards** (common) and **crystals** (rare) plus loose-rock filler;
+  the untouched vanilla recipes then build prismarine / bricks / dark prismarine / sea lantern. No mixin — the
+  worldgen feature, the TFC panning/sluicing definitions and all loot are datapack-driven, and the (animated)
+  crystal sheen is a single model overlay layered over each rock's gravel (no per-rock textures). The crystals
+  **glow in the dark** (full-bright overlay element via Forge `forge_data`) without emitting any light. The deposit
+  blocks carry the same tags as TFC's own deposits (`forge:gravel`, `mineable/shovel`, `tfc:can_landslide` so they
+  collapse like gravel, `tfc:ore_deposits`). This is the mod's first worldgen feature.

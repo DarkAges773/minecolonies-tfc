@@ -4,6 +4,7 @@ import com.firmavanilla.block.AlabasterBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.CopperWeathering;
 import com.firmavanilla.block.MortaredCobbleRegistry;
+import com.firmavanilla.block.PrismarineDeposits;
 import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.block.TileBlocks;
 import com.firmavanilla.data.MortaredCobbleData;
@@ -42,6 +43,9 @@ public class FirmaVanilla
         // Weathering copper forms (bars, plated block + stairs/slab, chains, trapdoors) — TFC's copper given
         // vanilla copper's oxidation/scrape/wax/lightning lifecycle, by splicing into vanilla's copper maps.
         CopperWeathering.init(modBus);
+        // Prismarine gravel deposits per TFC rock — a TFC-style (pan/sluice) source for the otherwise
+        // unreachable vanilla prismarine family. Generated on the deep-ocean floor via a tfc:soil_disc feature.
+        PrismarineDeposits.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.
