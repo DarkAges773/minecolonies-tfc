@@ -540,30 +540,34 @@ set, like a wall / a modded pipe, but driving a richer shape). Full cubes read a
 So quartz is **found in the world**, not just crafted, a custom cave-decoration feature
 (`firmavanilla:quartz_cluster`,
 [`QuartzClusterFeature`](../firmavanilla/src/main/java/com/firmavanilla/worldgen/QuartzClusterFeature.java))
-fills deeper caves with `quartz_cluster` veins — the mod's **second** worldgen feature (after the prismarine
-deposits). It is modelled on how TFC's own `cave_column`/`cave_spike` decorate caves, and is **block-only** — the
-earlier worldgen experiment that broke chunk generation did so by spawning *entities*, which this never does.
+fills the caves of **volcanoes** with `quartz_cluster` veins — the mod's **second** worldgen feature (after the
+prismarine deposits). It is modelled on how TFC's own `cave_column`/`cave_spike` decorate caves, and is
+**block-only** — the earlier worldgen experiment that broke chunk generation did so by spawning *entities*, which
+this never does.
 
-**Placement — decorates existing caves, never carves rock.** The placed feature gates on TFC's
-`tfc:carving_mask` (`step: air`), so every origin handed to the feature is already an air block in a carved cave;
-the feature only ever `setBlock`s air → quartz. Two more placement gates:
-- `min_y {above_bottom: 8}` + **`max_y {absolute: 48}`** — the requested **depth gate** (deeper caves only).
-- `minecraft:rarity_filter` `chance: 20`.
+**Placement — gated to volcanoes, in existing caves, never carves rock.** The placed feature chains three
+modifiers:
+- `tfc:carving_mask` (`step: air`, `min_y {above_bottom: 8}`, **`max_y {absolute: 48}`**) — origins are carved-cave
+  air in deeper caves; the feature only ever `setBlock`s air → quartz.
+- `minecraft:rarity_filter` `chance: 10` — density *within* a volcano (how many carved positions seed a vein).
+- **`tfc:volcano`** — the concentrator. This TFC modifier passes only inside a volcano footprint (TFC's volcanic
+  biomes — `volcanic_mountains`/`volcanic_oceanic_mountains`/`canyons`/…, and only the sparse volcano cells within
+  them). It's **(x,z)-only**, so it works underground (no `heightmap` modifier — that would force it to the
+  surface). Volcanoes are rare and regional, and their rock is the igneous-extrusive set whose felsic members
+  (**rhyolite/dacite**) are in the host tag — so this makes quartz caves a rare, concentrated, lore-fitting find
+  **without** any big-pocket / cross-chunk / deterministic mechanism (the proven small-reach per-position veins
+  never clip).
 
-It's added (merge, `replace:false`) to TFC's universal `in_biome/underground_decoration` placed-feature tag
-(alongside `cave_column`/`calcite`/`icicle`), so it runs in **every** TFC biome's caves — gated only by depth and
-rock, not biome.
+It's added (merge, `replace:false`) to TFC's universal `in_biome/underground_decoration` placed-feature tag; the
+`tfc:volcano` modifier is what restricts it from "every cave" to "volcano caves."
 
-**Shape — veins growing out of cave surfaces.** Per origin the feature only proceeds if the spot is **against a
-surface**: it scans the six faces, and requires that an adjacent solid block be **host rock** (this is both the
-"near a block" anchor and the strata gate — see below). It then builds a vein direction **purely from the open
-faces** — one face per axis, 1–3 axes — so every component points into open cave, never into the wall, and the
-vein can be **straight, diagonal or vertical**. It lays a line of `quartz_cluster` blocks (default state) from the
-origin out along that direction for a random length up to `max_reach` (10), stopping early at a wall, then
-**finalises connections** on
-every placed block (`withConnections`) now that the whole vein and the surrounding rock are in place — so each
-block grows its core+arms toward its neighbours and the host wall. Because `place()` runs once per surviving carved
-position, the many veins jutting from the rock accumulate into a quartz thicket.
+**Shape — veins growing out of cave surfaces.** Per carved origin (that passes the volcano + rarity gates), the
+feature proceeds only if the spot is **against a surface** with an adjacent **host-rock** face (the "near a block"
+anchor + strata gate); the vein direction is built **purely from the open faces** — one face per axis, 1–3 axes,
+sign uniform (unbiased) — so every component points into open cave, never into the wall, and the vein can be
+**straight, diagonal or vertical**, running a random length up to `max_reach` (10) or until it hits a wall. Each
+block is then **finalised** (`withConnections`) so it grows its core+arms toward its neighbours and the host wall.
+Because `place()` runs per carved position, a volcano's caves fill with crisscrossing quartz veins.
 
 **Why diagonals are walked as staircases.** A diagonal vein is laid one axis-step at a time (a *face-connected*
 staircase) so consecutive cluster blocks always share a face. That matters because the connected block only
@@ -580,5 +584,6 @@ itself checks it: a spike grows only where an **adjacent** solid block (the surf
 `quartzite`/`rhyolite`/`granite`/`dacite`/`gneiss`/`chert`. The tag is datapack-overridable to widen/narrow the set.
 
 All worldgen JSON (configured/placed feature), the host tag, and the `underground_decoration` merge are
-machine-generated in the raw-quartz-column section of `generate.cs`. The feature's tunable (`max_reach`) and the
-rock set live in data, so they can be retuned without touching Java.
+machine-generated in the raw-quartz-column section of `generate.cs`. The feature's tunables (`tfc:volcano`
+`distance` for how much of each volcano fills, `rarity_filter chance` for in-volcano density, `max_reach` for vein
+length) and the rock set live in data, so they can be retuned without touching Java.

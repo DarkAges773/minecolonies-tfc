@@ -1108,17 +1108,19 @@ int soulLamps = 0;
 
     // Worldgen: the firmavanilla:quartz_cluster cave-decoration feature (see QuartzClusterFeature.java) — grows the
     // self-shaping firmavanilla:quartz_cluster connected block (NOT the full raw_quartz_column) into veins in
-    // ALREADY-carved caves (tfc:carving_mask step=air; block-only, never carves rock). Gated to quartz-bearing rock
-    // via the firmavanilla:quartz_cluster_host block tag (raw + hardened quartzite/rhyolite/granite/dacite/gneiss/
-    // chert — checked in the feature) and to deeper caves via carving_mask's max_y. Injected into TFC's universal
-    // underground_decoration biome tag (alongside cave_column/calcite/icicle).
+    // ALREADY-carved caves (tfc:carving_mask step=air; block-only, never carves rock). GATED TO VOLCANOES via
+    // tfc:volcano (x,z-only, so it works underground) — quartz caves only generate within a TFC volcano footprint
+    // (the volcanic biomes), a rare/regional, lore-fitting spot whose felsic extrusive rock (rhyolite/dacite) is in
+    // the host tag. Also gated to quartz-bearing rock (the firmavanilla:quartz_cluster_host block tag, checked in
+    // the feature) and to deeper caves (carving_mask max_y). Injected into TFC's universal underground_decoration
+    // biome tag (alongside cave_column/calcite/icicle); the volcano modifier does the concentrating.
     string qCf = Path.Combine(resRoot, "data", MODID, "worldgen", "configured_feature");
     string qPf = Path.Combine(resRoot, "data", MODID, "worldgen", "placed_feature");
     Directory.CreateDirectory(qCf); Directory.CreateDirectory(qPf);
     File.WriteAllText(Path.Combine(qCf, "quartz_cluster.json"),
         """{"type":"MODID:quartz_cluster","config":{"crystal":"MODID:quartz_cluster","host":"MODID:quartz_cluster_host","max_reach":10}}""".Replace("MODID", MODID));
     File.WriteAllText(Path.Combine(qPf, "quartz_cluster.json"),
-        """{"feature":"MODID:quartz_cluster","placement":[{"type":"tfc:carving_mask","step":"air","min_y":{"above_bottom":8},"max_y":{"absolute":48}},{"type":"minecraft:rarity_filter","chance":20}]}""".Replace("MODID", MODID));
+        """{"feature":"MODID:quartz_cluster","placement":[{"type":"tfc:carving_mask","step":"air","min_y":{"above_bottom":8},"max_y":{"absolute":48}},{"type":"minecraft:rarity_filter","chance":10},{"type":"tfc:volcano"}]}""".Replace("MODID", MODID));
     // Strata gate: the quartz-bearing rocks, raw + hardened (cave walls are raw rock; hardened appears near volcanoes/deep).
     var qHostRocks = new[] { "quartzite", "rhyolite", "granite", "dacite", "gneiss", "chert" };
     var qHostVals = qHostRocks.SelectMany(r => new[] { $"\"tfc:rock/raw/{r}\"", $"\"tfc:rock/hardened/{r}\"" });

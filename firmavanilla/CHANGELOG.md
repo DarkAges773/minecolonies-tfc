@@ -92,16 +92,18 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   orients the quartz grain independently of the shape. Shares the raw quartz column's TFC raw-rock behaviour
   (`tfc:breaks_when_isolated` + a `tfc:is_isolated` loot table): mined with support it drops **1–4 nether
   quartz** (same as the column), but left unsupported it pops off and drops a raw quartz column.
-- **Quartz cave clusters** — a worldgen cave-decoration feature (`firmavanilla:quartz_cluster`) that grows
-  **quartz cluster** veins through deeper caves (a "quartz cave" look), so quartz is found in the world, not just
-  crafted. It places blocks **only into already-carved cave void** (never carves rock): TFC's `tfc:carving_mask`
-  (`step: air`) supplies each position, and where the spot is against a quartz-bearing rock surface the feature
-  lays a vein out into the open cave (straight, diagonal or vertical) until it meets a wall or its length limit,
-  then has each block shape itself to its neighbours — the many veins build up a quartz thicket. Gated to
-  **quartz-bearing rock** — a vein grows only from an adjacent quartzite/rhyolite/granite/dacite/gneiss/chert block
-  (the datapack-overridable `#firmavanilla:quartz_cluster_host` tag) — and to **deeper caves** (a `max_y` depth
-  bound), then injected into TFC's universal `underground_decoration` biome tag so it runs in every TFC biome's
-  caves. The mod's second worldgen feature; block-only (no entities).
+- **Quartz cave clusters** — a worldgen cave-decoration feature (`firmavanilla:quartz_cluster`) that fills the
+  caves of **volcanoes** with **quartz cluster** veins (a "quartz cave" look), so quartz is found in the world, not
+  just crafted. It places blocks **only into already-carved cave void** (never carves rock): TFC's
+  `tfc:carving_mask` (`step: air`) supplies each position, and TFC's **`tfc:volcano`** modifier restricts it to
+  volcano footprints (TFC's volcanic biomes) — a rare, regional, lore-fitting spot whose felsic rock
+  (rhyolite/dacite) is quartz-bearing. Where a carved spot sits against a quartz-bearing rock surface it shoots a
+  vein into the open cave (straight, diagonal or vertical, a random length) and the blocks self-shape into one
+  crisscrossing thicket. So quartz caves are an occasional concentrated find (at volcanoes) rather than a thin
+  layer in every cave. Also gated to **quartz-bearing rock** — a vein grows only from an adjacent
+  quartzite/rhyolite/granite/dacite/gneiss/chert block (the datapack-overridable
+  `#firmavanilla:quartz_cluster_host` tag) — and to **deeper caves** (a `max_y` depth bound). The mod's second
+  worldgen feature; block-only (no entities).
 - **Raw quartz column** — a vanilla-quartz-pillar-style directional block with TFC **raw-rock** drops: mined
   directly it drops **1–4 nether quartz**, but if it becomes **isolated** (no connected neighbours) it pops off as
   the block itself, exactly like TFC raw stone. Pure data — it joins TFC's `breaks_when_isolated` tag and uses a

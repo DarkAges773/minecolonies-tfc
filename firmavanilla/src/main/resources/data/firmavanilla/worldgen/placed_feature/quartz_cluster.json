@@ -1,1 +1,1 @@
-{"feature":"firmavanilla:quartz_cluster","placement":[{"type":"tfc:carving_mask","step":"air","min_y":{"above_bottom":8},"max_y":{"absolute":48}},{"type":"minecraft:rarity_filter","chance":20}]}
+{"feature":"firmavanilla:quartz_cluster","placement":[{"type":"tfc:carving_mask","step":"air","min_y":{"above_bottom":8},"max_y":{"absolute":48}},{"type":"minecraft:rarity_filter","chance":10},{"type":"tfc:volcano"}]}
