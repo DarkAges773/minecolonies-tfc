@@ -476,3 +476,21 @@ to TFC's fuel-burning lamps. Registered by
   (so the teal carries soul-fire's real tones, not a flat hue shift; the lit glass keeps its 3-frame `.mcmeta`,
   the off glass is darkened since CLUT normalises each input's range). One glass pair serves all 9 metals. Loot
   drops self with `tfc:copy_fluid` (keeps fuel on break, like TFC); `minecraft:mineable/pickaxe`.
+
+## Raw quartz column — quartz pillar with TFC raw-rock drops
+
+A vanilla-`quartz_pillar`-style directional block (`firmavanilla:raw_quartz_column`,
+[`QuartzBlocks`](../firmavanilla/src/main/java/com/firmavanilla/block/QuartzBlocks.java)) that drops like TFC raw
+stone. **Nothing re-implements the isolation logic** — it's a plain `RotatedPillarBlock`; the behaviour is two
+pieces of data:
+
+- **Loot table**: a `minecraft:alternatives` — drop the block itself when `tfc:is_isolated`, else **1–4 nether
+  quartz** (`minecraft:quartz`, `set_count` 1–4) — mirroring TFC's raw-rock loot exactly.
+- **Tag**: joins `tfc:breaks_when_isolated` (merged into TFC's). TFC's `WorldTracker`/`ForgeEventHandler` watch
+  neighbour updates for tagged blocks and, when one becomes isolated, pop it off supplying the `ISOLATED` loot
+  param — which is what `tfc:is_isolated` tests (`LootContext.hasParam(TFCLoot.ISOLATED)`). So mine it connected →
+  quartz; leave it isolated → it drops as a block.
+
+Visuals reuse vanilla's `cube_column` / `cube_column_horizontal` with the two hand-made textures (`quartz.png`
+side, `quartz_top.png` end, tracked tool-root inputs copied verbatim by the generator); blockstate is the standard
+3-axis pillar. `requiresCorrectToolForDrops` + `minecraft:mineable/pickaxe` (props copied from `quartz_pillar`).

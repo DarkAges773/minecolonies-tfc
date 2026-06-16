@@ -81,6 +81,10 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   **glow in the dark** (full-bright overlay element via Forge `forge_data`) without emitting any light. The deposit
   blocks carry the same tags as TFC's own deposits (`forge:gravel`, `mineable/shovel`, `tfc:can_landslide` so they
   collapse like gravel, `tfc:ore_deposits`). This is the mod's first worldgen feature.
+- **Raw quartz column** — a vanilla-quartz-pillar-style directional block with TFC **raw-rock** drops: mined
+  directly it drops **1–4 nether quartz**, but if it becomes **isolated** (no connected neighbours) it pops off as
+  the block itself, exactly like TFC raw stone. Pure data — it joins TFC's `breaks_when_isolated` tag and uses a
+  `tfc:is_isolated` loot table, so nothing re-implements the isolation logic.
 - **Soul lamps** — a soul-lantern-style **teal** variant of every TFC metal lamp (all 9 metals). They reuse TFC's
   lamp block-entity, so they fuel / light / fill / break / **melt** exactly like a normal lamp (fuel kept on
   break; melts to the same metal at the same temperature), but glow teal and emit a **dimmer light (10**, like a

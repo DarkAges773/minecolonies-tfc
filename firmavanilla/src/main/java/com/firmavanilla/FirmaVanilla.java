@@ -5,6 +5,7 @@ import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.CopperWeathering;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.PrismarineDeposits;
+import com.firmavanilla.block.QuartzBlocks;
 import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.block.SoulLamps;
 import com.firmavanilla.block.TileBlocks;
@@ -50,6 +51,9 @@ public class FirmaVanilla
         // "Soul" variants of TFC's metal lamps (teal glow, dimmer light) — reuse TFC's lamp block-entity, convert
         // to/from the normal lamp via a catalyst tag / burn-out. The Forge-bus interaction self-subscribes.
         SoulLamps.init(modBus);
+        // Raw quartz column — quartz-pillar-style block with TFC raw-rock drops (nether quartz; pops as a block
+        // when isolated, via the tfc:breaks_when_isolated tag + loot table — no code).
+        QuartzBlocks.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.

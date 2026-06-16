@@ -999,6 +999,36 @@ int soulLamps = 0;
     Console.WriteLine($"  soul lamps: {soulLamps} metals (glass = lamp CLUT'd through soul_fire) + blockstates/models/loot/recipes + heating + tfc:lamps + lava fuel");
 }
 
+// --- raw quartz column (vanilla quartz-pillar style; TFC raw-rock drops) ----------------------------------
+// A directional column block. Behaviour is pure data: the tfc:breaks_when_isolated tag (TFC pops a tagged block
+// that becomes isolated, supplying the ISOLATED loot param) + a loot table that drops the block when isolated
+// (tfc:is_isolated) and 1-4 nether quartz otherwise. The two textures (quartz.png side, quartz_top.png end) are
+// tracked tool-root inputs, copied verbatim. See QuartzBlocks.java.
+{
+    string qTex = Path.Combine(resRoot, "assets", MODID, "textures", "block");
+    Directory.CreateDirectory(qTex);
+    File.Copy(Path.Combine(scriptDir, "quartz.png"), Path.Combine(qTex, "raw_quartz_column.png"), overwrite: true);
+    File.Copy(Path.Combine(scriptDir, "quartz_top.png"), Path.Combine(qTex, "raw_quartz_column_top.png"), overwrite: true);
+    string qBs = Path.Combine(resRoot, "assets", MODID, "blockstates");
+    string qMd = Path.Combine(resRoot, "assets", MODID, "models", "block");
+    string qIt = Path.Combine(resRoot, "assets", MODID, "models", "item");
+    string qLoot = Path.Combine(resRoot, "data", MODID, "loot_tables", "blocks");
+    foreach (var d in new[] { qBs, qMd, qIt, qLoot }) Directory.CreateDirectory(d);
+    File.WriteAllText(Path.Combine(qBs, "raw_quartz_column.json"),
+        """{"variants":{"axis=x":{"model":"MODID:block/raw_quartz_column_horizontal","x":90,"y":90},"axis=y":{"model":"MODID:block/raw_quartz_column"},"axis=z":{"model":"MODID:block/raw_quartz_column_horizontal","x":90}}}""".Replace("MODID", MODID));
+    File.WriteAllText(Path.Combine(qMd, "raw_quartz_column.json"),
+        """{"parent":"minecraft:block/cube_column","textures":{"end":"MODID:block/raw_quartz_column_top","side":"MODID:block/raw_quartz_column"}}""".Replace("MODID", MODID));
+    File.WriteAllText(Path.Combine(qMd, "raw_quartz_column_horizontal.json"),
+        """{"parent":"minecraft:block/cube_column_horizontal","textures":{"end":"MODID:block/raw_quartz_column_top","side":"MODID:block/raw_quartz_column"}}""".Replace("MODID", MODID));
+    File.WriteAllText(Path.Combine(qIt, "raw_quartz_column.json"), ParentItem("raw_quartz_column"));
+    // loot: isolated → drop self (TFC raw-rock), else → 1-4 nether quartz.
+    File.WriteAllText(Path.Combine(qLoot, "raw_quartz_column.json"),
+        """{"type":"minecraft:block","pools":[{"name":"loot_pool","rolls":1,"entries":[{"type":"minecraft:alternatives","children":[{"type":"minecraft:item","name":"MODID:raw_quartz_column","conditions":[{"condition":"tfc:is_isolated"}]},{"type":"minecraft:item","name":"minecraft:quartz","functions":[{"function":"minecraft:set_count","count":{"min":1,"max":4,"type":"minecraft:uniform"}}]}]}],"conditions":[{"condition":"minecraft:survives_explosion"}]}]}""".Replace("MODID", MODID));
+    // join TFC's isolation tag (merges; raw_quartz_column is added to minecraft:mineable/pickaxe in MineableTag()).
+    WriteTag("tfc", "blocks", "breaks_when_isolated", """{"replace":false,"values":["MODID:raw_quartz_column"]}""".Replace("MODID", MODID));
+    Console.WriteLine("  raw quartz column: textures + blockstate/models/item/loot + breaks_when_isolated tag");
+}
+
 foreach (var (_, pair) in motifSources) { pair.relief.Dispose(); pair.flat.Dispose(); }
 Console.WriteLine($"Done: {done} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants + {patina} patina palettes + {copperBars} copper-bar stages + {copperForms} copper-form blocks + {prismarine} prismarine deposits written to {resRoot}");
 
@@ -1273,7 +1303,8 @@ string MineableTag()
                         "copper_cut_slab", "waxed_copper_cut_slab" }
             .SelectMany(kind => BAR_STAGES.Select(s => $"    \"{MODID}:{kind}/{s}\"")))
         .Concat(new[] { "copper", "bronze", "bismuth_bronze", "black_bronze", "wrought_iron", "steel", "black_steel", "blue_steel", "red_steel" }
-            .Select(m => $"    \"{MODID}:soul_lamp/{m}\""));
+            .Select(m => $"    \"{MODID}:soul_lamp/{m}\""))
+        .Concat(new[] { $"    \"{MODID}:raw_quartz_column\"" });
     return ValuesTag(ids);
 }
 

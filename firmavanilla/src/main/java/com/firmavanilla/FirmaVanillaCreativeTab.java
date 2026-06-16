@@ -6,6 +6,7 @@ import com.firmavanilla.block.CopperWeathering;
 import com.firmavanilla.block.MortaredCobbleBlock;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.PrismarineDeposits;
+import com.firmavanilla.block.QuartzBlocks;
 import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.block.SoulLamps;
 import com.firmavanilla.block.TileBlocks;
@@ -92,6 +93,8 @@ public final class FirmaVanillaCreativeTab
                         {
                             output.accept(soulLamp.get());
                         }
+                        // Raw quartz column.
+                        output.accept(QuartzBlocks.RAW_QUARTZ_COLUMN.get());
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {
                             output.accept(twin);
