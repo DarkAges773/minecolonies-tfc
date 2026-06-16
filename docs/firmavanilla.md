@@ -559,7 +559,8 @@ surface**: it scans the six faces, and requires that an adjacent solid block be 
 "near a block" anchor and the strata gate — see below). It then builds a vein direction **purely from the open
 faces** — one face per axis, 1–3 axes — so every component points into open cave, never into the wall, and the
 vein can be **straight, diagonal or vertical**. It lays a line of `quartz_cluster` blocks (default state) from the
-origin out along that direction until it meets a wall or reaches `max_reach` (8), then **finalises connections** on
+origin out along that direction for a random length up to `max_reach` (10), stopping early at a wall, then
+**finalises connections** on
 every placed block (`withConnections`) now that the whole vein and the surrounding rock are in place — so each
 block grows its core+arms toward its neighbours and the host wall. Because `place()` runs once per surviving carved
 position, the many veins jutting from the rock accumulate into a quartz thicket.

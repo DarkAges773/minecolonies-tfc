@@ -144,9 +144,9 @@ public class QuartzClusterFeature extends Feature<QuartzClusterFeature.Config>
     }
 
     /**
-     * Lay the vein from {@code center} along {@code (dx,dy,dz)}, up to {@code maxReach} blocks, stopping at the
-     * first wall. Diagonals are walked one axis at a time (a face-connected staircase) so the vein never breaks into
-     * corner-only steps; the per-block connection state is computed afterwards.
+     * Lay the vein from {@code center} along {@code (dx,dy,dz)} for a random length (1..{@code maxReach}), stopping
+     * early at the first wall. Diagonals are walked one axis at a time (a face-connected staircase) so the vein never
+     * breaks into corner-only steps; the per-block connection state is computed afterwards.
      */
     private static void walkArm(final WorldGenLevel level, final BlockPos center, final int dx, final int dy,
                                 final int dz, final int maxReach, final BlockState block, final RandomSource rand,
@@ -155,7 +155,8 @@ public class QuartzClusterFeature extends Feature<QuartzClusterFeature.Config>
         final List<Direction.Axis> cycle = nonzeroAxes(dx, dy, dz);
         final BlockPos.MutableBlockPos cur = center.mutable();
         int rot = rand.nextInt(cycle.size()); // vary which axis a diagonal staircase leads with
-        for (int i = 0; i < maxReach; i++)
+        final int len = 1 + rand.nextInt(maxReach); // randomize length 1..maxReach (don't always run the full reach)
+        for (int i = 0; i < len; i++)
         {
             final Direction.Axis axis = cycle.get(rot++ % cycle.size());
             final int comp = axis == Direction.Axis.X ? dx : axis == Direction.Axis.Y ? dy : dz; // ±1 (axis is non-zero)
