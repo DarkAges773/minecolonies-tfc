@@ -88,6 +88,7 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   connects to other quartz blocks (the `#firmavanilla:quartz_cluster_connectable` tag) and to any
   solid rock face, so it plugs into cave walls and chains into veins instead of looking like stacked cubes;
   connections (and the matching collision shape) recompute dynamically when placed or when a neighbour changes. It
+  is **waterloggable** (keeps water around its open shape when placed in / grown into water). It
   also carries an **axis** like the vanilla quartz pillar (set from the clicked face / the vein direction) that
   orients the quartz grain independently of the shape. Shares the raw quartz column's TFC raw-rock behaviour
   (`tfc:breaks_when_isolated` + a `tfc:is_isolated` loot table): mined with support it drops **1–4 nether
@@ -98,8 +99,9 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   `tfc:carving_mask` (`step: air`) supplies each position, and TFC's **`tfc:volcano`** modifier restricts it to
   volcano footprints (TFC's volcanic biomes) — a rare, regional, lore-fitting spot whose felsic rock
   (rhyolite/dacite) is quartz-bearing. Where a carved spot sits against a quartz-bearing rock surface it shoots a
-  vein into the open cave (straight, diagonal or vertical, a random length) and the blocks self-shape into one
-  crisscrossing thicket. So quartz caves are an occasional concentrated find (at volcanoes) rather than a thin
+  vein into the open cave — through air **or water** (flooded sections get waterlogged clusters; lava is left
+  alone) — straight, diagonal or vertical, a random length, and the blocks self-shape into one crisscrossing
+  thicket. So quartz caves are an occasional concentrated find (at volcanoes) rather than a thin
   layer in every cave. Also gated to **quartz-bearing rock** — a vein grows only from an adjacent
   quartzite/rhyolite/granite/dacite/gneiss/chert block (the datapack-overridable
   `#firmavanilla:quartz_cluster_host` tag) — and to **deeper caves** (a `max_y` depth bound). The mod's second

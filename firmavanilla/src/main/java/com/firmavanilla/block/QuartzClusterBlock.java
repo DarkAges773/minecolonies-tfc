@@ -11,10 +11,13 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.PipeBlock;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -45,6 +48,9 @@ import java.util.Map;
  * the {@code #end} quartz-top cap) <b>independently of the shape</b>: the shape is purely the connections, the axis
  * is purely the grain, so the multipart picks the per-axis model variant for each connected side.
  *
+ * <p>It is <b>waterloggable</b> ({@link SimpleWaterloggedBlock}) — placed in water (or grown into a flooded cave by
+ * the worldgen feature) it keeps the water around its open shape.
+ *
  * <p><b>Connection rule:</b> it connects to a neighbour that is either (a) another quartz block — anything in
  * {@code #firmavanilla:quartz_cluster_connectable} (this block + {@code raw_quartz_column}) — or (b) a solid sturdy
  * face (the cave wall/floor/ceiling it plugs into). Connections recompute dynamically
@@ -55,7 +61,7 @@ import java.util.Map;
  * unsupported (isolated) it pops off and drops itself — and an unsupported cluster is already the 0-connection
  * full-block pillar, so it behaves exactly like the column.
  */
-public class QuartzClusterBlock extends Block
+public class QuartzClusterBlock extends Block implements SimpleWaterloggedBlock
 {
     /** Blocks a cluster connects to directly (besides any solid sturdy face): this block + {@code raw_quartz_column}. */
     public static final TagKey<Block> CONNECTABLE =
@@ -78,7 +84,9 @@ public class QuartzClusterBlock extends Block
     public QuartzClusterBlock(final Properties props)
     {
         super(props);
-        BlockState state = stateDefinition.any().setValue(BlockStateProperties.AXIS, Direction.Axis.Y);
+        BlockState state = stateDefinition.any()
+                .setValue(BlockStateProperties.AXIS, Direction.Axis.Y)
+                .setValue(BlockStateProperties.WATERLOGGED, false);
         for (final BooleanProperty p : PROPS.values()) state = state.setValue(p, false);
         registerDefaultState(state);
     }
@@ -111,7 +119,8 @@ public class QuartzClusterBlock extends Block
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder)
     {
-        builder.add(BlockStateProperties.AXIS, PipeBlock.NORTH, PipeBlock.EAST, PipeBlock.SOUTH, PipeBlock.WEST, PipeBlock.UP, PipeBlock.DOWN);
+        builder.add(BlockStateProperties.AXIS, BlockStateProperties.WATERLOGGED,
+                PipeBlock.NORTH, PipeBlock.EAST, PipeBlock.SOUTH, PipeBlock.WEST, PipeBlock.UP, PipeBlock.DOWN);
     }
 
     @Override
@@ -123,8 +132,12 @@ public class QuartzClusterBlock extends Block
     @Override
     public BlockState getStateForPlacement(final BlockPlaceContext ctx)
     {
-        // Axis from the clicked face, exactly like a vanilla quartz pillar; connections fill in from there.
-        final BlockState state = defaultBlockState().setValue(BlockStateProperties.AXIS, ctx.getClickedFace().getAxis());
+        // Axis from the clicked face, exactly like a vanilla quartz pillar; waterlogged if placed in water;
+        // connections fill in from there.
+        final BlockState state = defaultBlockState()
+                .setValue(BlockStateProperties.AXIS, ctx.getClickedFace().getAxis())
+                .setValue(BlockStateProperties.WATERLOGGED,
+                        ctx.getLevel().getFluidState(ctx.getClickedPos()).getType() == Fluids.WATER);
         return withConnections(state, ctx.getLevel(), ctx.getClickedPos());
     }
 
@@ -132,7 +145,17 @@ public class QuartzClusterBlock extends Block
     public BlockState updateShape(final BlockState state, final Direction dir, final BlockState neighbor,
                                   final LevelAccessor level, final BlockPos pos, final BlockPos neighborPos)
     {
+        if (state.getValue(BlockStateProperties.WATERLOGGED))
+        {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+        }
         return state.setValue(PROPS.get(dir), connects(neighbor, level, neighborPos, dir));
+    }
+
+    @Override
+    public FluidState getFluidState(final BlockState state)
+    {
+        return state.getValue(BlockStateProperties.WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     /** Recompute all six connections from the world around {@code pos} (used by placement and the worldgen feature). */

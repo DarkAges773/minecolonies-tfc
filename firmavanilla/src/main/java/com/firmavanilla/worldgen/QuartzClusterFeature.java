@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
@@ -129,14 +130,19 @@ public class QuartzClusterFeature extends Feature<QuartzClusterFeature.Config>
         BlockState base = cfg.crystal().defaultBlockState();
         if (base.hasProperty(BlockStateProperties.AXIS)) base = base.setValue(BlockStateProperties.AXIS, primaryAxis);
         final List<BlockPos> placed = new ArrayList<>();
-        level.setBlock(origin, base, 2);
+        level.setBlock(origin, waterlog(base, level, origin), 2);
         placed.add(origin.immutable());
         walkArm(level, origin, dx, dy, dz, cfg.maxReach(), base, rand, placed);
 
-        // Finalise self-shaping connections now that the whole vein and the surrounding rock are in place.
+        // Finalise self-shaping connections now that the whole vein and the surrounding rock are in place. Read the
+        // placed state back so each block keeps its own grain axis AND waterlogged flag while connections recompute.
         if (cfg.crystal() instanceof QuartzClusterBlock cluster)
         {
-            for (final BlockPos p : placed) level.setBlock(p, cluster.withConnections(base, level, p), 2);
+            for (final BlockPos p : placed)
+            {
+                final BlockState s = level.getBlockState(p);
+                if (s.is(cfg.crystal())) level.setBlock(p, cluster.withConnections(s, level, p), 2);
+            }
         }
         return true;
     }
@@ -161,9 +167,9 @@ public class QuartzClusterFeature extends Feature<QuartzClusterFeature.Config>
             final Direction.AxisDirection ad =
                     comp > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE;
             cur.move(Direction.fromAxisAndDirection(axis, ad));
-            if (!isOpen(level, cur)) break; // hit a wall — stop
+            if (!isOpen(level, cur)) break; // hit a wall (rock or lava) — stop
             final BlockPos p = cur.immutable();
-            level.setBlock(p, block, 2);
+            level.setBlock(p, waterlog(block, level, p), 2);
             placed.add(p);
         }
     }
@@ -177,9 +183,27 @@ public class QuartzClusterFeature extends Feature<QuartzClusterFeature.Config>
         return axes;
     }
 
-    /** Open = an air block (worldgen cave void is air/cave_air); we only ever place into open blocks, never rock. */
+    /**
+     * Open = an air block OR a water block — the carved cave void, which below sea level may be flooded. We grow
+     * veins through both (water-filled spots get a waterlogged cluster); rock and <b>lava</b> are NOT open, so veins
+     * stop at them and lava is never replaced.
+     */
     private static boolean isOpen(final WorldGenLevel level, final BlockPos pos)
     {
-        return level.getBlockState(pos).isAir();
+        final BlockState s = level.getBlockState(pos);
+        return s.isAir() || s.getFluidState().is(FluidTags.WATER);
+    }
+
+    /** Whether {@code pos} currently holds water (used to waterlog a cluster placed there). */
+    private static boolean isWater(final WorldGenLevel level, final BlockPos pos)
+    {
+        return level.getFluidState(pos).is(FluidTags.WATER);
+    }
+
+    /** {@code base} with WATERLOGGED set to match whether {@code pos} currently holds water. */
+    private static BlockState waterlog(final BlockState base, final WorldGenLevel level, final BlockPos pos)
+    {
+        return base.hasProperty(BlockStateProperties.WATERLOGGED)
+                ? base.setValue(BlockStateProperties.WATERLOGGED, isWater(level, pos)) : base;
     }
 }

@@ -527,6 +527,8 @@ set, like a wall / a modded pipe, but driving a richer shape). Full cubes read a
   in `#firmavanilla:quartz_cluster_connectable` (this block + `raw_quartz_column`) — or (b) a **solid sturdy face**
   (the cave wall/floor/ceiling it plugs into). Recomputed dynamically via `getStateForPlacement`/`updateShape`, so
   it also looks right when player-placed or when a neighbour changes.
+- **Waterloggable** (`SimpleWaterloggedBlock`) — placed in water (or grown into a flooded cave by the worldgen
+  feature) it keeps the water around its open shape.
 - **TFC raw-rock behaviour, matching the column** — it joins `tfc:breaks_when_isolated` and uses a
   `tfc:is_isolated` loot table: mined **with support** → **1–4 nether quartz** (same as the column;
   `requiresCorrectToolForDrops` gates the quartz on the tool); left **unsupported (isolated)** → it pops off and
@@ -568,6 +570,10 @@ sign uniform (unbiased) — so every component points into open cave, never into
 **straight, diagonal or vertical**, running a random length up to `max_reach` (10) or until it hits a wall. Each
 block is then **finalised** (`withConnections`) so it grows its core+arms toward its neighbours and the host wall.
 Because `place()` runs per carved position, a volcano's caves fill with crisscrossing quartz veins.
+
+"Open" (passable for a vein) is **air or water** — so veins grow through **flooded** cave sections too, placing a
+**waterlogged** cluster at each water-filled spot (`waterlog`). **Lava is not open**, so veins stop at lava and it
+is never replaced.
 
 **Why diagonals are walked as staircases.** A diagonal vein is laid one axis-step at a time (a *face-connected*
 staircase) so consecutive cluster blocks always share a face. That matters because the connected block only
