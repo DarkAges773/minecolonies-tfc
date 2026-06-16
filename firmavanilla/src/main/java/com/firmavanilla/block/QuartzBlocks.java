@@ -5,7 +5,9 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.PipeBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -32,6 +34,14 @@ public final class QuartzBlocks
 
     public static final RegistryObject<Block> RAW_QUARTZ_COLUMN = register("raw_quartz_column",
             () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.QUARTZ_PILLAR)));
+
+    /**
+     * The self-shaping cave crystal placed by the quartz-cluster worldgen feature — a connected {@link PipeBlock}
+     * (core + per-side arms). Not a full cube, so {@code noOcclusion}; amethyst-cluster sound for the crystal feel.
+     */
+    public static final RegistryObject<Block> QUARTZ_CLUSTER = register("quartz_cluster",
+            () -> new QuartzClusterBlock(BlockBehaviour.Properties.copy(Blocks.QUARTZ_BLOCK)
+                    .noOcclusion().sound(SoundType.AMETHYST_CLUSTER)));
 
     private static RegistryObject<Block> register(final String name, final java.util.function.Supplier<Block> sup)
     {

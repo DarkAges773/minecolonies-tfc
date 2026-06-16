@@ -10,6 +10,7 @@ import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.block.SoulLamps;
 import com.firmavanilla.block.TileBlocks;
 import com.firmavanilla.data.MortaredCobbleData;
+import com.firmavanilla.worldgen.QuartzClusterFeature;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -54,6 +55,9 @@ public class FirmaVanilla
         // Raw quartz column — quartz-pillar-style block with TFC raw-rock drops (nether quartz; pops as a block
         // when isolated, via the tfc:breaks_when_isolated tag + loot table — no code).
         QuartzBlocks.init(modBus);
+        // Quartz-cluster cave feature — crisscross raw-quartz pillars decorating deeper caves cut through
+        // quartz-bearing rock (carving_mask + a host-rock tag gate). Block-only worldgen, no entities.
+        QuartzClusterFeature.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.

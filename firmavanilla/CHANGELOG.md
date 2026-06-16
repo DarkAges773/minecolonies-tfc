@@ -81,10 +81,33 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   **glow in the dark** (full-bright overlay element via Forge `forge_data`) without emitting any light. The deposit
   blocks carry the same tags as TFC's own deposits (`forge:gravel`, `mineable/shovel`, `tfc:can_landslide` so they
   collapse like gravel, `tfc:ore_deposits`). This is the mod's first worldgen feature.
+- **Quartz cluster** — a self-shaping connected block (`firmavanilla:quartz_cluster`, six directional sides like a
+  wall / a modded pipe) whose shape is the **union of a half-slab per connected side**: one side → slab/vertical
+  slab, two adjacent → stair, three adjacent → corner stair, two opposite (or none) → full block — the
+  no-connection full block rendered as the original quartz pillar (every other combo falls out the same way). It
+  connects to other quartz blocks (the `#firmavanilla:quartz_cluster_connectable` tag) and to any
+  solid rock face, so it plugs into cave walls and chains into veins instead of looking like stacked cubes;
+  connections (and the matching collision shape) recompute dynamically when placed or when a neighbour changes. It
+  also carries an **axis** like the vanilla quartz pillar (set from the clicked face / the vein direction) that
+  orients the quartz grain independently of the shape. Shares the raw quartz column's TFC raw-rock behaviour
+  (`tfc:breaks_when_isolated` + a `tfc:is_isolated` loot table): mined with support it drops **1–4 nether
+  quartz** (same as the column), but left unsupported it pops off and drops a raw quartz column.
+- **Quartz cave clusters** — a worldgen cave-decoration feature (`firmavanilla:quartz_cluster`) that grows
+  **quartz cluster** veins through deeper caves (a "quartz cave" look), so quartz is found in the world, not just
+  crafted. It places blocks **only into already-carved cave void** (never carves rock): TFC's `tfc:carving_mask`
+  (`step: air`) supplies each position, and where the spot is against a quartz-bearing rock surface the feature
+  lays a vein out into the open cave (straight, diagonal or vertical) until it meets a wall or its length limit,
+  then has each block shape itself to its neighbours — the many veins build up a quartz thicket. Gated to
+  **quartz-bearing rock** — a vein grows only from an adjacent quartzite/rhyolite/granite/dacite/gneiss/chert block
+  (the datapack-overridable `#firmavanilla:quartz_cluster_host` tag) — and to **deeper caves** (a `max_y` depth
+  bound), then injected into TFC's universal `underground_decoration` biome tag so it runs in every TFC biome's
+  caves. The mod's second worldgen feature; block-only (no entities).
 - **Raw quartz column** — a vanilla-quartz-pillar-style directional block with TFC **raw-rock** drops: mined
   directly it drops **1–4 nether quartz**, but if it becomes **isolated** (no connected neighbours) it pops off as
   the block itself, exactly like TFC raw stone. Pure data — it joins TFC's `breaks_when_isolated` tag and uses a
-  `tfc:is_isolated` loot table, so nothing re-implements the isolation logic.
+  `tfc:is_isolated` loot table, so nothing re-implements the isolation logic. (Now **creative-only**: the cave
+  feature places the self-shaping quartz cluster instead, and the column has no recipe — it stays registered and
+  in the cluster's connect tag.)
 - **Soul lamps** — a soul-lantern-style **teal** variant of every TFC metal lamp (all 9 metals). They reuse TFC's
   lamp block-entity, so they fuel / light / fill / break / **melt** exactly like a normal lamp (fuel kept on
   break; melts to the same metal at the same temperature), but glow teal and emit a **dimmer light (10**, like a
