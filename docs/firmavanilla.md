@@ -548,7 +548,7 @@ earlier worldgen experiment that broke chunk generation did so by spawning *enti
 `tfc:carving_mask` (`step: air`), so every origin handed to the feature is already an air block in a carved cave;
 the feature only ever `setBlock`s air → quartz. Two more placement gates:
 - `min_y {above_bottom: 8}` + **`max_y {absolute: 48}`** — the requested **depth gate** (deeper caves only).
-- `minecraft:rarity_filter` `chance: 10`.
+- `minecraft:rarity_filter` `chance: 20`.
 
 It's added (merge, `replace:false`) to TFC's universal `in_biome/underground_decoration` placed-feature tag
 (alongside `cave_column`/`calcite`/`icicle`), so it runs in **every** TFC biome's caves — gated only by depth and
@@ -559,7 +559,7 @@ surface**: it scans the six faces, and requires that an adjacent solid block be 
 "near a block" anchor and the strata gate — see below). It then builds a vein direction **purely from the open
 faces** — one face per axis, 1–3 axes — so every component points into open cave, never into the wall, and the
 vein can be **straight, diagonal or vertical**. It lays a line of `quartz_cluster` blocks (default state) from the
-origin out along that direction until it meets a wall or reaches `max_reach` (4), then **finalises connections** on
+origin out along that direction until it meets a wall or reaches `max_reach` (8), then **finalises connections** on
 every placed block (`withConnections`) now that the whole vein and the surrounding rock are in place — so each
 block grows its core+arms toward its neighbours and the host wall. Because `place()` runs once per surviving carved
 position, the many veins jutting from the rock accumulate into a quartz thicket.

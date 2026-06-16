@@ -1116,9 +1116,9 @@ int soulLamps = 0;
     string qPf = Path.Combine(resRoot, "data", MODID, "worldgen", "placed_feature");
     Directory.CreateDirectory(qCf); Directory.CreateDirectory(qPf);
     File.WriteAllText(Path.Combine(qCf, "quartz_cluster.json"),
-        """{"type":"MODID:quartz_cluster","config":{"crystal":"MODID:quartz_cluster","host":"MODID:quartz_cluster_host","max_reach":4}}""".Replace("MODID", MODID));
+        """{"type":"MODID:quartz_cluster","config":{"crystal":"MODID:quartz_cluster","host":"MODID:quartz_cluster_host","max_reach":8}}""".Replace("MODID", MODID));
     File.WriteAllText(Path.Combine(qPf, "quartz_cluster.json"),
-        """{"feature":"MODID:quartz_cluster","placement":[{"type":"tfc:carving_mask","step":"air","min_y":{"above_bottom":8},"max_y":{"absolute":48}},{"type":"minecraft:rarity_filter","chance":10}]}""".Replace("MODID", MODID));
+        """{"feature":"MODID:quartz_cluster","placement":[{"type":"tfc:carving_mask","step":"air","min_y":{"above_bottom":8},"max_y":{"absolute":48}},{"type":"minecraft:rarity_filter","chance":20}]}""".Replace("MODID", MODID));
     // Strata gate: the quartz-bearing rocks, raw + hardened (cave walls are raw rock; hardened appears near volcanoes/deep).
     var qHostRocks = new[] { "quartzite", "rhyolite", "granite", "dacite", "gneiss", "chert" };
     var qHostVals = qHostRocks.SelectMany(r => new[] { $"\"tfc:rock/raw/{r}\"", $"\"tfc:rock/hardened/{r}\"" });

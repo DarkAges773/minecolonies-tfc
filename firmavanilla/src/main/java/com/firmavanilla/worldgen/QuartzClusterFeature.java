@@ -23,7 +23,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -101,25 +100,36 @@ public class QuartzClusterFeature extends Feature<QuartzClusterFeature.Config>
         if (!anchoredOnHost) return false; // not growing from quartz-bearing rock (also rules out floating spots)
         if (open.isEmpty()) return false;  // fully enclosed — nowhere to shoot
 
-        // "Shoot in the direction that is not blocked": build the direction from open faces only — one face per
-        // axis (1–3 axes), so each component points into open cave. Straight / diagonal / vertical all arise.
-        final Direction primary = open.get(rand.nextInt(open.size()));
-        int dx = primary.getStepX(), dy = primary.getStepY(), dz = primary.getStepZ();
-        final EnumSet<Direction.Axis> used = EnumSet.of(primary.getAxis());
-        for (final Direction d : open)
+        // "Shoot in the direction that is not blocked": build the direction from open faces only, at most one face
+        // per axis. Group the open faces by axis; the primary axis is always included, the others by a coin flip; and
+        // each included axis picks its sign UNIFORMLY among that axis's open faces — so when both faces of an axis are
+        // open, +/- are equally likely. (The old code took whichever face came first in Direction order, biasing
+        // veins toward −x/−z/−y and making some directions rare — "not all rotations possible".) Every component still
+        // points into open cave; the primary axis (always included) also drives the grain.
+        final List<List<Direction>> openByAxis = new ArrayList<>(3);
+        for (final Direction.Axis ax : Direction.Axis.values())
         {
-            if (!used.contains(d.getAxis()) && rand.nextBoolean())
+            final List<Direction> faces = new ArrayList<>(2);
+            for (final Direction d : open) if (d.getAxis() == ax) faces.add(d);
+            if (!faces.isEmpty()) openByAxis.add(faces);
+        }
+        final List<Direction> primaryAxisFaces = openByAxis.get(rand.nextInt(openByAxis.size()));
+        final Direction.Axis primaryAxis = primaryAxisFaces.get(0).getAxis();
+        int dx = 0, dy = 0, dz = 0;
+        for (final List<Direction> axisFaces : openByAxis)
+        {
+            if (axisFaces == primaryAxisFaces || rand.nextBoolean())
             {
+                final Direction d = axisFaces.get(rand.nextInt(axisFaces.size()));
                 dx += d.getStepX();
                 dy += d.getStepY();
                 dz += d.getStepZ();
-                used.add(d.getAxis());
             }
         }
 
         // Lay the vein (default state for now), collecting positions. Grain runs along the vein's primary axis.
         BlockState base = cfg.crystal().defaultBlockState();
-        if (base.hasProperty(BlockStateProperties.AXIS)) base = base.setValue(BlockStateProperties.AXIS, primary.getAxis());
+        if (base.hasProperty(BlockStateProperties.AXIS)) base = base.setValue(BlockStateProperties.AXIS, primaryAxis);
         final List<BlockPos> placed = new ArrayList<>();
         level.setBlock(origin, base, 2);
         placed.add(origin.immutable());

@@ -1,1 +1,1 @@
-{"type":"firmavanilla:quartz_cluster","config":{"crystal":"firmavanilla:quartz_cluster","host":"firmavanilla:quartz_cluster_host","max_reach":4}}
+{"type":"firmavanilla:quartz_cluster","config":{"crystal":"firmavanilla:quartz_cluster","host":"firmavanilla:quartz_cluster_host","max_reach":8}}
