@@ -81,6 +81,15 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   **glow in the dark** (full-bright overlay element via Forge `forge_data`) without emitting any light. The deposit
   blocks carry the same tags as TFC's own deposits (`forge:gravel`, `mineable/shovel`, `tfc:can_landslide` so they
   collapse like gravel, `tfc:ore_deposits`). This is the mod's first worldgen feature.
+- **Quartz brick + the vanilla-quartz chisel chain** — a new `firmavanilla:quartz_brick` item (the vanilla brick
+  icon recoloured through the vanilla quartz icon's palette) that makes the **whole vanilla quartz block family
+  reachable under TFC**. Chisel **nether quartz** → quartz brick; then **TFC's own brick recipe** (the
+  `XYX/YXY/XYX` checkerboard — 5 bricks + 4 mortar → 2) makes `minecraft:quartz_bricks` → chisel →
+  `minecraft:chiseled_quartz_block`. And the **raw quartz column** chisels
+  down the other family: → `minecraft:smooth_quartz` → `minecraft:quartz_block` → `minecraft:quartz_pillar`. Every
+  block step has both a TFC in-world chisel (smooth) and a table craft with a chisel (`tfc:chisels`, tool not
+  consumed). The **vanilla recipes** for all five quartz blocks (and their stonecutting variants) are **disabled**
+  so the TFC chain is the only route; quartz slabs/stairs stay craftable from the now-chain-gated `quartz_block`.
 - **Quartz cluster** — a self-shaping connected block (`firmavanilla:quartz_cluster`, six directional sides like a
   wall / a modded pipe) whose shape is the **union of a half-slab per connected side**: one side → slab/vertical
   slab, two adjacent → stair, three adjacent → corner stair, two opposite (or none) → full block — the

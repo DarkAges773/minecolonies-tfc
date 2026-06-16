@@ -43,6 +43,14 @@ public final class QuartzBlocks
             () -> new QuartzClusterBlock(BlockBehaviour.Properties.copy(Blocks.QUARTZ_BLOCK)
                     .noOcclusion().sound(SoundType.AMETHYST_CLUSTER)));
 
+    /**
+     * Quartz brick — a plain item (vanilla brick icon recoloured through the quartz palette). Chiselled from
+     * nether quartz, it + mortar crafts {@code minecraft:quartz_bricks}, the start of the chisel chain that makes
+     * the whole vanilla quartz block family reachable under TFC (all recipes machine-generated).
+     */
+    public static final RegistryObject<Item> QUARTZ_BRICK = ITEMS.register("quartz_brick",
+            () -> new Item(new Item.Properties()));
+
     private static RegistryObject<Block> register(final String name, final java.util.function.Supplier<Block> sup)
     {
         final RegistryObject<Block> block = BLOCKS.register(name, sup);

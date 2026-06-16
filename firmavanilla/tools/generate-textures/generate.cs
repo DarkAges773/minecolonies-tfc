@@ -1131,6 +1131,78 @@ int soulLamps = 0;
     Console.WriteLine("  raw quartz column (creative-only) + quartz_cluster connected cave block (multipart) + quartz_cluster cave feature (worldgen)");
 }
 
+// --- quartz brick item + the vanilla-quartz chisel/mortar chain ----------------------------------------------
+// A new firmavanilla:quartz_brick item (the vanilla brick icon recoloured through the vanilla quartz item's palette
+// via CLUT) makes the whole vanilla quartz block family reachable under TFC, by chisel + mortar:
+//   minecraft:quartz --chisel--> firmavanilla:quartz_brick --(x4 + mortar)--> minecraft:quartz_bricks
+//   minecraft:quartz_bricks --chisel--> minecraft:chiseled_quartz_block
+//   firmavanilla:raw_quartz_column --chisel--> minecraft:smooth_quartz --chisel--> minecraft:quartz_block --chisel--> minecraft:quartz_pillar
+// Every block->block step ships BOTH a TFC in-world chisel (smooth mode) and a table craft with a chisel
+// (tfc:chisels, tool damaged not consumed), like the rest of firmavanilla. Inputs: input/vanilla/brick.png +
+// input/vanilla/quartz.png (the vanilla item icons). See QuartzBlocks.QUARTZ_BRICK.
+{
+    string itTex = Path.Combine(resRoot, "assets", MODID, "textures", "item");
+    string itMd = Path.Combine(resRoot, "assets", MODID, "models", "item");
+    string recDir = Path.Combine(resRoot, "data", MODID, "recipes");
+    string chiselSmooth = Path.Combine(recDir, "chisel", "smooth");
+    foreach (var d in new[] { itTex, itMd, recDir, chiselSmooth }) Directory.CreateDirectory(d);
+
+    // Texture: vanilla brick icon recoloured through the vanilla quartz item palette (CLUT). Optional-until-staged:
+    // if the two vanilla item icons aren't in input/vanilla yet, skip just the texture (model + recipes still ship,
+    // so the chain is testable; the item shows a missing texture until the inputs are added and the tool re-run).
+    File.WriteAllText(Path.Combine(itMd, "quartz_brick.json"), GeneratedItem($"{MODID}:item/quartz_brick"));
+    try
+    {
+        using var brick = Load("vanilla", "brick.png");
+        using var quartz = Load("vanilla", "quartz.png");
+        using var qb = ClutSide(brick, quartz, brick.Width, brick.Height);
+        qb.Save(Path.Combine(itTex, "quartz_brick.png"));
+    }
+    catch (FileNotFoundException e)
+    {
+        Console.WriteLine("  [skip] quartz_brick texture — " + e.Message);
+    }
+
+    // chisel nether quartz -> quartz brick (table craft with a chisel).
+    File.WriteAllText(Path.Combine(recDir, "quartz_brick.json"),
+        ToolCraft("minecraft:quartz", "tfc:chisels", $"{MODID}:quartz_brick"));
+    // quartz bricks + mortar -> vanilla quartz_bricks block, matching TFC's own brick recipe exactly: the
+    // XYX/YXY/XYX checkerboard (5 bricks + 4 mortar) yielding 2 blocks (X = brick, Y = tfc:mortar tag).
+    File.WriteAllText(Path.Combine(recDir, "quartz_bricks.json"),
+        """{"type":"minecraft:crafting_shaped","pattern":["XYX","YXY","XYX"],"key":{"X":{"item":"MODID:quartz_brick"},"Y":{"tag":"tfc:mortar"}},"result":{"item":"minecraft:quartz_bricks","count":2}}""".Replace("MODID", MODID));
+
+    // Block -> block chisel chain: both the in-world tfc:chisel (smooth) and the table craft with a chisel.
+    var chisels = new (string from, string to, string file)[] {
+        ("minecraft:quartz_bricks",    "minecraft:chiseled_quartz_block", "chiseled_quartz_block"),
+        ($"{MODID}:raw_quartz_column", "minecraft:smooth_quartz",          "smooth_quartz"),
+        ("minecraft:smooth_quartz",    "minecraft:quartz_block",           "quartz_block"),
+        ("minecraft:quartz_block",     "minecraft:quartz_pillar",          "quartz_pillar"),
+    };
+    foreach (var (from, to, file) in chisels)
+    {
+        File.WriteAllText(Path.Combine(recDir, file + ".json"), ToolCraft(from, "tfc:chisels", to));
+        File.WriteAllText(Path.Combine(chiselSmooth, file + ".json"), ChiselRecipe(from, to, "smooth"));
+    }
+
+    // Disable EVERY vanilla recipe that produces one of the quartz blocks in our chain, so the TFC chisel/mortar
+    // route is the only way to get them. We override each at its data/minecraft/recipes path with a forge:false
+    // copy (Forge checks conditions BEFORE parsing the recipe, so it's skipped/removed). Quartz slabs & stairs are
+    // intentionally left enabled — they still derive from the now-chain-gated quartz_block, so nothing is orphaned.
+    string mcRec = Path.Combine(resRoot, "data", "minecraft", "recipes");
+    Directory.CreateDirectory(mcRec);
+    string[] disabledVanilla = {
+        "quartz_block", "smooth_quartz",
+        "quartz_pillar", "quartz_pillar_from_quartz_block_stonecutting",
+        "chiseled_quartz_block", "chiseled_quartz_block_from_quartz_block_stonecutting",
+        "quartz_bricks", "quartz_bricks_from_quartz_block_stonecutting",
+    };
+    foreach (var name in disabledVanilla)
+        File.WriteAllText(Path.Combine(mcRec, name + ".json"),
+            """{"type":"minecraft:crafting_shapeless","conditions":[{"type":"forge:false"}],"ingredients":[{"item":"minecraft:quartz"}],"result":{"item":"minecraft:quartz"}}""");
+
+    Console.WriteLine($"  quartz brick item (CLUT brick→quartz) + vanilla-quartz chisel/mortar chain (10 recipes) + {disabledVanilla.Length} vanilla quartz recipes disabled");
+}
+
 foreach (var (_, pair) in motifSources) { pair.relief.Dispose(); pair.flat.Dispose(); }
 Console.WriteLine($"Done: {done} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants + {patina} patina palettes + {copperBars} copper-bar stages + {copperForms} copper-form blocks + {prismarine} prismarine deposits written to {resRoot}");
 

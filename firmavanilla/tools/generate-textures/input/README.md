@@ -56,6 +56,10 @@ input/tfc/lamp_off.png                      (TFC's unlit lamp glass — tfc:bloc
 input/vanilla/soul_fire_0.png              (the soul-fire palette source for the CLUT recolour)
 input/tfc/lamp_item/<metal>.png             (each metal's lamp ITEM texture — tfc:item/metal/lamp/<metal>, 9 metals)
 # (../soul_lantern_item_overlay.png — the hand-extracted soul-glass overlay for the item icon — is a TRACKED tool-root file, not under input/)
+
+# quartz brick (vanilla brick ITEM icon recoloured through the vanilla quartz ITEM icon's palette via CLUT):
+input/vanilla/brick.png                     (the vanilla brick item icon — minecraft:item/brick — relief)
+input/vanilla/quartz.png                     (the vanilla nether-quartz item icon — minecraft:item/quartz — CLUT palette)
 ```
 
 ## Extracting them from the dev dependency jars
@@ -93,6 +97,10 @@ subtraction). The generator reads them and writes the reusable LUT strips `../pa
 **Copper bars** — TFC's `block/metal/bars/copper.png` (grate) and `block/metal/smooth/copper.png` (post edge) live
 in the TFC jar; copy them to `input/tfc/copper_bars/bars.png` and `input/tfc/copper_bars/smooth.png`. The generator
 recolours both through each patina LUT into `assets/firmavanilla/.../copper_bars/<stage>.png` (+ `_edge`).
+
+**Quartz brick** — the vanilla **item** icons `item/brick.png` and `item/quartz.png` come from `client-extra.jar`
+(note: `textures/item/`, not `block/`); copy them to `input/vanilla/brick.png` and `input/vanilla/quartz.png`. The
+generator CLUTs the brick icon through the quartz icon's palette into `assets/firmavanilla/textures/item/quartz_brick.png`.
 
 ## Running
 

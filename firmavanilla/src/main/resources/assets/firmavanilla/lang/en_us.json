@@ -334,5 +334,6 @@
   "block.firmavanilla.soul_lamp.red_steel.filled": "Filled Soul Red Steel Lamp",
   "tag.item.firmavanilla.soul_lamp_catalyst": "Soul Lamp Catalyst",
   "block.firmavanilla.raw_quartz_column": "Raw Quartz Column",
-  "block.firmavanilla.quartz_cluster": "Quartz Cluster"
+  "block.firmavanilla.quartz_cluster": "Quartz Cluster",
+  "item.firmavanilla.quartz_brick": "Quartz Brick"
 }

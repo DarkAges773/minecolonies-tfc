@@ -593,3 +593,33 @@ All worldgen JSON (configured/placed feature), the host tag, and the `undergroun
 machine-generated in the raw-quartz-column section of `generate.cs`. The feature's tunables (`tfc:volcano`
 `distance` for how much of each volcano fills, `rarity_filter chance` for in-volcano density, `max_reach` for vein
 length) and the rock set live in data, so they can be retuned without touching Java.
+
+## Quartz brick + the vanilla-quartz chisel chain
+
+A single new item — `firmavanilla:quartz_brick` (registered in
+[`QuartzBlocks`](../firmavanilla/src/main/java/com/firmavanilla/block/QuartzBlocks.java)) — makes the **whole
+vanilla quartz block family reachable under TFC**, since the nether quartz it starts from is now obtainable (mine
+the quartz clusters / raw column). The item's texture is the vanilla **brick item icon recoloured through the
+vanilla quartz item icon's palette** (CLUT — `ClutSide(brick, quartz)`); inputs are `input/vanilla/brick.png` +
+`input/vanilla/quartz.png`.
+
+The progression is two chisel chains (every block→block step ships **both** a TFC in-world chisel — `tfc:chisel`,
+`mode: smooth` — and a table craft with a chisel — `tfc:chisels`, tool damaged not consumed — like the rest of the
+mod). All recipes are machine-generated:
+
+- **Bricks:** `minecraft:quartz` —chisel→ **`firmavanilla:quartz_brick`** —(TFC's brick recipe: the
+  `XYX/YXY/XYX` checkerboard, 5 bricks + 4 `tfc:mortar` → **2**)→ `minecraft:quartz_bricks` —chisel→
+  `minecraft:chiseled_quartz_block`.
+- **Column:** `firmavanilla:raw_quartz_column` —chisel→ `minecraft:smooth_quartz` —chisel→ `minecraft:quartz_block`
+  —chisel→ `minecraft:quartz_pillar`.
+
+**Vanilla recipes disabled.** So the TFC chain is the *only* route, every vanilla recipe that produces one of the
+five chain blocks is removed — its `data/minecraft/recipes/*.json` is overridden with a `forge:false`-conditioned
+copy (Forge skips it before parsing). That's 8 files: `quartz_block`, `smooth_quartz`, `quartz_pillar` (+ its
+stonecutting), `chiseled_quartz_block` (+ stonecutting), `quartz_bricks` (+ stonecutting). Quartz **slabs/stairs**
+are left enabled — they still derive from the now-chain-gated `quartz_block`, so nothing is orphaned.
+
+No new blocks — `quartz_bricks`/`chiseled_quartz_block`/`smooth_quartz`/`quartz_block`/`quartz_pillar` are all
+vanilla (models/blockstates already exist); only the `quartz_brick` item + the recipes are added. The
+`quartz_bricks` craft mirrors TFC's own brick recipe exactly (the `XYX/YXY/XYX` checkerboard, 5 bricks + 4 mortar →
+2 blocks); the other quantities (1 quartz → 1 brick) live in `generate.cs` and are easy to retune.

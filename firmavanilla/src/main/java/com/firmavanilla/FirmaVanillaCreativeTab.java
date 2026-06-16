@@ -93,9 +93,10 @@ public final class FirmaVanillaCreativeTab
                         {
                             output.accept(soulLamp.get());
                         }
-                        // Raw quartz column + the self-shaping cave quartz cluster.
+                        // Raw quartz column + the self-shaping cave quartz cluster + the quartz brick item.
                         output.accept(QuartzBlocks.RAW_QUARTZ_COLUMN.get());
                         output.accept(QuartzBlocks.QUARTZ_CLUSTER.get());
+                        output.accept(QuartzBlocks.QUARTZ_BRICK.get());
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {
                             output.accept(twin);
