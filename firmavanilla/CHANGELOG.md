@@ -79,8 +79,9 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   worldgen feature, the TFC panning/sluicing definitions and all loot are datapack-driven, and the (animated)
   crystal sheen is a single model overlay layered over each rock's gravel (no per-rock textures). The crystals
   **glow in the dark** (full-bright overlay element via Forge `forge_data`) without emitting any light. The deposit
-  blocks carry the same tags as TFC's own deposits (`forge:gravel`, `mineable/shovel`, `tfc:can_landslide` so they
-  collapse like gravel, `tfc:ore_deposits`). This is the mod's first worldgen feature.
+  blocks carry the same tags as TFC's own deposits (`forge:gravel`, `mineable/shovel`, `tfc:can_landslide` +
+  a `tfc:landslide` recipe so they actually collapse like gravel, `tfc:ore_deposits`). This is the mod's first
+  worldgen feature.
 - **Coarse dirt** per TFC soil (loam/sandy_loam/silt/silty_loam) — vanilla coarse-dirt's gravelly look in TFC's
   soil palettes (the coarse detail is derived as an overlay = `coarse_dirt − dirt`, CLUT'd through a gravel palette,
   composited onto each TFC dirt). They match TFC dirt's properties and tags (`tfc:dirt`, `mineable/shovel`,

@@ -808,7 +808,8 @@ int prismarine = 0;
     string lootBlk = D("loot_tables", "blocks", "deposit", "prismarine"), lootPan = D("loot_tables", "panning", "deposits");
     string panDef = D("tfc", "panning", "deposits"), sluDef = D("tfc", "sluicing", "deposits");
     string cfDir = D("worldgen", "configured_feature"), pfDir = D("worldgen", "placed_feature");
-    foreach (var d in new[] { texP, bsP, mdP, itP, panP, lootBlk, lootPan, panDef, sluDef, cfDir, pfDir }) Directory.CreateDirectory(d);
+    string landslideDir = D("recipes", "landslide");
+    foreach (var d in new[] { texP, bsP, mdP, itP, panP, lootBlk, lootPan, panDef, sluDef, cfDir, pfDir, landslideDir }) Directory.CreateDirectory(d);
 
     // Copy the hand-made animated crystal overlay (tracked input, tool root) to the single deposit texture, and
     // emit its animation .mcmeta (4-frame strip; mirrors vanilla prismarine's frame timing/sequence).
@@ -842,6 +843,10 @@ int prismarine = 0;
             """{"parent":"tfc:item/pan/half","textures":{"material":"tfc:block/rock/gravel/ROCK"}}""".Replace("ROCK", rock));
         // Block-break loot: drop the deposit itself (carry it to a pan/sluice), like TFC.
         File.WriteAllText(Path.Combine(lootBlk, rock + ".json"), CopperBarsLootDrop($"{MODID}:deposit/prismarine/{rock}"));
+        // Landslide recipe: the can_landslide tag only enqueues the check — without a tfc:landslide recipe TFC's
+        // tryLandslide no-ops, so the deposit never collapses like the TFC gravel it mimics. Collapse into itself.
+        File.WriteAllText(Path.Combine(landslideDir, "deposit_prismarine_" + rock + ".json"),
+            """{"type":"tfc:landslide","ingredient":"MODID:deposit/prismarine/ROCK","result":"MODID:deposit/prismarine/ROCK"}""".Replace("MODID", MODID).Replace("ROCK", rock));
         // Panning loot (fishing type): one item per wash — crystals (rare), shard (common), loose-rock filler.
         File.WriteAllText(Path.Combine(lootPan, "prismarine_" + rock + ".json"),
             """{"type":"minecraft:fishing","pools":[{"name":"loot_pool","rolls":1,"entries":[{"type":"minecraft:alternatives","children":[{"type":"minecraft:item","name":"minecraft:prismarine_crystals","conditions":[{"condition":"minecraft:random_chance","chance":0.2}]},{"type":"minecraft:item","name":"minecraft:prismarine_shard","conditions":[{"condition":"minecraft:random_chance","chance":0.6}]},{"type":"minecraft:item","name":"tfc:rock/loose/ROCK","conditions":[{"condition":"minecraft:random_chance","chance":0.4}]},{"type":"minecraft:item","name":"tfc:rock/loose/ROCK","conditions":[{"condition":"minecraft:random_chance","chance":0.2}]}]}]}]}""".Replace("ROCK", rock));
