@@ -99,6 +99,19 @@ cd firmavanilla/tools/generate-textures
 dotnet run generate.cs            # needs the .NET 10 SDK
 ```
 
+**Layout — one file per feature.** `generate.cs` keeps the `#:property EnableDefaultCompileItems=true` directive,
+which makes the file-based run compile every sibling `.cs` in the folder, so the generator is split while the
+single `dotnet run generate.cs` command is unchanged. `generate.cs` itself is just the entry point (it runs each
+feature, then writes the cross-cutting tags). The shared engine lives in `common.cs` (the static class `Gen`:
+config — `MODID`, the `ROCKS` / `ALABASTER_COLORS` / `BAR_STAGES` lists, the tuning constants — the texture
+pipeline, file/tag I/O, and the JSON emitters used across features); each feature is a self-contained file
+(`chiseledsandstone.cs`, `bookshelves.cs`, `rocktiles.cs`, `alabaster.cs`, `copper.cs`, `prismarinedeposits.cs`,
+`soullamps.cs`, `quartz.cs`, `coarsedirt.cs`) holding its own generation logic + JSON emitters. References to
+"`generate.cs`" elsewhere in this doc mean the generator as a whole — the specific logic lives in the matching
+feature file, and shared helpers/constants (`ROCKS`, `BAR_STAGES`, …) in `common.cs` (`Gen`).
+(Editor note: VS Code's C# language server analyses each file-based `.cs` in isolation, so it shows false-positive
+"name does not exist" errors across these files; `dotnet run generate.cs` compiles them together and is correct.)
+
 **Technique — CLUT (palette remap), the default.** Build a 256-entry luminance→colour ramp by sampling every
 pixel of TFC's real `cut_sandstone/<colour>` (average the colours at each brightness; interpolate the gaps),
 then repaint vanilla's chiseled art through it. **Normalization is the key step:** each vanilla pixel's
