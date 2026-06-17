@@ -81,6 +81,13 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   **glow in the dark** (full-bright overlay element via Forge `forge_data`) without emitting any light. The deposit
   blocks carry the same tags as TFC's own deposits (`forge:gravel`, `mineable/shovel`, `tfc:can_landslide` so they
   collapse like gravel, `tfc:ore_deposits`). This is the mod's first worldgen feature.
+- **Coarse dirt** per TFC soil (loam/sandy_loam/silt/silty_loam) — vanilla coarse-dirt's gravelly look in TFC's
+  soil palettes (the coarse detail is derived as an overlay = `coarse_dirt − dirt`, CLUT'd through a gravel palette,
+  composited onto each TFC dirt). They match TFC dirt's properties and tags (`tfc:dirt`, `mineable/shovel`,
+  `tfc:can_landslide` + a `tfc:landslide` recipe so they actually collapse) but are plain blocks (not a TFC
+  `DirtBlock`/`IDirtBlock`), so — like vanilla coarse dirt — they **never transform**: no grass spread, no
+  shovel→path, no hoe→farmland. Crafted vanilla-style (2×2 checkerboard) from the matching `tfc:dirt/<soil>` + any
+  `#forge:gravel`.
 - **Quartz brick + the vanilla-quartz chisel chain** — a new `firmavanilla:quartz_brick` item (the vanilla brick
   icon recoloured through the vanilla quartz icon's palette) that makes the **whole vanilla quartz block family
   reachable under TFC**. Chisel **nether quartz** → quartz brick; then **TFC's own brick recipe** (the

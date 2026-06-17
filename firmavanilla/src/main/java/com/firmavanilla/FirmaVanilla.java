@@ -2,6 +2,7 @@ package com.firmavanilla;
 
 import com.firmavanilla.block.AlabasterBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
+import com.firmavanilla.block.CoarseDirtBlocks;
 import com.firmavanilla.block.CopperWeathering;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.PrismarineDeposits;
@@ -58,6 +59,9 @@ public class FirmaVanilla
         // Quartz-cluster cave feature — crisscross raw-quartz pillars decorating deeper caves cut through
         // quartz-bearing rock (carving_mask + a host-rock tag gate). Block-only worldgen, no entities.
         QuartzClusterFeature.init(modBus);
+        // Coarse dirt per TFC soil — vanilla coarse-dirt look in TFC palettes; plain (non-transforming) dirt-like
+        // blocks crafted from TFC dirt + gravel. Textures/assets machine-generated.
+        CoarseDirtBlocks.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.

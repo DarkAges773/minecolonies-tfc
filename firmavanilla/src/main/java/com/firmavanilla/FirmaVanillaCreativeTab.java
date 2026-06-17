@@ -2,6 +2,7 @@ package com.firmavanilla;
 
 import com.firmavanilla.block.AlabasterBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
+import com.firmavanilla.block.CoarseDirtBlocks;
 import com.firmavanilla.block.CopperWeathering;
 import com.firmavanilla.block.MortaredCobbleBlock;
 import com.firmavanilla.block.MortaredCobbleRegistry;
@@ -97,6 +98,11 @@ public final class FirmaVanillaCreativeTab
                         output.accept(QuartzBlocks.RAW_QUARTZ_COLUMN.get());
                         output.accept(QuartzBlocks.QUARTZ_CLUSTER.get());
                         output.accept(QuartzBlocks.QUARTZ_BRICK.get());
+                        // Coarse dirt per TFC soil.
+                        for (final RegistryObject<Block> coarse : CoarseDirtBlocks.ALL)
+                        {
+                            output.accept(coarse.get());
+                        }
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {
                             output.accept(twin);

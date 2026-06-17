@@ -335,5 +335,9 @@
   "tag.item.firmavanilla.soul_lamp_catalyst": "Soul Lamp Catalyst",
   "block.firmavanilla.raw_quartz_column": "Raw Quartz Column",
   "block.firmavanilla.quartz_cluster": "Quartz Cluster",
-  "item.firmavanilla.quartz_brick": "Quartz Brick"
+  "item.firmavanilla.quartz_brick": "Quartz Brick",
+  "block.firmavanilla.coarse_dirt.loam": "Loam Coarse Dirt",
+  "block.firmavanilla.coarse_dirt.sandy_loam": "Sandy Loam Coarse Dirt",
+  "block.firmavanilla.coarse_dirt.silt": "Silt Coarse Dirt",
+  "block.firmavanilla.coarse_dirt.silty_loam": "Silty Loam Coarse Dirt"
 }

@@ -623,3 +623,34 @@ No new blocks — `quartz_bricks`/`chiseled_quartz_block`/`smooth_quartz`/`quart
 vanilla (models/blockstates already exist); only the `quartz_brick` item + the recipes are added. The
 `quartz_bricks` craft mirrors TFC's own brick recipe exactly (the `XYX/YXY/XYX` checkerboard, 5 bricks + 4 mortar →
 2 blocks); the other quantities (1 quartz → 1 brick) live in `generate.cs` and are easy to retune.
+
+## Coarse dirt — per TFC soil, non-transforming
+
+Vanilla coarse dirt's gravelly look in TFC's four soil palettes: `firmavanilla:coarse_dirt/<soil>` for
+`loam`/`sandy_loam`/`silt`/`silty_loam`
+([`CoarseDirtBlocks`](../firmavanilla/src/main/java/com/firmavanilla/block/CoarseDirtBlocks.java)).
+
+**Texture** (machine-generated): an **overlay** is derived as `coarse_dirt − dirt` (the scattered pebble detail
+where vanilla coarse_dirt differs from plain dirt — rgb = coarse colour, alpha = the difference ×
+`COARSE_OVERLAY_GAIN`), saved to the tool root (`coarse_dirt_overlay.png`, tracked next to the grain masks/LUTs).
+That overlay is CLUT'd through a TFC **gravel** palette (so the pebbles read as gravel) and source-over'd onto each
+soil's TFC dirt, so every soil keeps its own colour and just gains gravel flecks.
+
+**Behaviour — dirt-like but no transforms.** TFC gates soil transformations on the **block type**, not a tag:
+grass spreads only onto an `IDirtBlock`, and shovel→path / hoe→farmland live in TFC's `DirtBlock`. So these are a
+plain `Block` (not `DirtBlock`, not `IDirtBlock`) with TFC dirt's **properties** (`MapColor.DIRT`, strength 1.4,
+gravel sound) and **tags** — added to `tfc:dirt` (which cascades into `minecraft:dirt`/sniffer/`tfc:can_carve` via
+their `#tfc:dirt` reference) plus `minecraft:mineable/shovel` and `tfc:can_landslide`. The result behaves like dirt
+(mined with a shovel, collapses like TFC soil) yet **never** turns into grass, path or farmland — exactly like
+vanilla coarse dirt.
+
+> **Landslide needs a recipe, not just the tag.** `tfc:can_landslide` only *enqueues* a collapse check; TFC's
+> `tryLandslide` does nothing without a matching **`tfc:landslide` recipe**. So each soil ships
+> `data/firmavanilla/recipes/landslide/coarse_dirt_<soil>.json` collapsing the block **into itself** (it stays
+> coarse dirt, like TFC plain dirt landslides to itself).
+
+**Recipe:** vanilla coarse-dirt's 2×2 checkerboard, but with the concrete matching `tfc:dirt/<soil>` and the
+`#forge:gravel` tag for the gravel slot (so any TFC rock gravel — or our prismarine deposits — works) → 4.
+
+> The shared `minecraft:mineable/shovel` and `tfc:can_landslide` tags are written once in `generate.cs` from lists
+> the prismarine-deposit and coarse-dirt sections both append to (a mod can ship only one file per tag path).

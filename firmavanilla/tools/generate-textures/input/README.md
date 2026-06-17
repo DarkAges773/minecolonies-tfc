@@ -60,6 +60,13 @@ input/tfc/lamp_item/<metal>.png             (each metal's lamp ITEM texture — 
 # quartz brick (vanilla brick ITEM icon recoloured through the vanilla quartz ITEM icon's palette via CLUT):
 input/vanilla/brick.png                     (the vanilla brick item icon — minecraft:item/brick — relief)
 input/vanilla/quartz.png                     (the vanilla nether-quartz item icon — minecraft:item/quartz — CLUT palette)
+
+# coarse dirt (overlay = coarse_dirt − dirt, CLUT'd through a gravel palette, composited onto each TFC dirt):
+input/vanilla/coarse_dirt.png               (vanilla coarse_dirt — the coarse detail source)
+input/vanilla/dirt.png                       (vanilla plain dirt — the baseline subtracted off)
+input/tfc/gravel/gabbro.png                  (TFC gravel — CLUT palette so the pebbles read as gravel)
+input/tfc/dirt/{loam,sandy_loam,silt,silty_loam}.png   (each TFC soil's dirt — composite base)
+# (the derived ../coarse_dirt_overlay.png is a GENERATED tool-root artifact, tracked like grain_mask.png / patina_*.png)
 ```
 
 ## Extracting them from the dev dependency jars
