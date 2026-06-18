@@ -549,6 +549,51 @@ to TFC's fuel-burning lamps. Registered by
   the off glass is darkened since CLUT normalises each input's range). One glass pair serves all 9 metals. Loot
   drops self with `tfc:copy_fluid` (keeps fuel on break, like TFC); `minecraft:mineable/pickaxe`.
 
+## Soul torches — vanilla soul torch + TFC burn-out
+
+A vanilla-**soul-torch** look (teal soul-fire flame, vanilla models/textures) given **TFC's burn-out mechanic** —
+a standing `firmavanilla:soul_torch` + wall `firmavanilla:soul_wall_torch` that burn down over time into TFC's
+**dead torch**, but last **twice as long** as a normal TFC torch. Registered by
+[`SoulTorches`](../firmavanilla/src/main/java/com/firmavanilla/block/SoulTorches.java); **mixin-free**.
+
+- **Behaviour is TFC's, inherited.** [`SoulTorchBlock`](../firmavanilla/src/main/java/com/firmavanilla/block/SoulTorchBlock.java)
+  `extends` TFC's `TFCTorchBlock` and [`SoulWallTorchBlock`](../firmavanilla/src/main/java/com/firmavanilla/block/SoulWallTorchBlock.java)
+  its `TFCWallTorchBlock` — so they reuse the **whole** burn-out machinery: a `TFCBlockEntities.TICK_COUNTER`
+  block-entity times the burn (reused like the soul lamps reuse TFC's `LAMP` BE), `setPlacedBy` resets it on
+  placement, and the block converts itself to a dead torch. `SoulTorches#props` copies the real `tfc:torch` /
+  `tfc:wall_torch` block's properties (instabreak / no-collision / **random-ticks** / sound / push-reaction — so the
+  burn-out tick fires and it breaks like a torch), wires back `TICK_COUNTER`, and sets light **10** (vanilla
+  soul-torch parity). `TFCTorchBlock`'s constructor takes a `ParticleOptions`, so the soul flame is just
+  `ParticleTypes.SOUL_FIRE_FLAME` handed up — **no client code, no generated textures** (it reuses the vanilla
+  soul-torch sprite). The generated **block models** are our own (vanilla torch geometry + that sprite) carrying
+  Forge's `"render_type": "minecraft:cutout"`: vanilla registers the torch cutout layer in *code* for its own
+  blocks only, so reusing vanilla's `block/soul_torch` model directly would render our torch's transparent pixels
+  as **opaque black** — the same render-layer gotcha as the prismarine deposits.
+- **The 2× burn — the only override.** TFC's torch burns out when `TickCounterBlockEntity.getTicksSinceUpdate()`
+  exceeds the `torchTicks` **server config**; that's not data-driven, so the duration needs code. Each soul torch
+  overrides `randomTick` (not calling super, which would burn at 1×) to run the shared `SoulTorches#tryBurnOut`,
+  which fires at `BURN_MULT × torchTicks` (×2) and swaps to TFC's `dead_torch` (standing, default state) /
+  `dead_wall_torch` (wall, **facing copied** via `withPropertiesOf`). `torchTicks ≤ 0` disables burn-out (matching
+  TFC). The dead-torch blocks are resolved from the registry at common setup.
+- **Made by converting a lit TFC torch** (reuses the soul lamps' `firmavanilla:soul_lamp_catalyst` tag — *not* a
+  new tag):
+  - **Right-click** a placed TFC torch (standing or wall) holding a catalyst →
+    [`SoulTorchInteraction`](../firmavanilla/src/main/java/com/firmavanilla/block/SoulTorchInteraction.java)
+    (Forge `RightClickBlock`) swaps it to the soul torch (`withPropertiesOf` carries the wall facing) and
+    `TickCounterBlockEntity.reset`s the timer for a fresh doubled life, consuming one catalyst (free in creative).
+    Safe to intercept: TFC's torch `use()` only reacts to `#tfc:CAN_BE_LIT_ON_TORCH` items (lighting another torch),
+    not the powder catalyst, and the event is cancelled.
+  - **Crafting**: shapeless `tfc:torch` + a catalyst → soul torch (empty/fresh; the right-click path is the
+    in-place one).
+- **Standing + wall share one item** (`StandingAndWallBlockItem`, like vanilla soul torch — floor places standing,
+  walls place the wall form); both blocks drop the standing item. In the creative tab.
+- **Known cosmetic limitation (Jade).** TFC registers its torch burn-out tooltip against `TFCTorchBlock` /
+  `TFCWallTorchBlock` (our superclasses) with the **1×** `torchTicks` config, so Jade shows soul torches a burn-out
+  estimate at 1× (~half the real time) — the actual burn-out is correctly 2× (it's our `randomTick`, not TFC's, that
+  fires). Left as-is by choice: correcting it would mean either decoupling from `TFCTorchBlock` (losing the clean
+  reuse) or a Jade plugin that deletes TFC's line by id (coupling to TFC+Jade internals). The HUD number is the only
+  thing wrong; behaviour is right.
+
 ## Raw quartz column — quartz pillar with TFC raw-rock drops
 
 A vanilla-`quartz_pillar`-style directional block (`firmavanilla:raw_quartz_column`,

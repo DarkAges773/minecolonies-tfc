@@ -11,6 +11,7 @@ import com.firmavanilla.block.PrismarineDeposits;
 import com.firmavanilla.block.QuartzBlocks;
 import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.block.SoulLamps;
+import com.firmavanilla.block.SoulTorches;
 import com.firmavanilla.block.TileBlocks;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -99,6 +100,8 @@ public final class FirmaVanillaCreativeTab
                         {
                             output.accept(soulLamp.get());
                         }
+                        // Soul torch (vanilla-soul look + TFC burn-out) — the standing block's item places both forms.
+                        output.accept(SoulTorches.SOUL_TORCH.get());
                         // Raw quartz column + the self-shaping cave quartz cluster + the quartz brick item.
                         output.accept(QuartzBlocks.RAW_QUARTZ_COLUMN.get());
                         output.accept(QuartzBlocks.QUARTZ_CLUSTER.get());

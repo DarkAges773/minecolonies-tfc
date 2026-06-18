@@ -14,6 +14,12 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   `soul_tallow` (3600), plus the unchanged infinite `soul_lava` (blue_steel). Lighting/filling is unchanged.
 
 ### Added
+- **Soul torches** — a vanilla-soul-torch look (soul-fire flame, vanilla models) with **TFC's burn-out**: a standing
+  (`firmavanilla:soul_torch`) and wall (`soul_wall_torch`) torch that reuse TFC's torch block-entity/timer and, after
+  burning **twice as long** as a normal TFC torch, turn into TFC's `dead_torch`/`dead_wall_torch`. Made by converting
+  a lit TFC torch — craft it with a soul catalyst (the same `firmavanilla:soul_lamp_catalyst` tag the soul lamps use),
+  or **right-click** a placed TFC torch while holding a catalyst (consumes one, free in creative). Light level 10
+  (soul-torch parity). Mixin-free.
 - **Wood barrels** — functional storage barrels (`firmavanilla:barrel/<wood>`) in every wood, the form TFC lacks
   (its own barrel is a fluid-sealing device, not an item container). Openable, with the facing/open states, but
   shrunk to **TFC's small-chest rules** — 18 slots (two rows) + the same item-size limit as a TFC chest (reusing

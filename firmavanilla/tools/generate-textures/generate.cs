@@ -29,6 +29,7 @@ int alab        = Alabaster.Generate();
 var (patina, copperBars, copperForms) = Copper.Generate();
 int prismarine  = PrismarineDeposits.Generate();   // before CoarseDirt: both feed the shovel/landslide accumulators
 SoulLamps.Generate();
+SoulTorches.Generate();
 Quartz.Generate();
 CoarseDirt.Generate();
 int barrels    = Barrels.Generate();
