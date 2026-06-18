@@ -155,11 +155,14 @@ public abstract class MixinAbstractEntityAIHerder
     }
 
     /**
-     * BUTCHER-state target selection: pick the TFC animal to cull by husbandry priority (OLD first, then least
-     * familiar — see {@link TfcHerd#pickButcherTarget}) instead of MineColonies' furthest-and-sheltered choice.
-     * We hand the butcher loop a one-element list of that animal so it kills exactly it. Returns the original list
-     * (mutable — the method then {@code sort}s it) when there's no TFC adult/old to cull, so vanilla animals keep
-     * their normal selection. The decision of <i>whether</i> to butcher ({@code chanceToButcher}) is untouched.
+     * BUTCHER-state target selection: pick the TFC animal to cull by husbandry priority (OLD first, then the
+     * species+gender most over its reserve — see {@link TfcHerd#pickButcherTarget}) instead of MineColonies'
+     * furthest-and-sheltered choice. We hand the butcher loop a one-element list of that animal so it kills exactly
+     * it. When there's no valid TFC cull target we must <b>not</b> fall back to vanilla selection for a TFC herd —
+     * that would let it kill a reserved breeding animal (the gate and the picker can briefly disagree as the herd
+     * changes between ticks). So: if any TFC animal is present, return an empty list (cull nothing this pass);
+     * only a purely vanilla herd falls through to MineColonies' own selection. The {@code chanceToButcher} gate is
+     * handled separately.
      */
     @Redirect(method = "butcherAnimals",
       at = @At(value = "INVOKE",
@@ -168,13 +171,22 @@ public abstract class MixinAbstractEntityAIHerder
     {
         final List<? extends Animal> all = self.searchForAnimals(predicate);
         final Animal target = TfcHerd.pickButcherTarget(all, mctfc$buildingLevel());
-        if (target == null)
+        if (target != null)
         {
-            return all;
+            final List<Animal> chosen = new ArrayList<>(1);
+            chosen.add(target);
+            return chosen;
         }
-        final List<Animal> chosen = new ArrayList<>(1);
-        chosen.add(target);
-        return chosen;
+        // No valid TFC cull target: protect the per-species reserve by culling nothing if any TFC animal is present;
+        // only a purely vanilla herd uses MineColonies' own selection.
+        for (final Animal a : all)
+        {
+            if (TfcHerd.isTfc(a))
+            {
+                return new ArrayList<>();
+            }
+        }
+        return all;
     }
 
     /**

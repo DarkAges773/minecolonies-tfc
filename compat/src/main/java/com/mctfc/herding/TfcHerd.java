@@ -2,18 +2,24 @@ package com.mctfc.herding;
 
 import com.minecolonies.api.colony.jobs.registry.JobEntry;
 import com.minecolonies.api.crafting.ItemStorage;
+import net.dries007.tfc.common.entities.livestock.DairyAnimal;
 import net.dries007.tfc.common.entities.livestock.TFCAnimalProperties;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -108,6 +114,86 @@ public final class TfcHerd
         return isTendable(animal) && ((TFCAnimalProperties) animal).isFood(held);
     }
 
+    // ── Products: milk (Cowhand) ──────────────────────────────────────────────────────────────────────────────
+
+    private static final ResourceLocation MILK_CONTAINER_ID = new ResourceLocation("tfc", "ceramic/jug");
+
+    private static volatile ItemStorage milkContainer;
+
+    /** A TFC dairy animal (cow/goat/yak — base TFC and add-ons). */
+    public static boolean isDairy(final Animal animal)
+    {
+        return animal instanceof DairyAnimal;
+    }
+
+    /** A TFC dairy animal that can be milked right now — TFC's own gate (familiarity + product cooldown + adult/female). */
+    public static boolean isReadyDairy(final Animal animal)
+    {
+        return animal instanceof DairyAnimal dairy && dairy.isReadyForAnimalProduct();
+    }
+
+    /** The empty container the Cowhand requests to milk into: a ceramic jug (cheap; any held fluid container also works). */
+    public static ItemStorage milkContainerRequest()
+    {
+        ItemStorage c = milkContainer;
+        if (c == null)
+        {
+            c = new ItemStorage(new ItemStack(ForgeRegistries.ITEMS.getValue(MILK_CONTAINER_ID)), false, true);
+            milkContainer = c;
+        }
+        return c;
+    }
+
+    /** A single empty generic fluid container in the inventory (a copy of count 1) the worker can milk into, or EMPTY. */
+    public static ItemStack findEmptyMilkContainer(final IItemHandler inventory)
+    {
+        for (int slot = 0; slot < inventory.getSlots(); slot++)
+        {
+            final ItemStack stack = inventory.getStackInSlot(slot);
+            if (stack.isEmpty())
+            {
+                continue;
+            }
+            final IFluidHandlerItem handler = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).resolve().orElse(null);
+            if (handler != null && handler.getFluidInTank(0).isEmpty())
+            {
+                return stack.copyWithCount(1);
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /**
+     * Milk a ready TFC dairy animal by driving TFC's own {@code mobInteract} with the worker's {@link FakePlayer}
+     * holding the empty container. That one call fires TFC's {@code AnimalProductEvent} (so FirmaLife swaps in the
+     * per-animal milk variant), fills the container with the resulting fluid, and sets the product cooldown — exactly
+     * a player right-click. Returns the filled container (to bank in the worker's inventory), or EMPTY if it didn't
+     * milk (wrong/incompatible container, not actually ready, …). The caller consumes one empty container on success.
+     */
+    public static ItemStack milk(final Animal animal, final ItemStack emptyContainer, final FakePlayer fakePlayer)
+    {
+        if (fakePlayer == null || emptyContainer.isEmpty() || !(animal instanceof DairyAnimal))
+        {
+            return ItemStack.EMPTY;
+        }
+        final ItemStack previousHeld = fakePlayer.getMainHandItem();
+        fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, emptyContainer.copyWithCount(1));
+        try
+        {
+            final InteractionResult result = animal.mobInteract(fakePlayer, InteractionHand.MAIN_HAND);
+            final ItemStack filled = fakePlayer.getMainHandItem();
+            if (result.consumesAction() && !filled.isEmpty() && !ItemStack.matches(filled, emptyContainer))
+            {
+                return filled.copy();
+            }
+            return ItemStack.EMPTY;
+        }
+        finally
+        {
+            fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, previousHeld);
+        }
+    }
+
     /**
      * Per-gender adult breeding reserve, scaled with hut level and <b>female-weighted</b>: females grow one per
      * level, males {@code ceil(level / 2)} (one per two levels, rounded up), each floored at 1. So a herd skews
@@ -127,15 +213,15 @@ public final class TfcHerd
      * TFC butcher gate, replacing MineColonies' "more than 3 adults over a {@code level × 2} cap" rule. Returns the
      * chance the worker should cull from this herd, or {@code null} when the herd has no TFC animals (MineColonies'
      * own logic then applies). We <b>always</b> cull when an {@code OLD} animal is present — they no longer breed or
-     * produce, so they're culled even below the gate. Otherwise the worker culls only while a gender exceeds its own
-     * {@link #maleReserve}/{@link #femaleReserve} (which scale with hut level). {@code CHILD}/{@code OLD} don't count.
+     * produce, so they're culled even below the gate. Otherwise the worker culls only while some <b>species</b>
+     * exceeds its {@link #maleReserve}/{@link #femaleReserve}. The reserve is counted <b>per species</b> (cow, goat,
+     * yak — all {@code DairyAnimal} — are separate), so a multi-species hut keeps a breeding pair of <i>each</i>
+     * species rather than culling a minority species to extinction. {@code CHILD}/{@code OLD} don't count.
      */
     public static Double butcherChance(final List<? extends Animal> animals, final int level)
     {
+        final Map<EntityType<?>, int[]> adultsBySpecies = new HashMap<>();
         boolean anyTfc = false;
-        boolean hasOld = false;
-        int adultMales = 0;
-        int adultFemales = 0;
         for (final Animal a : animals)
         {
             if (!(a instanceof TFCAnimalProperties tfc))
@@ -146,42 +232,39 @@ public final class TfcHerd
             final TFCAnimalProperties.Age age = tfc.getAgeType();
             if (age == TFCAnimalProperties.Age.OLD)
             {
-                hasOld = true;
+                return 1.0; // always cull old
             }
-            else if (age == TFCAnimalProperties.Age.ADULT)
+            if (age == TFCAnimalProperties.Age.ADULT)
             {
-                if (tfc.getGender() == TFCAnimalProperties.Gender.MALE)
-                {
-                    adultMales++;
-                }
-                else
-                {
-                    adultFemales++;
-                }
+                final int[] count = adultsBySpecies.computeIfAbsent(a.getType(), k -> new int[2]);
+                count[tfc.getGender() == TFCAnimalProperties.Gender.MALE ? 0 : 1]++;
             }
         }
         if (!anyTfc)
         {
             return null;
         }
-        if (hasOld)
+        for (final int[] count : adultsBySpecies.values())
         {
-            return 1.0;
+            if (count[0] > maleReserve(level) || count[1] > femaleReserve(level))
+            {
+                return 1.0;
+            }
         }
-        return (adultMales > maleReserve(level) || adultFemales > femaleReserve(level)) ? 1.0 : 0.0;
+        return 0.0;
     }
 
     /**
      * Choose which TFC animal the worker should cull, given the whole herd:
      * <ol>
      *   <li><b>OLD</b> animals first (they no longer breed or produce) — least familiar among them;</li>
-     *   <li>then surplus adults from the gender with the <b>largest overshoot of its own reserve</b>
-     *       ({@link #maleReserve}/{@link #femaleReserve}) — least familiar among that gender.</li>
+     *   <li>then surplus adults from the <b>species + gender</b> with the largest overshoot of its own reserve
+     *       ({@link #maleReserve}/{@link #femaleReserve}) — least familiar among that group.</li>
      * </ol>
-     * So the colony keeps its productive, familiarized breeding stock and spends the worn-out / surplus / least-
-     * invested animals first, converging the herd to the female-weighted reserve. Babies ({@code CHILD}) are never
-     * targeted. Returns {@code null} when there's nothing to cull (MineColonies' own distance/shelter selection
-     * then applies — e.g. for a vanilla animal in a mixed herd).
+     * Reserves are <b>per species</b>, so culling a multi-species hut trims each species toward its own breeding
+     * reserve instead of wiping out a minority species (e.g. it won't butcher the last female goat just because
+     * there are also cows). Babies ({@code CHILD}) are never targeted. Returns {@code null} when there's nothing to
+     * cull.
      */
     public static Animal pickButcherTarget(final List<? extends Animal> animals, final int level)
     {
@@ -191,34 +274,45 @@ public final class TfcHerd
             return old;
         }
 
-        int adultMales = 0;
-        int adultFemales = 0;
+        final Map<EntityType<?>, int[]> adultsBySpecies = new HashMap<>();
         for (final Animal a : animals)
         {
             if (ageOf(a) == TFCAnimalProperties.Age.ADULT)
             {
-                if (((TFCAnimalProperties) a).getGender() == TFCAnimalProperties.Gender.MALE)
-                {
-                    adultMales++;
-                }
-                else
-                {
-                    adultFemales++;
-                }
+                final int[] count = adultsBySpecies.computeIfAbsent(a.getType(), k -> new int[2]);
+                count[((TFCAnimalProperties) a).getGender() == TFCAnimalProperties.Gender.MALE ? 0 : 1]++;
             }
         }
 
-        final int maleSurplus = adultMales - maleReserve(level);
-        final int femaleSurplus = adultFemales - femaleReserve(level);
-        if (maleSurplus <= 0 && femaleSurplus <= 0)
+        EntityType<?> cullType = null;
+        TFCAnimalProperties.Gender cullGender = null;
+        int bestSurplus = 0;
+        for (final Map.Entry<EntityType<?>, int[]> entry : adultsBySpecies.entrySet())
         {
-            return null;
+            final int maleSurplus = entry.getValue()[0] - maleReserve(level);
+            final int femaleSurplus = entry.getValue()[1] - femaleReserve(level);
+            if (maleSurplus > bestSurplus)
+            {
+                bestSurplus = maleSurplus;
+                cullType = entry.getKey();
+                cullGender = TFCAnimalProperties.Gender.MALE;
+            }
+            if (femaleSurplus > bestSurplus)
+            {
+                bestSurplus = femaleSurplus;
+                cullType = entry.getKey();
+                cullGender = TFCAnimalProperties.Gender.FEMALE;
+            }
         }
-        // Cull from the gender that overshoots its reserve the most; ties favour culling males (keeps it female-heavy).
-        final TFCAnimalProperties.Gender cull =
-          maleSurplus >= femaleSurplus ? TFCAnimalProperties.Gender.MALE : TFCAnimalProperties.Gender.FEMALE;
+        if (cullType == null)
+        {
+            return null; // no species over its reserve
+        }
+        final EntityType<?> type = cullType;
+        final TFCAnimalProperties.Gender gender = cullGender;
         return leastFamiliar(animals, a -> ageOf(a) == TFCAnimalProperties.Age.ADULT
-                                             && ((TFCAnimalProperties) a).getGender() == cull);
+                                             && a.getType() == type
+                                             && ((TFCAnimalProperties) a).getGender() == gender);
     }
 
     /** Age of a TFC animal, or {@code null} if it isn't TFC livestock. */

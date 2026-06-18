@@ -8,6 +8,11 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Cowhand milks TFC dairy animals** — the Cowhand now milks TFC cows/goats/yaks (not just vanilla cows) by driving
+  TFC's own milking: when an animal is ready (familiarity + product cooldown), the worker fills a held generic TFC
+  fluid container (it requests a **ceramic jug**; any held container works) with the animal's milk, respecting TFC's
+  rules and firing TFC's product event — so **FirmaLife's per-animal milk variants (goat/yak milk)** come out
+  correctly. A vanilla bucket isn't used (it can't hold the variant fluids). Vanilla cows still milk the vanilla way.
 - **Herding huts tend TFC livestock (recognition + breeding)** — the Cowhand, Shepherd, Swineherd, Chicken Herder and
   Rabbit Hutch now recognize TFC animals (cow/goat/yak, sheep/alpaca/musk ox, pig, chicken/duck/quail, rabbit) instead
   of only vanilla ones, driven by per-hut `#mctfc:herding/<job>` entity tags. Their worker breeds them the TFC way —
@@ -15,11 +20,13 @@ All notable changes to this mod are documented here. The format is based on
   butchers them for TFC meat. Feeding follows TFC's food rules: the worker feeds **hungry** animals one at a time
   (TFC's once-per-day window), and **rotten** grain familiarizes only animals that eat rotten food (e.g. pigs) —
   picky animals refuse it. Culling is herd-aware: the worker **always butchers old** animals (they no longer breed
-  or produce), and otherwise culls surplus down to a per-gender breeding reserve that **scales with hut level and is
-  female-weighted** — females +1 per level, males +1 per two levels rounded up, each floored at 1 (L1 1♂/1♀,
-  L2 1♂/2♀, L3 2♂/3♀, L4 2♂/4♀, L5 3♂/5♀) — trimming whichever gender most overshoots its reserve, so the colony grows an
-  increasingly female herd while harvesting the rest for meat (this replaces the vanilla `level × 2` herd cap).
-  Among valid targets it picks old first, then the least-familiar of the culled gender. Animal **products**
+  or produce), and otherwise culls surplus down to a breeding reserve kept **per species and per gender**, scaling
+  with hut level and **female-weighted** — females +1 per level, males +1 per two levels rounded up, each floored at
+  1 (L1 1♂/1♀, L2 1♂/2♀, L3 2♂/3♀, L4 2♂/4♀, L5 3♂/5♀). Because the reserve is per species, a multi-species hut
+  (cow + goat + yak, etc.) keeps a breeding pair of **each** species instead of culling a minority species out — it
+  won't butcher the last female goat just because there are also cows. It trims the species+gender most over its
+  reserve, picking old first then the least-familiar, harvesting the rest for meat (this replaces the vanilla
+  `level × 2` herd cap). Animal **products**
   (milk, wool, eggs) are not yet wired — that's a follow-up. The Swineherd and Rabbit Hutch are fully functional;
   the other three breed and butcher.
 - **Builder won't strip tagged blocks** — a new `#mctfc:builder_dont_clear` block tag protects listed world blocks from the

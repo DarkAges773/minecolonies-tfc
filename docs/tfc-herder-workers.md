@@ -145,12 +145,15 @@ abstractions:
    least-familiar**, `TfcHerd.pickButcherTarget`), handing the butcher loop a one-element list of that animal; and
    *whether* — `@Inject`s `chanceToButcher` (`TfcHerd.butcherChance`) to replace MineColonies' "more than 3 adults
    over a `level × 2` cap" gate with: **always cull when an OLD animal is present** (even below any threshold),
-   otherwise cull while **either gender** exceeds its own reserve, which **scales with hut level and is
-   female-weighted** (`TfcHerd.maleReserve`/`femaleReserve`: females `max(1, level)`, males `max(1, ceil(level/2))` —
-   so L1 1♂/1♀, L3 2♂/3♀, L5 3♂/5♀). The target trims the gender that **most overshoots its reserve** (ties favour males), so
-   the herd grows increasingly female as the hut upgrades. Hut level sets the reserve (replacing the old
-   `level × 2` cap); read via the `building` `@Accessor` on `AbstractEntityAIBasicInvoker`. Vanilla animals fall
-   through unchanged. See §5.
+   otherwise cull while some **species** exceeds its reserve. The reserve is **per species and per gender**, scaling
+   with hut level and **female-weighted** (`TfcHerd.maleReserve`/`femaleReserve`: females `max(1, level)`, males
+   `max(1, ceil(level/2))` — so L1 1♂/1♀, L3 2♂/3♀, L5 3♂/5♀). *Per species* matters because the multi-animal huts
+   pool species into one `DairyAnimal`/`WoolyAnimal`/poultry class — without it, a Cowhand with a cow and a goat
+   would see "2 females" and butcher the last goat. The target trims the species+gender that **most overshoots its
+   reserve**, picking OLD first then least-familiar. When the picker finds no valid target for a TFC herd the butcher
+   redirect culls **nothing** (never falls back to vanilla selection, which would ignore the reserve). Hut level sets
+   the reserve via the `building` `@Accessor` on `AbstractEntityAIBasicInvoker`. Vanilla animals fall through
+   unchanged. See §5.
 
 3. **Per-variant product hooks** — HEAD-cancellable `@Inject` on each variant's product method, routing TFC
    animals to `bridge.collectProduct` and leaving vanilla animals to the original code:
@@ -167,11 +170,17 @@ adding a hut is a registration line, not new mixin plumbing.
 
 ## 4. Products
 
-- **Milk (Cowhand).** Decision: **native TFC milk bucket.** When `isReadyForAnimalProduct()`, drive the same path
-  TFC's `DairyAnimal.mobInteract` uses — pull `getMilkFluid()` into a fluid-handler bucket the worker carries,
-  yielding TFC's milk bucket, then `setProductsCooldown()`. The hut requests **empty buckets** (TFC bucket, via a
-  tag) rather than vanilla buckets; downstream colony recipes consuming milk must accept TFC milk (already
-  partly handled by the food bridge). Honour the `AnimalProductEvent` TFC fires so other mods' hooks still run.
+- **Milk (Cowhand).** *Implemented by driving TFC's own `mobInteract`* — not a fixed item swap, because
+  **FirmaLife varies the milk per animal via TFC's `AnimalProductEvent`** (its `FLForgeEvents.onAnimalProduce`
+  calls `event.setProduct(GOAT_MILK/YAK_MILK/…)`), and that event fires **only inside `mobInteract`**. Base TFC's
+  `getMilkFluid()` is just `ForgeMod.MILK`; relying on it would miss every FirmaLife variant. So the worker, when a
+  TFC `DairyAnimal` is `isReadyForAnimalProduct()` (familiarity + product cooldown + adult/female — exactly the
+  player gate), holds an **empty generic TFC fluid container** (ceramic jug default, but **any** held
+  `IFluidHandlerItem` — jug/wooden/metal bucket — works) and calls `animal.mobInteract(fakePlayer, hand)`. TFC then
+  fires the event (FirmaLife swaps in the right milk), fills the container, and sets the cooldown; the worker banks
+  the filled container. A **vanilla bucket is deliberately not used** — it can't hold FirmaLife's milk variants.
+  MineColonies' hardcoded `instanceof Cow || Goat` search and fixed `getMilkOutputItem` swap are both bypassed for
+  TFC dairy. The mooshroom-stew path (`COWBOY_STEW`) is disabled for TFC (no mooshrooms in TFC).
 - **Wool (Shepherd).** TFC wooly animals are `IForgeShearable`; call `onSheared(fakePlayer, shears, level, pos,
   fortune)` when `hasProduct()` and bank the returned TFC wool. The shepherd already carries shears. Drop the
   vanilla dye step (TFC wool colour is per-species, not dyed-on-sheep). Keep the existing skill→quantity scaling
