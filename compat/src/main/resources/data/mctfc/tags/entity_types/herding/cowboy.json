@@ -1,0 +1,9 @@
+{
+  "__comment": "TFC animals the MineColonies Cowhand (job minecolonies:cowboy) tends. Matched in addition to its vanilla Cow/Goat predicate. AFC / add-on dairy animals can be added in a datapack.",
+  "replace": false,
+  "values": [
+    "tfc:cow",
+    "tfc:goat",
+    "tfc:yak"
+  ]
+}

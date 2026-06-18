@@ -1,0 +1,9 @@
+{
+  "__comment": "TFC animals the MineColonies Chicken Herder (job minecolonies:chickenherder) tends. Matched in addition to its vanilla Chicken predicate. AFC / add-on poultry can be added in a datapack.",
+  "replace": false,
+  "values": [
+    "tfc:chicken",
+    "tfc:duck",
+    "tfc:quail"
+  ]
+}

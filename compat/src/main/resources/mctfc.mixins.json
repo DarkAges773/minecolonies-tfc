@@ -28,7 +28,9 @@
     "MixinCustomRecipeManager",
     "MixinRecipeStorage",
     "MixinRestaurantMenuModule",
-    "MixinEntityAIWorkCook"
+    "MixinEntityAIWorkCook",
+    "MixinAnimalHerdingModule",
+    "MixinAbstractEntityAIHerder"
   ],
   "client": [
     "MixinWindowField"

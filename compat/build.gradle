@@ -104,6 +104,8 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
+    // MixinExtras (io.github.llamalad7) is published to Maven Central.
+    mavenCentral()
     maven {
         name = 'LDTTeam - Modding'
         url = 'https://ldtteam.jfrog.io/ldtteam/modding/'
@@ -118,6 +120,13 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    // MixinExtras — extended/composable Mixin injectors (@WrapOperation, @ModifyExpressionValue, @Local, …).
+    // Forge 47.x bundles MixinExtras at runtime (jar-in-jar), so we only need it at COMPILE time: compileOnly
+    // for the annotation types + annotationProcessor so its AP runs alongside Mixin's (validates expressions/
+    // locals and contributes to the refmap). Never bundled by us — do NOT make it a real runtime dependency.
+    compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+    annotationProcessor "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
 
     // The substitution engine (our standalone mod).
     implementation project(':replacements')

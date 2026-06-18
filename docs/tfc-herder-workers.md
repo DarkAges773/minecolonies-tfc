@@ -4,7 +4,14 @@ How `:compat` (`mctfc`) makes MineColonies' **animal-herding workers** tend, bre
 instead of vanilla animals. One framework covers all five herding huts: **Cowhand**, **Shepherd**, **Swineherd**,
 **Chicken Herder**, and the **Rabbit Hutch**.
 
-Status legend: **DONE** (built & in-tree), **PLANNED** (designed here, not yet built). Everything here is **PLANNED**.
+Status legend: **DONE** (built & in-tree), **PLANNED** (designed here, not yet built).
+
+**Phase 1 (recognition + familiarity breeding + meat) is DONE & in-tree** — see §8. Recognition tags
+([data/mctfc/tags/entity_types/herding/](../compat/src/main/resources/data/mctfc/tags/entity_types/herding/)), the
+[TfcHerd](../compat/src/main/java/com/mctfc/herding/TfcHerd.java) bridge, and the two mixins
+([MixinAnimalHerdingModule](../compat/src/main/java/com/mctfc/mixin/MixinAnimalHerdingModule.java),
+[MixinAbstractEntityAIHerder](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIHerder.java)) are built.
+Products (milk/wool/eggs — §4) remain **PLANNED**.
 
 ---
 
@@ -121,11 +128,15 @@ abstractions:
    rabbits). This single hook also fixes herd-counting, feed-target search, and butcher-target search, since they
    all funnel through `isCompatible`.
 
-2. **`MixinAbstractEntityAIHerder`** *(breeding → familiarity)*. The base breeding helpers (`isBreedAble`,
-   `canMate`, `breedTwoAnimals`) assume vanilla love. Redirect them through the resolved `HerdBridge` for TFC
-   animals: `isBreedAble`/`canMate` → `bridge.isBreedable` + TFC `isReadyToMate`/gender checks; the breed action
-   → `bridge.tendBreeding` (feed-to-familiarize) instead of `setInLove(null)`. Vanilla animals fall through
-   unchanged. (The "BREED" AI state effectively becomes "familiarize" for TFC herds — see §5.)
+2. **`MixinAbstractEntityAIHerder`** *(familiarization via the FEED state only)*. TFC animals are kept out of the
+   vanilla **BREED** state entirely — `isBreedAble` returns `false` for them, so BREED is skipped (it still drives
+   vanilla animals in a mixed herd). This is deliberate: TFC breeds familiarized adults on its own, and the BREED
+   loop feeds *two* animals in one tick whenever both are adjacent (TFC animals, tempted by the held grain, swarm
+   the worker), which looks like feeding the whole herd at once. Familiarization instead runs solely through the
+   **FEED** state (`feedAnimal`), which walks up to and feeds one animal at a time — three redirects make it
+   TFC-correct: filter `searchForAnimals` to hungry (`isTendable`) TFC animals; familiarize the fed animal on the
+   broadcast-eat event (`eatFood`, raising familiarity + clearing hunger); and suppress `ageUp` on TFC babies
+   (force-aging would corrupt TFC's calendar aging). Vanilla animals fall through unchanged. See §5.
 
 3. **Per-variant product hooks** — HEAD-cancellable `@Inject` on each variant's product method, routing TFC
    animals to `bridge.collectProduct` and leaving vanilla animals to the original code:
@@ -165,10 +176,10 @@ adding a hut is a registration line, not new mixin plumbing.
 Chosen approach: **the worker familiarizes animals the real TFC way; TFC's own rules then gate breeding and
 products.** No bypass — a colony herd ramps up like a player's would.
 
-- The worker's feed step (the repurposed BREED state + the existing `feedAnimal` step) feeds **TFC food**
-  (`bridge.isBreedingFood`, tag-driven) to animals via TFC's `eatFood(stack, hand, fakePlayer)`, which raises
-  familiarity at most ~once/day and respects the age-based familiarity cap (so animals raised from `CHILD`
-  reach high familiarity; adults cap low — exactly TFC's mechanic).
+- The worker's **FEED** step (`feedAnimal`, one animal at a time) feeds **TFC food** (a TFC grain via the
+  swapped `getBreedingItems`) to animals via TFC's `eatFood(stack, hand, fakePlayer)`, which raises familiarity at
+  most ~once/day and respects the age-based familiarity cap (so animals raised from `CHILD` reach high
+  familiarity; adults cap low — exactly TFC's mechanic). The vanilla BREED state is skipped for TFC (see §3).
 - Once two opposite-gender `ADULT`s clear `isReadyToMate()`, **TFC's brain `BreedBehavior` mates them with no
   colony involvement.** The herder doesn't force `setInLove`; it just keeps the herd fed/familiar and culls to
   the cap. Likewise products flow only when `isReadyForAnimalProduct()` is satisfied.
@@ -198,7 +209,7 @@ possible follow-up, not part of v1.
 | Mixin | Target | Purpose |
 |---|---|---|
 | `MixinAnimalHerdingModule` | `AnimalHerdingModule#isCompatible` | tag-based recognition of TFC species (all huts) |
-| `MixinAbstractEntityAIHerder` | breeding helpers (`isBreedAble`/`canMate`/`breedTwoAnimals`) + feed step | route TFC animals to familiarity-based breeding |
+| `MixinAbstractEntityAIHerder` | `isBreedAble` (skip BREED for TFC) + `feedAnimal` (select/familiarize/no-age) | familiarize TFC animals one-at-a-time via the FEED state; TFC self-breeds |
 | `MixinEntityAIWorkCowboy` | `milkCows` (skip `milkMooshrooms`) | TFC milk-fluid → TFC bucket |
 | `MixinEntityAIWorkShepherd` | `shearSheep` + `isSheared` gate | TFC `IForgeShearable` wool |
 | `MixinEntityAIWorkChickenHerder` | egg pickup | nest-box harvest instead of ground pickup |

@@ -1,0 +1,9 @@
+{
+  "__comment": "TFC animals the MineColonies Shepherd (job minecolonies:shepherd) tends. Matched in addition to its vanilla Sheep predicate. AFC / add-on wooly animals can be added in a datapack.",
+  "replace": false,
+  "values": [
+    "tfc:sheep",
+    "tfc:alpaca",
+    "tfc:musk_ox"
+  ]
+}

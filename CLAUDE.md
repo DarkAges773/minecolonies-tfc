@@ -148,6 +148,13 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
   target method, so the handler receives the `Level` as its receiver. No shadow required.
 - The runtime Mixin logs `Compatibility level JAVA_17 ... higher than max supported (JAVA_13)` as
   DEBUG — benign (config still selected).
+- **MixinExtras is available in `:compat`** (`compileOnly` + `annotationProcessor` `io.github.llamalad7:mixinextras-common`,
+  version `mixinextras_version` in [gradle.properties](gradle.properties)). Forge 47.x **bundles** MixinExtras at
+  runtime (jar-in-jar), so it's compile-time-only — never bundle/ship it. Use its composable injectors
+  (`@WrapOperation`, `@ModifyExpressionValue`, `@ModifyReturnValue`, `@Local`, …) when stock `@Redirect`/`@ModifyVariable`
+  is too brittle or would conflict with another mod redirecting the same call. Pin the version to what Forge ships so
+  we never compile against annotations missing at runtime. **`:replacements` does NOT have it** (added to `:compat` only
+  for now) — add it there too before using MixinExtras annotations in that subproject.
 
 ## The substitution feature (in :replacements)
 

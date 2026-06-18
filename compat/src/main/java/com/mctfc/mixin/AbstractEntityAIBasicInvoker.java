@@ -2,6 +2,7 @@ package com.mctfc.mixin;
 
 import com.minecolonies.core.entity.ai.workers.AbstractEntityAIBasic;
 import net.minecraft.core.BlockPos;
+import net.minecraftforge.common.util.FakePlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
@@ -21,4 +22,7 @@ public interface AbstractEntityAIBasicInvoker
 
     @Invoker(value = "walkToWorkPos", remap = false)
     boolean mctfc$walkToWorkPos(BlockPos pos);
+
+    @Invoker(value = "getFakePlayer", remap = false)
+    FakePlayer mctfc$getFakePlayer();
 }

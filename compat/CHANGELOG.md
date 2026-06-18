@@ -8,6 +8,12 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Herding huts tend TFC livestock (recognition + breeding)** — the Cowhand, Shepherd, Swineherd, Chicken Herder and
+  Rabbit Hutch now recognize TFC animals (cow/goat/yak, sheep/alpaca/musk ox, pig, chicken/duck/quail, rabbit) instead
+  of only vanilla ones, driven by per-hut `#mctfc:herding/<job>` entity tags. Their worker breeds them the TFC way —
+  feeding TFC grain to raise **familiarity** so TFC's own husbandry mates them — rather than vanilla love-mode, and
+  butchers them for TFC meat. Animal **products** (milk, wool, eggs) are not yet wired — that's a follow-up. The
+  Swineherd and Rabbit Hutch are fully functional; the other three breed and butcher.
 - **Builder won't strip tagged blocks** — a new `#mctfc:builder_dont_clear` block tag protects listed world blocks from the
   MineColonies builder's CLEAR phase: when a blueprint has air where one of these blocks already sits, the builder leaves it in
   place instead of tearing it out. This is the air-strip path only — the builder still places real blueprint blocks normally, and
