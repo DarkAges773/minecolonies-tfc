@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:soul_lamp/copper",
+    "firmavanilla:soul_lamp/bronze",
+    "firmavanilla:soul_lamp/bismuth_bronze",
+    "firmavanilla:soul_lamp/black_bronze",
+    "firmavanilla:soul_lamp/wrought_iron",
+    "firmavanilla:soul_lamp/steel",
+    "firmavanilla:soul_lamp/black_steel",
+    "firmavanilla:soul_lamp/blue_steel",
+    "firmavanilla:soul_lamp/red_steel"
+  ]
+}

@@ -22,6 +22,18 @@ All notable changes to this mod are documented here. The format is based on
   namespace (`mctfc:mortared/…` → `firmavanilla:mortared/…`).
 
 ### Added
+- **Deepslate → basalt (incl. firmavanilla rock tiles)** — the whole vanilla deepslate family now substitutes to
+  TFC basalt: the non-tile forms to TFC's basalt rock forms (raw / non-falling mortared cobble twin / smooth /
+  bricks / cracked bricks / chiseled), and the deepslate **tile** forms (tiles/cracked/stairs/slab/wall) to
+  firmavanilla's new basalt rock tiles. Each carries an any-rock *Replace* pool.
+- **Vanilla copper → firmavanilla weathering copper** — all vanilla copper now places the matching TFC-integrated
+  firmavanilla copper (plated block ↔ `copper_block`, cut copper/stairs/slab ↔ `copper_cut*`, waxed → waxed),
+  stage- and form-matched 1:1 across the four weather stages.
+- **Purpur → alabaster; end stone → alabaster** — purpur block/pillar/stairs/slab now place firmavanilla alabaster
+  tiles/pillars (default **purple**, with a pick-any-colour *Replace* pool); end stone → uncolored TFC raw
+  alabaster and end stone bricks → uncolored TFC alabaster bricks (each + a pick-any-colour pool).
+- **Soul lantern → soul lamp** — `minecraft:soul_lantern` now places a firmavanilla soul lamp (default wrought
+  iron, lit; any-metal *Replace* pool), mirroring the regular lantern → TFC lamp swap.
 - **Chiseled sandstone in TFC colours** — blueprints using chiseled sandstone now place a real chiseled block
   in one of TFC's 7 sand colours (with a *Replace* pool to re-pick the colour), instead of degrading to flat
   cut sandstone. Provided by the new `firmavanilla` dependency.

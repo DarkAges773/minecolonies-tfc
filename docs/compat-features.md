@@ -43,7 +43,25 @@ vanilla block, pool on the TFC-result tag) — never a fixed `to` + `to_tag` on 
   (which TFC lacks) instead maps to the firmavanilla mod's `firmavanilla:chiseled_sandstone/<color>` blocks
   (vanilla creeper/wither relief recoloured onto TFC's cut sandstone) + a `mctfc:subst/sandstone/chiseled`
   re-pick pool — see [docs/firmavanilla.md](firmavanilla.md).
-- **Pool tags** live under `data/mctfc/tags/blocks/subst/{wood,rock}/*.json` (one per form, listing every TFC
+- **Deepslate** ([firmavanilla_deepslate.json](../compat/src/main/resources/data/mctfc/block_substitutions/firmavanilla_deepslate.json)):
+  the whole deepslate family → **basalt** (default) with any-rock pools. The non-tile forms map to TFC basalt
+  rock forms exactly like the stone family above (raw / mortared cobble twin / `polished→smooth` / bricks /
+  cracked_bricks / chiseled), **reusing tfc_stone.json's existing `tfc:rock/*` pools** (the GUI keys off the
+  resolved basalt block). The **tile** forms (`deepslate_tiles`/`cracked`/`tile_stairs`/`slab`/`wall`) map to
+  firmavanilla's new rock tiles (`firmavanilla:{tiles,cracked_tiles,tile_stairs,tile_slab,tile_wall}/basalt`) with
+  new `mctfc:subst/firmavanilla/*` pools.
+- **Copper** ([firmavanilla_copper.json](../compat/src/main/resources/data/mctfc/block_substitutions/firmavanilla_copper.json)):
+  all vanilla copper → firmavanilla's TFC-integrated weathering copper, **form- and stage-matched 1:1** (no pool):
+  plated full block ↔ `copper_block`, cut copper/stairs/slab ↔ `copper_cut*`, `waxed_*` → `waxed_*`, and the four
+  weather stages map straight across (unaffected/exposed/weathered/oxidized).
+- **Alabaster** ([firmavanilla_alabaster.json](../compat/src/main/resources/data/mctfc/block_substitutions/firmavanilla_alabaster.json)):
+  **purpur** block/pillar/stairs/slab → firmavanilla alabaster tiles/pillars, default **purple** + a pick-any-colour
+  pool (`mctfc:subst/firmavanilla/alabaster_*`). **end_stone** → uncolored `tfc:alabaster/raw`; **end_stone_bricks** →
+  uncolored `tfc:alabaster/bricks` — each with a colour pool (`mctfc:subst/alabaster/{raw,bricks}`) that *includes
+  the uncolored base* so the GUI offers the pool on the default. **Soul lantern** → firmavanilla soul lamp
+  (default wrought_iron, `lit=true`; any-metal pool) is hand-written in [defaults.json](../compat/src/main/resources/data/mctfc/block_substitutions/defaults.json)
+  beside the regular lantern rule (it needs `apply_properties`).
+- **Pool tags** live under `data/mctfc/tags/blocks/subst/{wood,rock,firmavanilla,alabaster,…}/*.json` (one per form, listing every TFC
   variant). The rule files and tags are emitted by [gen_tfc_substitutions.sh](../compat/gen_tfc_substitutions.sh)
   (re-run if TFC's rock/wood set changes); they're plain static JSON, so `/reload`-able and editable. Validated:
   every fixed-rule target and all pool-tag members (880) resolve to real TFC blocks.

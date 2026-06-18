@@ -26,6 +26,9 @@
     { "from_tag": "mctfc:subst/metal/chain", "to_tag": "mctfc:subst/metal/chain" },
 
     { "from": "minecraft:lantern", "to": "tfc:metal/lamp/wrought_iron", "apply_properties": { "lit": "true" } },
-    { "from_tag": "mctfc:subst/metal/lamp", "to_tag": "mctfc:subst/metal/lamp", "apply_properties": { "lit": "true" } }
+    { "from_tag": "mctfc:subst/metal/lamp", "to_tag": "mctfc:subst/metal/lamp", "apply_properties": { "lit": "true" } },
+
+    { "from": "minecraft:soul_lantern", "to": "firmavanilla:soul_lamp/wrought_iron", "apply_properties": { "lit": "true" } },
+    { "from_tag": "mctfc:subst/firmavanilla/soul_lamp", "to_tag": "mctfc:subst/firmavanilla/soul_lamp", "apply_properties": { "lit": "true" } }
   ]
 }
