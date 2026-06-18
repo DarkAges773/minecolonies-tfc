@@ -12,8 +12,16 @@ All notable changes to this mod are documented here. The format is based on
   Rabbit Hutch now recognize TFC animals (cow/goat/yak, sheep/alpaca/musk ox, pig, chicken/duck/quail, rabbit) instead
   of only vanilla ones, driven by per-hut `#mctfc:herding/<job>` entity tags. Their worker breeds them the TFC way —
   feeding TFC grain to raise **familiarity** so TFC's own husbandry mates them — rather than vanilla love-mode, and
-  butchers them for TFC meat. Animal **products** (milk, wool, eggs) are not yet wired — that's a follow-up. The
-  Swineherd and Rabbit Hutch are fully functional; the other three breed and butcher.
+  butchers them for TFC meat. Feeding follows TFC's food rules: the worker feeds **hungry** animals one at a time
+  (TFC's once-per-day window), and **rotten** grain familiarizes only animals that eat rotten food (e.g. pigs) —
+  picky animals refuse it. Culling is herd-aware: the worker **always butchers old** animals (they no longer breed
+  or produce), and otherwise culls surplus down to a per-gender breeding reserve that **scales with hut level and is
+  female-weighted** — females +1 per level, males +1 per two levels rounded up, each floored at 1 (L1 1♂/1♀,
+  L2 1♂/2♀, L3 2♂/3♀, L4 2♂/4♀, L5 3♂/5♀) — trimming whichever gender most overshoots its reserve, so the colony grows an
+  increasingly female herd while harvesting the rest for meat (this replaces the vanilla `level × 2` herd cap).
+  Among valid targets it picks old first, then the least-familiar of the culled gender. Animal **products**
+  (milk, wool, eggs) are not yet wired — that's a follow-up. The Swineherd and Rabbit Hutch are fully functional;
+  the other three breed and butcher.
 - **Builder won't strip tagged blocks** — a new `#mctfc:builder_dont_clear` block tag protects listed world blocks from the
   MineColonies builder's CLEAR phase: when a blueprint has air where one of these blocks already sits, the builder leaves it in
   place instead of tearing it out. This is the air-strip path only — the builder still places real blueprint blocks normally, and

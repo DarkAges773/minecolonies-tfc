@@ -134,9 +134,23 @@ abstractions:
    loop feeds *two* animals in one tick whenever both are adjacent (TFC animals, tempted by the held grain, swarm
    the worker), which looks like feeding the whole herd at once. Familiarization instead runs solely through the
    **FEED** state (`feedAnimal`), which walks up to and feeds one animal at a time — three redirects make it
-   TFC-correct: filter `searchForAnimals` to hungry (`isTendable`) TFC animals; familiarize the fed animal on the
-   broadcast-eat event (`eatFood`, raising familiarity + clearing hunger); and suppress `ageUp` on TFC babies
-   (force-aging would corrupt TFC's calendar aging). Vanilla animals fall through unchanged. See §5.
+   TFC-correct: filter `searchForAnimals` to TFC animals that are hungry today **and** will accept the worker's
+   held grain (`willAcceptFeed` → TFC's `isFood`, which encodes the **rotten** rule — a picky animal refuses rotten
+   grain, a pig accepts it); familiarize the fed animal on the broadcast-eat event (TFC `eatFood`, raising
+   familiarity + clearing hunger); and suppress `ageUp` on TFC babies (force-aging would corrupt TFC's calendar
+   aging). The held grain is read via `AbstractAISkeletonAccessor` (`@Accessor` for the deeply-inherited `worker`
+   field). Familiarizing with the **real held stack** (not a synthetic one) is what makes the rotten rule
+   authentic. The same mixin also reworks **butchering** for TFC herds on two axes: *which* — redirects
+   `butcherAnimals`' `searchForAnimals` to pick the cull target by husbandry priority (**OLD first, then
+   least-familiar**, `TfcHerd.pickButcherTarget`), handing the butcher loop a one-element list of that animal; and
+   *whether* — `@Inject`s `chanceToButcher` (`TfcHerd.butcherChance`) to replace MineColonies' "more than 3 adults
+   over a `level × 2` cap" gate with: **always cull when an OLD animal is present** (even below any threshold),
+   otherwise cull while **either gender** exceeds its own reserve, which **scales with hut level and is
+   female-weighted** (`TfcHerd.maleReserve`/`femaleReserve`: females `max(1, level)`, males `max(1, ceil(level/2))` —
+   so L1 1♂/1♀, L3 2♂/3♀, L5 3♂/5♀). The target trims the gender that **most overshoots its reserve** (ties favour males), so
+   the herd grows increasingly female as the hut upgrades. Hut level sets the reserve (replacing the old
+   `level × 2` cap); read via the `building` `@Accessor` on `AbstractEntityAIBasicInvoker`. Vanilla animals fall
+   through unchanged. See §5.
 
 3. **Per-variant product hooks** — HEAD-cancellable `@Inject` on each variant's product method, routing TFC
    animals to `bridge.collectProduct` and leaving vanilla animals to the original code:
@@ -209,7 +223,8 @@ possible follow-up, not part of v1.
 | Mixin | Target | Purpose |
 |---|---|---|
 | `MixinAnimalHerdingModule` | `AnimalHerdingModule#isCompatible` | tag-based recognition of TFC species (all huts) |
-| `MixinAbstractEntityAIHerder` | `isBreedAble` (skip BREED for TFC) + `feedAnimal` (select/familiarize/no-age) | familiarize TFC animals one-at-a-time via the FEED state; TFC self-breeds |
+| `MixinAbstractEntityAIHerder` | `isBreedAble` (skip BREED) + `feedAnimal` (select/familiarize/no-age) + `decideWhatToDo` (feed chance) + `butcherAnimals`/`chanceToButcher` (cull target + gate) | familiarize hungry TFC animals via FEED (rotten rule); cull old-first, gate on breeding-pair reserve; TFC self-breeds |
+| `AbstractAISkeletonAccessor` | `AbstractAISkeleton#worker` (`@Accessor`) | read the worker's held grain (deeply-inherited field) for the rotten-food check |
 | `MixinEntityAIWorkCowboy` | `milkCows` (skip `milkMooshrooms`) | TFC milk-fluid → TFC bucket |
 | `MixinEntityAIWorkShepherd` | `shearSheep` + `isSheared` gate | TFC `IForgeShearable` wool |
 | `MixinEntityAIWorkChickenHerder` | egg pickup | nest-box harvest instead of ground pickup |

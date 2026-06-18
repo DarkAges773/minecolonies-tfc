@@ -30,7 +30,8 @@
     "MixinRestaurantMenuModule",
     "MixinEntityAIWorkCook",
     "MixinAnimalHerdingModule",
-    "MixinAbstractEntityAIHerder"
+    "MixinAbstractEntityAIHerder",
+    "AbstractAISkeletonAccessor"
   ],
   "client": [
     "MixinWindowField"

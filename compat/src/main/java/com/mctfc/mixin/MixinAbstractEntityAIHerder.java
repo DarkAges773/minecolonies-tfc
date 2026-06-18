@@ -1,14 +1,13 @@
 package com.mctfc.mixin;
 
 import com.mctfc.herding.TfcHerd;
-import com.minecolonies.core.colony.buildings.modules.AnimalHerdingModule;
 import com.minecolonies.core.entity.ai.workers.production.herders.AbstractEntityAIHerder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.FakePlayer;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -39,8 +39,9 @@ import java.util.function.Predicate;
  * <ul>
  *   <li><b>selection</b> — MineColonies picks by its own {@code fedRecently} ~5-minute per-worker cooldown (far
  *       shorter than a TFC day) and by iteration order; we filter {@code searchForAnimals} so a TFC animal is
- *       eligible only while {@code isTendable} (hungry today), so the worker doesn't re-walk to / waste grain on
- *       animals already fed;</li>
+ *       eligible only while {@code willAcceptFeed} — hungry today <i>and</i> the held grain is valid food for it
+ *       (TFC's {@code isFood}, which encodes the rotten rule: a picky animal refuses rotten grain, a pig accepts
+ *       it) — so the worker neither re-feeds the already-fed nor wastes rotten grain on animals that won't eat it;</li>
  *   <li><b>action</b> — the vanilla feed only force-ages babies, never familiarizing adults; we familiarize the fed
  *       TFC animal (adult or baby) on the broadcast-eat event, which raises familiarity and clears hunger;</li>
  *   <li><b>aging</b> — we suppress {@code ageUp} for TFC babies (force-aging would corrupt TFC's calendar aging).</li>
@@ -52,9 +53,6 @@ import java.util.function.Predicate;
 @Mixin(value = AbstractEntityAIHerder.class, remap = false)
 public abstract class MixinAbstractEntityAIHerder
 {
-    @Shadow
-    protected AnimalHerdingModule current_module;
-
     /**
      * Reach the worker's {@code FakePlayer} via {@link AbstractEntityAIBasicInvoker} — {@code getFakePlayer} is
      * declared up in {@code AbstractEntityAIBasic}, and a plain inherited {@code @Shadow} from this subclass fails
@@ -65,9 +63,21 @@ public abstract class MixinAbstractEntityAIHerder
         return ((AbstractEntityAIBasicInvoker) this).mctfc$getFakePlayer();
     }
 
+    /** The food the worker is currently holding (equipped from the breeding-item list before feeding). */
+    private ItemStack mctfc$heldFood()
+    {
+        return ((AbstractAISkeletonAccessor) this).mctfc$worker().getMainHandItem();
+    }
+
+    /** The hut's level — drives the (female-weighted) per-gender breeding reserve used by the butcher logic. */
+    private int mctfc$buildingLevel()
+    {
+        return ((AbstractEntityAIBasicInvoker) this).mctfc$building().getBuildingLevel();
+    }
+
     private void mctfc$familiarize(final Animal animal)
     {
-        TfcHerd.familiarize(animal, current_module.getBreedingItems().get(0).getItemStack(), mctfc$fakePlayer());
+        TfcHerd.familiarize(animal, mctfc$heldFood(), mctfc$fakePlayer());
     }
 
     /**
@@ -85,15 +95,34 @@ public abstract class MixinAbstractEntityAIHerder
     }
 
     /**
-     * FEED-state animal selection: only consider a TFC animal while it's hungry today, so the worker doesn't
-     * re-walk to (and waste grain on) animals already fed for the day. Vanilla animals are unaffected.
+     * Replace MineColonies' butcher gate ({@code >3 adults} over a {@code level × 2} cap) for TFC herds: always cull
+     * when an OLD animal is present (even below any gate), otherwise cull only while more than
+     * {@link TfcHerd#MIN_BREEDING_PAIRS} breedable pairs remain. {@link TfcHerd#butcherChance} returns {@code null}
+     * for a non-TFC herd, leaving MineColonies' logic in place.
+     */
+    @Inject(method = "chanceToButcher", at = @At("HEAD"), cancellable = true)
+    private void mctfc$tfcButcherGate(final List<? extends Animal> allAnimals, final CallbackInfoReturnable<Double> cir)
+    {
+        final Double chance = TfcHerd.butcherChance(allAnimals, mctfc$buildingLevel());
+        if (chance != null)
+        {
+            cir.setReturnValue(chance);
+        }
+    }
+
+    /**
+     * FEED-state animal selection: only consider a TFC animal that is hungry today <i>and</i> will accept the food
+     * the worker is currently holding ({@code willAcceptFeed} → TFC's {@code isFood}, which encodes the rotten rule).
+     * So the worker won't walk to / waste grain on an animal that's already fed, nor on a picky animal when the held
+     * grain is rotten — but a pig (which eats rotten food) is still fed. Vanilla animals are unaffected.
      */
     @Redirect(method = "feedAnimal",
       at = @At(value = "INVOKE",
         target = "Lcom/minecolonies/core/entity/ai/workers/production/herders/AbstractEntityAIHerder;searchForAnimals(Ljava/util/function/Predicate;)Ljava/util/List;"))
-    private List<? extends Animal> mctfc$feedHungryTfcOnly(final AbstractEntityAIHerder self, final Predicate<Animal> predicate)
+    private List<? extends Animal> mctfc$feedAcceptingTfcOnly(final AbstractEntityAIHerder self, final Predicate<Animal> predicate)
     {
-        return self.searchForAnimals(predicate.and(a -> !TfcHerd.isTfc(a) || TfcHerd.isTendable(a)));
+        final ItemStack held = mctfc$heldFood();
+        return self.searchForAnimals(predicate.and(a -> !TfcHerd.isTfc(a) || TfcHerd.willAcceptFeed(a, held)));
     }
 
     /**
@@ -123,6 +152,29 @@ public abstract class MixinAbstractEntityAIHerder
         {
             animal.ageUp(amount, forced);
         }
+    }
+
+    /**
+     * BUTCHER-state target selection: pick the TFC animal to cull by husbandry priority (OLD first, then least
+     * familiar — see {@link TfcHerd#pickButcherTarget}) instead of MineColonies' furthest-and-sheltered choice.
+     * We hand the butcher loop a one-element list of that animal so it kills exactly it. Returns the original list
+     * (mutable — the method then {@code sort}s it) when there's no TFC adult/old to cull, so vanilla animals keep
+     * their normal selection. The decision of <i>whether</i> to butcher ({@code chanceToButcher}) is untouched.
+     */
+    @Redirect(method = "butcherAnimals",
+      at = @At(value = "INVOKE",
+        target = "Lcom/minecolonies/core/entity/ai/workers/production/herders/AbstractEntityAIHerder;searchForAnimals(Ljava/util/function/Predicate;)Ljava/util/List;"))
+    private List<? extends Animal> mctfc$butcherByPriority(final AbstractEntityAIHerder self, final Predicate<Animal> predicate)
+    {
+        final List<? extends Animal> all = self.searchForAnimals(predicate);
+        final Animal target = TfcHerd.pickButcherTarget(all, mctfc$buildingLevel());
+        if (target == null)
+        {
+            return all;
+        }
+        final List<Animal> chosen = new ArrayList<>(1);
+        chosen.add(target);
+        return chosen;
     }
 
     /**
