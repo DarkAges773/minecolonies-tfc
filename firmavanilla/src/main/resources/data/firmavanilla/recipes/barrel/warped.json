@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "conditions": [ { "type": "forge:mod_loaded", "modid": "beneath" } ],
+  "pattern": [ "XTX", "X X", "XXX" ],
+  "key": {
+    "X": { "item": "beneath:wood/lumber/warped" },
+    "T": { "item": "beneath:wood/planks/warped_trapdoor" }
+  },
+  "result": { "item": "firmavanilla:barrel/warped" }
+}

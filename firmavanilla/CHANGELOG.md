@@ -8,13 +8,17 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
 ## [Unreleased]
 
 ### Added
-- **Wood barrels** — functional vanilla-style storage barrels (`firmavanilla:barrel/<wood>`) in every wood, the
-  form TFC lacks (its own barrel is a fluid-sealing device, not an item container). Plain `BarrelBlock` reusing
-  vanilla's barrel block-entity, so they're real openable 27-slot containers with the facing/open states. Faces
-  are vanilla's barrel relief recoloured into each wood's planks palette by the bundled .NET asset generator (the
-  metal hoops kept as a dark band, the open-top hole painted as that wood's shadowed interior). Covers TFC's 20
-  woods always, plus AFC (10) and Beneath (crimson/warped) when those mods are present; in the creative tab and
-  `mineable/axe`. Creative-only for now (no recipe).
+- **Wood barrels** — functional storage barrels (`firmavanilla:barrel/<wood>`) in every wood, the form TFC lacks
+  (its own barrel is a fluid-sealing device, not an item container). Openable, with the facing/open states, but
+  shrunk to **TFC's small-chest rules** — 18 slots (two rows) + the same item-size limit as a TFC chest (reusing
+  TFC's restricted chest container) — so they follow TFC's storage rules, not vanilla's oversized 27-slot one.
+  Faces are vanilla's barrel relief recoloured into each wood's planks palette by the bundled .NET asset generator
+  (the metal hoops kept as a dark band, the open-top hole painted as that wood's shadowed interior). Covers TFC's
+  20 woods always, plus AFC (10) and Beneath (crimson/warped) when those mods are present; in the creative tab and
+  the same tags as a vanilla barrel (`minecraft:mineable/axe`, `minecraft:guarded_by_piglins`, and the
+  `forge:barrels/wooden` block + item tag). Crafted the TFC way — TFC's barrel shape with the matching wood trapdoor
+  added at the top centre (7 `<ns>:wood/lumber/<wood>` + 1 `<ns>:wood/planks/<wood>_trapdoor`); AFC/Beneath recipes
+  are `forge:mod_loaded`-gated.
 - Initial split-out of decorative TFC building blocks into their own standalone mod (depends only on
   TerraFirmaCraft).
 - Non-falling "cemented" cobblestone twins for every cobble block (vanilla + TFC + earlier-loaded mods),

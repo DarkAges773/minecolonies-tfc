@@ -8,7 +8,6 @@
     "MixinEntityAIWorkFarmer",
     "MixinFarmField",
     "MixinInventoryCitizen",
-    "MixinBarrelBlockEntity",
     "AbstractTileEntityRackAccessor",
     "MixinRackInventory",
     "MixinFoodUtils",

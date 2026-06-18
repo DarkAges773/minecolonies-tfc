@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "conditions": [ { "type": "forge:mod_loaded", "modid": "afc" } ],
+  "pattern": [ "XTX", "X X", "XXX" ],
+  "key": {
+    "X": { "item": "afc:wood/lumber/fig" },
+    "T": { "item": "afc:wood/planks/fig_trapdoor" }
+  },
+  "result": { "item": "firmavanilla:barrel/fig" }
+}

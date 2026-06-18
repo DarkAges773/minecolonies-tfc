@@ -8,9 +8,11 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Removed
-- **Vanilla barrel crafting recipe** — the `mctfc:barrel` recipe (which restored a craftable vanilla barrel in a
-  TFC world) was removed now that **firmavanilla** ships per-wood barrels. The vanilla barrel is no longer made
-  craftable here; its `tfc:chest`-matching behaviour (`MixinBarrelBlockEntity`) is unchanged for any that exist.
+- **Vanilla barrel handling moved to firmavanilla** — both the `mctfc:barrel` crafting recipe (which restored a
+  craftable vanilla barrel in a TFC world) and `MixinBarrelBlockEntity` (which shrank the *vanilla* barrel to
+  `tfc:chest` rules) were removed, now that **firmavanilla** ships per-wood barrels. The vanilla barrel is left
+  untouched — plain 27-slot, uncraftable in TFC; the TFC small-chest behaviour (18 slots + item-size limit) now
+  lives on firmavanilla's own barrel blocks instead.
 
 ### Changed
 - **Dining hall stocks food to demand, not by the stackful** — the dining hall used to try to keep

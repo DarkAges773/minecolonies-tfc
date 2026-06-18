@@ -132,7 +132,7 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
   (button, substitution, preview, the per-building MineColonies integration) apply in the `:compat` run.
   (Production is fine: each mod's jar carries its own `MixinConfigs` manifest.)
 - **`:compat` owns `mctfc.mixins.json`** (package `com.mctfc.mixin`) — the TFC-bridge mixins (farmer,
-  field GUI, food stacking/spoilage/nutrition, barrel→`tfc:chest`, miner fill-block, collapse support,
+  field GUI, food stacking/spoilage/nutrition, miner fill-block, collapse support,
   citizen-rain, colony lights), each enumerated per feature in
   [docs/compat-features.md](docs/compat-features.md). Applying MixinGradle here ALSO injects the runtime
   refmap remapping (`mixin.env.remapRefMap`) into `:compat`'s dev runs — needed even when this config was

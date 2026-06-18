@@ -58,7 +58,8 @@ static class Barrels
         string modelDir = Path.Combine(resRoot, "assets", MODID, "models", "block", "barrel");
         string itemDir  = Path.Combine(resRoot, "assets", MODID, "models", "item", "barrel");
         string lootDir  = Path.Combine(resRoot, "data", MODID, "loot_tables", "blocks", "barrel");
-        foreach (var d in new[] { texDir, bsDir, modelDir, itemDir, lootDir }) Directory.CreateDirectory(d);
+        string recDir   = Path.Combine(resRoot, "data", MODID, "recipes", "barrel");
+        foreach (var d in new[] { texDir, bsDir, modelDir, itemDir, lootDir, recDir }) Directory.CreateDirectory(d);
 
         // Load the four vanilla faces + each masked face's hand-painted mask (null = file missing -> plain CLUT).
         var faces = FACES.ToDictionary(f => f, f => Load("vanilla", "barrel_" + f + ".png"));
@@ -66,6 +67,7 @@ static class Barrels
         foreach (var f in MASKED) masks[f] = LoadMask(f);
 
         int count = 0;
+        var tagEntries = new List<string>();   // formatted barrel ids (AFC/Beneath wrapped required:false)
         foreach (var (ns, woods) in BARREL)
         foreach (var wood in woods)
         {
@@ -86,13 +88,26 @@ static class Barrels
             File.WriteAllText(Path.Combine(modelDir, wood + "_open.json"), Model(wood, "top_open"));
             File.WriteAllText(Path.Combine(itemDir, wood + ".json"), ParentItem($"barrel/{wood}"));
             File.WriteAllText(Path.Combine(lootDir, wood + ".json"), DropItemLoot($"{MODID}:barrel/{wood}"));
-            // mineable/axe membership (shared with the bookshelves; AFC/Beneath required:false), written once by the
-            // entry point.
-            axeMineable.Add(ns == "tfc"
+            File.WriteAllText(Path.Combine(recDir, wood + ".json"), Recipe(ns, wood));
+            // Tag membership matching vanilla minecraft:barrel (mineable/axe, guarded_by_piglins, forge:barrels/wooden).
+            // AFC/Beneath ids are required:false (their blocks register only when the mod is loaded).
+            string entry = ns == "tfc"
                 ? $"    \"{MODID}:barrel/{wood}\""
-                : $"    {{ \"id\": \"{MODID}:barrel/{wood}\", \"required\": false }}");
+                : $"    {{ \"id\": \"{MODID}:barrel/{wood}\", \"required\": false }}";
+            axeMineable.Add(entry);   // mineable/axe is SHARED with the bookshelves -> written once by the entry point
+            tagEntries.Add(entry);
             count++;
         }
+
+        // Tags vanilla minecraft:barrel sits in, so our barrels behave identically. mineable/axe is accumulated
+        // above (shared with the bookshelves). These three are barrel-only, so write them here:
+        //   - minecraft:guarded_by_piglins (block) — piglins guard/anger when it's opened or broken near them,
+        //   - forge:barrels/wooden (block + item) — what other mods key off to recognise a wooden barrel (it rolls
+        //     up into forge:barrels via that tag's #forge:barrels/wooden include, so adding here covers both).
+        string body = ValuesTag(tagEntries);
+        WriteTag("minecraft", "blocks", "guarded_by_piglins", body);
+        WriteTag("forge", "blocks", "barrels/wooden", body);
+        WriteTag("forge", "items", "barrels/wooden", body);
 
         foreach (var img in faces.Values) img.Dispose();
         foreach (var img in masks.Values) if (img != null) img.Dispose();
@@ -132,6 +147,27 @@ static class Barrels
           }
         }
         """;
+
+    // TFC's barrel shape (XTX / X_X / XXX) but with the matching trapdoor at the top-centre: 7 of that wood's
+    // lumber + 1 of its plank trapdoor. (TFC's own barrel is 6 lumber, "X X"/"X X"/"XXX".) AFC/Beneath recipes carry
+    // a forge:mod_loaded condition so they're silently skipped when the mod — hence its lumber/trapdoor — is absent.
+    static string Recipe(string ns, string wood)
+    {
+        string cond = ns == "tfc"
+            ? ""
+            : $"\n  \"conditions\": [ {{ \"type\": \"forge:mod_loaded\", \"modid\": \"{ns}\" }} ],";
+        return $$"""
+        {
+          "type": "minecraft:crafting_shaped",{{cond}}
+          "pattern": [ "XTX", "X X", "XXX" ],
+          "key": {
+            "X": { "item": "{{ns}}:wood/lumber/{{wood}}" },
+            "T": { "item": "{{ns}}:wood/planks/{{wood}}_trapdoor" }
+          },
+          "result": { "item": "{{MODID}}:barrel/{{wood}}" }
+        }
+        """;
+    }
 
     // CLUT the WOOD region (mask white) through the planks; the masked (black) region is either kept vanilla
     // (holeMode == false — the metal hoops / bung) or, for the open top (holeMode == true), painted as the darkest

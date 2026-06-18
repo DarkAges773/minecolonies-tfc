@@ -191,13 +191,24 @@ wood — block id `firmavanilla:bookshelf/<wood>`.
 TFC's own barrel is a fluid-sealing device, not a vanilla-style item-storage container — so the openable
 `minecraft:barrel` has no TFC equivalent. `firmavanilla` adds one per wood — block id `firmavanilla:barrel/<wood>`.
 
-- **Plain `BarrelBlock`, no subclass** ([BarrelBlocks](../firmavanilla/src/main/java/com/firmavanilla/block/BarrelBlocks.java)):
-  each wood registers `new BarrelBlock(Properties.copy(Blocks.BARREL))` + a `BlockItem`. It inherits the **full**
-  vanilla barrel behaviour — the 27-slot container, the `facing`/`open` blockstates, the open/close animation +
-  sounds — and **reuses vanilla's `BlockEntityType.BARREL`** verbatim (vanilla `BarrelBlock.newBlockEntity` returns
-  a `BarrelBlockEntity`). In 1.20.1 Forge the BE place/load/tick paths don't gate on `BlockEntityType.isValid`, so
-  reusing vanilla's type for our blocks just works — the **same reuse the soul lamps rely on** for TFC's lamp BE.
-  No behaviour code.
+- **`BarrelBlockFV` + `BarrelBlockEntityFV`** ([BarrelBlocks](../firmavanilla/src/main/java/com/firmavanilla/block/BarrelBlocks.java)):
+  each wood registers a [BarrelBlockFV](../firmavanilla/src/main/java/com/firmavanilla/block/BarrelBlockFV.java)
+  (`extends BarrelBlock`, `Properties.copy(Blocks.BARREL)`) + a `BlockItem`. It keeps the **full** vanilla barrel
+  behaviour — the `facing`/`open` blockstates, the open/close animation + sounds (the inherited opener counter) —
+  but its block-entity ([BarrelBlockEntityFV](../firmavanilla/src/main/java/com/firmavanilla/block/BarrelBlockEntityFV.java))
+  shrinks the container to **TFC's small-chest rules**: **18 slots** (two rows, not vanilla's 27) and the same
+  **item-size limit** as a TFC chest. So our barrels follow TFC's storage rules — the behaviour the (now-removed)
+  `:compat` `MixinBarrelBlockEntity` used to force onto the *vanilla* barrel, **moved here onto our own blocks**,
+  the way TFC ships its own small chests rather than by mixing into vanilla (firmavanilla stays mixin-free; TFC is a
+  compile dep). It reuses TFC's own `RestrictedChestContainer` + `CHEST_9x2` menu (`RestrictedSlot#mayPlace` →
+  `TFCChestBlockEntity.isValid`) for the GUI restriction, and `canPlaceItem` → the same `isValid` so hoppers / the
+  item-handler wrapper honour it too.
+- **Why a subclass + a custom BE type** (not vanilla's `BARREL`): `BarrelBlockEntity`'s only constructor hardcodes
+  `BlockEntityType.BARREL`, so on load that type's factory would rebuild a plain 27-slot vanilla barrel. So each
+  barrel needs its **own** registered block-entity type (`BarrelBlocks.BARREL_BE`) and `BarrelBlockEntityFV`
+  overrides `getType()` to it (and re-derives the 18-slot backing list in its ctor + on load via
+  `getContainerSize`), so save/load round-trips through our factory. (The block registry fires before the BE
+  registry, so `BarrelBlocks.ALL` is the type's valid-blocks list.)
 - **Wood scope + conditional registration** mirrors the bookshelves: TFC's 20 woods register unconditionally; AFC's
   10 and Beneath's crimson/warped register only when those mods are loaded (the wood lists are aliased from
   `BookshelfBlocks`). Client assets (blockstate/models/lang) ship for all woods (unused when a block isn't
@@ -214,10 +225,18 @@ TFC's own barrel is a fluid-sealing device, not a vanilla-style item-storage con
   including the dark/normal woods where a fixed multiply of the wood's mid-tones blended in). The generator emits
   the textures + blockstate (vanilla's facing/open variants), closed/open `cube_bottom_top` models, item model, and
   loot (drop self).
-- **Tags / tab:** joins `minecraft:mineable/axe` (shared accumulator with the bookshelves — a mod ships one file
-  per tag path, written once by the generator entry point) and the creative tab (also what makes them discoverable
-  by MineColonies). **Creative-only — no recipe yet.** The wood lists are duplicated in `BarrelBlocks.java` (via
-  `BookshelfBlocks`) and `barrels.cs`; keep them in sync.
+- **Recipe — TFC's barrel shape + the matching trapdoor.** TFC crafts its barrel as `X X`/`X X`/`XXX` (6
+  `<ns>:wood/lumber/<wood>`); these fill the **top-centre** with that wood's plank trapdoor: `XTX`/`X X`/`XXX` = 7
+  `<ns>:wood/lumber/<wood>` + 1 `<ns>:wood/planks/<wood>_trapdoor`. AFC/Beneath recipes carry a `forge:mod_loaded`
+  condition (their lumber/trapdoor exist only then), like the bookshelves.
+- **Tags — matching vanilla `minecraft:barrel`** so anything keying off them treats our barrels identically:
+  `minecraft:mineable/axe` (block; shared accumulator with the bookshelves — a mod ships one file per tag path, so
+  it's written once by the generator entry point), `minecraft:guarded_by_piglins` (block; piglins guard/anger when
+  it's opened or broken near them), and `forge:barrels/wooden` (**block + item**; what other mods key off to
+  recognise a wooden barrel — it rolls up into `forge:barrels` via that tag's own `#forge:barrels/wooden` include).
+  All `replace:false` appends; AFC/Beneath ids are `required:false`. Plus the creative tab (also what makes them
+  discoverable by MineColonies). The wood lists are duplicated in `BarrelBlocks.java` (via `BookshelfBlocks`) and
+  `barrels.cs`; keep them in sync.
 
 ## Rock tiles — per TFC rock (proof of concept)
 

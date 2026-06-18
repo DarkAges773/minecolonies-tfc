@@ -708,21 +708,14 @@ that TFC players lack), all `mctfc:`-namespaced so they add to whatever TFC leav
 `#forge:cobblestone/normal` (includes vanilla + every TFC rock cobble); `smoker` = furnace + 4 `#minecraft:logs`
 (TFC logs are in it); `blast_furnace` = furnace + 5 `#forge:ingots/wrought_iron` + 3 `tfc:ceramic/fire_brick`.
 Also `bookshelf` = the vanilla recipe (6 `#minecraft:planks` + 3 `minecraft:book`) restored — the bookshelf→TFC
-substitution was dropped, so vanilla bookshelves stay vanilla and need a recipe. (The vanilla **barrel** recipe was
-**removed** — firmavanilla now ships per-wood barrels, so the vanilla barrel is no longer made craftable here; the
-`MixinBarrelBlockEntity` tfc:chest behaviour below still applies to any vanilla barrel that exists.)
+substitution was dropped, so vanilla bookshelves stay vanilla and need a recipe. (There is **no** `barrel` recipe:
+firmavanilla now ships per-wood barrels, so the vanilla barrel is left vanilla and uncraftable in TFC.)
 
-**Vanilla barrel matches `tfc:chest`** ([MixinBarrelBlockEntity](../compat/src/main/java/com/mctfc/mixin/MixinBarrelBlockEntity.java),
-targets a vanilla class so it's remapped): **18 slots** (two rows) instead of 27, and the same item-size limit
-(items at/below `TFCConfig.SERVER.chestMaximumItemSize`, default LARGE). **Gotcha (cost a wrong first attempt):**
-`Container#canPlaceItem` does **not** gate the chest GUI — vanilla `ChestMenu` slots use base `Slot#mayPlace`
-(always `true`) and never call it, so overriding `canPlaceItem` alone let oversized items in. The fix reuses
-TFC's own `RestrictedChestContainer` (its `RestrictedSlot#mayPlace` calls the static `TFCChestBlockEntity.isValid`)
-via the `TFCContainerTypes.CHEST_9x2` menu type, so opening the barrel shows TFC's 2-row chest screen with the
-size restriction. Pieces: backing list (`@ModifyConstant` 27→18 in `<init>`) + `getContainerSize` (→18) — both
-required since the `RestrictedChestContainer` ctor asserts an 18-slot container; `createMenu` → the TFC menu; and
-`canPlaceItem` → the same static `isValid` so hoppers / the Forge item-handler wrapper honour it too. No runtime
-config toggle: the list size is fixed at construction, so a live flip would desync.
+**Vanilla barrel is no longer touched.** Earlier a `MixinBarrelBlockEntity` here shrank the *vanilla* barrel to
+`tfc:chest` rules (18 slots + item-size limit). That was **removed** along with the barrel recipe — the small-chest
+behaviour now lives on firmavanilla's **own** barrel blocks (`firmavanilla:barrel/<wood>`, via `BarrelBlockEntityFV`,
+reusing TFC's `RestrictedChestContainer`/`CHEST_9x2`/`TFCChestBlockEntity.isValid`), the way TFC ships its own small
+chests rather than by mixing into vanilla. See [docs/firmavanilla.md](firmavanilla.md) → "Wood barrels".
 
 ## Optional per-mod datapacks (Beneath) — pattern
 

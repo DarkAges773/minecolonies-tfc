@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "XTX", "X X", "XXX" ],
+  "key": {
+    "X": { "item": "tfc:wood/lumber/acacia" },
+    "T": { "item": "tfc:wood/planks/acacia_trapdoor" }
+  },
+  "result": { "item": "firmavanilla:barrel/acacia" }
+}

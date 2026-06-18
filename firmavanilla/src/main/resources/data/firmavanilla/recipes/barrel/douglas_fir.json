@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "XTX", "X X", "XXX" ],
+  "key": {
+    "X": { "item": "tfc:wood/lumber/douglas_fir" },
+    "T": { "item": "tfc:wood/planks/douglas_fir_trapdoor" }
+  },
+  "result": { "item": "firmavanilla:barrel/douglas_fir" }
+}
