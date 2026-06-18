@@ -8,6 +8,10 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Builder won't strip tagged blocks** — a new `#mctfc:builder_dont_clear` block tag protects listed world blocks from the
+  MineColonies builder's CLEAR phase: when a blueprint has air where one of these blocks already sits, the builder leaves it in
+  place instead of tearing it out. This is the air-strip path only — the builder still places real blueprint blocks normally, and
+  deliberate building demolition is unaffected. The tag is empty by default (opt-in); add block ids in a datapack and `/reload`.
 - **Vanilla soul torch → firmavanilla soul torch substitution** — `minecraft:soul_torch`/`soul_wall_torch` in a
   blueprint now substitute to `firmavanilla:soul_torch`/`soul_wall_torch` (vanilla-soul look + TFC burn-out), beside
   the existing `torch`→`tfc:torch` rules; the wall variant keeps its facing.

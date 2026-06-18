@@ -216,6 +216,10 @@ changing a feature so you don't re-derive (or undo) a hard-won fix:
 - [docs/tfc-furnace-workers.md](docs/tfc-furnace-workers.md) — design for the TFC furnace-worker rework
   (Smelter done, Cook planned): the behaviour-controller (dispatcher mixin + `FurnaceBehavior` strategy), the
   furnace-as-container + `litTime` model, and the reusable temperature-gated/duration-pooled fuel system.
+- [docs/tfc-herder-workers.md](docs/tfc-herder-workers.md) — design (PLANNED) for the TFC herder-worker rework
+  across all five herding huts (Cowhand/Shepherd/Swineherd/Chicken/Rabbit): a `HerdBridge` strategy keyed on
+  TFC's common `TFCAnimalProperties` interface, tag-based species recognition, authentic familiarity-based
+  breeding, and per-family product harvest (TFC milk fluid / `IForgeShearable` wool / `tfc:nest_box` eggs / meat).
 - [docs/substitution-rule-examples.md](docs/substitution-rule-examples.md) — copy-paste rule JSON reference.
 - [docs/curseforge-description.md](docs/curseforge-description.md) — CurseForge store description.
 

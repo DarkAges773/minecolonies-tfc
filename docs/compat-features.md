@@ -535,6 +535,28 @@ then releases it — by which point the walls are placed (non-falling substitute
   - All `@Mixin(remap = false)` (MineColonies/TFC own classes). Server-side. Once the build finishes the box is dropped and normal
     TFC collapse physics resume.
 
+## Builder won't strip tagged world blocks (CLEAR-phase protection) — DONE, in-world test pending
+
+When the MineColonies builder builds (or re-levels) a structure, its **CLEAR phase** removes any existing world block that sits
+where the blueprint cell would be cleared — so a block a player placed (or a TFC feature that grew) at a structure position gets
+torn out. MineColonies' only built-in exceptions are hardcoded: `IBuilderUndestroyable` blocks (hut cores), bedrock, already-air,
+fluids, and Structurize's `blockFluidSubstitution` placeholder — there's no tag/datapack hook to protect arbitrary (especially
+vanilla/TFC) blocks. We add one.
+
+The single gate the CLEAR phase consults is `AbstractEntityAIStructure#skipClearing(info, pos, handler)` (returning `true` leaves
+the world block in place); it's the only caller of `Operation.BLOCK_REMOVAL` for that phase.
+[MixinAbstractEntityAIStructure](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIStructure.java) (`@Mixin(remap = false)`)
+`@Inject`s HEAD-cancellable into `skipClearing` and forces `true` when the **world** block is in the
+`#mctfc:builder_dont_clear` block tag ([builder_dont_clear.json](../compat/src/main/resources/data/mctfc/tags/blocks/builder_dont_clear.json)).
+- **Air-strip path only, by design.** `skipClearing` governs only the CLEAR (air-strip) phase. Normal placement — the blueprint
+  laying a *real* block over the spot — is untouched (it's not a clear, so the protected block is overwritten as usual), and the
+  deliberate building-demolition phase has its own `skipRemoval` gate we intentionally leave alone. So the tag means "don't *erase*
+  this to empty space," not "this block is indestructible."
+- **Covers the quarrier too.** `EntityAIQuarrier` overrides `skipClearing` but calls `super` first and returns early when it's
+  `true`, so this base-class injection applies there as well.
+- **Empty by default (opt-in).** The shipped tag is empty — the feature does nothing until a datapack adds block ids (or `#tag`
+  references) and `/reload`s. Cost is one `BlockState#is(tag)` test per cleared position.
+
 ## Citizens rest for TFC's localized rain (not the global flag) — DONE, in-world test pending
 
 MineColonies citizens stop working and "rest" (the `IDLE`/`BAD_WEATHER` branch of `CitizenAI#calculateNextState`) when
