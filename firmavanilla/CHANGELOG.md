@@ -7,6 +7,12 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
 
 ## [Unreleased]
 
+### Changed
+- **Soul lamps burn fuel 2× longer than TFC lamps.** They no longer ride TFC's `#tfc:lamps` fuel tag (which would
+  also match TFC's normal-rate olive_oil/tallow, with load-order-dependent results); instead they get their own
+  `firmavanilla:soul_lamps` block tag and dedicated double-rate fuels — `soul_olive_oil` (burn_rate 16000) and
+  `soul_tallow` (3600), plus the unchanged infinite `soul_lava` (blue_steel). Lighting/filling is unchanged.
+
 ### Added
 - **Wood barrels** — functional storage barrels (`firmavanilla:barrel/<wood>`) in every wood, the form TFC lacks
   (its own barrel is a fluid-sealing device, not an item container). Openable, with the facing/open states, but

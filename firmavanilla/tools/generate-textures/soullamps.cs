@@ -123,16 +123,34 @@ static class SoulLamps
         // Catalyst item tag (datapack-overridable): seed with TFC sulfur + native-copper powders.
         // (soul lamps are added to minecraft:mineable/pickaxe in MineableTag().)
         WriteTag("firmavanilla", "items", "soul_lamp_catalyst", """{"replace":false,"values":["tfc:powder/sulfur","tfc:powder/native_copper"]}""");
-        // CRITICAL for lighting/fuelling: a TFC LampFuel only works in lamps listed by its `valid_lamps`. olive_oil +
-        // tallow use `#tfc:lamps`, so add our soul lamps to that block tag (else getFuel()==null → can't be lit).
-        WriteTag("tfc", "blocks", "lamps",
+        // Fuelling + the 2x-burn feature. A TFC LampFuel matches by (fluid, valid_lamps block); its `burn_rate` is
+        // ticks-per-mB (higher = slower = LONGER burn — see LampBlockEntity.checkHasRanOut, which drains
+        // ticksSinceUpdate / burn_rate). Soul lamps burn fuel SOUL_BURN_MULT× longer than TFC lamps.
+        //
+        // We deliberately DON'T add the soul lamps to TFC's `#tfc:lamps` block tag (the only functional consumer of
+        // which is TFC's olive_oil/tallow fuels). If we did, those normal-rate fuels would also match the soul lamps
+        // and which fuel LampFuel.get() returns first is load-order-dependent. Instead the soul lamps get their OWN
+        // block tag + dedicated fuels at the multiplied rate, so for a soul lamp ONLY these match (TFC's fuels need
+        // `#tfc:lamps`, which the soul lamps aren't in) — deterministic, and getFuel() is still non-null so they fill
+        // and light. (`#tfc:lamps` has no other functional use: TFC has no LAMPS block-tag code constant, and the
+        // item-size `tfc:lamps` is a separate ITEM tag.)
+        const int SOUL_BURN_MULT = 2;
+        int oliveRate  = 8000 * SOUL_BURN_MULT;   // TFC olive_oil = 8000
+        int tallowRate = 1800 * SOUL_BURN_MULT;   // TFC tallow    = 1800
+        WriteTag("firmavanilla", "blocks", "soul_lamps",
             "{\"replace\":false,\"values\":[" + string.Join(",", metals.Select(m => "\"" + MODID + ":soul_lamp/" + m + "\"")) + "]}");
-        // Lava is restricted to blue_steel in TFC (explicit, not the tag); mirror that for the soul blue_steel lamp
-        // via our own LampFuel entry (TFC's DataManager merges across namespaces).
+        string soulLamps_ = "{\"type\":\"tfc:tag\",\"tag\":\"" + MODID + ":soul_lamps\"}";  // valid_lamps BlockIngredient
         string lampFuelDir = Path.Combine(resRoot, "data", MODID, "tfc", "lamp_fuels");
         Directory.CreateDirectory(lampFuelDir);
+        // olive_oil + tallow at 2x rate, valid only for the soul lamps (mirrors TFC's two #tfc:lamps fuels).
+        File.WriteAllText(Path.Combine(lampFuelDir, "soul_olive_oil.json"),
+            "{\"fluid\":\"tfc:olive_oil\",\"burn_rate\":" + oliveRate + ",\"valid_lamps\":" + soulLamps_ + "}");
+        File.WriteAllText(Path.Combine(lampFuelDir, "soul_tallow.json"),
+            "{\"fluid\":\"tfc:tallow\",\"burn_rate\":" + tallowRate + ",\"valid_lamps\":" + soulLamps_ + "}");
+        // Lava is infinite (burn_rate -1) and restricted to blue_steel in TFC — mirror it (the 2x is moot for an
+        // never-depleting fuel); keyed to the single soul blue_steel lamp, like TFC's lava->blue_steel.
         File.WriteAllText(Path.Combine(lampFuelDir, "soul_lava.json"),
             """{"fluid":"minecraft:lava","burn_rate":-1,"valid_lamps":"MODID:soul_lamp/blue_steel"}""".Replace("MODID", MODID));
-        Console.WriteLine($"  soul lamps: {soulLamps} metals (glass = lamp CLUT'd through soul_fire) + blockstates/models/loot/recipes + heating + tfc:lamps + lava fuel");
+        Console.WriteLine($"  soul lamps: {soulLamps} metals (glass = lamp CLUT'd through soul_fire) + blockstates/models/loot/recipes + heating + firmavanilla:soul_lamps tag + 2x-burn fuels (olive_oil/tallow/lava)");
     }
 }

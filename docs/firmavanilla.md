@@ -510,12 +510,19 @@ to TFC's fuel-burning lamps. Registered by
     consuming one item (free in creative). Holding a powder does nothing in TFC's own lamp `use()`, so this is
     safe to intercept.
   - **Crafting**: shapeless lamp + catalyst → soul lamp (empty; the right-click path is the fuel-preserving one).
-- **Fuel validity — the gotcha that breaks lighting.** A TFC `LampFuel` only works in the lamps its
-  `valid_lamps` lists, and `LampBlockEntity.getFuel()` returns null otherwise — so a lamp not covered has fuel in
-  its tank but reads as empty and **can't be lit**. olive_oil + tallow use the `#tfc:lamps` *block tag* and lava is
-  explicit to `blue_steel`. So `generate.cs` adds all 9 soul lamps to `tfc:lamps` (merged tag) and ships a
-  `data/firmavanilla/tfc/lamp_fuels/soul_lava.json` entry (lava → `soul_lamp/blue_steel`, mirroring TFC's
-  tier-gating). Without these the soul lamps fuel but never light.
+- **Fuel validity + the 2× burn.** A TFC `LampFuel` matches by `(fluid, valid_lamps block)`, and
+  `LampBlockEntity.getFuel()` returns null otherwise — so a lamp no fuel covers has fuel in its tank but reads as
+  empty and **can't be lit/filled**. Its `burn_rate` is **ticks-per-mB** (`checkHasRanOut` drains
+  `ticksSinceUpdate / burn_rate`), so a **higher** rate burns **slower / longer**. Soul lamps deliberately **burn
+  fuel 2× longer** than TFC lamps. Rather than join TFC's `#tfc:lamps` block tag (whose only functional use is
+  TFC's normal-rate `olive_oil`/`tallow` fuels — adding the soul lamps there would make those *also* match, and
+  which fuel `getFuel()` returns first is load-order-dependent), the soul lamps get their **own**
+  `firmavanilla:soul_lamps` block tag + **dedicated fuels at double rate**: `soul_olive_oil` (burn_rate 16000, TFC
+  8000) and `soul_tallow` (3600, TFC 1800), both `valid_lamps` = `#firmavanilla:soul_lamps`, plus `soul_lava`
+  (`-1` infinite, restricted to the blue_steel soul lamp like TFC). For a soul lamp only these match (TFC's fuels
+  need `#tfc:lamps`, which the soul lamps aren't in), so it's deterministic and they still fill/light. (Safe to
+  skip `#tfc:lamps`: TFC has no LAMPS block-tag *code* constant, and the lamp item-size keys off a separate ITEM
+  tag.) Tune the multiplier via `SOUL_BURN_MULT` in `soullamps.cs`.
 - **Burns back to normal.** TFC's `LampBlockEntity#checkHasRanOut` flips `LIT` false on empty — and it runs from
   **both** `randomTick` *and* `use()` (a right-click re-checks fuel), so `SoulLampBlock` wraps **both** and reverts
   to the matching normal lamp on the lit→unlit transition. Key guard: only revert when the **tank is empty** (a
