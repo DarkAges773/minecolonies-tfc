@@ -708,8 +708,9 @@ that TFC players lack), all `mctfc:`-namespaced so they add to whatever TFC leav
 `#forge:cobblestone/normal` (includes vanilla + every TFC rock cobble); `smoker` = furnace + 4 `#minecraft:logs`
 (TFC logs are in it); `blast_furnace` = furnace + 5 `#forge:ingots/wrought_iron` + 3 `tfc:ceramic/fire_brick`.
 Also `bookshelf` = the vanilla recipe (6 `#minecraft:planks` + 3 `minecraft:book`) restored — the bookshelf→TFC
-substitution was dropped, so vanilla bookshelves stay vanilla and need a recipe. `barrel` = vanilla shape with
-`#minecraft:planks` + `#minecraft:wooden_slabs`.
+substitution was dropped, so vanilla bookshelves stay vanilla and need a recipe. (The vanilla **barrel** recipe was
+**removed** — firmavanilla now ships per-wood barrels, so the vanilla barrel is no longer made craftable here; the
+`MixinBarrelBlockEntity` tfc:chest behaviour below still applies to any vanilla barrel that exists.)
 
 **Vanilla barrel matches `tfc:chest`** ([MixinBarrelBlockEntity](../compat/src/main/java/com/mctfc/mixin/MixinBarrelBlockEntity.java),
 targets a vanilla class so it's remapped): **18 slots** (two rows) instead of 27, and the same item-size limit

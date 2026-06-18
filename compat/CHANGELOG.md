@@ -7,6 +7,11 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+### Removed
+- **Vanilla barrel crafting recipe** — the `mctfc:barrel` recipe (which restored a craftable vanilla barrel in a
+  TFC world) was removed now that **firmavanilla** ships per-wood barrels. The vanilla barrel is no longer made
+  craftable here; its `tfc:chest`-matching behaviour (`MixinBarrelBlockEntity`) is unchanged for any that exist.
+
 ### Changed
 - **Dining hall stocks food to demand, not by the stackful** — the dining hall used to try to keep
   `maxStackSize × building level` of *every* menu dish (e.g. ~160 of each at level 5), so the Chef bulk-cooked far

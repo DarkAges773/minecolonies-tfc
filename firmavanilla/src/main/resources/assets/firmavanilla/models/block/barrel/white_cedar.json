@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "firmavanilla:block/barrel/white_cedar_bottom",
+    "side": "firmavanilla:block/barrel/white_cedar_side",
+    "top": "firmavanilla:block/barrel/white_cedar_top"
+  }
+}

@@ -105,7 +105,7 @@ single `dotnet run generate.cs` command is unchanged. `generate.cs` itself is ju
 feature, then writes the cross-cutting tags). The shared engine lives in `common.cs` (the static class `Gen`:
 config — `MODID`, the `ROCKS` / `ALABASTER_COLORS` / `BAR_STAGES` lists, the tuning constants — the texture
 pipeline, file/tag I/O, and the JSON emitters used across features); each feature is a self-contained file
-(`chiseledsandstone.cs`, `bookshelves.cs`, `rocktiles.cs`, `alabaster.cs`, `copper.cs`, `prismarinedeposits.cs`,
+(`chiseledsandstone.cs`, `bookshelves.cs`, `barrels.cs`, `rocktiles.cs`, `alabaster.cs`, `copper.cs`, `prismarinedeposits.cs`,
 `soullamps.cs`, `quartz.cs`, `coarsedirt.cs`) holding its own generation logic + JSON emitters. References to
 "`generate.cs`" elsewhere in this doc mean the generator as a whole — the specific logic lives in the matching
 feature file, and shared helpers/constants (`ROCKS`, `BAR_STAGES`, …) in `common.cs` (`Gen`).
@@ -185,6 +185,39 @@ wood — block id `firmavanilla:bookshelf/<wood>`.
   `BookshelfBlocks.java` and `generate.cs`; keep them in sync.
 
 ---
+
+## Wood barrels — per wood
+
+TFC's own barrel is a fluid-sealing device, not a vanilla-style item-storage container — so the openable
+`minecraft:barrel` has no TFC equivalent. `firmavanilla` adds one per wood — block id `firmavanilla:barrel/<wood>`.
+
+- **Plain `BarrelBlock`, no subclass** ([BarrelBlocks](../firmavanilla/src/main/java/com/firmavanilla/block/BarrelBlocks.java)):
+  each wood registers `new BarrelBlock(Properties.copy(Blocks.BARREL))` + a `BlockItem`. It inherits the **full**
+  vanilla barrel behaviour — the 27-slot container, the `facing`/`open` blockstates, the open/close animation +
+  sounds — and **reuses vanilla's `BlockEntityType.BARREL`** verbatim (vanilla `BarrelBlock.newBlockEntity` returns
+  a `BarrelBlockEntity`). In 1.20.1 Forge the BE place/load/tick paths don't gate on `BlockEntityType.isValid`, so
+  reusing vanilla's type for our blocks just works — the **same reuse the soul lamps rely on** for TFC's lamp BE.
+  No behaviour code.
+- **Wood scope + conditional registration** mirrors the bookshelves: TFC's 20 woods register unconditionally; AFC's
+  10 and Beneath's crimson/warped register only when those mods are loaded (the wood lists are aliased from
+  `BookshelfBlocks`). Client assets (blockstate/models/lang) ship for all woods (unused when a block isn't
+  registered).
+- **Generated faces** ([barrels.cs](../firmavanilla/tools/generate-textures/barrels.cs)): vanilla's four barrel
+  faces (`side`/`top`/`bottom`/`top_open`) recoloured through each wood's **planks** palette via CLUT (the same
+  luminance-normalized remap as the rest of the mod). The plank palettes are extracted to
+  `input/<ns>/planks/<wood>.png`. **Hand-painted masks** per face (tool-root `barrel_<face>_mask.png`, **load-only**,
+  never auto-generated/overwritten — white = wood/CLUT, black = metal/hole) hold the metal hoops out: the masked
+  region is excluded from the wood region's normalization range (so the near-black hoops don't crush the stave
+  contrast — the unmasked `bottom` looked right while side/top read flat) and, on `top_open`, the masked hole is
+  painted as that wood's **darkest tone** with only its brightness modulated rim→centre (anchoring to the darkest
+  wood + keeping the rim below full brightness guarantees the hole reads darker than the staves on every wood,
+  including the dark/normal woods where a fixed multiply of the wood's mid-tones blended in). The generator emits
+  the textures + blockstate (vanilla's facing/open variants), closed/open `cube_bottom_top` models, item model, and
+  loot (drop self).
+- **Tags / tab:** joins `minecraft:mineable/axe` (shared accumulator with the bookshelves — a mod ships one file
+  per tag path, written once by the generator entry point) and the creative tab (also what makes them discoverable
+  by MineColonies). **Creative-only — no recipe yet.** The wood lists are duplicated in `BarrelBlocks.java` (via
+  `BookshelfBlocks`) and `barrels.cs`; keep them in sync.
 
 ## Rock tiles — per TFC rock (proof of concept)
 

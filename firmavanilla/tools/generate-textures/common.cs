@@ -81,6 +81,9 @@ static class Gen
     // file per tag path): minecraft:mineable/shovel + tfc:can_landslide get prismarine deposits AND coarse dirt.
     public static readonly List<string> shovelMineable = new();
     public static readonly List<string> canLandslide = new();
+    // minecraft:mineable/axe gets the decorative bookshelves AND the wood barrels (a mod ships one file per tag);
+    // both append already-formatted, indented+quoted entries (non-TFC ones wrapped required:false).
+    public static readonly List<string> axeMineable = new();
     public static string IdsTagBody(IEnumerable<string> ids) =>
         "{\"replace\":false,\"values\":[" + string.Join(",", ids.Select(id => "\"" + id + "\"")) + "]}";
 

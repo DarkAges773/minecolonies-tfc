@@ -61,6 +61,10 @@ input/tfc/lamp_item/<metal>.png             (each metal's lamp ITEM texture — 
 input/vanilla/brick.png                     (the vanilla brick item icon — minecraft:item/brick — relief)
 input/vanilla/quartz.png                     (the vanilla nether-quartz item icon — minecraft:item/quartz — CLUT palette)
 
+# per-wood barrels (vanilla's four barrel faces CLUT'd through each wood's PLANKS palette):
+input/vanilla/barrel_{side,top,bottom,top_open}.png   (the four vanilla barrel faces — the relief)
+input/{tfc,afc,beneath}/planks/<wood>.png             (each wood's planks — the CLUT palette; wood lists in barrels.cs)
+
 # coarse dirt (overlay = coarse_dirt − dirt, CLUT'd through a gravel palette, composited onto each TFC dirt):
 input/vanilla/coarse_dirt.png               (vanilla coarse_dirt — the coarse detail source)
 input/vanilla/dirt.png                       (vanilla plain dirt — the baseline subtracted off)
@@ -109,6 +113,12 @@ recolours both through each patina LUT into `assets/firmavanilla/.../copper_bars
 (note: `textures/item/`, not `block/`); copy them to `input/vanilla/brick.png` and `input/vanilla/quartz.png`. The
 generator CLUTs the brick icon through the quartz icon's palette into `assets/firmavanilla/textures/item/quartz_brick.png`.
 
+**Barrels** — the vanilla `block/barrel_{side,top,bottom,top_open}.png` faces come from `client-extra.jar`; copy them
+to `input/vanilla/`. Each wood's planks live at `assets/<ns>/textures/block/wood/planks/<wood>.png` in the TFC / AFC /
+Beneath jars (same path for all three); copy each to `input/<ns>/planks/<wood>.png`. The generator CLUTs every barrel
+face through each wood's plank palette into `assets/firmavanilla/textures/block/barrel/<wood>_<face>.png`. Wood lists
+are in `barrels.cs` (mirroring the bookshelves).
+
 ## Running
 
 ```
@@ -131,6 +141,16 @@ exactly where flecks appear, then re-run the generator and it uses your edited m
 Each is auto-created the first time (and rebuilt only with `dotnet run generate.cs -- regen-mask`, or if the file
 is missing) from granite's tile structure — which every rock shares, since the CLUT preserves the pattern's
 luminance ordering, so one mask per pattern serves all 20 rocks.
+
+## Barrel masks (editable)
+
+The per-wood barrels CLUT vanilla's barrel faces through each wood's planks, but the metal hoops / open hole are
+held out via a **hand-painted mask per face** in the tool root (tracked, alongside the grain masks): `../barrel_side_mask.png`,
+`../barrel_top_mask.png`, `../barrel_top_open_mask.png`. **White = wood** (recoloured through the planks), **black =
+metal/hole** (vanilla's pixel kept as-is). Black pixels are also excluded from the wood region's luminance-normalization
+range, so the hoops don't crush the stave contrast (the bottom face is all wood, so it has no mask). Unlike the
+luminance-derived grain masks these are **load-only** — the generator never creates or overwrites them, so a hand
+edit is safe; paint the pixels and re-run. A missing mask falls back to a plain unmasked CLUT (with a warning).
 
 ## Patina palettes (generated, reusable)
 

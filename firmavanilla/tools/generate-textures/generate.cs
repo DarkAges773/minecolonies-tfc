@@ -31,6 +31,7 @@ int prismarine  = PrismarineDeposits.Generate();   // before CoarseDirt: both fe
 SoulLamps.Generate();
 Quartz.Generate();
 CoarseDirt.Generate();
+int barrels    = Barrels.Generate();
 
 // ---- cross-cutting tags written ONCE (a mod can ship only one file per tag path) ----
 // minecraft:mineable/pickaxe + the vanilla stairs/slabs/walls shape tags are pure functions of the config lists.
@@ -41,5 +42,7 @@ WriteTag("minecraft", "blocks", "walls", ShapeTag("tile_wall", "alabaster_tile_w
 // minecraft:mineable/shovel + tfc:can_landslide get prismarine deposits AND coarse dirt (accumulated above).
 WriteTag("minecraft", "blocks", "mineable/shovel", IdsTagBody(shovelMineable));
 WriteTag("tfc", "blocks", "can_landslide", IdsTagBody(canLandslide));
+// minecraft:mineable/axe gets the decorative bookshelves AND the wood barrels (accumulated above).
+WriteTag("minecraft", "blocks", "mineable/axe", ValuesTag(axeMineable));
 
-Console.WriteLine($"Done: {sandstone} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants + {patina} patina palettes + {copperBars} copper-bar stages + {copperForms} copper-form blocks + {prismarine} prismarine deposits written to {resRoot}");
+Console.WriteLine($"Done: {sandstone} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants + {patina} patina palettes + {copperBars} copper-bar stages + {copperForms} copper-form blocks + {prismarine} prismarine deposits + {barrels} barrel wood-variants written to {resRoot}");

@@ -58,7 +58,9 @@ static class Bookshelves
         // enchantment_power_provider (enchanting-table power) and forge:bookshelves (block + item). replace:false
         // appends to the existing tags; AFC/Beneath entries are required:false so they're skipped when the mod is absent.
         string tagBody = "{\n  \"replace\": false,\n  \"values\": [\n" + string.Join(",\n", tagEntries) + "\n  ]\n}\n";
-        WriteTag("minecraft", "blocks", "mineable/axe", tagBody);
+        // mineable/axe is SHARED with the wood barrels — accumulate and let the entry point write it once (a mod can
+        // ship only one file per tag path). The other two are bookshelf-only.
+        axeMineable.AddRange(tagEntries);
         WriteTag("minecraft", "blocks", "enchantment_power_provider", tagBody);
         WriteTag("forge", "blocks", "bookshelves", tagBody);
         WriteTag("forge", "items", "bookshelves", tagBody);

@@ -8,6 +8,13 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
 ## [Unreleased]
 
 ### Added
+- **Wood barrels** — functional vanilla-style storage barrels (`firmavanilla:barrel/<wood>`) in every wood, the
+  form TFC lacks (its own barrel is a fluid-sealing device, not an item container). Plain `BarrelBlock` reusing
+  vanilla's barrel block-entity, so they're real openable 27-slot containers with the facing/open states. Faces
+  are vanilla's barrel relief recoloured into each wood's planks palette by the bundled .NET asset generator (the
+  metal hoops kept as a dark band, the open-top hole painted as that wood's shadowed interior). Covers TFC's 20
+  woods always, plus AFC (10) and Beneath (crimson/warped) when those mods are present; in the creative tab and
+  `mineable/axe`. Creative-only for now (no recipe).
 - Initial split-out of decorative TFC building blocks into their own standalone mod (depends only on
   TerraFirmaCraft).
 - Non-falling "cemented" cobblestone twins for every cobble block (vanilla + TFC + earlier-loaded mods),

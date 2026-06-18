@@ -1,6 +1,7 @@
 package com.firmavanilla;
 
 import com.firmavanilla.block.AlabasterBlocks;
+import com.firmavanilla.block.BarrelBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.CoarseDirtBlocks;
 import com.firmavanilla.block.CopperWeathering;
@@ -40,6 +41,9 @@ public class FirmaVanilla
         SandstoneBlocks.init(modBus);
         // Decorative full-block bookshelves (enchanting power) per wood — TFC always, AFC/Beneath when present.
         BookshelfBlocks.init(modBus);
+        // Functional vanilla-style storage barrels per wood (plain BarrelBlock, vanilla BE reused) — TFC always,
+        // AFC/Beneath when present. Faces are CLUT-generated from each wood's planks.
+        BarrelBlocks.init(modBus);
         // Decorative "tiles" blocks (deepslate-tiles style) per TFC rock — CLUT-generated textures.
         TileBlocks.init(modBus);
         // Alabaster tile + pillar (purpur recoloured) in TFC's 16 dye colours — CLUT-generated textures.
