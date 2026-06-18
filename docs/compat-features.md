@@ -22,7 +22,9 @@ vanilla block, pool on the TFC-result tag) — never a fixed `to` + `to_tag` on 
   **copper** (`hanging_sign/copper/<wood>`); the candidate pool offers the wood re-pick (copper kept). Bamboo is special
   (`*_block` → log, `*_mosaic*` → TFC palm mosaic). Singletons default to oak: `minecraft:chest`, `trapped_chest`,
   `crafting_table` (→ `oak_workbench`), `lectern` (→ `tfc:wood/lectern/oak`; TFC lecterns are per-wood
-  `tfc:wood/lectern/<wood>`). Plus a per-form candidate pool so the player can pick any TFC wood. The
+  `tfc:wood/lectern/<wood>`), and the two firmavanilla per-wood forms TFC lacks — `bookshelf` →
+  `firmavanilla:bookshelf/oak` and `barrel` → `firmavanilla:barrel/oak` (each with its own any-wood re-pick pool).
+  Plus a per-form candidate pool so the player can pick any TFC wood. The
   **nether woods (crimson/warped) are NOT mapped to TFC here** — they're handled 1:1 by the optional Beneath
   datapack (Beneath ships real crimson/warped wood); see "Optional per-mod datapacks".
 - **Stone** ([tfc_stone.json](../compat/src/main/resources/data/mctfc/block_substitutions/tfc_stone.json)): vanilla

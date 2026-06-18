@@ -7,6 +7,13 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **Vanilla barrel → firmavanilla wood barrel substitution** — placing a blueprint's `minecraft:barrel` now
+  substitutes to `firmavanilla:barrel/oak` by default, with an any-wood re-pick pool (`mctfc:subst/wood/barrel`,
+  all TFC woods; AFC/Beneath woods join via their conditional datapacks) — mirroring the decorative-bookshelf wiring.
+  When **AFC** is present its datapack overrides the default to `firmavanilla:barrel/cypress` (priority 1, matching
+  AFC's spruce→cypress mapping).
+
 ### Removed
 - **Vanilla barrel handling moved to firmavanilla** — both the `mctfc:barrel` crafting recipe (which restored a
   craftable vanilla barrel in a TFC world) and `MixinBarrelBlockEntity` (which shrank the *vanilla* barrel to
