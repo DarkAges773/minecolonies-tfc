@@ -62,7 +62,9 @@ vanilla block, pool on the TFC-result tag) — never a fixed `to` + `to_tag` on 
   uncolored `tfc:alabaster/bricks` — each with a colour pool (`mctfc:subst/alabaster/{raw,bricks}`) that *includes
   the uncolored base* so the GUI offers the pool on the default. **Soul lantern** → firmavanilla soul lamp
   (default wrought_iron, `lit=true`; any-metal pool) is hand-written in [defaults.json](../compat/src/main/resources/data/mctfc/block_substitutions/defaults.json)
-  beside the regular lantern rule (it needs `apply_properties`).
+  beside the regular lantern rule (it needs `apply_properties`). **Soul torch** / **soul wall torch** →
+  `firmavanilla:soul_torch` / `soul_wall_torch` (single block, no pool — wall facing carries via shared-property
+  copy), also in `defaults.json` beside the regular `torch`→`tfc:torch` rules.
 - **Pool tags** live under `data/mctfc/tags/blocks/subst/{wood,rock,firmavanilla,alabaster,…}/*.json` (one per form, listing every TFC
   variant). The rule files and tags are emitted by [gen_tfc_substitutions.sh](../compat/gen_tfc_substitutions.sh)
   (re-run if TFC's rock/wood set changes); they're plain static JSON, so `/reload`-able and editable. Validated:

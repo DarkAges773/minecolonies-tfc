@@ -8,6 +8,9 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Vanilla soul torch → firmavanilla soul torch substitution** — `minecraft:soul_torch`/`soul_wall_torch` in a
+  blueprint now substitute to `firmavanilla:soul_torch`/`soul_wall_torch` (vanilla-soul look + TFC burn-out), beside
+  the existing `torch`→`tfc:torch` rules; the wall variant keeps its facing.
 - **Vanilla barrel → firmavanilla wood barrel substitution** — placing a blueprint's `minecraft:barrel` now
   substitutes to `firmavanilla:barrel/oak` by default, with an any-wood re-pick pool (`mctfc:subst/wood/barrel`,
   all TFC woods; AFC/Beneath woods join via their conditional datapacks) — mirroring the decorative-bookshelf wiring.
