@@ -399,7 +399,12 @@ public final class TfcHerd
     /**
      * Choose which TFC animal the worker should cull, given the whole herd:
      * <ol>
-     *   <li><b>OLD</b> animals first (they no longer breed or produce) — least familiar among them;</li>
+     *   <li><b>Resume an interrupted kill</b> — the most-hurt <i>cull-eligible</i> animal (below full health), if any.
+     *       Butchering lands one hit per cycle, so if the loop is interrupted and re-picks a fresh animal each time it
+     *       just spreads damage that then regenerates and nothing ever dies; finishing the already-hurt animal first
+     *       avoids that. Gated to cull-eligible animals (OLD, or a surplus-gender adult) so a reserved breeder hurt by
+     *       something else is never finished off.</li>
+     *   <li><b>OLD</b> animals next (they no longer breed or produce) — least familiar among them;</li>
      *   <li>then surplus adults from the <b>species + gender</b> with the largest overshoot of its own reserve
      *       ({@link #maleReserve}/{@link #femaleReserve}) — least familiar among that group.</li>
      * </ol>
@@ -410,12 +415,6 @@ public final class TfcHerd
      */
     public static Animal pickButcherTarget(final List<? extends Animal> animals, final int level)
     {
-        final Animal old = leastFamiliar(animals, a -> ageOf(a) == TFCAnimalProperties.Age.OLD);
-        if (old != null)
-        {
-            return old;
-        }
-
         final Map<EntityType<?>, int[]> adultsBySpecies = new HashMap<>();
         for (final Animal a : animals)
         {
@@ -424,6 +423,18 @@ public final class TfcHerd
                 final int[] count = adultsBySpecies.computeIfAbsent(a.getType(), k -> new int[2]);
                 count[((TFCAnimalProperties) a).getGender() == TFCAnimalProperties.Gender.MALE ? 0 : 1]++;
             }
+        }
+
+        final Animal hurt = mostHurtCullable(animals, level, adultsBySpecies);
+        if (hurt != null)
+        {
+            return hurt;
+        }
+
+        final Animal old = leastFamiliar(animals, a -> ageOf(a) == TFCAnimalProperties.Age.OLD);
+        if (old != null)
+        {
+            return old;
         }
 
         EntityType<?> cullType = null;
@@ -461,6 +472,51 @@ public final class TfcHerd
     private static TFCAnimalProperties.Age ageOf(final Animal animal)
     {
         return animal instanceof TFCAnimalProperties tfc ? tfc.getAgeType() : null;
+    }
+
+    /**
+     * The most-hurt <b>cull-eligible</b> animal that is below full health (lowest current health wins), or {@code null}
+     * if none are hurt. Lets the butcher resume an interrupted kill instead of starting over on a fresh animal.
+     */
+    private static Animal mostHurtCullable(final List<? extends Animal> animals, final int level, final Map<EntityType<?>, int[]> adultsBySpecies)
+    {
+        Animal best = null;
+        float bestHealth = Float.MAX_VALUE;
+        for (final Animal a : animals)
+        {
+            if (!(a instanceof TFCAnimalProperties) || a.getHealth() >= a.getMaxHealth() || !isCullable(a, level, adultsBySpecies))
+            {
+                continue;
+            }
+            if (best == null || a.getHealth() < bestHealth)
+            {
+                best = a;
+                bestHealth = a.getHealth();
+            }
+        }
+        return best;
+    }
+
+    /** Whether this animal is a legitimate cull target right now: an OLD animal, or an adult of a species+gender over its reserve. */
+    private static boolean isCullable(final Animal animal, final int level, final Map<EntityType<?>, int[]> adultsBySpecies)
+    {
+        final TFCAnimalProperties.Age age = ageOf(animal);
+        if (age == TFCAnimalProperties.Age.OLD)
+        {
+            return true;
+        }
+        if (age != TFCAnimalProperties.Age.ADULT)
+        {
+            return false;
+        }
+        final int[] count = adultsBySpecies.get(animal.getType());
+        if (count == null)
+        {
+            return false;
+        }
+        return ((TFCAnimalProperties) animal).getGender() == TFCAnimalProperties.Gender.MALE
+                 ? count[0] > maleReserve(level)
+                 : count[1] > femaleReserve(level);
     }
 
     /** The least-familiar animal matching the filter (used to pick the least-invested cull target), or null. */
