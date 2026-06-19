@@ -1,8 +1,13 @@
 package com.mctfc.mixin;
 
 import com.mctfc.herding.TfcHerd;
+import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
+import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
+import com.minecolonies.api.util.InventoryUtils;
 import com.minecolonies.core.entity.ai.workers.production.herders.AbstractEntityAIHerder;
+import com.minecolonies.core.entity.ai.workers.production.herders.EntityAIWorkChickenHerder;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
@@ -21,7 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.DECIDE;
+import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.HERDER_PICKUP;
 import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.IDLE;
+import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.START_WORKING;
 
 /**
  * Reworks the shared herder loop to TFC's husbandry for TFC livestock, leaving vanilla animals (and non-TFC worlds)
@@ -100,6 +108,63 @@ public abstract class MixinAbstractEntityAIHerder
         {
             cir.setReturnValue(IDLE);
         }
+    }
+
+    /**
+     * Route an idle Chicken Herder to {@code HERDER_PICKUP} when a nest box holds collectable eggs. TFC chickens lay
+     * into {@code tfc:nest_box} blocks (not on the ground), which the vanilla pickup never checks — so without this
+     * the herder never gathers eggs. Only when otherwise idle (so breeding/feeding/butchering keep priority); the
+     * mixed-species halt runs at HEAD and cancels before this, so a halted herder collects nothing.
+     */
+    @Inject(method = "decideWhatToDo", at = @At("RETURN"), cancellable = true)
+    private void mctfc$collectEggsDecide(final CallbackInfoReturnable<IAIState> cir)
+    {
+        if (cir.getReturnValue() == START_WORKING
+              && (Object) this instanceof EntityAIWorkChickenHerder
+              && TfcHerd.findEggNestBox(((AbstractEntityAIBasicInvoker) this).mctfc$building()) != null)
+        {
+            cir.setReturnValue(HERDER_PICKUP);
+        }
+    }
+
+    /**
+     * For the Chicken Herder, harvest eggs from a {@code tfc:nest_box} during the pickup state: walk to the box and
+     * pull its non-fertilized (food) eggs ({@link TfcHerd#collectFoodEggs}), leaving fertilized eggs to hatch. When
+     * no nest box has eggs we fall through to vanilla ground pickup (so dropped items are still collected). Counts as
+     * an action so the eggs get dumped to the hut on schedule.
+     */
+    @Inject(method = "pickupItems", at = @At("HEAD"), cancellable = true)
+    private void mctfc$collectEggs(final CallbackInfoReturnable<IAIState> cir)
+    {
+        if (!((Object) this instanceof EntityAIWorkChickenHerder))
+        {
+            return;
+        }
+        final AbstractEntityAIHerder<?, ?> self = (AbstractEntityAIHerder<?, ?>) (Object) this;
+        final IBuilding building = ((AbstractEntityAIBasicInvoker) this).mctfc$building();
+        final BlockPos box = TfcHerd.findEggNestBox(building);
+        if (box == null)
+        {
+            return; // no eggs to gather — let vanilla ground pickup run
+        }
+        if (!((AbstractEntityAIBasicInvoker) this).mctfc$walkToWorkPos(box))
+        {
+            cir.setReturnValue(self.getState()); // keep walking to the nest box
+            return;
+        }
+
+        final AbstractEntityCitizen worker = ((AbstractAISkeletonAccessor) this).mctfc$worker();
+        final List<ItemStack> eggs = TfcHerd.collectFoodEggs(building.getColony().getWorld(), box);
+        for (final ItemStack egg : eggs)
+        {
+            InventoryUtils.transferItemStackIntoNextBestSlotInItemHandler(egg, worker.getInventoryCitizen());
+        }
+        if (!eggs.isEmpty())
+        {
+            worker.getCitizenExperienceHandler().addExperience(0.5);
+            self.incrementActionsDoneAndDecSaturation();
+        }
+        cir.setReturnValue(DECIDE);
     }
 
     /** BREED candidates for TFC: fertile adults that need feeding today (so the worker familiarizes them toward mating). */

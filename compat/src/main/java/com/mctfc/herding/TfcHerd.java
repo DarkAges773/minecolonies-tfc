@@ -6,6 +6,9 @@ import com.minecolonies.api.colony.jobs.registry.JobEntry;
 import com.minecolonies.api.crafting.ItemStorage;
 import com.minecolonies.api.util.WorldUtil;
 import com.minecolonies.core.colony.buildings.modules.AnimalHerdingModule;
+import net.dries007.tfc.common.blockentities.NestBoxBlockEntity;
+import net.dries007.tfc.common.capabilities.egg.EggCapability;
+import net.dries007.tfc.common.capabilities.egg.IEgg;
 import net.dries007.tfc.common.entities.livestock.DairyAnimal;
 import net.dries007.tfc.common.entities.livestock.TFCAnimalProperties;
 import net.dries007.tfc.common.entities.livestock.WoolyAnimal;
@@ -22,6 +25,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -386,6 +390,96 @@ public final class TfcHerd
             return List.of();
         }
         return wooly.onSheared(fakePlayer, shears, level, pos, shears.getEnchantmentLevel(Enchantments.BLOCK_FORTUNE));
+    }
+
+    // ── Products: eggs (Chicken Herder) ───────────────────────────────────────────────────────────────────────
+
+    /**
+     * A {@code tfc:nest_box} in the hut holding a collectable (non-fertilized) egg, or {@code null}. TFC chickens lay
+     * into nest boxes rather than dropping eggs on the ground, so the vanilla ground-pickup never finds them; the
+     * worker visits the box instead. Scans the building's bounds for the block entity (nest boxes are player-placed,
+     * and kept by {@code #mctfc:builder_dont_clear}).
+     */
+    public static BlockPos findEggNestBox(final IBuilding building)
+    {
+        if (building == null)
+        {
+            return null;
+        }
+        final Level level = building.getColony().getWorld();
+        if (level == null)
+        {
+            return null;
+        }
+        for (final BlockPos pos : BlockPos.betweenClosed(building.getCorners().getA(), building.getCorners().getB()))
+        {
+            final BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof NestBoxBlockEntity && nestBoxHasFoodEgg(be))
+            {
+                return pos.immutable();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Extract every non-fertilized (food) egg from the nest box at {@code pos}, <b>leaving fertilized eggs to hatch</b>
+     * (that's how a TFC flock grows — the nest box incubates them itself). Returns the eggs taken (already removed
+     * from the box) for the caller to bank.
+     */
+    public static List<ItemStack> collectFoodEggs(final Level level, final BlockPos pos)
+    {
+        final BlockEntity be = level.getBlockEntity(pos);
+        if (!(be instanceof NestBoxBlockEntity))
+        {
+            return List.of();
+        }
+        final IItemHandler handler = be.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+        if (handler == null)
+        {
+            return List.of();
+        }
+        final List<ItemStack> eggs = new ArrayList<>();
+        for (int slot = 0; slot < handler.getSlots(); slot++)
+        {
+            if (isFoodEgg(handler.getStackInSlot(slot)))
+            {
+                final ItemStack taken = handler.extractItem(slot, Integer.MAX_VALUE, false);
+                if (!taken.isEmpty())
+                {
+                    eggs.add(taken);
+                }
+            }
+        }
+        return eggs;
+    }
+
+    private static boolean nestBoxHasFoodEgg(final BlockEntity be)
+    {
+        final IItemHandler handler = be.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+        if (handler == null)
+        {
+            return false;
+        }
+        for (int slot = 0; slot < handler.getSlots(); slot++)
+        {
+            if (isFoodEgg(handler.getStackInSlot(slot)))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A non-fertilized egg (food); a fertilized egg is left in the nest box to hatch into a chick. */
+    private static boolean isFoodEgg(final ItemStack stack)
+    {
+        if (stack.isEmpty())
+        {
+            return false;
+        }
+        final IEgg egg = EggCapability.get(stack);
+        return egg != null && !egg.isFertilized();
     }
 
     /**

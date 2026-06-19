@@ -8,6 +8,10 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Chicken Herder collects eggs from nest boxes** — TFC chickens lay into `tfc:nest_box` blocks instead of dropping
+  eggs on the ground, so the vanilla Chicken Herder never gathered them. The worker now visits nest boxes in its hut
+  and harvests the **food (non-fertilized) eggs**, leaving **fertilized** eggs in the box to hatch into chicks (that's
+  how the flock grows). Place nest boxes in the hut; they're protected from the builder's air-clear.
 - **Mixed-species pen halts the worker** — a herding worker now raises a blocking problem and **stops tending** when
   its pen holds more than one suitable TFC species (TFC breeds, familiarizes and reserves per species, so a mixed pen
   can't be tended properly). It resumes — and the warning clears itself — once the pen is down to a single species.

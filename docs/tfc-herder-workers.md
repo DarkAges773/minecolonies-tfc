@@ -11,7 +11,7 @@ Status legend: **DONE** (built & in-tree), **PLANNED** (designed here, not yet b
 [TfcHerd](../compat/src/main/java/com/mctfc/herding/TfcHerd.java) bridge, and the two mixins
 ([MixinAnimalHerdingModule](../compat/src/main/java/com/mctfc/mixin/MixinAnimalHerdingModule.java),
 [MixinAbstractEntityAIHerder](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIHerder.java)) are built.
-Products (milk/wool/eggs — §4) remain **PLANNED**.
+**All three products are now DONE too** (§4): milk (Cowhand), wool (Shepherd) and eggs (Chicken Herder).
 
 ---
 
@@ -223,10 +223,18 @@ adding a hut is a registration line, not new mixin plumbing.
   vanilla `Sheep`), which the HEAD inject skips for TFC wooly animals — so the inert **Dyeing** setting is hidden
   from the GUI by [MixinSettingsModuleView](../compat/src/main/java/com/mctfc/mixin/MixinSettingsModuleView.java).
   Vanilla sheep fall through to the vanilla (shear + maybe-dye) path.
-- **Eggs (Chicken Herder).** Eggs are laid into `tfc:nest_box` blocks, so harvesting = the worker visiting nest
-  boxes in the building bounds and pulling eggs out of the `NestBoxBlockEntity`, **not** ground pickup. This is
-  why `tfc:nest_box` was added to `#mctfc:builder_dont_clear` — the builder must not strip nest boxes the herder
-  depends on. (Placement of nest boxes in the hut blueprint / by the worker is an open item — see §7.)
+- **Eggs (Chicken Herder).** *Implemented* — TFC chickens lay into `tfc:nest_box` blocks, not on the ground, so the
+  vanilla pickup (ground `ItemEntity`s) finds nothing. We reuse the existing `HERDER_PICKUP` state via two injects in
+  [MixinAbstractEntityAIHerder](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIHerder.java) gated to
+  `EntityAIWorkChickenHerder` (the chicken herder overrides no egg/pickup method, so the hooks live on the shared base
+  with an `instanceof` gate): (1) a `decideWhatToDo` RETURN inject routes an idle herder to `HERDER_PICKUP` when
+  [TfcHerd.findEggNestBox](../compat/src/main/java/com/mctfc/herding/TfcHerd.java) finds a box with a collectable egg
+  (scans the building bounds via `getCorners()` for a `NestBoxBlockEntity`); (2) a `pickupItems` HEAD inject walks to
+  that box and pulls its **non-fertilized (food) eggs** out of the BE's `ITEM_HANDLER` (`TfcHerd.collectFoodEggs`),
+  banks them, and counts an action. **Fertilized eggs are left in the box** — the nest box's own `serverTick`
+  incubates and hatches them into chicks, so that's how the flock grows (the egg analogue of breeding). When no box
+  has eggs we fall through to vanilla ground pickup. `tfc:nest_box` is in `#mctfc:builder_dont_clear` so the builder
+  won't strip player-placed boxes. Fertilized vs food is read from TFC's `EggCapability` (`IEgg.isFertilized`).
 - **Meat (all).** Unchanged: `butcherAnimals` → `animal.hurt`. Works as soon as recognition lands. Population cap
   (`level × 2`, `chanceToButcher`) is reused as-is.
 
