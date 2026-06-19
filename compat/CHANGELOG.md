@@ -8,6 +8,9 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Mixed-species pen halts the worker** — a herding worker now raises a blocking problem and **stops tending** when
+  its pen holds more than one suitable TFC species (TFC breeds, familiarizes and reserves per species, so a mixed pen
+  can't be tended properly). It resumes — and the warning clears itself — once the pen is down to a single species.
 - **Shepherd shears TFC wooly animals** — the Shepherd now shears TFC sheep/alpaca/musk ox (not just vanilla sheep)
   when an animal is ready (familiarity + product cooldown), driving TFC's own shear path (`IForgeShearable`) so it
   yields **TFC wool** and fires TFC's product event — **FirmaLife/add-on wool variants** come out correctly. No

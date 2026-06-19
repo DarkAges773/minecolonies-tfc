@@ -1,6 +1,7 @@
 package com.mctfc.mixin;
 
 import com.mctfc.herding.TfcHerd;
+import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 import com.minecolonies.core.entity.ai.workers.production.herders.AbstractEntityAIHerder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Animal;
@@ -19,6 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+
+import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.IDLE;
 
 /**
  * Reworks the shared herder loop to TFC's husbandry for TFC livestock, leaving vanilla animals (and non-TFC worlds)
@@ -81,6 +84,22 @@ public abstract class MixinAbstractEntityAIHerder
     private void mctfc$familiarize(final Animal animal)
     {
         TfcHerd.familiarize(animal, mctfc$heldFood(), mctfc$fakePlayer());
+    }
+
+    /**
+     * Halt all tending while the pen holds more than one TFC species: the worker idles until the player separates it
+     * to a single species (the paired {@link TfcHerd#MIXED_SPECIES} worker warning is raised from
+     * {@code MixinAbstractBuilding}). TFC breeds/familiarises/reserves <b>per species</b>, so a mixed pen can't be
+     * tended properly. Returning {@code IDLE} (not {@code START_WORKING}) also stops the Cowhand milking and Shepherd
+     * shearing, since those only run when this shared {@code decideWhatToDo} returns {@code START_WORKING}.
+     */
+    @Inject(method = "decideWhatToDo", at = @At("HEAD"), cancellable = true)
+    private void mctfc$haltOnMixedSpecies(final CallbackInfoReturnable<IAIState> cir)
+    {
+        if (TfcHerd.penSpeciesCount(((AbstractEntityAIBasicInvoker) this).mctfc$building()) > 1)
+        {
+            cir.setReturnValue(IDLE);
+        }
     }
 
     /** BREED candidates for TFC: fertile adults that need feeding today (so the worker familiarizes them toward mating). */

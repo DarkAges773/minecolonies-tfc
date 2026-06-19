@@ -16,6 +16,7 @@ import com.mctfc.data.AfcDataPack;
 import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.FirmaLifeDataPack;
 import com.mctfc.food.FoodPreservation;
+import com.mctfc.herding.TfcHerd;
 import com.mctfc.network.McFarmingNetwork;
 import com.mctfc.placement.TfcSoilPlacementHandler;
 import com.mojang.logging.LogUtils;
@@ -68,6 +69,8 @@ public class MineColoniesTFC
         modBus.addListener(FirmaLifeDataPack::onAddPackFinders);
         // Register the colony-storage food-preservation trait (TFC food decays slower in colony-owned racks).
         modBus.addListener(FoodPreservation::onCommonSetup);
+        // Register herder interaction validators (e.g. the "more than one species in this pen" worker warning).
+        modBus.addListener(TfcHerd::onCommonSetup);
         // Network channel for the farming bridge (per-field harvest-mode toggle from the field GUI).
         McFarmingNetwork.register();
         // Let the builder place substituted TFC grass / grass-path by requesting the matching TFC dirt

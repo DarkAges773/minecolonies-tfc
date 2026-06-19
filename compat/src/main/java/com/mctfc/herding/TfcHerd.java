@@ -1,12 +1,17 @@
 package com.mctfc.herding;
 
+import com.minecolonies.api.colony.buildings.IBuilding;
+import com.minecolonies.api.colony.interactionhandling.InteractionValidatorRegistry;
 import com.minecolonies.api.colony.jobs.registry.JobEntry;
 import com.minecolonies.api.crafting.ItemStorage;
+import com.minecolonies.api.util.WorldUtil;
+import com.minecolonies.core.colony.buildings.modules.AnimalHerdingModule;
 import net.dries007.tfc.common.entities.livestock.DairyAnimal;
 import net.dries007.tfc.common.entities.livestock.TFCAnimalProperties;
 import net.dries007.tfc.common.entities.livestock.WoolyAnimal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
@@ -20,6 +25,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -29,6 +35,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -95,6 +102,51 @@ public final class TfcHerd
         final TagKey<EntityType<?>> tag = TAGS.computeIfAbsent(jobEntry.getKey().getPath(),
           path -> TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("mctfc", "herding/" + path)));
         return ForgeRegistries.ENTITY_TYPES.tags().getTag(tag).contains(animal.getType());
+    }
+
+    // ── Pen hygiene: one species per hut ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Interaction key for the "more than one species in this pen" worker warning. TFC breeds, familiarises and
+     * reserves <b>per species</b>, so a mixed pen splits the worker's effort and over-crowds with each species'
+     * breeding reserve — the player is better off one species per hut. The validator (registered in
+     * {@link #onCommonSetup}) keeps the warning shown while that's the case and auto-clears it once the pen is down
+     * to a single species.
+     */
+    public static final String MIXED_SPECIES = "com.mctfc.interaction.herder.mixedspecies";
+
+    /** How many distinct TFC species the herding hut currently pens (animals its herding module recognises). */
+    public static int penSpeciesCount(final IBuilding building)
+    {
+        if (building == null)
+        {
+            return 0;
+        }
+        final Level level = building.getColony().getWorld();
+        if (level == null)
+        {
+            return 0;
+        }
+        final HashSet<EntityType<?>> species = new HashSet<>();
+        for (final AnimalHerdingModule module : building.getModulesByType(AnimalHerdingModule.class))
+        {
+            for (final Animal a : WorldUtil.getEntitiesWithinBuilding(level, Animal.class, building, module::isCompatible))
+            {
+                if (isTfc(a))
+                {
+                    species.add(a.getType());
+                }
+            }
+        }
+        return species.size();
+    }
+
+    /** Register herder interaction validators on common setup (the mixed-species warning auto-clears at 1 species). */
+    public static void onCommonSetup(final FMLCommonSetupEvent event)
+    {
+        event.enqueueWork(() -> InteractionValidatorRegistry.registerStandardPredicate(
+          Component.translatable(MIXED_SPECIES),
+          citizen -> penSpeciesCount(citizen.getWorkBuilding()) > 1));
     }
 
     /**
