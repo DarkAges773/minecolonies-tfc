@@ -1,7 +1,6 @@
 {
   "replace": false,
   "values": [
-    "tfc:alabaster/bricks",
     "tfc:alabaster/bricks/white",
     "tfc:alabaster/bricks/light_gray",
     "tfc:alabaster/bricks/gray",

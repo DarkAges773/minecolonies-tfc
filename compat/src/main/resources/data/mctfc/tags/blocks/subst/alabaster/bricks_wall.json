@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "tfc:alabaster/bricks/white_wall",
+    "tfc:alabaster/bricks/light_gray_wall",
+    "tfc:alabaster/bricks/gray_wall",
+    "tfc:alabaster/bricks/black_wall",
+    "tfc:alabaster/bricks/brown_wall",
+    "tfc:alabaster/bricks/red_wall",
+    "tfc:alabaster/bricks/orange_wall",
+    "tfc:alabaster/bricks/yellow_wall",
+    "tfc:alabaster/bricks/lime_wall",
+    "tfc:alabaster/bricks/green_wall",
+    "tfc:alabaster/bricks/cyan_wall",
+    "tfc:alabaster/bricks/light_blue_wall",
+    "tfc:alabaster/bricks/blue_wall",
+    "tfc:alabaster/bricks/purple_wall",
+    "tfc:alabaster/bricks/magenta_wall",
+    "tfc:alabaster/bricks/pink_wall"
+  ]
+}

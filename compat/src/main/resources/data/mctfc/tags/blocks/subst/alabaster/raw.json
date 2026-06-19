@@ -1,7 +1,6 @@
 {
   "replace": false,
   "values": [
-    "tfc:alabaster/raw",
     "tfc:alabaster/raw/white",
     "tfc:alabaster/raw/light_gray",
     "tfc:alabaster/raw/gray",

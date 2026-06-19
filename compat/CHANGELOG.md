@@ -63,6 +63,11 @@ All notable changes to this mod are documented here. The format is based on
   AFC's spruce→cypress mapping).
 
 ### Changed
+- **End-stone substitution fixed & extended** — the end stone / end-stone-brick rules pointed at uncolored
+  `tfc:alabaster/raw` and `tfc:alabaster/bricks`, which aren't real blocks (TFC alabaster is colour-only), so they
+  silently did nothing. They now resolve to **`light_gray`** TFC alabaster, and the previously-missing
+  **end-stone-brick stairs, slab and wall** are covered too (`tfc:alabaster/bricks/light_gray_{stairs,slab,wall}`).
+  Each still offers the pick-any-colour GUI pool.
 - **Herder huts drop their vanilla-only chores in TFC** — the Cowhand no longer wastes time attempting **mooshroom
   stew** (TFC spawns no mooshrooms), and the Shepherd's auto-**dyeing** no longer applies (TFC sheep aren't vanilla
   `Sheep`, and the TFC shear path doesn't dye). Their now-inert settings (**Stewing Amount** on the Cowhand, **Dyeing**
