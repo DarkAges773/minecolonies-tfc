@@ -32,6 +32,8 @@
     "MixinAnimalHerdingModule",
     "MixinAbstractEntityAIHerder",
     "MixinEntityAIWorkCowboy",
+    "MixinEntityAIWorkShepherd",
+    "MixinEquipmentTypeEntry",
     "AbstractAISkeletonAccessor"
   ],
   "client": [

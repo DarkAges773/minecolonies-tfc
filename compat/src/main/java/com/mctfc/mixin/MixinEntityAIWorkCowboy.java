@@ -85,17 +85,22 @@ public abstract class MixinEntityAIWorkCowboy
     }
 
     /**
-     * Have the hut request a ceramic jug (the default milk container) when it tends TFC dairy animals, so the
-     * courier keeps the Cowhand stocked — paralleling how vanilla requests buckets. Any held fluid container works
-     * to milk; the jug is just the cheap default we ask for.
+     * Have the hut request ceramic jugs (the default milk container) when it tends TFC dairy animals, so the courier
+     * keeps the Cowhand stocked — paralleling how vanilla requests buckets. Each TFC milking consumes an empty jug
+     * (it becomes a <i>filled</i> milk-jug), so we stock the hut's {@code MILKING_AMOUNT} (a full milking cycle's
+     * worth), gated on {@code canTryToMilk()} exactly like vanilla's input-container request. Any held fluid
+     * container works to milk; the jug is just the cheap default we ask for.
      */
     @Inject(method = "getExtraItemsNeeded", at = @At("RETURN"))
     private void mctfc$requestMilkContainer(final CallbackInfoReturnable<List<ItemStorage>> cir)
     {
         final AbstractEntityAIHerder<?, ?> self = (AbstractEntityAIHerder<?, ?>) (Object) this;
-        if (!self.searchForAnimals(TfcHerd::isDairy).isEmpty())
+        final IBuilding building = ((AbstractEntityAIBasicInvoker) this).mctfc$building();
+        if (building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).canTryToMilk()
+              && !self.searchForAnimals(TfcHerd::isDairy).isEmpty())
         {
-            cir.getReturnValue().add(TfcHerd.milkContainerRequest());
+            final int amount = Math.max(1, building.getSetting(BuildingCowboy.MILKING_AMOUNT).getValue());
+            cir.getReturnValue().add(new ItemStorage(TfcHerd.milkContainerRequest().getItemStack().copy(), amount));
         }
     }
 }

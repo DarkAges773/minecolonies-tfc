@@ -4,6 +4,8 @@ import com.minecolonies.api.colony.jobs.registry.JobEntry;
 import com.minecolonies.api.crafting.ItemStorage;
 import net.dries007.tfc.common.entities.livestock.DairyAnimal;
 import net.dries007.tfc.common.entities.livestock.TFCAnimalProperties;
+import net.dries007.tfc.common.entities.livestock.WoolyAnimal;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -13,6 +15,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
@@ -48,13 +52,10 @@ public final class TfcHerd
       Set.of("cowboy", "shepherd", "swineherder", "chickenherder", "rabbitherder");
 
     /**
-     * Per-{@code DECIDE} chance the herder enters the FEED state. MineColonies' default is {@code 0.1}; we raise it
-     * because for TFC animals FEED is the <i>sole</i> familiarization path (BREED is skipped — see
-     * {@code MixinAbstractEntityAIHerder}), so the worker needs to feed more often to keep a herd familiar within a
-     * TFC day. Applied via {@code @ModifyConstant} on {@code decideWhatToDo}.
+     * Per-{@code DECIDE} chance the herder enters the individual FEED (familiarization) state. MineColonies' default
+     * is {@code 0.1}; we raise it so a herd familiarizes within reasonable time. Applied via {@code @ModifyConstant}.
      */
     public static final double FEED_CHANCE = 0.33;
-
 
     /** Universal TFC feed: a grain, which sits in {@code #tfc:foods/grains} — accepted by every herded TFC species. */
     private static final ResourceLocation FEED_ID = new ResourceLocation("tfc", "food/wheat_grain");
@@ -92,26 +93,46 @@ public final class TfcHerd
     }
 
     /**
-     * Worth tending today: a TFC animal that isn't {@code OLD} (old animals don't breed/produce) and is still
-     * hungry (TFC's once-per-day feed gate).
+     * Worth feeding individually to <b>familiarize</b> — a hungry TFC animal that can still gain familiarity (a
+     * {@code CHILD}, or an adult below its {@code adultFamiliarityCap}, matching TFC's own {@code eatFood} cap) and
+     * accepts the held food (TFC's {@code isFood}, which encodes the rotten rule — a picky animal refuses rotten
+     * grain, a pig accepts it). Drives the individual FEED state; animals at their cap are skipped (no benefit), and
+     * breeding-ready ones are pair-fed by BREED instead. This is the "default feeding until the familiarity cap."
      */
-    public static boolean isTendable(final Animal animal)
+    public static boolean shouldFamiliarize(final Animal animal, final ItemStack held)
     {
         return animal instanceof TFCAnimalProperties tfc
-                 && tfc.getAgeType() != TFCAnimalProperties.Age.OLD
-                 && tfc.isHungry();
+                 && tfc.isHungry()
+                 && (tfc.getAgeType() == TFCAnimalProperties.Age.CHILD || tfc.getFamiliarity() < tfc.getAdultFamiliarityCap())
+                 && tfc.isFood(held);
     }
 
     /**
-     * Whether the worker should feed this TFC animal the food it's currently holding — tendable today <i>and</i> the
-     * held item is valid food for it. The food test is TFC's own {@code isFood}, which is where the <b>rotten</b>
-     * rule lives: a rotten item is "not food" for an animal that doesn't {@code eatsRottenFood}, but rotten food is
-     * still food for one that does (e.g. pigs). So the worker won't waste-feed rotten grain to a picky animal, but a
-     * pig still accepts it. Used to filter the FEED-state selection.
+     * A breed-feed candidate: a TFC <b>adult</b> that is already familiar enough to mate
+     * ({@code familiarity ≥ READY_TO_MATE_FAMILIARITY}, i.e. 0.3 — TFC won't mate below this), not pregnant, and
+     * hungry today, so feeding it clears hunger into TFC's ready-to-mate state. Used as the herder's
+     * {@code isBreedAble} for TFC — paired up by {@link #canPair} so only animals with a partner get fed. (Animals
+     * below the mate threshold are familiarized first via {@link #shouldFamiliarize}.)
      */
-    public static boolean willAcceptFeed(final Animal animal, final ItemStack held)
+    public static boolean isBreedingCandidate(final Animal animal)
     {
-        return isTendable(animal) && ((TFCAnimalProperties) animal).isFood(held);
+        return animal instanceof TFCAnimalProperties tfc
+                 && tfc.getAgeType() == TFCAnimalProperties.Age.ADULT
+                 && !tfc.isFertilized()
+                 && tfc.isHungry()
+                 && tfc.getFamiliarity() >= TFCAnimalProperties.READY_TO_MATE_FAMILIARITY;
+    }
+
+    /**
+     * Two TFC animals form a valid breeding pair — opposite genders (each is already a {@link #isBreedingCandidate}
+     * from the breedables filter). TFC breeds a male with a female, so the worker feeds one of each together and
+     * skips an animal with no opposite-gender partner.
+     */
+    public static boolean canPair(final Animal first, final Animal second)
+    {
+        return first instanceof TFCAnimalProperties a
+                 && second instanceof TFCAnimalProperties b
+                 && a.getGender() != b.getGender();
     }
 
     // ── Products: milk (Cowhand) ──────────────────────────────────────────────────────────────────────────────
@@ -192,6 +213,41 @@ public final class TfcHerd
         {
             fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, previousHeld);
         }
+    }
+
+    // ── Products: wool (Shepherd) ─────────────────────────────────────────────────────────────────────────────
+
+    /** A TFC wooly animal (sheep/alpaca/musk ox — base TFC and add-ons). */
+    public static boolean isWooly(final Animal animal)
+    {
+        return animal instanceof WoolyAnimal;
+    }
+
+    /** A TFC wooly animal that can be sheared right now — TFC's own gate (familiarity + product cooldown + adult). */
+    public static boolean isReadyWooly(final Animal animal)
+    {
+        return animal instanceof WoolyAnimal wooly && wooly.isReadyForAnimalProduct();
+    }
+
+    /**
+     * Shear a ready TFC wooly animal via Forge's {@code IForgeShearable.onSheared} — TFC's own shear path. That call
+     * fires TFC's {@code AnimalProductEvent} (so FirmaLife/add-ons can vary the wool per species), sets the product
+     * cooldown, and <b>returns</b> the wool drops directly (unlike milk, no container is involved). Returns an empty
+     * list if the animal isn't a ready TFC wooly. The caller banks the drops and damages the shears.
+     */
+    public static List<ItemStack> shear(final Animal animal, final ItemStack shears, final FakePlayer fakePlayer)
+    {
+        if (fakePlayer == null || !(animal instanceof WoolyAnimal wooly))
+        {
+            return List.of();
+        }
+        final Level level = animal.level();
+        final BlockPos pos = animal.blockPosition();
+        if (!wooly.isShearable(shears, level, pos))
+        {
+            return List.of();
+        }
+        return wooly.onSheared(fakePlayer, shears, level, pos, shears.getEnchantmentLevel(Enchantments.BLOCK_FORTUNE));
     }
 
     /**

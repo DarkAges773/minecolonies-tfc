@@ -128,19 +128,33 @@ abstractions:
    rabbits). This single hook also fixes herd-counting, feed-target search, and butcher-target search, since they
    all funnel through `isCompatible`.
 
-2. **`MixinAbstractEntityAIHerder`** *(familiarization via the FEED state only)*. TFC animals are kept out of the
-   vanilla **BREED** state entirely — `isBreedAble` returns `false` for them, so BREED is skipped (it still drives
-   vanilla animals in a mixed herd). This is deliberate: TFC breeds familiarized adults on its own, and the BREED
-   loop feeds *two* animals in one tick whenever both are adjacent (TFC animals, tempted by the held grain, swarm
-   the worker), which looks like feeding the whole herd at once. Familiarization instead runs solely through the
-   **FEED** state (`feedAnimal`), which walks up to and feeds one animal at a time — three redirects make it
-   TFC-correct: filter `searchForAnimals` to TFC animals that are hungry today **and** will accept the worker's
-   held grain (`willAcceptFeed` → TFC's `isFood`, which encodes the **rotten** rule — a picky animal refuses rotten
-   grain, a pig accepts it); familiarize the fed animal on the broadcast-eat event (TFC `eatFood`, raising
-   familiarity + clearing hunger); and suppress `ageUp` on TFC babies (force-aging would corrupt TFC's calendar
-   aging). The held grain is read via `AbstractAISkeletonAccessor` (`@Accessor` for the deeply-inherited `worker`
-   field). Familiarizing with the **real held stack** (not a synthetic one) is what makes the rotten rule
-   authentic. The same mixin also reworks **butchering** for TFC herds on two axes: *which* — redirects
+2. **`MixinAbstractEntityAIHerder`** *(two-phase husbandry: familiarize → breed)*. TFC's `isReadyToMate` requires an
+   adult that's familiar (≥ 0.3), not pregnant, mate-cooldown-elapsed, **and fed that day** (`!isHungry`); its brain
+   `BreedBehavior` then pairs a male with an opposite-gender partner. And `eatFood` only raises familiarity while an
+   animal can still gain it (a child, or an adult below its `adultFamiliarityCap`). So two phases:
+   - **FEED (individual familiarization)** — the FEED state's `searchForAnimals` is filtered to TFC animals that are
+     hungry and `TfcHerd.shouldFamiliarize` (child or below cap, accepts the held grain); the fed animal is
+     familiarized on the broadcast-eat event (`TfcHerd.familiarize` → TFC `eatFood`), and `ageUp` is suppressed for
+     TFC babies. This builds familiarity up to the cap; at-cap animals are skipped (no benefit). FEED chance is
+     raised to `TfcHerd.FEED_CHANCE` (0.33) via `@ModifyConstant`.
+   - **BREED (pair mating)** — once an adult is mate-ready (≥ 0.3), `breedAnimals` finds it a `canMate` partner and
+     feeds both. `isBreedAble` → `TfcHerd.isBreedingCandidate` (fertile, non-pregnant, hungry, **mate-ready** adult);
+     `canMate` → `TfcHerd.canPair` (opposite genders, so a fitting **pair is fed at once** and partnerless animals
+     are skipped — no waste); `setInLove` → feed the animal. Both fed today + ≥ 0.3 → TFC mates them. BREED is
+     checked before FEED, so a ready pair breeds while everyone else familiarizes.
+
+   **The hut's "Breeding" setting and TFC.** `decideWhatToDo` only enters `HERDER_BREED` when `canBreedChildren()`
+   (= `building.getSetting(AbstractBuilding.BREEDING)`) is on, and we leave that gate untouched — so the **BREED**
+   phase already honours the toggle. The **FEED** (familiarization) phase is deliberately **not** gated on it
+   (design decision): familiarity also unlocks products (milk/wool) and tameness, so the worker keeps familiarizing
+   regardless. Note this makes the toggle a *soft* control for TFC herds — because TFC's `BreedBehavior` mates
+   adults **autonomously** the moment both are familiar + fed-that-day (no worker BREED state needed), feeding alone
+   can still produce offspring while the toggle is off. Honouring it strictly would mean suppressing FEED on
+   mate-ready adults, which we chose not to do.
+
+   The held grain is read via `AbstractAISkeletonAccessor` (`@Accessor` for the deeply-inherited `worker` field);
+   familiarizing with the **real held stack** keeps TFC's rotten-food rule authentic (`isFood` inside `eatFood`). The
+   same mixin also reworks **butchering** for TFC herds on two axes: *which* — redirects
    `butcherAnimals`' `searchForAnimals` to pick the cull target by husbandry priority (**OLD first, then
    least-familiar**, `TfcHerd.pickButcherTarget`), handing the butcher loop a one-element list of that animal; and
    *whether* — `@Inject`s `chanceToButcher` (`TfcHerd.butcherChance`) to replace MineColonies' "more than 3 adults
@@ -181,10 +195,15 @@ adding a hut is a registration line, not new mixin plumbing.
   the filled container. A **vanilla bucket is deliberately not used** — it can't hold FirmaLife's milk variants.
   MineColonies' hardcoded `instanceof Cow || Goat` search and fixed `getMilkOutputItem` swap are both bypassed for
   TFC dairy. The mooshroom-stew path (`COWBOY_STEW`) is disabled for TFC (no mooshrooms in TFC).
-- **Wool (Shepherd).** TFC wooly animals are `IForgeShearable`; call `onSheared(fakePlayer, shears, level, pos,
-  fortune)` when `hasProduct()` and bank the returned TFC wool. The shepherd already carries shears. Drop the
-  vanilla dye step (TFC wool colour is per-species, not dyed-on-sheep). Keep the existing skill→quantity scaling
-  where it still maps.
+- **Wool (Shepherd).** *Implemented* — TFC wooly animals (sheep/alpaca/musk ox) are `IForgeShearable`, and TFC's
+  `onSheared` itself fires the `AnimalProductEvent` (so FirmaLife/add-ons can vary the wool) and **returns the wool
+  drops directly** — simpler than milk (no container). [MixinEntityAIWorkShepherd](../compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkShepherd.java)
+  has two injects, because the Shepherd's `decideWhatToDo` only enters `SHEPHERD_SHEAR` when its hardcoded
+  `findShearableSheep()` (`instanceof Sheep`) is non-null: (1) a `decideWhatToDo` RETURN inject routes an idle
+  worker to `SHEPHERD_SHEAR` when `SHEARING` is on and a *ready* TFC `WoolyAnimal` is present; (2) a `shearSheep`
+  HEAD inject shears a ready `WoolyAnimal` via [TfcHerd.shear](../compat/src/main/java/com/mctfc/herding/TfcHerd.java)
+  (Forge `onSheared` — respects familiarity + cooldown), banks the wool, damages the shears. No vanilla
+  colored-wool / sheep-dyeing for TFC. Vanilla sheep fall through to the vanilla path.
 - **Eggs (Chicken Herder).** Eggs are laid into `tfc:nest_box` blocks, so harvesting = the worker visiting nest
   boxes in the building bounds and pulling eggs out of the `NestBoxBlockEntity`, **not** ground pickup. This is
   why `tfc:nest_box` was added to `#mctfc:builder_dont_clear` — the builder must not strip nest boxes the herder
@@ -199,13 +218,14 @@ adding a hut is a registration line, not new mixin plumbing.
 Chosen approach: **the worker familiarizes animals the real TFC way; TFC's own rules then gate breeding and
 products.** No bypass — a colony herd ramps up like a player's would.
 
-- The worker's **FEED** step (`feedAnimal`, one animal at a time) feeds **TFC food** (a TFC grain via the
-  swapped `getBreedingItems`) to animals via TFC's `eatFood(stack, hand, fakePlayer)`, which raises familiarity at
-  most ~once/day and respects the age-based familiarity cap (so animals raised from `CHILD` reach high
-  familiarity; adults cap low — exactly TFC's mechanic). The vanilla BREED state is skipped for TFC (see §3).
-- Once two opposite-gender `ADULT`s clear `isReadyToMate()`, **TFC's brain `BreedBehavior` mates them with no
-  colony involvement.** The herder doesn't force `setInLove`; it just keeps the herd fed/familiar and culls to
-  the cap. Likewise products flow only when `isReadyForAnimalProduct()` is satisfied.
+- **Familiarize first.** The individual FEED step feeds **TFC food** (a grain via the swapped `getBreedingItems`)
+  to any hungry animal that can still gain familiarity — a child, or an adult below its `adultFamiliarityCap` —
+  via TFC's `eatFood`, ~once/day, respecting the age-based cap. This is the default feeding, run until the cap;
+  at-cap animals are skipped (no benefit).
+- **Then breed in pairs.** Once an adult is familiar enough (≥ 0.3), the BREED step pair-feeds it together with an
+  opposite-gender partner; an animal with no partner is skipped (no waste). Both being fed today + ≥ 0.3 satisfies
+  TFC's `isReadyToMate()` (adult, familiar, not pregnant, **fed that day**, cooldown elapsed) and **TFC's brain
+  `BreedBehavior` mates them**. Products likewise flow only when `isReadyForAnimalProduct()` is satisfied.
 - `OLD` animals are preferred butcher targets (they no longer breed/produce) — a natural fit for the existing
   "furthest-from-centre, prefers shaded" butcher selection, extended with an age check.
 

@@ -4,6 +4,7 @@ import com.mctfc.herding.TfcHerd;
 import com.minecolonies.core.entity.ai.workers.production.herders.AbstractEntityAIHerder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.FakePlayer;
@@ -20,35 +21,34 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * Reworks the shared herder loop to TFC's familiarity husbandry for TFC livestock, while leaving vanilla animals
- * (and non-TFC worlds) on the original path. MineColonies breeds via vanilla love-mode
- * ({@code isBreedAble} → {@code canMate} → {@code setInLove}); TFC animals never enter vanilla love — TFC breeds
- * familiarized adults on its own (brain {@code BreedBehavior}). So for TFC the worker's whole job is to keep the
- * herd fed/familiar; TFC mates them.
+ * Reworks the shared herder loop to TFC's husbandry for TFC livestock, leaving vanilla animals (and non-TFC worlds)
+ * on the original path. TFC animals never enter vanilla love-mode; instead TFC's {@code isReadyToMate} requires an
+ * adult that is familiar enough (≥ 0.3), not already pregnant, and — crucially — <b>fed that day</b>
+ * ({@code !isHungry}), with the mate cooldown elapsed. Its brain {@code BreedBehavior} then pairs a male with a
+ * valid opposite-gender partner. So breeding is genuinely <b>pair-based</b>: feeding <i>both</i> of a fitting pair
+ * today is what makes them mate.
  *
- * <p>The gate for TFC is {@link TfcHerd#isTendable} (adult/child, not {@code OLD}, and still {@code isHungry} —
- * TFC's once-per-day feed window). Feeding via TFC's {@code eatFood} clears hunger for the day, so a fed animal
- * isn't picked again until tomorrow.
- *
- * <p><b>Familiarization runs through the FEED state only, one animal at a time.</b> We do <i>not</i> let the
- * vanilla BREED state run for TFC animals: {@code isBreedAble} returns {@code false} for them, so BREED is skipped
- * (it still drives vanilla animals in a mixed herd). BREED feeds <i>two</i> animals in a single tick whenever both
- * are already adjacent — and TFC animals, tempted by the grain the worker holds, swarm and cluster — which read as
- * "feeding the whole herd at once." {@code feedAnimal}, which walks up to and feeds a single animal, is the sole,
- * consistent familiarizer. Its vanilla logic needs three fixes for TFC:
+ * <p>This needs <b>two</b> phases — familiarize first, then breed in pairs:
  * <ul>
- *   <li><b>selection</b> — MineColonies picks by its own {@code fedRecently} ~5-minute per-worker cooldown (far
- *       shorter than a TFC day) and by iteration order; we filter {@code searchForAnimals} so a TFC animal is
- *       eligible only while {@code willAcceptFeed} — hungry today <i>and</i> the held grain is valid food for it
- *       (TFC's {@code isFood}, which encodes the rotten rule: a picky animal refuses rotten grain, a pig accepts
- *       it) — so the worker neither re-feeds the already-fed nor wastes rotten grain on animals that won't eat it;</li>
- *   <li><b>action</b> — the vanilla feed only force-ages babies, never familiarizing adults; we familiarize the fed
- *       TFC animal (adult or baby) on the broadcast-eat event, which raises familiarity and clears hunger;</li>
- *   <li><b>aging</b> — we suppress {@code ageUp} for TFC babies (force-aging would corrupt TFC's calendar aging).</li>
+ *   <li><b>FEED</b> (individual familiarization) — TFC's {@code eatFood} raises familiarity only while an animal can
+ *       still gain it (a child, or an adult below its {@code adultFamiliarityCap}). So the individual FEED state
+ *       feeds any such hungry animal ({@link TfcHerd#shouldFamiliarize}) to build it toward the mate threshold —
+ *       the "default feeding until the familiarity cap." At-cap animals are skipped (no benefit).</li>
+ *   <li><b>BREED</b> (pair mating) — once an adult is familiar enough (≥ 0.3), MineColonies' {@code breedAnimals}
+ *       finds it a {@code canMate} partner and feeds both. We point its pieces at TFC: {@code isBreedAble} →
+ *       {@link TfcHerd#isBreedingCandidate} (fertile, non-pregnant, hungry, <b>mate-ready</b> adult); {@code canMate}
+ *       → {@link TfcHerd#canPair} (opposite genders — so the worker feeds a fitting <b>pair at once</b> and skips an
+ *       animal with no partner, no wasted food); and the {@code setInLove} action → feed the animal (raising
+ *       familiarity + clearing hunger). Both being fed today + ≥ 0.3 satisfies TFC's {@code isReadyToMate} and its
+ *       brain {@code BreedBehavior} mates them.</li>
  * </ul>
+ * BREED is checked before FEED, so a mate-ready pair is bred while everyone else is familiarized.
  *
- * {@code @Mixin(remap = false)} — MineColonies' own class/members; the redirected vanilla calls carry
- * {@code remap = true} on their {@code @At}. See {@code docs/tfc-herder-workers.md}.
+ * <p>Butchering is also TFC-aware: {@code chanceToButcher} and {@code butcherAnimals} use the per-species,
+ * female-weighted reserve (see {@link TfcHerd#butcherChance}/{@link TfcHerd#pickButcherTarget}).
+ *
+ * {@code @Mixin(remap = false)} — MineColonies' own class/members; redirected vanilla calls carry {@code remap = true}
+ * on their {@code @At}. See {@code docs/tfc-herder-workers.md}.
  */
 @Mixin(value = AbstractEntityAIHerder.class, remap = false)
 public abstract class MixinAbstractEntityAIHerder
@@ -63,7 +63,7 @@ public abstract class MixinAbstractEntityAIHerder
         return ((AbstractEntityAIBasicInvoker) this).mctfc$getFakePlayer();
     }
 
-    /** The food the worker is currently holding (equipped from the breeding-item list before feeding). */
+    /** The food the worker is currently holding (the breeding item it equips before feeding a pair). */
     private ItemStack mctfc$heldFood()
     {
         return ((AbstractAISkeletonAccessor) this).mctfc$worker().getMainHandItem();
@@ -80,55 +80,59 @@ public abstract class MixinAbstractEntityAIHerder
         TfcHerd.familiarize(animal, mctfc$heldFood(), mctfc$fakePlayer());
     }
 
-    /**
-     * Keep TFC animals out of the vanilla BREED state — TFC breeds them itself once familiar, and the BREED loop's
-     * feed-two-at-once behaviour is the "feeds the whole herd at once" the FEED-only path avoids. Vanilla animals
-     * are unaffected, so a mixed herd still breeds its vanilla members normally.
-     */
+    /** BREED candidates for TFC: fertile adults that need feeding today (so the worker familiarizes them toward mating). */
     @Inject(method = "isBreedAble", at = @At("HEAD"), cancellable = true)
-    private static void mctfc$tfcSkipsVanillaBreeding(final Animal entity, final CallbackInfoReturnable<Boolean> cir)
+    private static void mctfc$tfcBreedAble(final Animal entity, final CallbackInfoReturnable<Boolean> cir)
     {
         if (TfcHerd.isTfc(entity))
         {
-            cir.setReturnValue(false);
+            cir.setReturnValue(TfcHerd.isBreedingCandidate(entity));
         }
     }
 
-    /**
-     * Replace MineColonies' butcher gate ({@code >3 adults} over a {@code level × 2} cap) for TFC herds: always cull
-     * when an OLD animal is present (even below any gate), otherwise cull only while more than
-     * {@link TfcHerd#MIN_BREEDING_PAIRS} breedable pairs remain. {@link TfcHerd#butcherChance} returns {@code null}
-     * for a non-TFC herd, leaving MineColonies' logic in place.
-     */
-    @Inject(method = "chanceToButcher", at = @At("HEAD"), cancellable = true)
-    private void mctfc$tfcButcherGate(final List<? extends Animal> allAnimals, final CallbackInfoReturnable<Double> cir)
+    /** TFC pairs by gender: a male + female form the pair the worker feeds together; same-gender never pairs. */
+    @Inject(method = "canMate", at = @At("HEAD"), cancellable = true)
+    private static void mctfc$tfcCanMate(final Animal first, final Animal second, final CallbackInfoReturnable<Boolean> cir)
     {
-        final Double chance = TfcHerd.butcherChance(allAnimals, mctfc$buildingLevel());
-        if (chance != null)
+        if (TfcHerd.isTfc(first) || TfcHerd.isTfc(second))
         {
-            cir.setReturnValue(chance);
+            cir.setReturnValue(TfcHerd.canPair(first, second));
+        }
+    }
+
+    /** Breed action for TFC: feed the animal TFC food (raise familiarity + clear hunger) instead of vanilla love-mode. */
+    @Redirect(method = "breedTwoAnimals",
+      at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/world/entity/animal/Animal;setInLove(Lnet/minecraft/world/entity/player/Player;)V",
+        remap = true))
+    private void mctfc$tendInsteadOfLove(final Animal animal, final Player player)
+    {
+        if (TfcHerd.isTfc(animal))
+        {
+            mctfc$familiarize(animal);
+        }
+        else
+        {
+            animal.setInLove(player);
         }
     }
 
     /**
-     * FEED-state animal selection: only consider a TFC animal that is hungry today <i>and</i> will accept the food
-     * the worker is currently holding ({@code willAcceptFeed} → TFC's {@code isFood}, which encodes the rotten rule).
-     * So the worker won't walk to / waste grain on an animal that's already fed, nor on a picky animal when the held
-     * grain is rotten — but a pig (which eats rotten food) is still fed. Vanilla animals are unaffected.
+     * Individual FEED state = <b>familiarization</b>: select a TFC animal that's hungry today and can still gain
+     * familiarity ({@link TfcHerd#shouldFamiliarize} — a child or an adult below its cap, that accepts the held
+     * grain). This is the "default feeding until the familiarity cap"; mate-ready animals are pair-fed by BREED
+     * instead, and at-cap animals are skipped (no benefit). Vanilla animals are unaffected.
      */
     @Redirect(method = "feedAnimal",
       at = @At(value = "INVOKE",
         target = "Lcom/minecolonies/core/entity/ai/workers/production/herders/AbstractEntityAIHerder;searchForAnimals(Ljava/util/function/Predicate;)Ljava/util/List;"))
-    private List<? extends Animal> mctfc$feedAcceptingTfcOnly(final AbstractEntityAIHerder self, final Predicate<Animal> predicate)
+    private List<? extends Animal> mctfc$familiarizeHungryTfc(final AbstractEntityAIHerder self, final Predicate<Animal> predicate)
     {
         final ItemStack held = mctfc$heldFood();
-        return self.searchForAnimals(predicate.and(a -> !TfcHerd.isTfc(a) || TfcHerd.willAcceptFeed(a, held)));
+        return self.searchForAnimals(predicate.and(a -> !TfcHerd.isTfc(a) || TfcHerd.shouldFamiliarize(a, held)));
     }
 
-    /**
-     * FEED-state feed action: the eat-event fires for every fed animal (baby or adult), so this is where we
-     * actually raise familiarity for TFC livestock — which also clears hunger for the day.
-     */
+    /** FEED action for TFC: raise familiarity (TFC {@code eatFood}) on the broadcast-eat event, which also clears hunger. */
     @Redirect(method = "feedAnimal",
       at = @At(value = "INVOKE",
         target = "Lnet/minecraft/world/level/Level;broadcastEntityEvent(Lnet/minecraft/world/entity/Entity;B)V",
@@ -142,6 +146,7 @@ public abstract class MixinAbstractEntityAIHerder
         level.broadcastEntityEvent(entity, event);
     }
 
+    /** Don't force-age a TFC baby in the FEED state (that would corrupt TFC's calendar aging); vanilla unaffected. */
     @Redirect(method = "feedAnimal",
       at = @At(value = "INVOKE",
         target = "Lnet/minecraft/world/entity/animal/Animal;ageUp(IZ)V",
@@ -155,14 +160,26 @@ public abstract class MixinAbstractEntityAIHerder
     }
 
     /**
+     * Replace MineColonies' butcher gate for TFC herds: always cull when an OLD animal is present, otherwise cull
+     * while some species exceeds its per-gender reserve. {@link TfcHerd#butcherChance} returns {@code null} for a
+     * non-TFC herd, leaving MineColonies' logic in place.
+     */
+    @Inject(method = "chanceToButcher", at = @At("HEAD"), cancellable = true)
+    private void mctfc$tfcButcherGate(final List<? extends Animal> allAnimals, final CallbackInfoReturnable<Double> cir)
+    {
+        final Double chance = TfcHerd.butcherChance(allAnimals, mctfc$buildingLevel());
+        if (chance != null)
+        {
+            cir.setReturnValue(chance);
+        }
+    }
+
+    /**
      * BUTCHER-state target selection: pick the TFC animal to cull by husbandry priority (OLD first, then the
      * species+gender most over its reserve — see {@link TfcHerd#pickButcherTarget}) instead of MineColonies'
-     * furthest-and-sheltered choice. We hand the butcher loop a one-element list of that animal so it kills exactly
-     * it. When there's no valid TFC cull target we must <b>not</b> fall back to vanilla selection for a TFC herd —
-     * that would let it kill a reserved breeding animal (the gate and the picker can briefly disagree as the herd
-     * changes between ticks). So: if any TFC animal is present, return an empty list (cull nothing this pass);
-     * only a purely vanilla herd falls through to MineColonies' own selection. The {@code chanceToButcher} gate is
-     * handled separately.
+     * furthest-and-sheltered choice. We hand the butcher loop a one-element list of that animal. When there's no
+     * valid TFC cull target we must not fall back to vanilla selection for a TFC herd (it would kill a reserved
+     * breeder), so we return an empty list; only a purely vanilla herd uses MineColonies' own selection.
      */
     @Redirect(method = "butcherAnimals",
       at = @At(value = "INVOKE",
@@ -177,8 +194,6 @@ public abstract class MixinAbstractEntityAIHerder
             chosen.add(target);
             return chosen;
         }
-        // No valid TFC cull target: protect the per-species reserve by culling nothing if any TFC animal is present;
-        // only a purely vanilla herd uses MineColonies' own selection.
         for (final Animal a : all)
         {
             if (TfcHerd.isTfc(a))
@@ -190,10 +205,9 @@ public abstract class MixinAbstractEntityAIHerder
     }
 
     /**
-     * Raise the per-{@code DECIDE} FEED chance from MineColonies' {@code 0.1} to {@link TfcHerd#FEED_CHANCE}. Since
-     * BREED is skipped for TFC, FEED is the only familiarization path, so it needs to fire more often to keep a herd
-     * familiar within a TFC day. {@code ordinal = 1} targets the FEED threshold specifically — the PICKUP branch
-     * uses the same {@code 0.1} literal (ordinal 0), which we leave alone.
+     * Raise the per-{@code DECIDE} FEED (familiarization) chance from MineColonies' {@code 0.1} to
+     * {@link TfcHerd#FEED_CHANCE}, so a herd familiarizes in reasonable time. {@code ordinal = 1} targets the FEED
+     * threshold — the PICKUP branch uses the same {@code 0.1} literal (ordinal 0), which we leave alone.
      */
     @ModifyConstant(method = "decideWhatToDo", constant = @Constant(doubleValue = 0.1, ordinal = 1), require = 1)
     private double mctfc$feedChance(final double original)

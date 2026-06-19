@@ -8,18 +8,25 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Shepherd shears TFC wooly animals** — the Shepherd now shears TFC sheep/alpaca/musk ox (not just vanilla sheep)
+  when an animal is ready (familiarity + product cooldown), driving TFC's own shear path (`IForgeShearable`) so it
+  yields **TFC wool** and fires TFC's product event — **FirmaLife/add-on wool variants** come out correctly. No
+  vanilla colored-wool or sheep-dyeing for TFC animals. Vanilla sheep still shear the vanilla way.
 - **Cowhand milks TFC dairy animals** — the Cowhand now milks TFC cows/goats/yaks (not just vanilla cows) by driving
   TFC's own milking: when an animal is ready (familiarity + product cooldown), the worker fills a held generic TFC
   fluid container (it requests a **ceramic jug**; any held container works) with the animal's milk, respecting TFC's
   rules and firing TFC's product event — so **FirmaLife's per-animal milk variants (goat/yak milk)** come out
   correctly. A vanilla bucket isn't used (it can't hold the variant fluids). Vanilla cows still milk the vanilla way.
+  The Cowhand now stocks **as many ceramic jugs as its Milking Amount setting** (each TFC milking uses up an empty
+  jug), so a full milking cycle isn't throttled to courier round-trips.
 - **Herding huts tend TFC livestock (recognition + breeding)** — the Cowhand, Shepherd, Swineherd, Chicken Herder and
   Rabbit Hutch now recognize TFC animals (cow/goat/yak, sheep/alpaca/musk ox, pig, chicken/duck/quail, rabbit) instead
-  of only vanilla ones, driven by per-hut `#mctfc:herding/<job>` entity tags. Their worker breeds them the TFC way —
-  feeding TFC grain to raise **familiarity** so TFC's own husbandry mates them — rather than vanilla love-mode, and
-  butchers them for TFC meat. Feeding follows TFC's food rules: the worker feeds **hungry** animals one at a time
-  (TFC's once-per-day window), and **rotten** grain familiarizes only animals that eat rotten food (e.g. pigs) —
-  picky animals refuse it. Culling is herd-aware: the worker **always butchers old** animals (they no longer breed
+  of only vanilla ones, driven by per-hut `#mctfc:herding/<job>` entity tags. Their worker raises them the TFC way,
+  in two phases: it first **familiarizes** animals (feeding TFC grain to any hungry animal still below its familiarity
+  cap), then **breeds** the familiar ones by feeding a fitting **pair** at once (a male + female, mate-ready,
+  non-pregnant, hungry that day) so TFC's own husbandry mates them — rather than vanilla love-mode. No food is wasted:
+  at-cap animals aren't re-fed, a breeding animal with no opposite-gender partner is skipped, and **rotten** grain
+  only feeds animals that eat rotten food (e.g. pigs). They butcher animals for TFC meat. Culling is herd-aware: the worker **always butchers old** animals (they no longer breed
   or produce), and otherwise culls surplus down to a breeding reserve kept **per species and per gender**, scaling
   with hut level and **female-weighted** — females +1 per level, males +1 per two levels rounded up, each floored at
   1 (L1 1♂/1♀, L2 1♂/2♀, L3 2♂/3♀, L4 2♂/4♀, L5 3♂/5♀). Because the reserve is per species, a multi-species hut
