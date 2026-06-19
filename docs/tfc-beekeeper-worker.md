@@ -185,15 +185,26 @@ booleans). Implemented as a custom MineColonies setting:
 
 The same custom-setting machinery is reusable if we later want other multi-toggle hut settings.
 
-### Settings left inert (deliberate, for a later pass)
+### Vanilla apiary cruft hidden (FirmaLife-gated)
 
-The vanilla Beekeeper GUI also shows **MODE** (honeycomb/honey/both), the **BREEDING** toggle, and a **flower
-list** — all meaningless for a FirmaLife apiary (no combs; breeding is autonomous and uses *world* flowers, not
-a hut list; the harvest is always honey). The FirmaLife `harvestHoney`/`prepareForHerding`/`decideWhatToDo`
-injects simply ignore them, so they're harmless. **Hiding** them is deferred (locked decision): unlike the
-Cowhand's stewing / Shepherd's dyeing rows (hidden by `MixinSettingsModuleView`), `BREEDING` is a **shared** key
-across all five herder huts *and* the beekeeper, so it can't be globally dropped — beekeeper-specific hiding is
-a follow-up, not part of v1.
+The vanilla Beekeeper also carries several things meaningless to a FirmaLife apiary (no combs; the harvest is
+always honey; breeding is autonomous from *world* flowers, not a hut list). When FirmaLife is loaded these are
+suppressed:
+
+- **MODE** (honeycomb/honey/both) — its row is dropped from `getSettingsToShow` in `MixinSettingsModuleView`
+  (key path `beekeeper`), alongside the existing Cowhand-stewing / Shepherd-dyeing removals. The setting still
+  registers/serializes (save-compat intact); only the row is hidden.
+- **The flower-list tab** — `MixinItemListModuleView` overrides `isPageVisible()` to `false` for the beekeeper's
+  `"flowers"` list (`AbstractBuildingWindow` honours it). Gated to `BuildingBeekeeper.View` so the Florist's
+  flower list is untouched.
+- **The kept consumables** (1 shears / 4 glass bottles / a stack of flowers) — `MixinBuildingBeekeeper` redirects
+  the three `keepX.put` calls in the constructor to no-ops, so the hut stops requesting them. (`keepX` is rebuilt
+  in `<init>` on every load, so pre-existing huts are cleaned up too.) The worker requests its own
+  jars/knife/frames via `prepareForHerding`.
+
+The **BREEDING** toggle is left visible: it's a **shared** key across all five herder huts *and* the beekeeper,
+so it can't be globally dropped, and it's harmless (the FirmaLife decision path ignores it). Beekeeper-specific
+hiding of it remains a possible follow-up.
 
 ---
 
@@ -228,19 +239,22 @@ The placed hive is empty; the player adds frames + queens + flowers and register
 
 ---
 
-## 7. Mixin inventory (all in `mctfc.mixins.json`, `remap = false`)
+## 7. Mixin inventory (in `mctfc.mixins.json`)
 
 | Mixin | Target | Purpose |
 |---|---|---|
-| `MixinItemScepterBeekeeper` | `ItemScepterBeekeeper#useOn` (`@ModifyExpressionValue` on `INSTANCEOF BeehiveBlock`) | also accept FirmaLife hives for scepter registration |
-| `MixinEntityAIWorkBeekeeper` | `prepareForHerding` + `decideWhatToDo` + `harvestHoney` (HEAD-cancellable) | request jar/knife/frames; FirmaLife harvest-or-idle decision; the honey + wax + refill hive service |
-| *(no mixin)* TFC `InventoryBlockEntity#inventory` | read reflectively in `FlBeekeeping` | read/write the four frame slots (GUI-only, not on the Forge capability; the field is a type variable, which a Mixin `@Accessor` can't bind) |
+| `MixinEntityAIWorkBeekeeper` (`remap=false`) | `prepareForHerding` + `decideWhatToDo` + `harvestHoney` (HEAD-cancellable) | request jar/knife/frames; FirmaLife harvest-or-idle decision; the honey + wax + refill hive service |
+| `MixinItemScepterBeekeeper` (**remap on**) | `ItemScepterBeekeeper#useOn` (`@ModifyExpressionValue` on the `BlockState#getBlock()` call) | hand back vanilla `Blocks.BEEHIVE` for a FirmaLife hive so the `instanceof BeehiveBlock` passes → scepter registers it. (Mixin 0.8.5 has no `INSTANCEOF` injection point, hence the `getBlock` seam; both targets are vanilla methods, so remap stays on.) |
+| `MixinBuildingBeekeeper` (`remap=false`, server/common) | `BuildingBeekeeper#<init>` (`@Redirect` on `Map.put`) | skip the 3 vanilla `keepX` consumable keeps (shears/glass bottle/flowers) for a FirmaLife apiary |
+| `MixinItemListModuleView` (`remap=false`, client) | `ItemListModuleView#isPageVisible` (added override) | hide the beekeeper's `"flowers"` list tab when FirmaLife is loaded |
+| `MixinSettingsModuleView` (`remap=false`, client; existing) | `getSettingsToShow` | drop the `beekeeper` MODE row (FirmaLife-gated) alongside the existing stewing/dyeing removals |
 | `MixinAbstractBuildingModule` (existing) | `AbstractBuildingModule#setBuilding` | attaches the `wax_frames` setting registered via `BuildingSettings.register(...)` (no new mixin needed) |
+| *(no mixin)* TFC `InventoryBlockEntity#inventory` | read reflectively in `FlBeekeeping` | read/write the four frame slots (GUI-only, not on the Forge capability; the field is a type variable, which a Mixin `@Accessor` can't bind) |
 
 Reused existing accessors/invokers: `AbstractAISkeletonAccessor#mctfc$worker`,
-`AbstractEntityAIBasicInvoker#{mctfc$building, mctfc$walkToWorkPos}`. The AI's own `equipItem`/`getItemSlot` are
-`@Shadow`n; the inherited `setDelay`/`getState`/`incrementActionsDoneAndDecSaturation`/
-`checkIfRequestForItemExistOrCreateAsync` are `public final` on `AbstractEntityAIBasic`/`AbstractAISkeleton`,
+`AbstractEntityAIBasicInvoker#{mctfc$building, mctfc$walkToWorkPos}`. The inherited
+`setDelay`/`getState`/`incrementActionsDoneAndDecSaturation`/`checkIfRequestForItemExistOrCreateAsync`/
+`checkIfRequestForTagExistOrCreateAsync` are `public final` on `AbstractEntityAIBasic`/`AbstractAISkeleton`,
 called via a cast.
 
 Server-side; all behaviour is AI-tick logic. This is **MineColonies-only** bridging in `:compat` — no

@@ -14,7 +14,9 @@ All notable changes to this mod are documented here. The format is based on
   FirmaLife's bees breed on their own. A new **Beeswax frames** hut setting (one row, a toggle per frame) picks which
   frames are scraped for wax (default none — scraping a frame kills its queen, so leave some for honey/breeding). Set
   up the apiary (frames, queens, flowers) and register the hives as you would by hand. Vanilla `beehive`/`bee_nest`
-  blueprint blocks substitute to `firmalife:beehive`.
+  blueprint blocks substitute to `firmalife:beehive`. The hut's now-irrelevant vanilla bits are hidden when FirmaLife
+  is present: the honeycomb/honey/both harvest toggle, the flower-list tab, and the glass-bottle/shears/flower stock
+  requests (the worker requests TFC empty jars / a knife / beehive frames instead).
 - **Chicken Herder collects eggs from nest boxes** — TFC chickens lay into `tfc:nest_box` blocks instead of dropping
   eggs on the ground, so the vanilla Chicken Herder never gathered them. The worker now visits nest boxes in its hut
   and harvests the **food (non-fertilized) eggs**, leaving **fertilized** eggs in the box to hatch into chicks (that's

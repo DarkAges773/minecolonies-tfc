@@ -36,12 +36,14 @@
     "MixinEntityAIWorkShepherd",
     "MixinEntityAIWorkBeekeeper",
     "MixinItemScepterBeekeeper",
+    "MixinBuildingBeekeeper",
     "MixinEquipmentTypeEntry",
     "AbstractAISkeletonAccessor"
   ],
   "client": [
     "MixinWindowField",
-    "MixinSettingsModuleView"
+    "MixinSettingsModuleView",
+    "MixinItemListModuleView"
   ],
   "injectors": {
     "defaultRequire": 1
