@@ -15,6 +15,8 @@
     { "from": "minecraft:dead_bush", "to": "tfc:plant/dead_bush" },
     { "from": "minecraft:potted_dead_bush", "to": "tfc:plant/potted/dead_bush" },
 
+    { "from": "minecraft:sea_pickle", "to": "tfc:sea_pickle" },
+
     { "from": "minecraft:pumpkin", "to": "tfc:pumpkin" },
     { "from": "minecraft:melon", "to": "tfc:melon" },
     { "from": "minecraft:jack_o_lantern", "to": "tfc:jack_o_lantern" },

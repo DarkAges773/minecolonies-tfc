@@ -61,6 +61,15 @@ All notable changes to this mod are documented here. The format is based on
   all TFC woods; AFC/Beneath woods join via their conditional datapacks) — mirroring the decorative-bookshelf wiring.
   When **AFC** is present its datapack overrides the default to `firmavanilla:barrel/cypress` (priority 1, matching
   AFC's spruce→cypress mapping).
+- **Candle substitutions** — every vanilla candle now substitutes to the **matching-colour TFC candle** (plain
+  `minecraft:candle` → `tfc:candle`, each dyed → `tfc:candle/<colour>`), with a pick-any-colour GUI pool. Candle
+  count and lit state carry over.
+- **Sea pickle substitution** — `minecraft:sea_pickle` → `tfc:sea_pickle` (count + waterlogged carry over).
+- **Enchanting table → scribing table** — `minecraft:enchanting_table` now substitutes to TFC's wooden **scribing
+  table** (`tfc:wood/scribing_table/oak` by default), with an any-wood re-pick pool — TFC's nearest wooden
+  workstation twin.
+- **FirmaLife beehive substitution** — when **FirmaLife** is present, `minecraft:beehive` → `firmalife:beehive` (via
+  the FirmaLife-only datapack).
 
 ### Changed
 - **End-stone substitution fixed & extended** — the end stone / end-stone-brick rules pointed at uncolored
