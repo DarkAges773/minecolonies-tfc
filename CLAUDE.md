@@ -227,6 +227,11 @@ changing a feature so you don't re-derive (or undo) a hard-won fix:
   across all five herding huts (Cowhand/Shepherd/Swineherd/Chicken/Rabbit): a `HerdBridge` strategy keyed on
   TFC's common `TFCAnimalProperties` interface, tag-based species recognition, authentic familiarity-based
   breeding, and per-family product harvest (TFC milk fluid / `IForgeShearable` wool / `tfc:nest_box` eggs / meat).
+- [docs/tfc-beekeeper-worker.md](docs/tfc-beekeeper-worker.md) — design (PLANNED) for the **FirmaLife-specific**
+  Beekeeper rework (base TFC has no beekeeping): a `FlBeekeeping` bridge driving `FLBeehiveBlockEntity` (honey →
+  `firmalife:jar/honey`, knife-scraped beeswax, empty-frame refill), an `@Accessor` into TFC's
+  `InventoryBlockEntity` for the GUI-only frame slots, and a custom single-row 4-toggle `BeeFrameSetting` for
+  per-slot wax control — all gated on `ModList.isLoaded("firmalife")`.
 - [docs/substitution-rule-examples.md](docs/substitution-rule-examples.md) — copy-paste rule JSON reference.
 - [docs/curseforge-description.md](docs/curseforge-description.md) — CurseForge store description.
 
