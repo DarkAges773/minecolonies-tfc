@@ -53,6 +53,9 @@ import java.util.function.Predicate;
 @Mixin(value = AbstractEntityAIHerder.class, remap = false)
 public abstract class MixinAbstractEntityAIHerder
 {
+    /** How many "actions done" each butchered animal counts as (vanilla counts 1); see {@link #mctfc$butcherCountsMore}. */
+    private static final int BUTCHER_ACTION_WEIGHT = 5;
+
     /**
      * Reach the worker's {@code FakePlayer} via {@link AbstractEntityAIBasicInvoker} — {@code getFakePlayer} is
      * declared up in {@code AbstractEntityAIBasic}, and a plain inherited {@code @Shadow} from this subclass fails
@@ -202,6 +205,23 @@ public abstract class MixinAbstractEntityAIHerder
             }
         }
         return all;
+    }
+
+    /**
+     * Weight each butchered animal as several "actions done" instead of one, so the worker dumps its haul to the hut
+     * sooner. A single TFC kill yields many bulky stacks (meat + hide + bones + fat …), so at vanilla's 1-per-kill the
+     * worker would hoard up to {@code ACTIONS_FOR_DUMP} (10) kills' worth of drops before dumping. Weighting the kill
+     * makes the dump cadence match the drop volume (≈ a dump every {@value #BUTCHER_ACTION_WEIGHT}-weighted kills,
+     * i.e. every 2 kills against the 10 threshold). We redirect the single {@code incrementActionsDone()} call in
+     * {@code butcherAnimals} and call the public no-arg form repeatedly, since the multi-arg form is {@code protected}.
+     */
+    @Redirect(method = "butcherAnimals", at = @At(value = "INVOKE", target = "incrementActionsDone()V"), require = 1)
+    private void mctfc$butcherCountsMore(final AbstractEntityAIHerder self)
+    {
+        for (int i = 0; i < BUTCHER_ACTION_WEIGHT; i++)
+        {
+            self.incrementActionsDone();
+        }
     }
 
     /**

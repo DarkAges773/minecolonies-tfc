@@ -108,6 +108,7 @@ public abstract class MixinEntityAIWorkShepherd
         {
             CitizenItemUtils.damageItemInHand(worker, InteractionHand.MAIN_HAND, 1);
             worker.getCitizenExperienceHandler().addExperience(0.5);
+            self.incrementActionsDoneAndDecSaturation(); // count toward the dump threshold, like vanilla shearSheep
         }
         cir.setReturnValue(DECIDE);
     }

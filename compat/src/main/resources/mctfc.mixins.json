@@ -30,6 +30,7 @@
     "MixinRestaurantMenuModule",
     "MixinEntityAIWorkCook",
     "MixinAnimalHerdingModule",
+    "MixinAbstractEntityAIBasic",
     "MixinAbstractEntityAIHerder",
     "MixinEntityAIWorkCowboy",
     "MixinEntityAIWorkShepherd",

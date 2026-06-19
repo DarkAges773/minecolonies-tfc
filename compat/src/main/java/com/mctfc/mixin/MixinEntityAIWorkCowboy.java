@@ -23,6 +23,7 @@ import java.util.List;
 
 import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.COWBOY_STEW;
 import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.DECIDE;
+import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.INVENTORY_FULL;
 import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.START_WORKING;
 
 /**
@@ -106,6 +107,9 @@ public abstract class MixinEntityAIWorkCowboy
 
             building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).onMilked();
             worker.getCitizenExperienceHandler().addExperience(1.0);
+            self.incrementActionsDoneAndDecSaturation();
+            cir.setReturnValue(INVENTORY_FULL); // bank the milk to the hut after milking, like vanilla milkCows
+            return;
         }
         cir.setReturnValue(DECIDE);
     }
