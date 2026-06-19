@@ -195,6 +195,21 @@ adding a hut is a registration line, not new mixin plumbing.
   the filled container. A **vanilla bucket is deliberately not used** — it can't hold FirmaLife's milk variants.
   MineColonies' hardcoded `instanceof Cow || Goat` search and fixed `getMilkOutputItem` swap are both bypassed for
   TFC dairy. The mooshroom-stew path (`COWBOY_STEW`) is disabled for TFC (no mooshrooms in TFC).
+  - **The hut's "Milk Item" setting picks the container.** MineColonies' `MILK_ITEM` `StringSetting` (stock options:
+    vanilla milk bucket / large milk bottle — neither holds TFC milk) is repopulated, via the same
+    [MixinSettingsModule](../compat/src/main/java/com/mctfc/mixin/MixinSettingsModule.java) `with` seam used for the
+    builder's fill-block, with the **TFC fluid containers that actually hold milk** (`TfcHerd.milkContainerOptions()`
+    probes each candidate's `IFluidHandlerItem` with Forge's milk fluid): ceramic jug (default), wooden bucket,
+    red/blue steel bucket. The selected value resolves back to a container via `TfcHerd.milkContainerFor(value)`,
+    which is what `milkCows` prefers (`findEmptyMilkContainer(inv, preferred)`) and what `getExtraItemsNeeded`
+    requests — at **`MILKING_AMOUNT`** count, since each milking consumes an empty container. Option order is
+    **stable** (the setting persists the selected *index*; `StringSetting.updateSetting` refreshes the list from our
+    registered setting on load, so existing huts adopt the TFC options while keeping their saved pick).
+  - **Mooshroom stew is dropped.** The Cowhand's `decideWhatToDo` routes to `COWBOY_STEW` purely on `canTryToStew()`
+    (it never checks a `MushroomCow` exists), so in a mooshroom-free TFC world the worker keeps entering a dead stew
+    state. A `decideWhatToDo` RETURN inject in `MixinEntityAIWorkCowboy` rewrites a `COWBOY_STEW` result back to
+    `START_WORKING` when no `MushroomCow` is present (the vanilla path survives if one ever is), and the inert
+    **Stewing Amount** setting is hidden from the GUI by [MixinSettingsModuleView](../compat/src/main/java/com/mctfc/mixin/MixinSettingsModuleView.java).
 - **Wool (Shepherd).** *Implemented* — TFC wooly animals (sheep/alpaca/musk ox) are `IForgeShearable`, and TFC's
   `onSheared` itself fires the `AnimalProductEvent` (so FirmaLife/add-ons can vary the wool) and **returns the wool
   drops directly** — simpler than milk (no container). [MixinEntityAIWorkShepherd](../compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkShepherd.java)
@@ -202,8 +217,12 @@ adding a hut is a registration line, not new mixin plumbing.
   `findShearableSheep()` (`instanceof Sheep`) is non-null: (1) a `decideWhatToDo` RETURN inject routes an idle
   worker to `SHEPHERD_SHEAR` when `SHEARING` is on and a *ready* TFC `WoolyAnimal` is present; (2) a `shearSheep`
   HEAD inject shears a ready `WoolyAnimal` via [TfcHerd.shear](../compat/src/main/java/com/mctfc/herding/TfcHerd.java)
-  (Forge `onSheared` — respects familiarity + cooldown), banks the wool, damages the shears. No vanilla
-  colored-wool / sheep-dyeing for TFC. Vanilla sheep fall through to the vanilla path.
+  (Forge `onSheared` — respects familiarity + cooldown), banks the wool, damages the shears. Both injects honour the
+  **`SHEARING`** setting (the HEAD inject re-checks it, so toggling shearing off mid-state still stops the worker).
+  Auto-**dyeing** never applies to TFC: it only runs inside the *vanilla* `shearSheep` body (`dyeSheepChance` on a
+  vanilla `Sheep`), which the HEAD inject skips for TFC wooly animals — so the inert **Dyeing** setting is hidden
+  from the GUI by [MixinSettingsModuleView](../compat/src/main/java/com/mctfc/mixin/MixinSettingsModuleView.java).
+  Vanilla sheep fall through to the vanilla (shear + maybe-dye) path.
 - **Eggs (Chicken Herder).** Eggs are laid into `tfc:nest_box` blocks, so harvesting = the worker visiting nest
   boxes in the building bounds and pulling eggs out of the `NestBoxBlockEntity`, **not** ground pickup. This is
   why `tfc:nest_box` was added to `#mctfc:builder_dont_clear` — the builder must not strip nest boxes the herder

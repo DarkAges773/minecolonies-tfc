@@ -69,6 +69,12 @@ public abstract class MixinEntityAIWorkShepherd
     @Inject(method = "shearSheep", at = @At("HEAD"), cancellable = true)
     private void mctfc$tfcShear(final CallbackInfoReturnable<IAIState> cir)
     {
+        final IBuilding building = ((AbstractEntityAIBasicInvoker) this).mctfc$building();
+        if (!building.getSetting(BuildingShepherd.SHEARING).getValue())
+        {
+            cir.setReturnValue(DECIDE); // shearing turned off — never shear (defends a mid-state toggle)
+            return;
+        }
         final AbstractEntityAIHerder<?, ?> self = (AbstractEntityAIHerder<?, ?>) (Object) this;
         final Animal animal = self.searchForAnimals(TfcHerd::isReadyWooly).stream().findFirst().orElse(null);
         if (animal == null)

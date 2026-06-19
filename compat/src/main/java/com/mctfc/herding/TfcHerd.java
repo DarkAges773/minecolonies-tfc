@@ -17,12 +17,17 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +60,7 @@ public final class TfcHerd
      * Per-{@code DECIDE} chance the herder enters the individual FEED (familiarization) state. MineColonies' default
      * is {@code 0.1}; we raise it so a herd familiarizes within reasonable time. Applied via {@code @ModifyConstant}.
      */
-    public static final double FEED_CHANCE = 0.33;
+    public static final double FEED_CHANCE = 0.50;
 
     /** Universal TFC feed: a grain, which sits in {@code #tfc:foods/grains} — accepted by every herded TFC species. */
     private static final ResourceLocation FEED_ID = new ResourceLocation("tfc", "food/wheat_grain");
@@ -137,9 +142,87 @@ public final class TfcHerd
 
     // ── Products: milk (Cowhand) ──────────────────────────────────────────────────────────────────────────────
 
-    private static final ResourceLocation MILK_CONTAINER_ID = new ResourceLocation("tfc", "ceramic/jug");
+    /**
+     * TFC fluid containers offered for the Cowhand's "Milk Item" setting, in a <b>stable order</b> — the player's
+     * selection persists by index ({@code StringSetting} serializes its index), so reordering would shift saved
+     * picks. Only those that exist and can actually hold milk are listed; the first survivor is the default (the
+     * cheap ceramic jug). Drawn from TFC's {@code fluid_item_ingredient_empty_containers} tag.
+     */
+    private static final ResourceLocation[] MILK_CONTAINER_IDS = {
+      new ResourceLocation("tfc", "ceramic/jug"),
+      new ResourceLocation("tfc", "wooden_bucket"),
+      new ResourceLocation("tfc", "metal/bucket/red_steel"),
+      new ResourceLocation("tfc", "metal/bucket/blue_steel"),
+    };
 
-    private static volatile ItemStorage milkContainer;
+    private static volatile List<String> milkContainerOptions;       // setting values (item description ids), in order
+    private static volatile Map<String, Item> milkContainerByOption; // description id -> container item
+
+    private static void ensureMilkContainers()
+    {
+        if (milkContainerOptions != null)
+        {
+            return;
+        }
+        final List<String> opts = new ArrayList<>();
+        final Map<String, Item> byOpt = new HashMap<>();
+        for (final ResourceLocation id : MILK_CONTAINER_IDS)
+        {
+            final Item item = ForgeRegistries.ITEMS.getValue(id);
+            if (item == null || !acceptsMilk(item))
+            {
+                continue;
+            }
+            final String key = item.getDescriptionId();
+            if (byOpt.putIfAbsent(key, item) == null)
+            {
+                opts.add(key);
+            }
+        }
+        if (opts.isEmpty()) // never hand the GUI an empty list — fall back to the jug
+        {
+            final Item jug = ForgeRegistries.ITEMS.getValue(MILK_CONTAINER_IDS[0]);
+            if (jug != null)
+            {
+                opts.add(jug.getDescriptionId());
+                byOpt.put(jug.getDescriptionId(), jug);
+            }
+        }
+        milkContainerByOption = byOpt;
+        milkContainerOptions = opts;
+    }
+
+    /** Whether an empty container item can be filled with milk — TFC's milk is Forge's milk fluid (FirmaLife varies it). */
+    private static boolean acceptsMilk(final Item item)
+    {
+        final Fluid milk = ForgeMod.MILK.get();
+        if (milk == null)
+        {
+            return true; // can't probe (fluid not registered yet) — assume usable
+        }
+        return new ItemStack(item).getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM)
+                 .map(h -> h.fill(new FluidStack(milk, Integer.MAX_VALUE), IFluidHandler.FluidAction.SIMULATE) > 0)
+                 .orElse(false);
+    }
+
+    /** The option list (item description ids) for the Cowhand's "Milk Item" {@code StringSetting}. */
+    public static String[] milkContainerOptions()
+    {
+        ensureMilkContainers();
+        return milkContainerOptions.toArray(new String[0]);
+    }
+
+    /** Resolve a "Milk Item" setting value to its empty-container stack (falls back to the default jug). */
+    public static ItemStack milkContainerFor(final String settingValue)
+    {
+        ensureMilkContainers();
+        Item item = settingValue == null ? null : milkContainerByOption.get(settingValue);
+        if (item == null)
+        {
+            item = ForgeRegistries.ITEMS.getValue(MILK_CONTAINER_IDS[0]);
+        }
+        return item == null ? ItemStack.EMPTY : new ItemStack(item);
+    }
 
     /** A TFC dairy animal (cow/goat/yak — base TFC and add-ons). */
     public static boolean isDairy(final Animal animal)
@@ -153,32 +236,35 @@ public final class TfcHerd
         return animal instanceof DairyAnimal dairy && dairy.isReadyForAnimalProduct();
     }
 
-    /** The empty container the Cowhand requests to milk into: a ceramic jug (cheap; any held fluid container also works). */
-    public static ItemStorage milkContainerRequest()
+    /**
+     * A single empty instance of the hut's <b>selected</b> milk container ({@code wanted}) in the inventory (a copy
+     * of count 1) to milk into, or EMPTY if the worker holds none. Strictly the selected item — the caller is
+     * responsible for stocking it (pulling from the hut / requesting), so the worker only ever milks into the
+     * container the player picked rather than into whatever fluid item it happens to carry.
+     *
+     * <p>The fluid-handler capability is probed on a <b>count-1 copy</b>, not the inventory stack: TFC's
+     * {@code ItemStackFluidHandler} only exposes the capability when {@code stack.getCount() == 1}, so a <i>stack</i>
+     * of empty containers (e.g. 10 wooden buckets) would otherwise read as "not a fluid container" and the worker
+     * would never find anything to milk into.
+     */
+    public static ItemStack findEmptyMilkContainer(final IItemHandler inventory, final ItemStack wanted)
     {
-        ItemStorage c = milkContainer;
-        if (c == null)
+        if (wanted == null || wanted.isEmpty())
         {
-            c = new ItemStorage(new ItemStack(ForgeRegistries.ITEMS.getValue(MILK_CONTAINER_ID)), false, true);
-            milkContainer = c;
+            return ItemStack.EMPTY;
         }
-        return c;
-    }
-
-    /** A single empty generic fluid container in the inventory (a copy of count 1) the worker can milk into, or EMPTY. */
-    public static ItemStack findEmptyMilkContainer(final IItemHandler inventory)
-    {
         for (int slot = 0; slot < inventory.getSlots(); slot++)
         {
             final ItemStack stack = inventory.getStackInSlot(slot);
-            if (stack.isEmpty())
+            if (stack.isEmpty() || !ItemStack.isSameItem(stack, wanted))
             {
                 continue;
             }
-            final IFluidHandlerItem handler = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).resolve().orElse(null);
+            final ItemStack single = stack.copyWithCount(1);
+            final IFluidHandlerItem handler = single.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).resolve().orElse(null);
             if (handler != null && handler.getFluidInTank(0).isEmpty())
             {
-                return stack.copyWithCount(1);
+                return single;
             }
         }
         return ItemStack.EMPTY;
@@ -418,15 +504,21 @@ public final class TfcHerd
         }
     }
 
-    /** The breeding item TFC herding huts request/equip/feed: a TFC grain, NBT-agnostic so food decay doesn't break matching. */
+    /**
+     * The breeding item TFC herding huts request/equip/feed: a TFC grain, NBT-agnostic so food decay doesn't break
+     * matching. Amount is <b>2</b> to match vanilla's {@code new ItemStorage(Items.WHEAT, 2)}: the herder's
+     * {@code prepareForHerding} requests with {@code minCount = amount}, and the FEED/BREED gate needs {@code > 1} in
+     * inventory — so amount 1 would leave a worker stuck at a single grain (can't feed, yet "has enough" to skip
+     * restocking). Amount 2 makes it restock whenever it drops below 2.
+     */
     public static List<ItemStorage> breedingFood()
     {
         List<ItemStorage> list = feedList;
         if (list == null)
         {
             final Item grain = ForgeRegistries.ITEMS.getValue(FEED_ID);
-            // ignoreDamage = false, ignoreNBT = true
-            list = List.of(new ItemStorage(new ItemStack(grain), false, true));
+            // amount = 2, ignoreDamage = false, ignoreNBT = true
+            list = List.of(new ItemStorage(new ItemStack(grain), 2, false, true));
             feedList = list;
         }
         return list;

@@ -13,12 +13,18 @@ All notable changes to this mod are documented here. The format is based on
   yields **TFC wool** and fires TFC's product event — **FirmaLife/add-on wool variants** come out correctly. No
   vanilla colored-wool or sheep-dyeing for TFC animals. Vanilla sheep still shear the vanilla way.
 - **Cowhand milks TFC dairy animals** — the Cowhand now milks TFC cows/goats/yaks (not just vanilla cows) by driving
-  TFC's own milking: when an animal is ready (familiarity + product cooldown), the worker fills a held generic TFC
-  fluid container (it requests a **ceramic jug**; any held container works) with the animal's milk, respecting TFC's
-  rules and firing TFC's product event — so **FirmaLife's per-animal milk variants (goat/yak milk)** come out
-  correctly. A vanilla bucket isn't used (it can't hold the variant fluids). Vanilla cows still milk the vanilla way.
-  The Cowhand now stocks **as many ceramic jugs as its Milking Amount setting** (each TFC milking uses up an empty
-  jug), so a full milking cycle isn't throttled to courier round-trips.
+  TFC's own milking: when an animal is ready (familiarity + product cooldown), the worker fills a TFC fluid container
+  with the animal's milk, respecting TFC's rules and firing TFC's product event — so **FirmaLife's per-animal milk
+  variants (goat/yak milk)** come out correctly. A vanilla bucket isn't used (it can't hold the variant fluids).
+  Vanilla cows still milk the vanilla way.
+- **Cowhand "Milk Item" setting offers TFC containers** — the hut's Milk Item setting (which used to pick between a
+  vanilla milk bucket and a large milk bottle, neither able to hold TFC milk) now lists the **TFC fluid containers
+  that can actually hold milk** — ceramic jug (default), wooden bucket, red/blue steel bucket. The Cowhand milks
+  **only** into the chosen container: it requests that container (**as many as the Milking Amount setting**, since
+  each milking uses up an empty one) and **pulls it from the hut's racks** into its own inventory before milking,
+  rather than milking with whatever fluid item it happened to carry. If no empty selected container is available
+  (worker or hut), it waits for delivery instead of milking the animal for nothing. Existing huts pick up the new
+  options automatically.
 - **Herding huts tend TFC livestock (recognition + breeding)** — the Cowhand, Shepherd, Swineherd, Chicken Herder and
   Rabbit Hutch now recognize TFC animals (cow/goat/yak, sheep/alpaca/musk ox, pig, chicken/duck/quail, rabbit) instead
   of only vanilla ones, driven by per-hut `#mctfc:herding/<job>` entity tags. Their worker raises them the TFC way,
@@ -48,6 +54,13 @@ All notable changes to this mod are documented here. The format is based on
   all TFC woods; AFC/Beneath woods join via their conditional datapacks) — mirroring the decorative-bookshelf wiring.
   When **AFC** is present its datapack overrides the default to `firmavanilla:barrel/cypress` (priority 1, matching
   AFC's spruce→cypress mapping).
+
+### Changed
+- **Herder huts drop their vanilla-only chores in TFC** — the Cowhand no longer wastes time attempting **mooshroom
+  stew** (TFC spawns no mooshrooms), and the Shepherd's auto-**dyeing** no longer applies (TFC sheep aren't vanilla
+  `Sheep`, and the TFC shear path doesn't dye). Their now-inert settings (**Stewing Amount** on the Cowhand, **Dyeing**
+  on the Shepherd) are hidden from the hut GUI. The Shepherd also strictly honours its **Shearing** setting — with it
+  off, the worker won't shear TFC wooly animals even mid-state.
 
 ### Removed
 - **Vanilla barrel handling moved to firmavanilla** — both the `mctfc:barrel` crafting recipe (which restored a

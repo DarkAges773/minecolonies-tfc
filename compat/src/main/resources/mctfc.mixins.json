@@ -37,7 +37,8 @@
     "AbstractAISkeletonAccessor"
   ],
   "client": [
-    "MixinWindowField"
+    "MixinWindowField",
+    "MixinSettingsModuleView"
   ],
   "injectors": {
     "defaultRequire": 1

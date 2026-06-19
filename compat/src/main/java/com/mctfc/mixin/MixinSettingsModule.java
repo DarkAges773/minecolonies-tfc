@@ -1,9 +1,12 @@
 package com.mctfc.mixin;
 
+import com.mctfc.herding.TfcHerd;
 import com.minecolonies.api.colony.buildings.modules.settings.ISetting;
 import com.minecolonies.api.colony.buildings.modules.settings.ISettingKey;
 import com.minecolonies.core.colony.buildings.modules.SettingsModule;
 import com.minecolonies.core.colony.buildings.modules.settings.BlockSetting;
+import com.minecolonies.core.colony.buildings.modules.settings.StringSetting;
+import com.minecolonies.core.colony.buildings.workerbuildings.BuildingCowboy;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingMiner;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
@@ -43,6 +46,28 @@ public class MixinSettingsModule
             if (loam instanceof BlockItem loamItem)
             {
                 return new BlockSetting(loamItem);
+            }
+        }
+        return setting;
+    }
+
+    /**
+     * Replaces the Cowhand's <b>Milk Item</b> options (vanilla milk bucket / large milk bottle — neither can hold
+     * TFC's milk <i>fluid</i>) with TFC fluid containers that actually hold milk (ceramic jug by default, wooden /
+     * steel buckets), so the player can pick which container the Cowhand stocks and milks into. Same {@code with}
+     * seam as the fill-block default; existing huts pick the new options up too, because {@code StringSetting}'s
+     * {@code updateSetting} refreshes the option list from this (registered) setting on load while preserving the
+     * saved index — hence {@link TfcHerd#milkContainerOptions()} keeps a stable order.
+     */
+    @ModifyVariable(method = "with", at = @At("HEAD"), argsOnly = true)
+    private ISetting<?> mctfc$tfcMilkContainers(final ISetting<?> setting, final ISettingKey<?> key)
+    {
+        if (key == BuildingCowboy.MILK_ITEM && setting instanceof StringSetting)
+        {
+            final String[] options = TfcHerd.milkContainerOptions();
+            if (options.length > 0)
+            {
+                return new StringSetting(options);
             }
         }
         return setting;

@@ -9,7 +9,10 @@ import com.minecolonies.api.util.InventoryUtils;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingCowboy;
 import com.minecolonies.core.entity.ai.workers.production.herders.AbstractEntityAIHerder;
 import com.minecolonies.core.entity.ai.workers.production.herders.EntityAIWorkCowboy;
+import com.minecolonies.core.util.citizenutils.CitizenItemUtils;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.MushroomCow;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,7 +21,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
+import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.COWBOY_STEW;
 import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.DECIDE;
+import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.START_WORKING;
 
 /**
  * Makes the Cowhand milk TFC dairy animals (cow/goat/yak) instead of only vanilla cows/goats. MineColonies'
@@ -59,25 +64,46 @@ public abstract class MixinEntityAIWorkCowboy
         }
 
         final AbstractEntityCitizen worker = ((AbstractAISkeletonAccessor) this).mctfc$worker();
-        final ItemStack container = TfcHerd.findEmptyMilkContainer(worker.getInventoryCitizen());
+        final IBuilding building = ((AbstractEntityAIBasicInvoker) this).mctfc$building();
+        final ItemStack selected = TfcHerd.milkContainerFor(building.getSetting(BuildingCowboy.MILK_ITEM).getValue());
+
+        // The worker milks into the SELECTED container, which it must hold in its own inventory. If it doesn't, pull
+        // one from the hut's racks — mirroring vanilla `milkCows` (we bypass that whole body, so we must do the
+        // transfer ourselves); if the hut hasn't got one either, wait for the courier instead of milking for nothing.
+        ItemStack container = TfcHerd.findEmptyMilkContainer(worker.getInventoryCitizen(), selected);
         if (container.isEmpty())
         {
-            cir.setReturnValue(DECIDE); // no empty container yet — the courier restocks requested jugs
-            return;
+            if (!selected.isEmpty()
+                  && InventoryUtils.hasBuildingEnoughElseCount(building, new ItemStorage(selected), 1) > 0
+                  && ((AbstractEntityAIBasicInvoker) this).mctfc$walkToBuilding())
+            {
+                self.checkAndTransferFromHut(selected);
+                container = TfcHerd.findEmptyMilkContainer(worker.getInventoryCitizen(), selected);
+            }
+            if (container.isEmpty())
+            {
+                cir.setReturnValue(DECIDE); // no empty selected container in worker or hut — wait for delivery
+                return;
+            }
         }
+        // Visually carry the empty container while approaching/milking, mirroring vanilla milkCows' hand handling
+        // (it equips the input bucket, then swaps the hand to the milk output). The fill itself goes through the
+        // fake player; this just keeps the worker's shown item consistent instead of leaving a stale tool in hand.
+        CitizenItemUtils.setHeldItem(worker, InteractionHand.MAIN_HAND, self.getItemSlot(container.getItem()));
         if (self.walkingToAnimal(animal))
         {
             cir.setReturnValue(self.getState()); // keep walking toward the animal
             return;
         }
 
+        worker.swing(InteractionHand.MAIN_HAND);
         final ItemStack filled = TfcHerd.milk(animal, container, ((AbstractEntityAIBasicInvoker) this).mctfc$getFakePlayer());
         if (!filled.isEmpty())
         {
             InventoryUtils.tryRemoveStackFromItemHandler(worker.getInventoryCitizen(), container);
             InventoryUtils.addItemStackToItemHandler(worker.getInventoryCitizen(), filled);
+            CitizenItemUtils.setHeldItem(worker, InteractionHand.MAIN_HAND, self.getItemSlot(filled.getItem())); // swap to the filled container
 
-            final IBuilding building = ((AbstractEntityAIBasicInvoker) this).mctfc$building();
             building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).onMilked();
             worker.getCitizenExperienceHandler().addExperience(1.0);
         }
@@ -85,11 +111,30 @@ public abstract class MixinEntityAIWorkCowboy
     }
 
     /**
-     * Have the hut request ceramic jugs (the default milk container) when it tends TFC dairy animals, so the courier
-     * keeps the Cowhand stocked — paralleling how vanilla requests buckets. Each TFC milking consumes an empty jug
-     * (it becomes a <i>filled</i> milk-jug), so we stock the hut's {@code MILKING_AMOUNT} (a full milking cycle's
-     * worth), gated on {@code canTryToMilk()} exactly like vanilla's input-container request. Any held fluid
-     * container works to milk; the jug is just the cheap default we ask for.
+     * Drop the mooshroom-stew attempt in a TFC world. The Cowhand's {@code decideWhatToDo} routes to
+     * {@code COWBOY_STEW} purely on {@code canTryToStew()} — it never checks that a {@code MushroomCow} exists — so
+     * without mooshrooms (TFC spawns none) the worker keeps entering a stew state that can never produce anything. We
+     * cancel that route when no mooshroom is around, leaving the vanilla stew path intact if one ever is.
+     */
+    @Inject(method = "decideWhatToDo", at = @At("RETURN"), cancellable = true)
+    private void mctfc$noStewWithoutMooshroom(final CallbackInfoReturnable<IAIState> cir)
+    {
+        if (cir.getReturnValue() == COWBOY_STEW)
+        {
+            final AbstractEntityAIHerder<?, ?> self = (AbstractEntityAIHerder<?, ?>) (Object) this;
+            if (self.searchForAnimals(a -> a instanceof MushroomCow).isEmpty())
+            {
+                cir.setReturnValue(START_WORKING);
+            }
+        }
+    }
+
+    /**
+     * Have the hut request the <b>selected</b> milk container (the hut's Milk Item setting — a TFC fluid container,
+     * ceramic jug by default) when it tends TFC dairy animals, so the courier keeps the Cowhand stocked. Each TFC
+     * milking consumes an empty container (it becomes a <i>filled</i> one), so we stock the hut's
+     * {@code MILKING_AMOUNT} (a full milking cycle's worth), gated on {@code canTryToMilk()} exactly like vanilla's
+     * input-container request.
      */
     @Inject(method = "getExtraItemsNeeded", at = @At("RETURN"))
     private void mctfc$requestMilkContainer(final CallbackInfoReturnable<List<ItemStorage>> cir)
@@ -99,8 +144,12 @@ public abstract class MixinEntityAIWorkCowboy
         if (building.getFirstModuleOccurance(BuildingCowboy.HerdingModule.class).canTryToMilk()
               && !self.searchForAnimals(TfcHerd::isDairy).isEmpty())
         {
-            final int amount = Math.max(1, building.getSetting(BuildingCowboy.MILKING_AMOUNT).getValue());
-            cir.getReturnValue().add(new ItemStorage(TfcHerd.milkContainerRequest().getItemStack().copy(), amount));
+            final ItemStack container = TfcHerd.milkContainerFor(building.getSetting(BuildingCowboy.MILK_ITEM).getValue());
+            if (!container.isEmpty())
+            {
+                final int amount = Math.max(1, building.getSetting(BuildingCowboy.MILKING_AMOUNT).getValue());
+                cir.getReturnValue().add(new ItemStorage(container, amount));
+            }
         }
     }
 }
