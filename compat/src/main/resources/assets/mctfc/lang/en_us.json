@@ -4,6 +4,8 @@
   "gui.mctfc.field.harvestmode.seeding": "Seeding",
   "gui.mctfc.field.harvestmode.tooltip": "Click to toggle. Fruiting: harvest ripe crops (produce) and any that went to seed. Seeding: let crops go to seed, then harvest for max seeds.",
   "com.minecolonies.coremod.setting.mctfc:ore_threshold": "Ore restock threshold",
+  "com.minecolonies.coremod.setting.mctfc:wax_frames": "Beeswax frames",
+  "com.minecolonies.coremod.setting.tooltip.mctfc:wax_frames": "Which of the hive's four frames the beekeeper scrapes for beeswax. Scraping kills that frame's queen, so leave some frames unscraped for honey and breeding — enabling all four can depopulate the hive.",
   "com.mctfc.research.smithing.bronze.name": "Bronze Smithing",
   "com.mctfc.research.smithing.bronze.subtitle": "If it bends, hit it harder",
   "com.mctfc.research.smithing.wrought_iron.name": "Ironworking",

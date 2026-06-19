@@ -4,8 +4,12 @@ How `:compat` (`mctfc`) makes MineColonies' **Beekeeper** harvest a **FirmaLife 
 
 Status legend: **DONE** (built & in-tree), **PLANNED** (designed here, not yet built).
 
-**Status: PLANNED** — this document is the design; nothing here is built yet except a stub
-[FlBeekeeping](../compat/src/main/java/com/mctfc/firmalife/FlBeekeeping.java) helper.
+**Status: DONE & in-tree** (pending in-game verification) — the
+[FlBeekeeping](../compat/src/main/java/com/mctfc/firmalife/FlBeekeeping.java) bridge, the two beekeeper mixins
+([MixinEntityAIWorkBeekeeper](../compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkBeekeeper.java),
+[MixinItemScepterBeekeeper](../compat/src/main/java/com/mctfc/mixin/MixinItemScepterBeekeeper.java)), and the
+[BeeFrameSetting](../compat/src/main/java/com/mctfc/settings/BeeFrameSetting.java) (+ factory + layout) are all
+built and compile. This document is both the design and the as-built reference.
 
 > **This is FirmaLife-specific, optional compat.** Base TerraFirmaCraft has **no beekeeping at all** — no
 > hive, no bees, no honey. The whole feature therefore targets **FirmaLife** (mod id `firmalife`) and is gated
@@ -82,12 +86,15 @@ insert the empty jar into `SLOT_JAR_IN`=4; the DOWN face extracts the filled jar
 four **frame** slots (0–3) are **GUI-only** — not reachable through `getCapability`. They live in TFC's
 `InventoryBlockEntity.inventory` (`protected final` `ItemStackHandler`).
 
-So the bridge reaches frames via an **`@Accessor` mixin on TFC's `InventoryBlockEntity`**
-(`InventoryBlockEntityAccessor#mctfc$inventory()` → `IItemHandlerModifiable`) — the same accessor-into-TFC
-pattern `:compat` already uses for `RackInventory`. After mutating a frame slot the bridge calls the BE's
-**public** `setAndUpdateSlots(int)` to refresh the cached bees, re-derive the `HONEY`/`BEES` blockstate props,
-and mark for client sync. Queen state is read straight off the frame `ItemStack` via FirmaLife's
-`BeeCapability.CAPABILITY` → `IBee.hasQueen()` (authoritative, independent of the client-facing bee cache).
+So the bridge reaches frames via TFC's `InventoryBlockEntity.inventory` field — **read reflectively**, not with a
+Mixin `@Accessor`. A Mixin accessor can't bind it: the field is declared as a **type variable** (`C inventory`),
+which the Mixin annotation processor rejects at compile time ("could not locate target") even though its erased
+descriptor is `IItemHandlerModifiable`. Reflection on the field name (TFC's own, never remapped, so it works in
+dev and prod) is the pragmatic exception — a single cached `Field` lookup in `FlBeekeeping`. After mutating a
+frame slot the bridge calls the BE's **public** `setAndUpdateSlots(int)` to refresh the cached bees, re-derive
+the `HONEY`/`BEES` blockstate props, and mark for client sync. Queen state is read straight off the frame
+`ItemStack` via FirmaLife's `BeeCapability.CAPABILITY` → `IBee.hasQueen()` (authoritative, independent of the
+client-facing bee cache).
 
 > **Why direct BE access and not "simulate the player".** FirmaLife's player paths (`FLBeehiveBlock.use` for
 > the empty-jar fill; `BeehiveFrameItem.overrideOtherStackedOnMe` for the knife scrape) are awkward to invoke
@@ -164,14 +171,16 @@ booleans). Implemented as a custom MineColonies setting:
   four risks **depopulating** the hive (no breeding reserve).
 - **`BeeFrameSettingFactory implements IFactory<FactoryVoidInput, BeeFrameSetting>`** — round-trips the bitmask
   through NBT **and** the network buffer (a single byte). Registered with `StandardFactoryController` in common
-  setup (alongside `TfcHerd::onCommonSetup`). Its `getSerializationId()` uses a **mctfc-private** short well
-  clear of MineColonies' range (MC uses 0–60) — e.g. the 9000s — to avoid the controller's
+  setup (`MineColoniesTFC::onCommonSetup`), **unconditionally** (the setting names no FirmaLife type) so a world
+  that loses FirmaLife can still deserialize a saved Beekeeper. Its `getSerializationId()` uses a
+  **mctfc-private** short (`9201`) well clear of MineColonies' range (MC uses 0–60) to avoid the controller's
   "two factories with the same serialization id" crash.
-- **Attachment** — added to the Beekeeper's `SettingsModule` through the **existing `MixinSettingsModule.with`
-  seam** this project already uses to inject the Cowhand milk-item and the builder fill-block settings (the
-  building's `ModuleProducer` is a MineColonies static field, so we can't edit the `.with(...)` chain directly —
-  we intercept `with`). Key: `SettingKey<>(BeeFrameSetting.class, new ResourceLocation("mctfc","bee_frames"))`.
-- **Lang** — `com.minecolonies.coremod.setting.mctfc:bee_frames` (row label) + `.tooltip.` (the depopulation
+- **Attachment** — registered via `BuildingSettings.register(b -> b instanceof BuildingBeekeeper, KEY, () -> new
+  BeeFrameSetting(0))` (the project's existing per-hut-settings registry), which the existing
+  `MixinAbstractBuildingModule` grafts onto each Beekeeper's `SettingsModule` as it's built — **no new mixin**.
+  The `register` call is **FirmaLife-gated** (base TFC has no apiary). Key:
+  `SettingKey<>(BeeFrameSetting.class, new ResourceLocation("mctfc","wax_frames"))`.
+- **Lang** — `com.minecolonies.coremod.setting.mctfc:wax_frames` (row label) + `.tooltip.` (the depopulation
   warning) in `en_us.json`.
 
 The same custom-setting machinery is reusable if we later want other multi-toggle hut settings.
@@ -225,8 +234,8 @@ The placed hive is empty; the player adds frames + queens + flowers and register
 |---|---|---|
 | `MixinItemScepterBeekeeper` | `ItemScepterBeekeeper#useOn` (`@ModifyExpressionValue` on `INSTANCEOF BeehiveBlock`) | also accept FirmaLife hives for scepter registration |
 | `MixinEntityAIWorkBeekeeper` | `prepareForHerding` + `decideWhatToDo` + `harvestHoney` (HEAD-cancellable) | request jar/knife/frames; FirmaLife harvest-or-idle decision; the honey + wax + refill hive service |
-| `InventoryBlockEntityAccessor` | TFC `InventoryBlockEntity#inventory` (`@Accessor`) | read/write the four frame slots (GUI-only, not on the Forge capability) |
-| `MixinSettingsModule` (extend existing) | `SettingsModule#with` | attach the `bee_frames` setting to the Beekeeper settings module |
+| *(no mixin)* TFC `InventoryBlockEntity#inventory` | read reflectively in `FlBeekeeping` | read/write the four frame slots (GUI-only, not on the Forge capability; the field is a type variable, which a Mixin `@Accessor` can't bind) |
+| `MixinAbstractBuildingModule` (existing) | `AbstractBuildingModule#setBuilding` | attaches the `wax_frames` setting registered via `BuildingSettings.register(...)` (no new mixin needed) |
 
 Reused existing accessors/invokers: `AbstractAISkeletonAccessor#mctfc$worker`,
 `AbstractEntityAIBasicInvoker#{mctfc$building, mctfc$walkToWorkPos}`. The AI's own `equipItem`/`getItemSlot` are
@@ -239,22 +248,22 @@ SlimColonies twin (that fork rule applies to `:replacements`' colony integration
 
 ---
 
-## 8. Status & phasing
+## 8. Status
 
-| Piece | Status | Effort |
-|---|---|---|
-| `FlBeekeeping` helper (honey) | stub in-tree | — |
-| Scepter accepts FirmaLife hives | PLANNED | small |
-| Honey harvest (jar → honey jar) | PLANNED | medium |
-| `InventoryBlockEntityAccessor` + frame read/write | PLANNED | small |
-| Wax scrape + empty-frame refill | PLANNED | medium |
-| `BeeFrameSetting` (+ factory, layout, lang, attach) | PLANNED | medium–large |
-| Substitution `+bee_nest`, docs, changelog | PLANNED | small |
+| Piece | Status |
+|---|---|
+| `FlBeekeeping` bridge (honey + frame read/scrape/refill + queen detection) | **DONE** |
+| Scepter accepts FirmaLife hives | **DONE** |
+| Honey harvest (jar → honey jar) | **DONE** |
+| Frame read/write via reflection on `InventoryBlockEntity#inventory` | **DONE** |
+| Wax scrape + empty-frame refill | **DONE** |
+| `BeeFrameSetting` (+ factory, layout, lang, attach) | **DONE** |
+| Substitution `+bee_nest`, docs, changelog | **DONE** |
 
-Recommended order: **(1)** scepter registration + honey harvest + the FirmaLife `decideWhatToDo` bypass — this
-alone makes the Beekeeper *functionally* harvest a FirmaLife apiary; verify in `:compat:runClient`. **(2)** the
-frame accessor + wax/refill service (no setting yet — e.g. wax off). **(3)** the `BeeFrameSetting` GUI row to
-control which slots produce wax. Each phase is independently testable in-world.
+Compiles in `:compat`. **Remaining: in-game verification** in `:compat:runClient` (FirmaLife is on the dev
+classpath) — set up a FirmaLife apiary (hive + frames + queens + flowers), register it with the beekeeper
+scepter, and confirm the worker harvests honey jars, scrapes wax from the toggled frames, refills empties, and
+that the **Beeswax frames** setting row renders/persists.
 
 ---
 

@@ -5,11 +5,15 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.Ad
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.BlockGrassPathPlacementHandler;
 import com.mctfc.furnace.FurnaceBehaviors;
 import com.mctfc.furnace.FurnaceProcessCapability;
+import com.mctfc.settings.BeeFrameSetting;
+import com.mctfc.settings.BeeFrameSettingFactory;
 import com.mctfc.settings.BuildingSettings;
 import com.mctfc.settings.BuildingStockSeeds;
 import com.mctfc.smelter.SmelterBehavior;
 import com.mctfc.smelter.SmelterRecipes;
+import com.minecolonies.api.colony.requestsystem.StandardFactoryController;
 import com.minecolonies.core.colony.buildings.modules.settings.IntSetting;
+import com.minecolonies.core.colony.buildings.workerbuildings.BuildingBeekeeper;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingSmeltery;
 import com.minecolonies.core.entity.ai.workers.crafting.EntityAIWorkSmelter;
 import com.mctfc.data.AfcDataPack;
@@ -71,6 +75,15 @@ public class MineColoniesTFC
         modBus.addListener(FoodPreservation::onCommonSetup);
         // Register herder interaction validators (e.g. the "more than one species in this pen" worker warning).
         modBus.addListener(TfcHerd::onCommonSetup);
+        // Register the wax-frame setting's (de)serialization factory so a Beekeeper carrying it saves/syncs.
+        // Unconditional (the setting names no FirmaLife type) so a world that loses FirmaLife can still load.
+        modBus.addListener(MineColoniesTFC::onCommonSetup);
+        // FirmaLife Beekeeper: give the hut a "wax frames" setting (which of the 4 hive frame slots the worker
+        // scrapes for beeswax). FirmaLife-gated — base TFC has no beekeeping, so a non-FirmaLife world omits it.
+        if (net.minecraftforge.fml.ModList.get().isLoaded("firmalife"))
+        {
+            BuildingSettings.register(b -> b instanceof BuildingBeekeeper, BeeFrameSetting.KEY, () -> new BeeFrameSetting(0));
+        }
         // Network channel for the farming bridge (per-field harvest-mode toggle from the field GUI).
         McFarmingNetwork.register();
         // Let the builder place substituted TFC grass / grass-path by requesting the matching TFC dirt
@@ -79,5 +92,10 @@ public class MineColoniesTFC
         // TFC's PathBlock (a DirtPathBlock subclass).
         PlacementHandlers.add(new TfcSoilPlacementHandler(), BlockGrassPathPlacementHandler.class, AddType.BEFORE);
         LOGGER.info("MineColonies x TerraFirmaCraft bridge loaded.");
+    }
+
+    private static void onCommonSetup(final net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event)
+    {
+        StandardFactoryController.getInstance().registerNewFactory(new BeeFrameSettingFactory());
     }
 }

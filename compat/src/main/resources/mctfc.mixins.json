@@ -34,6 +34,8 @@
     "MixinAbstractEntityAIHerder",
     "MixinEntityAIWorkCowboy",
     "MixinEntityAIWorkShepherd",
+    "MixinEntityAIWorkBeekeeper",
+    "MixinItemScepterBeekeeper",
     "MixinEquipmentTypeEntry",
     "AbstractAISkeletonAccessor"
   ],

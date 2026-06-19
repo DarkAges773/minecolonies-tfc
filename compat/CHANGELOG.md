@@ -8,6 +8,13 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Beekeeper works a FirmaLife apiary** (requires FirmaLife) — base TFC has no beekeeping, so the Beekeeper was
+  inert. The worker now registers FirmaLife hives with the scepter and **services** them: harvests **honey** into TFC
+  empty jars (→ jars of honey), scrapes **beeswax** from frames you designate, and tops up empty frame slots — while
+  FirmaLife's bees breed on their own. A new **Beeswax frames** hut setting (one row, a toggle per frame) picks which
+  frames are scraped for wax (default none — scraping a frame kills its queen, so leave some for honey/breeding). Set
+  up the apiary (frames, queens, flowers) and register the hives as you would by hand. Vanilla `beehive`/`bee_nest`
+  blueprint blocks substitute to `firmalife:beehive`.
 - **Chicken Herder collects eggs from nest boxes** — TFC chickens lay into `tfc:nest_box` blocks instead of dropping
   eggs on the ground, so the vanilla Chicken Herder never gathered them. The worker now visits nest boxes in its hut
   and harvests the **food (non-fertilized) eggs**, leaving **fertilized** eggs in the box to hatch into chicks (that's

@@ -1,0 +1,11 @@
+<window xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/ldtteam/BlockUI/version/1.20.1/src/main/resources/assets/blockui/gui/block_ui.xsd">
+    <!-- Hidden row id (used by the settings list to recycle rows) + the auto-filled label. -->
+    <text id="id" size="0 0" pos="0 0" visible="false"/>
+    <text id="desc" size="100% 15" pos="5 5" color="black" textalign="MIDDLE_LEFT" wrap="true"/>
+
+    <!-- One toggle per frame slot (0..3). BeeFrameSetting wires the handlers/labels by id. -->
+    <button id="slot0" pos="5 25"   size="34 17" source="minecolonies:textures/gui/builderhut/builder_button_very_small.png" color="black"/>
+    <button id="slot1" pos="42 25"  size="34 17" source="minecolonies:textures/gui/builderhut/builder_button_very_small.png" color="black"/>
+    <button id="slot2" pos="79 25"  size="34 17" source="minecolonies:textures/gui/builderhut/builder_button_very_small.png" color="black"/>
+    <button id="slot3" pos="116 25" size="34 17" source="minecolonies:textures/gui/builderhut/builder_button_very_small.png" color="black"/>
+</window>
