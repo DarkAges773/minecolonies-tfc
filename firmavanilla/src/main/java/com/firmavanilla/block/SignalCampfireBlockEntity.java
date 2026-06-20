@@ -28,11 +28,22 @@ public class SignalCampfireBlockEntity extends TickCounterBlockEntity
         super(SignalCampfires.SIGNAL_CAMPFIRE_BE.get(), pos, state);
     }
 
-    /** Burn out like a TFC torch (4×): once lit long enough, extinguish to the unlit state. */
+    /** TFC's {@code lastUpdateTick} sentinel (set in the ctor) — means the burn timer was never started. */
+    private static final long UNINITIALIZED = -2147483648L;
+
+    /** Burn out like a TFC torch: once lit long enough, extinguish to the unlit state. */
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state, final SignalCampfireBlockEntity be)
     {
         if (!state.getValue(CampfireBlock.LIT))
         {
+            return;
+        }
+        // Start the timer if it was never reset — placement paths that don't call setPlacedBy/onPlace-with-BE
+        // (the MineColonies builder, /setblock, worldgen) leave it at the sentinel, which would otherwise read as
+        // "ancient" and burn out on the first tick. Begin the burn from now instead.
+        if (be.getLastUpdateTick() == UNINITIALIZED)
+        {
+            be.resetCounter();
             return;
         }
         final int t = TFCConfig.SERVER.torchTicks.get();

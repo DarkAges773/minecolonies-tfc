@@ -26,6 +26,9 @@
     { "from": "minecraft:soul_torch", "to": "firmavanilla:soul_torch" },
     { "from": "minecraft:soul_wall_torch", "to": "firmavanilla:soul_wall_torch" },
 
+    { "from": "minecraft:campfire", "to": "firmavanilla:signal_campfire", "apply_properties": { "lit": "true" } },
+    { "from": "minecraft:soul_campfire", "to": "firmavanilla:soul_signal_campfire", "apply_properties": { "lit": "true" } },
+
     { "from": "minecraft:chain", "to": "tfc:metal/chain/wrought_iron" },
     { "from_tag": "mctfc:subst/metal/chain", "to_tag": "mctfc:subst/metal/chain" },
 

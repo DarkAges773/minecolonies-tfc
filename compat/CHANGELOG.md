@@ -8,6 +8,9 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Campfires → signal campfires** — `minecraft:campfire`/`soul_campfire` in blueprints now substitute to
+  firmavanilla's `signal_campfire`/`soul_signal_campfire` (campfire look, no cooking, torch-style burn-out), placed
+  **lit** so colony builds light up as designed.
 - **Magma block → TFC magma** — `minecraft:magma_block` now substitutes to `tfc:rock/magma/dacite` (closest look),
   with an any-magma re-pick pool covering TFC's 7 igneous magmas (andesite/basalt/dacite/diorite/gabbro/granite/rhyolite).
 - **Honeycomb block → block of beeswax** (requires FirmaLife) — `minecraft:honeycomb_block` in blueprints now

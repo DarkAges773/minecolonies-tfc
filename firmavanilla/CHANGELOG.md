@@ -14,6 +14,13 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   `soul_tallow` (3600), plus the unchanged infinite `soul_lava` (blue_steel). Lighting/filling is unchanged.
 
 ### Added
+- **Signal campfires** — a normal (`firmavanilla:signal_campfire`) and soul (`soul_signal_campfire`) campfire that
+  look like vanilla's but **can't cook** and **burn out like a TFC torch** (normal 1× / soul 2× `torchTicks`),
+  extinguishing to their unlit state (a soul one degrades to a normal one). Place unlit, light with flint & steel
+  (relighting refreshes the timer), full-render-distance smoke column. Crafted from straw + logs (campfire shape);
+  soul variant via a soul catalyst (craft or right-click, like the soul torch). They start their burn timer on the
+  first tick when placed without a player (the MineColonies builder, `/setblock`, worldgen), so builder-placed lit
+  campfires no longer wink out instantly. Mixin-free.
 - **Soul torches** — a vanilla-soul-torch look (soul-fire flame, vanilla models) with **TFC's burn-out**: a standing
   (`firmavanilla:soul_torch`) and wall (`soul_wall_torch`) torch that reuse TFC's torch block-entity/timer and, after
   burning **twice as long** as a normal TFC torch, turn into TFC's `dead_torch`/`dead_wall_torch`. Made by converting
