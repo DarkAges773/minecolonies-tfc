@@ -8,6 +8,10 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Lumberjack replants TFC trees.** The Lumberjack already found and chopped TFC trees, but never replanted them:
+  vanilla's replant check only sustains saplings on `BlockTags.DIRT`, which (under TFC) excludes TFC grass — where
+  wild TFC trees actually grow — so the worker pulled the stump and planted nothing, depleting the forest. It now
+  also replants wherever the sapling can genuinely survive (TFC grass/dirt/farmland).
 - **Coarse dirt / podzol / mycelium substitutions** — `minecraft:coarse_dirt` → firmavanilla's coarse dirt
   (default coarse loam, with a pick-any-soil pool: loam/sandy_loam/silt/silty_loam); `minecraft:podzol` and
   `minecraft:mycelium` → TFC rooted dirt (default loam, same soil-pick pool).

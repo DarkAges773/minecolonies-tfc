@@ -699,6 +699,29 @@ listener reset+reload, with the server `RecipeManager` loaded and tags bound, ri
 Recipe-gating semantics: `CustomRecipe.isUnlockEffectResearched` accepts a research id (completed-research check)
 *or* an effect id (effect-strength check) — we use effect ids, matching the stock `assistanthammerunlock` pattern.
 
+## Lumberjack replants TFC trees — DONE, in-world test pending
+
+The Lumberjack already **finds and chops** TFC trees with no help: TFC logs/leaves/saplings piggyback the vanilla
+`#minecraft:logs` / `#minecraft:leaves` / `#minecraft:saplings` tags, and `Tree.checkTree`'s log gate is
+`state.is(minecolonies:tree)` (= `#minecraft:logs` + …), its leaf gate counts `#minecraft:leaves`, and its
+"on solid ground" gate is just *any solid that isn't vanilla cobblestone* — so TFC grass/dirt pass. (TFC **fruit**
+trees are skipped — their branches aren't logs.) Auto-discovery of the leaf→sapling mapping and TFC axes both work.
+
+The one gap was **replanting**. `EntityAIWorkLumberjack.placeSaplings` plants only when
+`block.canSustainPlant(soilBelow, …)` is true, and Forge's default `canSustainPlant` for a `PlantType.PLAINS`
+sapling requires the soil ∈ `BlockTags.DIRT`. Under TFC, `#minecraft:dirt` = `#tfc:dirt` (bare dirt/rooted/muddy)
+and **excludes `#tfc:grass`** — but wild TFC trees stand on grass. So vanilla rejected every grass-grown tree and
+the worker pulled the stump without replanting → forest depletion.
+
+[MixinEntityAIWorkLumberjack](../compat/src/main/java/com/mctfc/mixin/MixinEntityAIWorkLumberjack.java)
+`@WrapOperation`s that single `canSustainPlant` call (MixinExtras; `remap = false` — MineColonies' own method,
+Forge's own `canSustainPlant`): keep the original result, else ask the plant itself —
+`plantable.getPlant(level, soilPos.above()).canSurvive(reader, plantPos)`. For a TFC sapling that defers to
+`TFCSaplingBlock.mayPlaceOn`, which accepts `#tfc:bush_plantable_on` (= `#minecraft:dirt` + `#tfc:grass` +
+`#tfc:farmland`). General + conservative: it only allows a replant where the sapling can genuinely live, so it
+never plants where it shouldn't and hard-codes no TFC tag. Chosen over adding `#tfc:grass` to `#minecraft:dirt`
+(too broad — many systems read `BlockTags.DIRT`).
+
 ## Non-falling ("mortared"/"cemented") cobble — MOVED to firmavanilla
 
 The cemented-cobble twin system (registry scan, runtime data pack, model delegation, in-world mortar
