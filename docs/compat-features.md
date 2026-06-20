@@ -699,7 +699,7 @@ listener reset+reload, with the server `RecipeManager` loaded and tags bound, ri
 Recipe-gating semantics: `CustomRecipe.isUnlockEffectResearched` accepts a research id (completed-research check)
 *or* an effect id (effect-strength check) — we use effect ids, matching the stock `assistanthammerunlock` pattern.
 
-## Lumberjack replants TFC trees — DONE, in-world test pending
+## Lumberjack fells + replants TFC trees — DONE, in-world test pending
 
 The Lumberjack already **finds and chops** TFC trees with no help: TFC logs/leaves/saplings piggyback the vanilla
 `#minecraft:logs` / `#minecraft:leaves` / `#minecraft:saplings` tags, and `Tree.checkTree`'s log gate is
@@ -721,6 +721,32 @@ Forge's own `canSustainPlant`): keep the original result, else ask the plant its
 `#tfc:farmland`). General + conservative: it only allows a replant where the sapling can genuinely live, so it
 never plants where it shouldn't and hard-codes no TFC tag. Chosen over adding `#tfc:grass` to `#minecraft:dirt`
 (too broad — many systems read `BlockTags.DIRT`).
+
+**Whole-tree felling.** TFC gives every axe a one-hit felling behavior, wired in `ForgeEventHandler.onBlockBroken`
+to a `BlockEvent.BreakEvent` — which only fires for a real **player**. The citizen breaks via `world.removeBlock`,
+so it never triggers; the worker climbs the trunk log-by-log (slow, and gets stuck on tall trees). The same mixin's
+second `@WrapOperation` wraps the per-log `mineBlock` call in `chopTree`: when TFC's own
+`AxeLoggingHelper.shouldLog(level, pos, state, axe)` approves (`isLoggingAxe && isLoggingBlock && !isPartOfLargerTrunk`)
+it spends a chop delay scaled by the tree's log count (`AxeLoggingHelper.findLogs(...).size()` × the normal
+per-log `getBlockMiningTime`, reached via the public method and the `mctfc$hasNotDelayed` invoker — so axe tier /
+skill / research and tree size all matter), then calls `AxeLoggingHelper.doLogging(level, pos, fakePlayer, axe)` —
+felling the whole connected trunk at once.
+`doLogging` uses `level.destroyBlock(pos, true, breaker)` so logs drop **at their own positions** (the gathering
+phase collects them) and `axe.hurtAndBreak` so the worker's axe wears per log, exactly like a player. The
+**fake player** comes from MineColonies' own `AbstractEntityAIBasic.getFakePlayer()` (reached via the existing
+[AbstractEntityAIBasicInvoker](../compat/src/main/java/com/mctfc/mixin/AbstractEntityAIBasicInvoker.java)), and the
+axe from [AbstractAISkeletonAccessor](../compat/src/main/java/com/mctfc/mixin/AbstractAISkeletonAccessor.java) —
+both avoiding the inherited-field `@Shadow` trap. The leaf path, non-trunk logs, and 2×2 trunks (where `shouldLog`
+is false) fall through to the unchanged single-block break, so it's faithful to TFC by construction. No fake
+`BlockEvent.BreakEvent` is posted, so there's no recursion.
+
+**Cut from the base, not the top.** `Tree` sorts `woodBlocks` ascending by distance from the base but hands them
+out from the end (`peekNextLog`/`pollNextLog` = `peekLast`/`pollLast`) — topmost first (vanilla's "work down so
+nothing floats"). With felling that reads as nonsense (the worker reaches the *top* to drop the tree).
+[MixinTree](../compat/src/main/java/com/mctfc/mixin/MixinTree.java) flips both ends to `peekFirst`/`pollFirst` so
+the forester cuts the **base** log — where `shouldLog` fells from. peek and poll must flip together (peeking the
+base but polling the top would never remove the base → infinite loop). `woodBlocks` is declared in `Tree` itself,
+so the `@Shadow` is safe.
 
 ## Non-falling ("mortared"/"cemented") cobble — MOVED to firmavanilla
 

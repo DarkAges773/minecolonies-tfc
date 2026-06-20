@@ -8,6 +8,14 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Lumberjack fells whole TFC trees (TFC axe behavior).** TFC gives every axe a one-hit tree-felling behavior,
+  but it only triggers for real players — so the colony forester used to climb each trunk log-by-log (slow, and apt
+  to get stuck on tall trees). The forester now fells the whole connected trunk in one chop via TFC's own logging,
+  dropping the logs (its gathering phase collects them) and wearing the axe per log, exactly like a player. Falls
+  back to the normal single-log chop where TFC itself wouldn't fell (non-trunk logs, 2×2 trunks). The forester cuts
+  the tree from the **base** block (not the top down), and the fell takes time proportional to the tree's size —
+  the log count × the normal per-log chop time (which scales with axe tier / worker skill / research) — so big
+  trees and worse axes take longer, rather than every tree dropping instantly.
 - **Lumberjack replants TFC trees.** The Lumberjack already found and chopped TFC trees, but never replanted them:
   vanilla's replant check only sustains saplings on `BlockTags.DIRT`, which (under TFC) excludes TFC grass — where
   wild TFC trees actually grow — so the worker pulled the stump and planted nothing, depleting the forest. It now

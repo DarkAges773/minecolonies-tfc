@@ -35,6 +35,7 @@
     "MixinEntityAIWorkCowboy",
     "MixinEntityAIWorkShepherd",
     "MixinEntityAIWorkLumberjack",
+    "MixinTree",
     "MixinEntityAIWorkBeekeeper",
     "MixinItemScepterBeekeeper",
     "MixinBuildingBeekeeper",

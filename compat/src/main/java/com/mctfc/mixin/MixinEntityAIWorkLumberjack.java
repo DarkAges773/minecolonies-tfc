@@ -2,36 +2,51 @@ package com.mctfc.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.minecolonies.core.entity.ai.workers.AbstractEntityAIInteract;
 import com.minecolonies.core.entity.ai.workers.production.EntityAIWorkLumberjack;
+import net.dries007.tfc.util.AxeLoggingHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.IPlantable;
+import net.minecraftforge.common.util.FakePlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /**
- * Lets the Lumberjack <b>replant</b> on TFC ground. The Lumberjack already <i>finds and chops</i> TFC trees fine
- * (TFC logs/leaves piggyback the vanilla {@code #minecraft:logs}/{@code #minecraft:leaves} tags that drive
- * {@code minecolonies:tree}), but {@code placeSaplings} only plants when
- * {@code block.canSustainPlant(soilBelow, …)} is true — and Forge's default {@code canSustainPlant} for a
- * {@code PlantType.PLAINS} sapling requires the soil to be in {@code BlockTags.DIRT}. TFC's {@code #minecraft:dirt}
- * contains only {@code #tfc:dirt} (bare dirt/rooted/muddy), <b>not</b> {@code #tfc:grass} — yet naturally-grown TFC
- * trees stand on grass. So vanilla rejects every grass-grown TFC tree and the Lumberjack removes the stump without
- * replanting, depleting the forest.
+ * Two TFC fixes for the Lumberjack. (The worker already <i>finds and chops</i> TFC trees with no help — TFC
+ * logs/leaves/saplings ride the vanilla {@code #minecraft:logs}/{@code leaves}/{@code saplings} tags that drive
+ * {@code minecolonies:tree}.)
  *
- * <p>We wrap that single {@code canSustainPlant} call: keep its result (so vanilla/other-mod soils are unchanged),
- * but if it says no, ask the plant itself whether it could survive on this soil via {@code BlockState#canSurvive}.
- * For a TFC sapling that defers to {@code TFCSaplingBlock#mayPlaceOn}, which accepts {@code #tfc:bush_plantable_on}
- * ({@code #minecraft:dirt} + {@code #tfc:grass} + {@code #tfc:farmland}) — i.e. TFC grass. This is general and
- * conservative: it only allows a replant where the sapling can genuinely live, so it never plants where it
- * shouldn't, and needs no hard-coded TFC tag.
+ * <p><b>1 — Replant on TFC ground.</b> {@code placeSaplings} plants only when
+ * {@code block.canSustainPlant(soilBelow, …)} is true, and Forge's default {@code canSustainPlant} for a
+ * {@code PlantType.PLAINS} sapling requires the soil ∈ {@code BlockTags.DIRT}. TFC's {@code #minecraft:dirt}
+ * contains only {@code #tfc:dirt} (bare dirt/rooted/muddy), <b>not</b> {@code #tfc:grass} — yet wild TFC trees grow
+ * on grass, so vanilla rejected them and the worker pulled the stump without replanting. We wrap that call: keep its
+ * result, else ask the plant itself via {@code BlockState#canSurvive} (for a TFC sapling that defers to
+ * {@code TFCSaplingBlock#mayPlaceOn}, accepting {@code #tfc:bush_plantable_on} = dirt + grass + farmland).
  *
- * <p>{@code remap = false}: the target method {@code placeSaplings} is MineColonies' own, and the wrapped
- * {@code Block#canSustainPlant} is a Forge-added method — neither is SRG-mapped.
+ * <p><b>2 — TFC whole-tree felling.</b> TFC gives every axe a felling behaviour (break one trunk log → the whole
+ * connected tree drops), wired to a {@code BlockEvent.BreakEvent} that only fires for a real player; the citizen
+ * isn't one, so it never triggers and the worker instead climbs the trunk log-by-log (slow, and prone to getting
+ * stuck on tall trees). We wrap the per-log {@code mineBlock} call in {@code chopTree}: when TFC's own
+ * {@code AxeLoggingHelper.shouldLog} approves (logging axe + natural trunk), we first spend a chop delay scaled by
+ * the whole tree's log count ({@code findLogs().size()} × the normal per-log {@code getBlockMiningTime}, so a bigger
+ * tree — or a worse axe — takes longer), then call {@code doLogging} with the worker's
+ * {@linkplain AbstractEntityAIBasicInvoker#mctfc$getFakePlayer() fake player} and its actual axe stack — felling the
+ * trunk in one go, dropping the logs at their positions (the gathering phase collects them) and wearing the axe per
+ * log, exactly like a player. The leaf path, non-trunk logs, and 2×2 trunks (where {@code shouldLog} is false) fall
+ * through to the unchanged single-block break.
+ *
+ * <p>{@code remap = false}: the target methods are MineColonies' own and the wrapped {@code Block#canSustainPlant}
+ * is a Forge-added method — none are SRG-mapped. TFC is a mandatory dependency of mctfc, so {@code AxeLoggingHelper}
+ * is always present.
  */
 @Mixin(EntityAIWorkLumberjack.class)
 public abstract class MixinEntityAIWorkLumberjack
@@ -58,5 +73,41 @@ public abstract class MixinEntityAIWorkLumberjack
         // soilPos is the block BELOW the stump; the sapling itself goes one above. Let the plant judge the soil.
         final BlockPos plantPos = soilPos.above();
         return level instanceof LevelReader reader && plantable.getPlant(level, plantPos).canSurvive(reader, plantPos);
+    }
+
+    @WrapOperation(
+      method = "chopTree",
+      at = @At(
+        value = "INVOKE",
+        target = "Lcom/minecolonies/core/entity/ai/workers/production/EntityAIWorkLumberjack;mineBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Z"),
+      remap = false)
+    private boolean mctfc$fellTfcTree(
+      final EntityAIWorkLumberjack self,
+      final BlockPos toMine,
+      final BlockPos safeStand,
+      final Operation<Boolean> original)
+    {
+        final AbstractEntityAIBasicInvoker ai = (AbstractEntityAIBasicInvoker) (Object) this;
+        final FakePlayer faker = ai.mctfc$getFakePlayer();
+        final Level level = faker.level();
+        final ItemStack axe = ((AbstractAISkeletonAccessor) (Object) this).mctfc$worker().getMainHandItem();
+        final BlockState state = level.getBlockState(toMine);
+        if (!AxeLoggingHelper.shouldLog(level, toMine, state, axe))
+        {
+            return original.call(self, toMine, safeStand);
+        }
+        // Spend chop time proportional to the whole tree's log count, × the normal per-log mining time (which itself
+        // scales with axe tier + worker skill + research) — so a bigger tree, or a worse axe, takes longer to fell.
+        final int logs = AxeLoggingHelper.findLogs(level, toMine).size();
+        final int perLog = ((AbstractEntityAIInteract) (Object) this).getBlockMiningTime(state, toMine);
+        if (ai.mctfc$hasNotDelayed(Math.max(1, logs * perLog)))
+        {
+            ((AbstractAISkeletonAccessor) (Object) this).mctfc$worker().swing(InteractionHand.MAIN_HAND);
+            return false; // still cutting the base — keep waiting (chopTree re-enters after the delay)
+        }
+        // Delay elapsed: drop the whole connected trunk. Logs drop at their own positions (gathering collects them);
+        // the axe wears per log. Remaining tracked logs are now air and drain a tick each.
+        AxeLoggingHelper.doLogging(level, toMine, faker, axe);
+        return true;
     }
 }

@@ -28,6 +28,9 @@ public interface AbstractEntityAIBasicInvoker
     @Invoker(value = "getFakePlayer", remap = false)
     FakePlayer mctfc$getFakePlayer();
 
+    @Invoker(value = "hasNotDelayed", remap = false)
+    boolean mctfc$hasNotDelayed(int time);
+
     @Accessor(value = "building", remap = false)
     AbstractBuilding mctfc$building();
 }
