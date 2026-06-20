@@ -6,6 +6,13 @@
     { "from": "minecraft:dirt", "to": "tfc:dirt/loam" },
     { "from_tag": "mctfc:subst/soil/dirt", "to_tag": "mctfc:subst/soil/dirt" },
 
+    { "from": "minecraft:coarse_dirt", "to": "firmavanilla:coarse_dirt/loam" },
+    { "from_tag": "mctfc:subst/soil/coarse_dirt", "to_tag": "mctfc:subst/soil/coarse_dirt" },
+
+    { "from": "minecraft:podzol", "to": "tfc:rooted_dirt/loam" },
+    { "from": "minecraft:mycelium", "to": "tfc:rooted_dirt/loam" },
+    { "from_tag": "mctfc:subst/soil/rooted_dirt", "to_tag": "mctfc:subst/soil/rooted_dirt" },
+
     { "from": "minecraft:grass_block", "to": "tfc:grass/loam" },
     { "from_tag": "mctfc:subst/soil/grass", "to_tag": "mctfc:subst/soil/grass" },
 

@@ -8,6 +8,9 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Coarse dirt / podzol / mycelium substitutions** — `minecraft:coarse_dirt` → firmavanilla's coarse dirt
+  (default coarse loam, with a pick-any-soil pool: loam/sandy_loam/silt/silty_loam); `minecraft:podzol` and
+  `minecraft:mycelium` → TFC rooted dirt (default loam, same soil-pick pool).
 - **Campfires → signal campfires** — `minecraft:campfire`/`soul_campfire` in blueprints now substitute to
   firmavanilla's `signal_campfire`/`soul_signal_campfire` (campfire look, no cooking, torch-style burn-out), placed
   **lit** so colony builds light up as designed.
