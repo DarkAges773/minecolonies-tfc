@@ -14,6 +14,8 @@ to a `<mcversion>-<MAJOR.MINOR.patch>` version scheme (the patch auto-rolls from
   `soul_tallow` (3600), plus the unchanged infinite `soul_lava` (blue_steel). Lighting/filling is unchanged.
 
 ### Added
+- **Moss block loom recipe** — weave 4 TFC moss (`tfc:plant/moss`) → 2 `minecraft:moss_block` on the TFC loom.
+  Vanilla ships no moss-block recipe (it's lush-caves/trader loot only), so a TFC world otherwise can't obtain it.
 - **Signal campfires** — a normal (`firmavanilla:signal_campfire`) and soul (`soul_signal_campfire`) campfire that
   look like vanilla's but **can't cook** and **burn out like a TFC torch** (normal 1× / soul 2× `torchTicks`),
   extinguishing to their unlit state (a soul one degrades to a normal one). Place unlit, light with flint & steel

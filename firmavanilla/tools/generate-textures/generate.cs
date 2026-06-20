@@ -34,6 +34,7 @@ Quartz.Generate();
 CoarseDirt.Generate();
 Beeswax.Generate();    // block of beeswax — honeycomb_block motif CLUT'd through FirmaLife beeswax's palette
 SignalCampfire.Generate();  // signal campfires (normal + soul) — JSON only, reuse vanilla campfire art
+Moss.Generate();        // 4 tfc:plant/moss -> 2 minecraft:moss_block recipe (vanilla moss block, uncraftable in TFC)
 int barrels    = Barrels.Generate();
 
 // ---- cross-cutting tags written ONCE (a mod can ship only one file per tag path) ----
