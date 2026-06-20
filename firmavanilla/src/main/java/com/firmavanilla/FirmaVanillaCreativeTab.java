@@ -13,6 +13,7 @@ import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.block.SoulLamps;
 import com.firmavanilla.block.SoulTorches;
 import com.firmavanilla.block.TileBlocks;
+import com.firmavanilla.block.WaxBlocks;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -111,6 +112,8 @@ public final class FirmaVanillaCreativeTab
                         {
                             output.accept(coarse.get());
                         }
+                        // Block of beeswax (honeycomb motif in beeswax tones).
+                        output.accept(WaxBlocks.BEESWAX_BLOCK.get());
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {
                             output.accept(twin);

@@ -32,6 +32,7 @@ SoulLamps.Generate();
 SoulTorches.Generate();
 Quartz.Generate();
 CoarseDirt.Generate();
+Beeswax.Generate();    // block of beeswax — honeycomb_block motif CLUT'd through FirmaLife beeswax's palette
 int barrels    = Barrels.Generate();
 
 // ---- cross-cutting tags written ONCE (a mod can ship only one file per tag path) ----

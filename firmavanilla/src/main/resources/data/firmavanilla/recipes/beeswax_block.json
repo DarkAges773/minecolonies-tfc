@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","conditions":[{"type":"forge:mod_loaded","modid":"firmalife"}],"pattern":["BB","BB"],"key":{"B":{"item":"firmalife:beeswax"}},"result":{"item":"firmavanilla:beeswax_block","count":1}}

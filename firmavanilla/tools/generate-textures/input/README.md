@@ -166,3 +166,14 @@ Each is a 256×16 strip: column *x* is the patina colour for source luminance *x
 ramp is sampled straight from the stage via `BuildPaletteRamp`. To **patina-ify any block** later, feed a strip
 to `ClutThrough(pattern, patinaStrip)` as the `lutBase` (exactly like the alabaster-brick palettes), and the
 target's luminance is repainted through the copper patina. Re-run the generator to refresh them.
+
+## One-off: honeycomb → beeswax CLUT preview
+
+A prototype (`dotnet run generate.cs -- clut`) recolours Minecraft's honeycomb block through FirmaLife
+beeswax's palette via the standard luminance-normalized CLUT, writing `../honeycomb_wax.png` to the tool root
+(a beeswax-toned honeycomb texture for the FirmaLife beekeeper — not yet wired to a block). Inputs (extract):
+
+```
+input/vanilla/honeycomb_block.png    (minecraft:block/honeycomb_block — from client-extra.jar)
+input/firmalife/beeswax.png          (firmalife:item/beeswax — from the FirmaLife jar)
+```

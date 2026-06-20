@@ -771,3 +771,27 @@ vanilla coarse dirt.
 
 > The shared `minecraft:mineable/shovel` and `tfc:can_landslide` tags are written once in `generate.cs` from lists
 > the prismarine-deposit and coarse-dirt sections both append to (a mod can ship only one file per tag path).
+
+## Block of beeswax — honeycomb motif in FirmaLife wax tones
+
+`firmavanilla:beeswax_block` — vanilla's **honeycomb-block** comb motif recoloured to **FirmaLife beeswax**'s
+warm-tan palette, the beeswax analogue of vanilla's 4-honeycomb → honeycomb-block. A plain decorative full cube
+(`Properties.copy(Blocks.HONEYCOMB_BLOCK)` — honeycomb sound/hardness, no tool needed, `cube_all`, drops self).
+See [`WaxBlocks`](../firmavanilla/src/main/java/com/firmavanilla/block/WaxBlocks.java).
+
+**Texture** (machine-generated, [beeswax.cs](../firmavanilla/tools/generate-textures/beeswax.cs)): the standard
+luminance-normalized **CLUT** — vanilla `honeycomb_block`'s exact pixels repainted through a palette ramp built
+from FirmaLife's `beeswax` item (`ClutSide(honeycomb, beeswax, 16, 16)`). So the comb relief stays crisp and the
+colour is authentically beeswax. Inputs `input/vanilla/honeycomb_block.png` + `input/firmalife/beeswax.png` are
+git-ignored like the rest; the committed PNG is what ships.
+
+**No FirmaLife dependency.** firmavanilla stays TFC-only: the block is registered unconditionally and the texture
+ships as a committed derivative. The **only** FirmaLife touch is the recipe — `BB`/`BB` of **4
+`firmalife:beeswax`** → 1 block (mirroring 4-honeycomb → honeycomb-block) — wrapped in a `forge:mod_loaded`
+condition (`firmalife`), so it simply doesn't load when FirmaLife is absent (the block is then craft-less, like
+any other content gated on an optional mod).
+
+**`:compat` substitution:** `minecraft:honeycomb_block → firmavanilla:beeswax_block`, in the **FirmaLife-gated**
+datapack (`firmalife.json`, via `gen_tfc_substitutions.sh`) — placed there rather than the base pack because the
+block is only craftable with FirmaLife present, so there's no point mapping to an uncraftable block in a
+FirmaLife-less world.

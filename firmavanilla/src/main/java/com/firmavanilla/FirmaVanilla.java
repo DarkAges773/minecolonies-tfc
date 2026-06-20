@@ -12,6 +12,7 @@ import com.firmavanilla.block.SandstoneBlocks;
 import com.firmavanilla.block.SoulLamps;
 import com.firmavanilla.block.SoulTorches;
 import com.firmavanilla.block.TileBlocks;
+import com.firmavanilla.block.WaxBlocks;
 import com.firmavanilla.data.MortaredCobbleData;
 import com.firmavanilla.worldgen.QuartzClusterFeature;
 import com.mojang.logging.LogUtils;
@@ -70,6 +71,9 @@ public class FirmaVanilla
         // Coarse dirt per TFC soil — vanilla coarse-dirt look in TFC palettes; plain (non-transforming) dirt-like
         // blocks crafted from TFC dirt + gravel. Textures/assets machine-generated.
         CoarseDirtBlocks.init(modBus);
+        // Block of beeswax — vanilla honeycomb-block motif recoloured to FirmaLife beeswax's palette (CLUT).
+        // Standalone block (no FirmaLife dep); only its recipe (4 firmalife:beeswax) is mod_loaded-gated.
+        WaxBlocks.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.

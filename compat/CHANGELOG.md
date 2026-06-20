@@ -8,6 +8,11 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Magma block → TFC magma** — `minecraft:magma_block` now substitutes to `tfc:rock/magma/dacite` (closest look),
+  with an any-magma re-pick pool covering TFC's 7 igneous magmas (andesite/basalt/dacite/diorite/gabbro/granite/rhyolite).
+- **Honeycomb block → block of beeswax** (requires FirmaLife) — `minecraft:honeycomb_block` in blueprints now
+  substitutes to `firmavanilla:beeswax_block` (the honeycomb motif in FirmaLife beeswax's tones, craftable from
+  beeswax). FirmaLife-gated, since the block is only craftable when FirmaLife is present.
 - **Beekeeper works a FirmaLife apiary** (requires FirmaLife) — base TFC has no beekeeping, so the Beekeeper was
   inert. The worker now registers FirmaLife hives with the scepter and **services** them: harvests **honey** into TFC
   empty jars (→ jars of honey), scrapes **beeswax** from frames you designate, and tops up empty frame slots — while
