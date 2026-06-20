@@ -374,5 +374,7 @@
   "block.firmavanilla.coarse_dirt.sandy_loam": "Sandy Loam Coarse Dirt",
   "block.firmavanilla.coarse_dirt.silt": "Silt Coarse Dirt",
   "block.firmavanilla.coarse_dirt.silty_loam": "Silty Loam Coarse Dirt",
-  "block.firmavanilla.beeswax_block": "Block of Beeswax"
+  "block.firmavanilla.beeswax_block": "Block of Beeswax",
+  "block.firmavanilla.signal_campfire": "Signal Campfire",
+  "block.firmavanilla.soul_signal_campfire": "Soul Signal Campfire"
 }

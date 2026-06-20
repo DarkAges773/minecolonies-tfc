@@ -10,6 +10,7 @@ import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.PrismarineDeposits;
 import com.firmavanilla.block.QuartzBlocks;
 import com.firmavanilla.block.SandstoneBlocks;
+import com.firmavanilla.block.SignalCampfires;
 import com.firmavanilla.block.SoulLamps;
 import com.firmavanilla.block.SoulTorches;
 import com.firmavanilla.block.TileBlocks;
@@ -114,6 +115,9 @@ public final class FirmaVanillaCreativeTab
                         }
                         // Block of beeswax (honeycomb motif in beeswax tones).
                         output.accept(WaxBlocks.BEESWAX_BLOCK.get());
+                        // Signal campfires (normal + soul) — no cooking, burn out like a torch.
+                        output.accept(SignalCampfires.SIGNAL_CAMPFIRE.get());
+                        output.accept(SignalCampfires.SOUL_SIGNAL_CAMPFIRE.get());
                         for (final MortaredCobbleBlock twin : MortaredCobbleRegistry.twins().values())
                         {
                             output.accept(twin);

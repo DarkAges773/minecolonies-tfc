@@ -795,3 +795,42 @@ any other content gated on an optional mod).
 datapack (`firmalife.json`, via `gen_tfc_substitutions.sh`) — placed there rather than the base pack because the
 block is only craftable with FirmaLife present, so there's no point mapping to an uncraftable block in a
 FirmaLife-less world.
+
+## Signal campfires — campfires that don't cook and burn out
+
+`firmavanilla:signal_campfire` and `firmavanilla:soul_signal_campfire` — they look like vanilla (soul) campfires
+but **can't cook** and **burn out like a TFC torch** (4× a torch's duration), extinguishing to their unlit state.
+One block class, [`SignalCampfireBlock`](../firmavanilla/src/main/java/com/firmavanilla/block/SignalCampfireBlock.java),
+serves both ([`SignalCampfires`](../firmavanilla/src/main/java/com/firmavanilla/block/SignalCampfires.java) registers
+the pair); standalone (TFC-only) and **mixin-free**.
+
+It **extends vanilla `CampfireBlock`** (TFC ships no campfire — only a firepit — so vanilla's is free to subclass),
+keeping the look, light, fire damage, facing/lit/signal-fire/waterlogged states, douse-with-water and flint-&-steel
+relight, with three surgical changes:
+
+- **No cooking.** Vanilla `use()` only places food to cook, so it's overridden to `PASS`; and `newBlockEntity`
+  returns our own [`SignalCampfireBlockEntity`](../firmavanilla/src/main/java/com/firmavanilla/block/SignalCampfireBlockEntity.java)
+  instead of the cooking `CampfireBlockEntity` — so there's no cook logic at all.
+- **Burns out + smokes via its BE.** `SignalCampfireBlockEntity` **extends** TFC's `TickCounterBlockEntity` (keeping
+  the **calendar-based** timer — ages even while the chunk is unloaded, like a torch) but is registered as our **own**
+  BE type with both campfires as valid blocks. `getTicker` wires its `serverTick` (extinguish to `LIT=false` + fizzle
+  once the counter passes the block's burn multiplier × TFC's `torchTicks` — **normal 4×, soul 8×** (the soul campfire
+  burns twice as long); `torchTicks ≤ 0` disables) and its `clientTick` (the rising cozy / tall "signal" smoke column). The smoke is a **client BE tick** — so it shows at full render distance like vanilla
+  campfire smoke; the block's inherited `animateTick` still adds the crackle + lava sparks.
+  - *Why our own BE type, not TFC's `TICK_COUNTER` directly:* the smoke needs the **client** to tick the BE, and the
+    client only creates/ticks a BE for a block in that BE type's valid-blocks. Reusing `TICK_COUNTER` (whose
+    valid-blocks don't include our campfires) ticks fine on the server but the client drops it — no smoke. (The soul
+    lamps/torches reuse `TICK_COUNTER` happily because their visuals don't need a client BE tick.)
+- **Relightable.** Flint & steel relights it because the blocks join **`#minecraft:campfires`** (vanilla's
+  `CampfireBlock.canLight` gates on that tag). The burn timer resets on placement (`setPlacedBy`) and on relight
+  (`onPlace`, `LIT` false→true via the inherited `TickCounterBlockEntity.reset`), so a relit campfire gets a fresh life.
+
+**Assets** ([signalcampfire.cs](../firmavanilla/tools/generate-textures/signalcampfire.cs)) are **JSON-only — no
+texture generation**: the models reuse vanilla campfire art — the LIT model parents `minecraft:block/campfire`
+(soul: `…/soul_campfire`) with `render_type: cutout` (vanilla registers the campfire cutout layer in *code* for its
+own blocks only, so the fire's transparent pixels would render opaque black otherwise — the same render-layer
+gotcha as the soul torches / prismarine deposits); the unlit state reuses vanilla's opaque `campfire_off` directly.
+Blockstate mirrors vanilla campfire (facing rotations × lit); drop-self loot; the **item icon reuses vanilla's flat
+campfire sprite** (`item/generated`, `layer0: minecraft:item/campfire` — vanilla's campfire item is flat, not the 3D
+block). It also writes the `#minecraft:campfires` block tag (for relight). **No crafting recipe yet** (creative-/loot-obtainable
+for now — recipe to be designed once the behaviour's settled).

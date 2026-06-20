@@ -33,6 +33,7 @@ SoulTorches.Generate();
 Quartz.Generate();
 CoarseDirt.Generate();
 Beeswax.Generate();    // block of beeswax — honeycomb_block motif CLUT'd through FirmaLife beeswax's palette
+SignalCampfire.Generate();  // signal campfires (normal + soul) — JSON only, reuse vanilla campfire art
 int barrels    = Barrels.Generate();
 
 // ---- cross-cutting tags written ONCE (a mod can ship only one file per tag path) ----

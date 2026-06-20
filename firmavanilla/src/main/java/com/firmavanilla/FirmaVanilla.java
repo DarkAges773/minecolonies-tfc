@@ -9,6 +9,7 @@ import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.PrismarineDeposits;
 import com.firmavanilla.block.QuartzBlocks;
 import com.firmavanilla.block.SandstoneBlocks;
+import com.firmavanilla.block.SignalCampfires;
 import com.firmavanilla.block.SoulLamps;
 import com.firmavanilla.block.SoulTorches;
 import com.firmavanilla.block.TileBlocks;
@@ -74,6 +75,9 @@ public class FirmaVanilla
         // Block of beeswax — vanilla honeycomb-block motif recoloured to FirmaLife beeswax's palette (CLUT).
         // Standalone block (no FirmaLife dep); only its recipe (4 firmalife:beeswax) is mod_loaded-gated.
         WaxBlocks.init(modBus);
+        // Signal campfires (normal + soul) — campfire-look blocks that can't cook and burn out like a TFC torch
+        // (4x torch duration), reusing TFC's tick-counter burn-out. Mixin-free; standalone.
+        SignalCampfires.init(modBus);
         // Scan the block registry and register a non-falling twin for every cobble block (so TFC's
         // collapsing cobble doesn't wreck builds). Substitution targets these via the
         // firmavanilla:mortared_cobblestone tag.
