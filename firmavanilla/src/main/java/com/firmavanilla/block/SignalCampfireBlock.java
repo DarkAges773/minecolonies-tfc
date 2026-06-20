@@ -7,6 +7,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SignalCampfireBlock extends CampfireBlock
 {
-    /** Stays lit this many times TFC's {@code torchTicks} (normal 4×; soul 8× — twice as long). */
+    /** Stays lit this many times TFC's {@code torchTicks} (normal 1× = a TFC torch; soul 2× = a soul torch). */
     private final int burnMult;
 
     public SignalCampfireBlock(final boolean spawnParticles, final int fireDamage, final int burnMult, final Properties properties)
@@ -52,6 +53,15 @@ public class SignalCampfireBlock extends CampfireBlock
     public int burnMult()
     {
         return burnMult;
+    }
+
+    /** Place <b>unlit</b> by default (vanilla campfires place lit) — the player lights it with flint &amp; steel. */
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(final BlockPlaceContext context)
+    {
+        final BlockState state = super.getStateForPlacement(context);
+        return state == null ? null : state.setValue(LIT, false);
     }
 
     /** No cooking — vanilla {@code use} exists only to place food on the campfire. */

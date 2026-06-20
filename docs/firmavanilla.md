@@ -813,17 +813,21 @@ relight, with three surgical changes:
   instead of the cooking `CampfireBlockEntity` — so there's no cook logic at all.
 - **Burns out + smokes via its BE.** `SignalCampfireBlockEntity` **extends** TFC's `TickCounterBlockEntity` (keeping
   the **calendar-based** timer — ages even while the chunk is unloaded, like a torch) but is registered as our **own**
-  BE type with both campfires as valid blocks. `getTicker` wires its `serverTick` (extinguish to `LIT=false` + fizzle
-  once the counter passes the block's burn multiplier × TFC's `torchTicks` — **normal 4×, soul 8×** (the soul campfire
-  burns twice as long); `torchTicks ≤ 0` disables) and its `clientTick` (the rising cozy / tall "signal" smoke column). The smoke is a **client BE tick** — so it shows at full render distance like vanilla
+  BE type with both campfires as valid blocks. `getTicker` wires its `serverTick` and `clientTick` (the rising cozy /
+  tall "signal" smoke column). Once the counter passes the block's burn multiplier × TFC's `torchTicks` — **normal 1×
+  (like a TFC torch), soul 2× (like a soul torch)**; `torchTicks ≤ 0` disables — `serverTick` **burns it out into the
+  normal (unlit) signal campfire** (a soul campfire *degrades to a plain one*, like a TFC torch → dead torch, carrying
+  over facing/waterlogged/signal-fire), plays the fizzle, and relighting then gives the normal flame. The smoke is a **client BE tick** — so it shows at full render distance like vanilla
   campfire smoke; the block's inherited `animateTick` still adds the crackle + lava sparks.
   - *Why our own BE type, not TFC's `TICK_COUNTER` directly:* the smoke needs the **client** to tick the BE, and the
     client only creates/ticks a BE for a block in that BE type's valid-blocks. Reusing `TICK_COUNTER` (whose
     valid-blocks don't include our campfires) ticks fine on the server but the client drops it — no smoke. (The soul
     lamps/torches reuse `TICK_COUNTER` happily because their visuals don't need a client BE tick.)
-- **Relightable.** Flint & steel relights it because the blocks join **`#minecraft:campfires`** (vanilla's
-  `CampfireBlock.canLight` gates on that tag). The burn timer resets on placement (`setPlacedBy`) and on relight
-  (`onPlace`, `LIT` false→true via the inherited `TickCounterBlockEntity.reset`), so a relit campfire gets a fresh life.
+- **Placed unlit; (re)lightable.** `getStateForPlacement` forces `LIT=false`, so signal campfires are placed **unlit**
+  (vanilla campfires place lit) — you light them with flint & steel, which works because the blocks join
+  **`#minecraft:campfires`** (vanilla's `CampfireBlock.canLight` gates on that tag). The burn timer (re)starts whenever
+  it's lit — reset on placement-while-lit (`setPlacedBy`) and on relight (`onPlace`, `LIT` false→true) — so each light
+  gets a fresh life.
 
 **Assets** ([signalcampfire.cs](../firmavanilla/tools/generate-textures/signalcampfire.cs)) are **JSON-only — no
 texture generation**: the models reuse vanilla campfire art — the LIT model parents `minecraft:block/campfire`
@@ -832,5 +836,11 @@ own blocks only, so the fire's transparent pixels would render opaque black othe
 gotcha as the soul torches / prismarine deposits); the unlit state reuses vanilla's opaque `campfire_off` directly.
 Blockstate mirrors vanilla campfire (facing rotations × lit); drop-self loot; the **item icon reuses vanilla's flat
 campfire sprite** (`item/generated`, `layer0: minecraft:item/campfire` — vanilla's campfire item is flat, not the 3D
-block). It also writes the `#minecraft:campfires` block tag (for relight). **No crafting recipe yet** (creative-/loot-obtainable
-for now — recipe to be designed once the behaviour's settled).
+block). It also writes the `#minecraft:campfires` block tag (for relight).
+
+**Recipes.** The normal signal campfire is crafted in the vanilla campfire shape — **`tfc:straw` (fuel) over three
+`#minecraft:logs`** (` S ` / `LLL`). The **soul** variant matches the soul torch: a **shapeless** craft of a normal
+signal campfire + a `#firmavanilla:soul_lamp_catalyst` (the same catalyst tag the soul lamps/torches use), **and** an
+in-world **right-click conversion** ([`SignalCampfireInteraction`](../firmavanilla/src/main/java/com/firmavanilla/block/SignalCampfireInteraction.java),
+Forge bus): hold a catalyst, right-click a placed normal signal campfire → it becomes the soul one (carrying
+facing/lit/etc., timer reset), consuming one catalyst.

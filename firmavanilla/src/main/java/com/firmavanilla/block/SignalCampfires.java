@@ -28,9 +28,9 @@ public final class SignalCampfires
 {
     private SignalCampfires() {}
 
-    /** Normal signal campfire stays lit this many times TFC's torch ({@code torchTicks}) duration. */
-    public static final int BURN_MULT = 4;
-    /** Soul signal campfire burns <b>twice as long</b> as the normal one. */
+    /** Normal signal campfire burns out like a <b>TFC torch</b> (1× {@code torchTicks}). */
+    public static final int BURN_MULT = 1;
+    /** Soul signal campfire burns out like a <b>soul torch</b> — twice as long as the normal one ({@link SoulTorches#BURN_MULT}). */
     public static final int SOUL_BURN_MULT = 2 * BURN_MULT;
 
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, FirmaVanilla.MODID);

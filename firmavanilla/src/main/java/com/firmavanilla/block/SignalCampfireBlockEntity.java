@@ -39,7 +39,10 @@ public class SignalCampfireBlockEntity extends TickCounterBlockEntity
         final int mult = state.getBlock() instanceof SignalCampfireBlock c ? c.burnMult() : SignalCampfires.BURN_MULT;
         if (t > 0 && be.getTicksSinceUpdate() > (long) mult * t)
         {
-            level.setBlockAndUpdate(pos, state.setValue(CampfireBlock.LIT, false));
+            // Burn out into the NORMAL (unlit) signal campfire — a soul campfire degrades to a plain one (like a
+            // torch → dead torch), carrying over facing/waterlogged/signal-fire. Relighting then gives the normal flame.
+            final BlockState burnt = SignalCampfires.SIGNAL_CAMPFIRE.get().withPropertiesOf(state).setValue(CampfireBlock.LIT, false);
+            level.setBlockAndUpdate(pos, burnt);
             level.playSound(null, pos, SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.BLOCKS, 0.5F, 2.6F);
         }
     }
