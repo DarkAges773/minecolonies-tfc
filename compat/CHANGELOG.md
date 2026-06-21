@@ -7,6 +7,11 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+- **Cobblestone and mossy cobblestone are no longer interchangeable in the Replace picker.** Both still substitute
+  to their non-falling cemented twin, but the GUI re-pick pool is now split: plain cemented cobble offers only the
+  other rocks' plain cobble, and mossy offers only mossy — you can't swap a wall between plain and mossy.
+
 ### Added
 - **Lumberjack teaches TFC log recipes, not vanilla ones.** Removed MineColonies' built-in vanilla-log lumberjack
   recipes (the `strip_logs`/`strip_stems` templates — dead clutter in a TFC world) and added the TFC equivalents:

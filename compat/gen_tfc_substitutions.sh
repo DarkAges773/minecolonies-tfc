@@ -55,7 +55,12 @@ for form in raw bricks smooth mossy_bricks cracked_bricks; do
     for r in $ROCKS; do echo "tfc:rock/$form/${r}_${suf}"; done | emit_tag "$TAGS/rock/${form}_${suf}.json"
   done
 done
-# cobble + mossy_cobble: full block is the non-falling mortared twin (reuse firmavanilla:mortared_cobblestone);
+# cobble + mossy_cobble: full block is the non-falling mortared twin (firmavanilla mod). Two SEPARATE full-block
+# pools (plain twins / mossy twins) so plain cemented cobble re-picks only among plain rocks and mossy only among
+# mossy — they must NOT be interchangeable. (The firmavanilla:mortared_cobblestone tag mixes both and is kept for
+# the mortar recipe / DO skins, but the substitution pool uses these split tags instead.)
+for r in $ROCKS; do echo "firmavanilla:mortared/tfc/rock/cobble/$r"; done       | emit_tag "$TAGS/rock/mortared_cobble.json"
+for r in $ROCKS; do echo "firmavanilla:mortared/tfc/rock/mossy_cobble/$r"; done | emit_tag "$TAGS/rock/mortared_mossy_cobble.json"
 # only the stairs/slab/wall sub-forms (which don't landslide) get plain-TFC pools here.
 for form in cobble mossy_cobble; do
   for suf in stairs slab wall; do
@@ -415,8 +420,9 @@ done
 fixed "minecraft:magma_block" "tfc:rock/magma/dacite"
 
 # candidate pools (player re-picks the rock per form, keyed on the converted TFC block)
-# cobble + mossy_cobble full blocks resolve to a mortared twin -> the mortared pool offers the rock choice
-pool "firmavanilla:mortared_cobblestone"
+# cobble + mossy_cobble full blocks resolve to a mortared twin -> SEPARATE plain/mossy pools (not interchangeable)
+pool "mctfc:subst/rock/mortared_cobble"
+pool "mctfc:subst/rock/mortared_mossy_cobble"
 for form in raw raw_stairs raw_slab raw_wall \
             cobble_stairs cobble_slab cobble_wall \
             mossy_cobble_stairs mossy_cobble_slab mossy_cobble_wall \

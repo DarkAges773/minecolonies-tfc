@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:mortared/tfc/rock/cobble/andesite",
+    "firmavanilla:mortared/tfc/rock/cobble/basalt",
+    "firmavanilla:mortared/tfc/rock/cobble/chalk",
+    "firmavanilla:mortared/tfc/rock/cobble/chert",
+    "firmavanilla:mortared/tfc/rock/cobble/claystone",
+    "firmavanilla:mortared/tfc/rock/cobble/conglomerate",
+    "firmavanilla:mortared/tfc/rock/cobble/dacite",
+    "firmavanilla:mortared/tfc/rock/cobble/diorite",
+    "firmavanilla:mortared/tfc/rock/cobble/dolomite",
+    "firmavanilla:mortared/tfc/rock/cobble/gabbro",
+    "firmavanilla:mortared/tfc/rock/cobble/gneiss",
+    "firmavanilla:mortared/tfc/rock/cobble/granite",
+    "firmavanilla:mortared/tfc/rock/cobble/limestone",
+    "firmavanilla:mortared/tfc/rock/cobble/marble",
+    "firmavanilla:mortared/tfc/rock/cobble/phyllite",
+    "firmavanilla:mortared/tfc/rock/cobble/quartzite",
+    "firmavanilla:mortared/tfc/rock/cobble/rhyolite",
+    "firmavanilla:mortared/tfc/rock/cobble/schist",
+    "firmavanilla:mortared/tfc/rock/cobble/shale",
+    "firmavanilla:mortared/tfc/rock/cobble/slate"
+  ]
+}

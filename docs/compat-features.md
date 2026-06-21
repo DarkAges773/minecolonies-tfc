@@ -35,8 +35,9 @@ vanilla block, pool on the TFC-result tag) — never a fixed `to` + `to_tag` on 
   `minecraft:stone_button` → `tfc:rock/button/dacite`. Vanilla
   **granite/diorite/andesite** (which are real TFC rock types) map to the **same** rock — plain → `tfc:rock/raw/<rock>`,
   polished → `tfc:rock/smooth/<rock>` (+ stairs/slabs/walls). Per-form candidate pools let the player pick any
-  TFC rock — the cobble/mossy-cobble full-block pick reuses the runtime `firmavanilla:mortared_cobblestone` pool, and
-  granite/diorite/andesite reuse the existing `raw`/`smooth` pools.
+  TFC rock — the cobble/mossy-cobble full-block picks use the split `mctfc:subst/rock/mortared_cobble` /
+  `mortared_mossy_cobble` pools (plain and mossy kept separate), and granite/diorite/andesite reuse the existing
+  `raw`/`smooth` pools.
 - **Sandstone** ([tfc_sandstone.json](../compat/src/main/resources/data/mctfc/block_substitutions/tfc_sandstone.json)):
   **pool-only, no implicit swap** — vanilla sandstone is accessible in TFC so it stays the default, but every
   variant (normal + red, raw/cut/smooth + stairs/slabs/walls) offers a *Replace* pool of TFC colored sandstones
@@ -797,10 +798,14 @@ conversion) now lives in the standalone **firmavanilla** mod, which `:compat` ha
 [docs/firmavanilla.md](firmavanilla.md). `:compat` still owns the **substitution** side (plain datapack, see
 "TFC default substitutions" above): [tfc_stone.json](../compat/src/main/resources/data/mctfc/block_substitutions/tfc_stone.json)
 fixes `minecraft:cobblestone → firmavanilla:mortared/tfc/rock/cobble/dacite` (the non-falling dacite twin) and
-offers the `firmavanilla:mortared_cobblestone` pool keyed on that converted twin, so the player re-picks the
-rock via the Replace GUI. **Gotcha:** the fixed default and the pool must have **distinct sources** (fixed on
-`minecraft:cobblestone`, pool on the `firmavanilla:mortared_cobblestone` tag that matches the *converted* twin)
-— a fixed `to` and a `to_tag` on the *same* source shadows the pool under converted-block semantics.
+offers a re-pick pool keyed on that converted twin, so the player re-picks the rock via the Replace GUI.
+**Plain and mossy are kept separate:** rather than the single `firmavanilla:mortared_cobblestone` tag (which mixes
+both — it stays for the mortar recipe / DO skins), the substitution uses two split pools,
+`mctfc:subst/rock/mortared_cobble` (the 20 plain twins) and `mctfc:subst/rock/mortared_mossy_cobble` (the 20 mossy
+twins), so plain cobble re-picks only among plain and mossy only among mossy — they aren't interchangeable.
+**Gotcha:** the fixed default and the pool must have **distinct sources** (fixed on `minecraft:cobblestone`, pool
+keyed on the *converted* twin tag) — a fixed `to` and a `to_tag` on the *same* source shadows the pool under
+converted-block semantics.
 
 ## Vanilla furnaces made decorative — DONE
 
