@@ -758,6 +758,31 @@ vanilla, injector `remap = false` for the MineColonies method) calls `TickCounte
 after a successful placement — a no-op for blocks without that counter BE (vanilla saplings, the nylium under a
 fungus). Planted TFC saplings now wait their normal grow time.
 
+**TFC log crafting recipes (replacing the vanilla defaults).** MineColonies ships two `recipe-template`s for the
+lumberjack — `strip_logs` and `strip_stems` (in `data/minecolonies/crafterrecipes/lumberjack/`) — that expand over
+`#minecraft:logs` using vanilla `_log`/`_stem` naming into one recipe per vanilla log (`1 oak_log → {stripped_log,
+oak_wood, stripped_oak_wood}`). TFC logs are named `tfc:wood/log/<wood>` (no `_log` suffix), so they're filtered out
+— the vanilla recipes are dead clutter in a TFC world and TFC logs get none.
+
+We ship [tfc_strip_logs.json](../compat/src/main/resources/data/mctfc/crafterrecipes/lumberjack/tfc_strip_logs.json)
+— a `recipe-template` over `#minecraft:logs` filtered to the `tfc:wood/log/` path, whose `[PATH:wood/log/=…]`
+substitutions produce each log's stripped-log / wood / stripped-wood (`alternate-output`, like vanilla). The
+all-namespace `crafterrecipes` scan picks it up; non-existent forms are pruned by MineColonies.
+
+The vanilla `strip_logs`/`strip_stems` children are removed in
+[LumberjackRecipes](../compat/src/main/java/com/mctfc/crafting/LumberjackRecipes.java), called from
+`MixinCustomRecipeManager` at the `resolveTemplates()` TAIL (after both templates expand). The `remove` recipe type
+only deletes by exact id, impractical against a template's per-log fan-out, so we prune by id prefix
+(`minecolonies:lumberjack/strip_logs/…`, `…/strip_stems/…`) — the bamboo recipe and our TFC recipes are kept.
+
+**AFC + Beneath** woods share TFC's `<ns>:wood/log/<wood>` naming and join `#minecraft:logs`, so the same template
+(namespace/filter swapped) is shipped in the mod-gated datapacks:
+[afc_strip_logs.json](../compat/src/main/resources/afc_datapack/data/mctfc/crafterrecipes/lumberjack/afc_strip_logs.json)
+(filter `afc:wood/log/`) and
+[beneath_strip_logs.json](../compat/src/main/resources/beneath_datapack/data/mctfc/crafterrecipes/lumberjack/beneath_strip_logs.json)
+(filter `beneath:wood/log/`). They only load when `afc`/`beneath` is present (AfcDataPack/BeneathDataPack), and
+need no extra removal (MineColonies has no AFC/Beneath log recipes to begin with).
+
 **Caveat — saplings come from leaves, not felling.** TFC logs never drop saplings (only leaves do, ~1.3% on
 **break**), and TFC leaf **decay** removes leaves with *no drops* (`removeBlock(pos, false)`). So a felled trunk
 yields no saplings on its own, and the leaves left behind decay to nothing — the forester only self-harvests

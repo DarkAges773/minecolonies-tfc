@@ -1,0 +1,22 @@
+{
+  "__comment": "TFC replacement for MineColonies' vanilla strip_logs/strip_stems lumberjack recipes (those are removed programmatically; see com.mctfc.crafting.LumberjackRecipes). For every TFC log (tfc:wood/log/<wood>, matched via #minecraft:logs + the tfc:wood/log/ path filter) the lumberjack can produce the stripped log, the wood (all-bark) block, or the stripped wood — mirroring the vanilla 1-log -> {stripped_log, wood, stripped_wood} behaviour. Path substitution swaps the wood/log/ form segment; non-existent forms are pruned by MineColonies.",
+  "type": "recipe-template",
+  "tag": "minecraft:logs",
+  "filter": {
+    "include": [ "tfc:wood/log/" ],
+    "exclude": [ "stripped" ]
+  },
+  "recipe": {
+    "crafter": "lumberjack_custom",
+    "inputs": [
+      { "item": "[NS]:[PATH]" }
+    ],
+    "alternate-output": [
+      { "item": "[NS]:[PATH:wood/log/=wood/stripped_log/]" },
+      { "item": "[NS]:[PATH:wood/log/=wood/wood/]" },
+      { "item": "[NS]:[PATH:wood/log/=wood/stripped_wood/]" }
+    ],
+    "intermediate": "minecraft:air",
+    "tool": "minecolonies:axe"
+  }
+}

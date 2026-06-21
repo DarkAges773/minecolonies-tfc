@@ -8,6 +8,11 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Lumberjack teaches TFC log recipes, not vanilla ones.** Removed MineColonies' built-in vanilla-log lumberjack
+  recipes (the `strip_logs`/`strip_stems` templates — dead clutter in a TFC world) and added the TFC equivalents:
+  each TFC log (`tfc:wood/log/<wood>`) → its stripped log, wood, or stripped wood, mirroring the vanilla
+  one-log-to-three-forms behavior. The bamboo stripping recipe is kept. The same TFC-style log recipes are added
+  for **ArborFirmaCraft** and **Beneath** woods when those mods are present (via their optional datapacks).
 - **Lumberjack fells whole TFC trees (TFC axe behavior).** TFC gives every axe a one-hit tree-felling behavior,
   but it only triggers for real players — so the colony forester used to climb each trunk log-by-log (slow, and apt
   to get stuck on tall trees). The forester now fells the whole connected trunk in one chop via TFC's own logging,
