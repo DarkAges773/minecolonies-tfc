@@ -33,4 +33,12 @@ public interface AbstractEntityAIBasicInvoker
 
     @Accessor(value = "building", remap = false)
     AbstractBuilding mctfc$building();
+
+    /**
+     * Point the worker at a block it's "working on". While a delay is active, {@code waitingForSomething()} animates
+     * the tool swing each tick on this position (via {@code hitBlockWithToolInHand}) — so setting it before a long
+     * delay makes the worker swing rather than stand idle.
+     */
+    @Accessor(value = "currentWorkingLocation", remap = false)
+    void mctfc$setCurrentWorkingLocation(BlockPos pos);
 }

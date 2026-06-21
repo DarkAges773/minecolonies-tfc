@@ -730,7 +730,9 @@ second `@WrapOperation` wraps the per-log `mineBlock` call in `chopTree`: when T
 it spends a chop delay scaled by the tree's log count (`AxeLoggingHelper.findLogs(...).size()` × the normal
 per-log `getBlockMiningTime`, reached via the public method and the `mctfc$hasNotDelayed` invoker — so axe tier /
 skill / research and tree size all matter), then calls `AxeLoggingHelper.doLogging(level, pos, fakePlayer, axe)` —
-felling the whole connected trunk at once.
+felling the whole connected trunk at once. During that delay it sets `currentWorkingLocation` to the base log (via a
+`mctfc$setCurrentWorkingLocation` accessor) so MineColonies' own `waitingForSomething()` swings the axe each tick
+(`hitBlockWithToolInHand`) — the worker chops visibly instead of standing idle, just like normal mining.
 `doLogging` uses `level.destroyBlock(pos, true, breaker)` so logs drop **at their own positions** (the gathering
 phase collects them) and `axe.hurtAndBreak` so the worker's axe wears per log, exactly like a player. The
 **fake player** comes from MineColonies' own `AbstractEntityAIBasic.getFakePlayer()` (reached via the existing
@@ -747,6 +749,19 @@ nothing floats"). With felling that reads as nonsense (the worker reaches the *t
 the forester cuts the **base** log — where `shouldLog` fells from. peek and poll must flip together (peeking the
 base but polling the top would never remove the base → infinite loop). `woodBlocks` is declared in `Tree` itself,
 so the `@Shadow` is safe.
+
+**Planted saplings grow on a timer.** A `TFCSaplingBlock` grows when its `TickCounterBlockEntity` passes
+`daysToGrow`, and only `setPlacedBy` resets that counter. The worker plants with `Level#setBlockAndUpdate` (never
+`setPlacedBy`), so the counter stayed at its sentinel → read as ancient → the sapling sprouted on its first random
+tick. A third `@WrapOperation` (on the `setBlockAndUpdate` in `placeSaplings`; `@At` `remap = true` since it's
+vanilla, injector `remap = false` for the MineColonies method) calls `TickCounterBlockEntity.reset(level, pos)`
+after a successful placement — a no-op for blocks without that counter BE (vanilla saplings, the nylium under a
+fungus). Planted TFC saplings now wait their normal grow time.
+
+**Caveat — saplings come from leaves, not felling.** TFC logs never drop saplings (only leaves do, ~1.3% on
+**break**), and TFC leaf **decay** removes leaves with *no drops* (`removeBlock(pos, false)`). So a felled trunk
+yields no saplings on its own, and the leaves left behind decay to nothing — the forester only self-harvests
+saplings if it **breaks** the leaves (the hut's "harvest leaves"/defoliate setting), or is stocked with saplings.
 
 ## Non-falling ("mortared"/"cemented") cobble — MOVED to firmavanilla
 

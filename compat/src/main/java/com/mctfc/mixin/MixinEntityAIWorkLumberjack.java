@@ -4,10 +4,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.minecolonies.core.entity.ai.workers.AbstractEntityAIInteract;
 import com.minecolonies.core.entity.ai.workers.production.EntityAIWorkLumberjack;
+import net.dries007.tfc.common.blockentities.TickCounterBlockEntity;
 import net.dries007.tfc.util.AxeLoggingHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -51,6 +51,35 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(EntityAIWorkLumberjack.class)
 public abstract class MixinEntityAIWorkLumberjack
 {
+    /**
+     * Start a freshly-planted TFC sapling's growth timer. The worker places saplings with {@code Level#setBlockAndUpdate}
+     * — which never calls {@code setPlacedBy}, the only place {@code TFCSaplingBlock} resets its {@code TickCounterBlockEntity}.
+     * Left unreset, the counter sits at its sentinel, reads as ancient, and the sapling grows on its first random tick
+     * instead of after its {@code daysToGrow}. We reset it right after a successful placement (a no-op for any block
+     * without that counter BE, e.g. vanilla saplings or the nylium below a fungus). {@code remap = false} for the
+     * MineColonies method selector; {@code remap = true} on the {@code @At} because {@code setBlockAndUpdate} is vanilla.
+     */
+    @WrapOperation(
+      method = "placeSaplings",
+      at = @At(
+        value = "INVOKE",
+        target = "Lnet/minecraft/world/level/Level;setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z",
+        remap = true),
+      remap = false)
+    private boolean mctfc$startSaplingGrowthTimer(
+      final Level level,
+      final BlockPos pos,
+      final BlockState placed,
+      final Operation<Boolean> original)
+    {
+        final boolean placedOk = original.call(level, pos, placed);
+        if (placedOk)
+        {
+            TickCounterBlockEntity.reset(level, pos);
+        }
+        return placedOk;
+    }
+
     @WrapOperation(
       method = "placeSaplings",
       at = @At(
@@ -100,10 +129,12 @@ public abstract class MixinEntityAIWorkLumberjack
         // scales with axe tier + worker skill + research) — so a bigger tree, or a worse axe, takes longer to fell.
         final int logs = AxeLoggingHelper.findLogs(level, toMine).size();
         final int perLog = ((AbstractEntityAIInteract) (Object) this).getBlockMiningTime(state, toMine);
+        // Point the worker at the base log so MineColonies' waitingForSomething() swings the axe each tick of the
+        // delay (it auto-calls hitBlockWithToolInHand on currentWorkingLocation) — otherwise it stands idle.
+        ai.mctfc$setCurrentWorkingLocation(toMine);
         if (ai.mctfc$hasNotDelayed(Math.max(1, logs * perLog)))
         {
-            ((AbstractAISkeletonAccessor) (Object) this).mctfc$worker().swing(InteractionHand.MAIN_HAND);
-            return false; // still cutting the base — keep waiting (chopTree re-enters after the delay)
+            return false; // still cutting the base — keep waiting (worker swings via waitingForSomething)
         }
         // Delay elapsed: drop the whole connected trunk. Logs drop at their own positions (gathering collects them);
         // the axe wears per log. Remaining tracked logs are now air and drain a tick each.

@@ -15,11 +15,15 @@ All notable changes to this mod are documented here. The format is based on
   back to the normal single-log chop where TFC itself wouldn't fell (non-trunk logs, 2×2 trunks). The forester cuts
   the tree from the **base** block (not the top down), and the fell takes time proportional to the tree's size —
   the log count × the normal per-log chop time (which scales with axe tier / worker skill / research) — so big
-  trees and worse axes take longer, rather than every tree dropping instantly.
+  trees and worse axes take longer, rather than every tree dropping instantly. The worker swings its axe at the base
+  throughout that time instead of standing idle.
 - **Lumberjack replants TFC trees.** The Lumberjack already found and chopped TFC trees, but never replanted them:
   vanilla's replant check only sustains saplings on `BlockTags.DIRT`, which (under TFC) excludes TFC grass — where
   wild TFC trees actually grow — so the worker pulled the stump and planted nothing, depleting the forest. It now
   also replants wherever the sapling can genuinely survive (TFC grass/dirt/farmland).
+- **Lumberjack-planted TFC saplings now grow on a timer, not instantly.** The worker plants via `setBlockAndUpdate`
+  (no `setPlacedBy`), so a TFC sapling's growth counter was never started and it sprouted on its first random tick.
+  We now reset the counter on placement, so a planted sapling waits its normal `daysToGrow` like a hand-placed one.
 - **Coarse dirt / podzol / mycelium substitutions** — `minecraft:coarse_dirt` → firmavanilla's coarse dirt
   (default coarse loam, with a pick-any-soil pool: loam/sandy_loam/silt/silty_loam); `minecraft:podzol` and
   `minecraft:mycelium` → TFC rooted dirt (default loam, same soil-pick pool).
