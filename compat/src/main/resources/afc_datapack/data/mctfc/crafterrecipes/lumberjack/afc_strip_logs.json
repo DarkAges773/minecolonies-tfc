@@ -1,10 +1,10 @@
 {
-  "__comment": "ArborFirmaCraft variant of tfc_strip_logs (this whole datapack loads only when the 'afc' mod is present, see AfcDataPack). AFC woods share TFC's naming (afc:wood/log/<wood>, all four forms) and join #minecraft:logs, so the same template works with the afc:wood/log/ path filter: each AFC log -> its stripped log / wood / stripped wood. Non-existent forms are pruned by MineColonies. Catches every AFC wood (incl. rainbow_eucalyptus) via the tag scan.",
+  "__comment": "ArborFirmaCraft variant of tfc_strip_logs (this whole datapack loads only when the 'afc' mod is present, see AfcDataPack). AFC woods share TFC's naming (afc:wood/log/<wood>, all four forms) and join #minecraft:logs, so the same template works with the afc:wood/log/ path filter: each AFC log -> its stripped log / wood / stripped wood. Non-existent forms are pruned by MineColonies. Catches every normal AFC wood (incl. rainbow_eucalyptus) via the tag scan. The 'ancient_' exclude drops AFC's inaccessible ancient_<wood> log variants (worldgen-only, no stripped/plank forms), which #minecraft:logs otherwise pulls in.",
   "type": "recipe-template",
   "tag": "minecraft:logs",
   "filter": {
     "include": [ "afc:wood/log/" ],
-    "exclude": [ "stripped" ]
+    "exclude": [ "stripped", "ancient_" ]
   },
   "recipe": {
     "crafter": "lumberjack_custom",

@@ -778,7 +778,8 @@ only deletes by exact id, impractical against a template's per-log fan-out, so w
 **AFC + Beneath** woods share TFC's `<ns>:wood/log/<wood>` naming and join `#minecraft:logs`, so the same template
 (namespace/filter swapped) is shipped in the mod-gated datapacks:
 [afc_strip_logs.json](../compat/src/main/resources/afc_datapack/data/mctfc/crafterrecipes/lumberjack/afc_strip_logs.json)
-(filter `afc:wood/log/`) and
+(filter `afc:wood/log/`, excluding `ancient_` — AFC ships an inaccessible worldgen-only `ancient_<wood>` log
+variant for every wood that `#minecraft:logs` otherwise pulls in) and
 [beneath_strip_logs.json](../compat/src/main/resources/beneath_datapack/data/mctfc/crafterrecipes/lumberjack/beneath_strip_logs.json)
 (filter `beneath:wood/log/`). They only load when `afc`/`beneath` is present (AfcDataPack/BeneathDataPack), and
 need no extra removal (MineColonies has no AFC/Beneath log recipes to begin with).
