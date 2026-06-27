@@ -16,6 +16,18 @@ public interface ReplacementChoiceContext
     /** Candidate source blocks to show as rows (distinct schematic blocks matching a candidate rule). */
     List<Block> sources();
 
+    /**
+     * For each source row, the distinct blueprint blocks a swap of that source would affect — a bare
+     * candidate block is its own host; a Domum Ornamentum block is the host of every material it carries
+     * (so swapping oak planks reports both the bare oak-planks block and the framed block that contains it).
+     * Drives {@link WindowReplacements}'s per-row "affects N blocks" tooltip and count badge. A missing key
+     * or empty list means there's no detail to show; defaults to empty so contexts can opt in.
+     */
+    default Map<Block, List<Block>> affectedBlocks()
+    {
+        return Map.of();
+    }
+
     /** Current source → chosen-target map to display. */
     Map<Block, Block> current();
 

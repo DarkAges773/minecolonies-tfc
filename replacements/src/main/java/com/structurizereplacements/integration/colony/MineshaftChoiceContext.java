@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,9 +42,14 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
     private final Object view;
 
     private Runnable reloader = () -> {};
-    /** Accumulated across the per-blueprint futures (all resolve on the client thread, so no syncing needed). */
-    private final Set<Block> accumulated = new LinkedHashSet<>();
+    /**
+     * Accumulated across the per-blueprint futures (all resolve on the client thread, so no syncing needed):
+     * each candidate source mapped to the distinct mineshaft blocks it would affect (a bare block is its own
+     * host; a Domum Ornamentum block hosts each material it carries) — drives the GUI's per-row tooltip.
+     */
+    private final Map<Block, Set<Block>> accumulatedHosts = new LinkedHashMap<>();
     private List<Block> sources = List.of();
+    private Map<Block, List<Block>> affected = Map.of();
 
     public MineshaftChoiceContext(final Object view)
     {
@@ -62,6 +67,12 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
     public List<Block> sources()
     {
         return sources;
+    }
+
+    @Override
+    public Map<Block, List<Block>> affectedBlocks()
+    {
+        return affected;
     }
 
     @Override
@@ -125,15 +136,31 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
         {
             return;
         }
-        final Set<Block> distinct = new LinkedHashSet<>();
+        final int beforeKeys = accumulatedHosts.size();
+        final int beforeHosts = hostCount();
         for (final BlockInfo info : blueprint.getBlockInfoAsList())
         {
-            BlockSubstitutions.collectCandidateSources(info, distinct);
+            BlockSubstitutions.collectCandidateSourcesWithHosts(info, accumulatedHosts);
         }
-        if (accumulated.addAll(distinct))
+        // Redraw only when this blueprint actually added a new source row or a new affected host.
+        if (accumulatedHosts.size() != beforeKeys || hostCount() != beforeHosts)
         {
-            this.sources = new ArrayList<>(accumulated);
+            this.sources = new ArrayList<>(accumulatedHosts.keySet());
+            final Map<Block, List<Block>> snapshot = new LinkedHashMap<>();
+            accumulatedHosts.forEach((source, set) -> snapshot.put(source, new ArrayList<>(set)));
+            this.affected = snapshot;
             this.reloader.run();
         }
+    }
+
+    /** Total number of (source, host) pairs accumulated — for change detection across blueprint folds. */
+    private int hostCount()
+    {
+        int total = 0;
+        for (final Set<Block> set : accumulatedHosts.values())
+        {
+            total += set.size();
+        }
+        return total;
     }
 }

@@ -4,7 +4,6 @@ import com.ldtteam.structurize.blueprints.v1.Blueprint;
 import com.ldtteam.structurize.client.BlueprintHandler;
 import com.ldtteam.structurize.storage.rendering.RenderingCache;
 import com.ldtteam.structurize.storage.rendering.types.BlueprintPreviewData;
-import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.placement.ClientPlacementChoices;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.world.level.block.Block;
@@ -12,10 +11,8 @@ import net.minecraft.world.level.block.Blocks;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * {@link ReplacementChoiceContext} for the build wand: edits the global session picks
@@ -25,20 +22,26 @@ import java.util.Set;
  */
 public class BuildWandChoiceContext implements ReplacementChoiceContext
 {
+    /** Built alongside {@link #sources()} from the same blueprint scan; surfaced via {@link #affectedBlocks()}. */
+    private Map<Block, List<Block>> affected = Map.of();
+
     @Override
     public List<Block> sources()
     {
         final Blueprint blueprint = currentBlueprint();
         if (blueprint == null)
         {
+            this.affected = Map.of();
             return List.of();
         }
-        final Set<Block> distinct = new LinkedHashSet<>();
-        for (final BlockInfo info : blueprint.getBlockInfoAsList())
-        {
-            BlockSubstitutions.collectCandidateSources(info, distinct);
-        }
-        return new ArrayList<>(distinct);
+        this.affected = BlockSubstitutions.candidateSourceHosts(blueprint.getBlockInfoAsList());
+        return new ArrayList<>(this.affected.keySet());
+    }
+
+    @Override
+    public Map<Block, List<Block>> affectedBlocks()
+    {
+        return affected;
     }
 
     @Override

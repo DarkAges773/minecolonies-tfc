@@ -4,7 +4,6 @@ import com.ldtteam.structurize.blueprints.v1.Blueprint;
 import com.ldtteam.structurize.client.BlueprintHandler;
 import com.ldtteam.structurize.storage.ClientFutureProcessor;
 import com.ldtteam.structurize.storage.StructurePacks;
-import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.client.gui.ReplacementChoiceContext;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
@@ -12,10 +11,8 @@ import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -49,6 +46,7 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
 
     private Runnable reloader = () -> {};
     private List<Block> sources = List.of();
+    private Map<Block, List<Block>> affected = Map.of();
 
     public BuildingChoiceContext(final Object view,
                                  final String targetPack,
@@ -72,6 +70,12 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
     public List<Block> sources()
     {
         return sources;
+    }
+
+    @Override
+    public Map<Block, List<Block>> affectedBlocks()
+    {
+        return affected;
     }
 
     @Override
@@ -165,12 +169,8 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
         {
             return;
         }
-        final Set<Block> distinct = new LinkedHashSet<>();
-        for (final BlockInfo info : blueprint.getBlockInfoAsList())
-        {
-            BlockSubstitutions.collectCandidateSources(info, distinct);
-        }
-        this.sources = new ArrayList<>(distinct);
+        this.affected = BlockSubstitutions.candidateSourceHosts(blueprint.getBlockInfoAsList());
+        this.sources = new ArrayList<>(this.affected.keySet());
         this.reloader.run();
     }
 }

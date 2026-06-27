@@ -3,6 +3,7 @@
   "structurizereplacements.gui.replace.mineshaft.title": "Edit Mineshaft Palette",
   "structurizereplacements.gui.replace.mineshaft.button": "Edit Mineshaft Palette",
   "structurizereplacements.gui.replace.reset": "Reset",
+  "structurizereplacements.gui.replace.affects": "Affects %s block type(s):",
   "structurizereplacements.gui.replace.palette.update": "Upgrade",
   "structurizereplacements.gui.replace.palette.current": "Current",
   "structurizereplacements.gui.replace.palette.tooltip": "Palette shown: the tier being built (Upgrade) or the current tier (Current). Click to switch."

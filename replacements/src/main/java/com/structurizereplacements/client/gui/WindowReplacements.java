@@ -2,6 +2,7 @@ package com.structurizereplacements.client.gui;
 
 import com.ldtteam.blockui.Pane;
 import com.ldtteam.blockui.PaneBuilders;
+import com.ldtteam.blockui.controls.AbstractTextBuilder.TooltipBuilder;
 import com.ldtteam.blockui.controls.ButtonImage;
 import com.ldtteam.blockui.controls.ItemIcon;
 import com.ldtteam.blockui.controls.Text;
@@ -42,6 +43,8 @@ public class WindowReplacements extends AbstractWindowSkeleton
     private final BOWindow parent;
     private final ScrollingList list;
     private List<Block> sources = List.of();
+    /** Per-source: the distinct blueprint blocks a swap would affect (for the row tooltip + count badge). */
+    private Map<Block, List<Block>> affected = Map.of();
 
     /** Build-wand default: edits the global session picks. */
     public WindowReplacements(final BOWindow parent)
@@ -122,6 +125,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
     public void onOpened()
     {
         this.sources = new ArrayList<>(context.sources());
+        this.affected = context.affectedBlocks();
         super.onOpened();
         this.list.refreshElementPanes();
     }
@@ -137,14 +141,23 @@ public class WindowReplacements extends AbstractWindowSkeleton
     public void reload()
     {
         this.sources = new ArrayList<>(context.sources());
+        this.affected = context.affectedBlocks();
         this.list.refreshElementPanes();
     }
 
     private void updateRow(final int index, final Pane row)
     {
         final Block source = sources.get(index);
+        final List<Block> hosts = affected.getOrDefault(source, List.of());
         row.findPaneOfTypeByID("srcIcon", ItemIcon.class).setItem(iconFor(source));
-        row.findPaneOfTypeByID("srcName", Text.class).setText(source.getName());
+
+        // Name carries a "(N)" badge when the swap touches more than one blueprint block type (e.g. the bare
+        // block plus a Domum Ornamentum frame that contains it); the full list is in the row tooltip.
+        final Text srcName = row.findPaneOfTypeByID("srcName", Text.class);
+        srcName.setText(hosts.size() > 1
+                ? source.getName().copy().append(Component.literal(" (" + hosts.size() + ")"))
+                : source.getName());
+        attachAffectsTooltip(row, hosts);
 
         final Block chosen = context.current().get(source);
         final ItemIcon dstIcon = row.findPaneOfTypeByID("dstIcon", ItemIcon.class);
@@ -161,6 +174,30 @@ public class WindowReplacements extends AbstractWindowSkeleton
         }
 
         row.findPaneOfTypeByID("change", ButtonImage.class).setHandler(b -> openPickerFor(source));
+    }
+
+    /**
+     * Mount (or, on a recycled row, replace) a hover tooltip on the whole row listing the distinct blueprint
+     * blocks a swap of this source would affect — chiefly so a material shared by a bare block and one or
+     * more Domum Ornamentum blocks reads as "affects N block(s)" with each named. Cleared when there's
+     * nothing to show so a recycled row never carries a stale tooltip. Built here (not at row creation) because
+     * the affected set is per-source, and {@code build()} needs the row already attached to a window — true
+     * inside {@code updateRow}.
+     */
+    private static void attachAffectsTooltip(final Pane row, final List<Block> hosts)
+    {
+        if (hosts.isEmpty())
+        {
+            row.setHoverPane(null);
+            return;
+        }
+        final TooltipBuilder tooltip = PaneBuilders.tooltipBuilder()
+                .append(Component.translatable("structurizereplacements.gui.replace.affects", hosts.size()));
+        for (final Block host : hosts)
+        {
+            tooltip.appendNL(Component.literal(" - ").append(host.getName()));
+        }
+        tooltip.hoverPane(row).build();
     }
 
     private void openPickerFor(final Block source)

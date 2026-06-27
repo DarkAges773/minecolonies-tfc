@@ -60,6 +60,14 @@ In `:replacements` (generic):
   + button [MixinAbstractBlueprintManipulationWindow](../replacements/src/main/java/com/structurizereplacements/mixin/MixinAbstractBlueprintManipulationWindow.java);
   live refresh via `BlueprintHandler.getInstance().clearCache()`. Labels reuse existing translations
   (Structurize + vanilla `gui.done`).
+  - **Affected-blocks tooltip (per row).** Each row hovers a tooltip listing the distinct blueprint blocks a
+    swap of that source touches, plus a `(N)` name badge when `N>1`. A material can reach the world through
+    more than one blueprint block — the bare block *and* any Domum Ornamentum host carrying it — so the engine
+    tracks, per candidate source, its set of **host** blocks (`BlockSubstitutions.collectCandidateSourcesWithHosts`
+    / `candidateSourceHosts`: bare block ⇒ itself; DO block ⇒ host of each contained material). Contexts expose
+    this via `ReplacementChoiceContext.affectedBlocks()` (built from the same blueprint scan that yields
+    `sources()`); `WindowReplacements.attachAffectsTooltip` mounts it on the row (rebuilt each `updateRow`, so
+    recycled rows never carry a stale tooltip).
   **Caveats / follow-ups:** the per-placement GUI choice applies to creative-paste placement; per-blueprint
   session memory + row counts are unpolished. **Dedicated-server rule sync — DONE:** rules load server-side
   only, so the server pushes the active ruleset to clients via

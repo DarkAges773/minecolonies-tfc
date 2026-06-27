@@ -8,10 +8,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -163,20 +165,36 @@ public final class BlockSubstitutions
     }
 
     /**
-     * Collect the candidate-eligible source blocks of one blueprint entry, <i>as the GUI shows them</i>:
-     * each raw block (the placed block plus any Domum Ornamentum materials) is first mapped through
-     * datapack fixed rules ({@link #datapackTarget}), and kept only if a candidate pool matches the
-     * <b>resolved</b> block. So a {@code minecraft:oak_planks -> tfc:oak_planks} conversion surfaces as a
-     * {@code tfc:oak_planks} row, and the player's pick (stored against the resolved block) applies on top
-     * of the conversion.
+     * Collect the candidate-eligible source blocks of one blueprint entry, <i>as the GUI shows them</i>,
+     * recording for each the blueprint <b>host</b> block that contributed it. Each raw block (the placed
+     * block plus any Domum Ornamentum materials) is first mapped through datapack fixed rules
+     * ({@link #datapackTarget}) and kept only if a candidate pool matches the <b>resolved</b> block — so a
+     * {@code minecraft:oak_planks -> tfc:oak_planks} conversion surfaces as a {@code tfc:oak_planks} row, and
+     * the player's pick (stored against the resolved block) applies on top of the conversion.
+     *
+     * <p>The host is the blueprint block the source came from: a bare candidate block is its own host; a
+     * Domum Ornamentum materialized block is the host of every material it carries (so a framed block whose
+     * frame is oak planks registers the framed block as a host of the {@code oak_planks} row). Accumulating
+     * this across a blueprint tells the GUI, per row, which distinct blueprint blocks a swap would affect —
+     * the "affects N blocks" tooltip. Each source's host set preserves first-seen order.
      */
-    public static void collectCandidateSources(final BlockInfo info, final Collection<Block> out)
+    public static void collectCandidateSourcesWithHosts(final BlockInfo info, final Map<Block, Set<Block>> out)
     {
+        if (info == null)
+        {
+            return;
+        }
+        final BlockState state = info.getState();
+        final Block host = state == null ? null : state.getBlock();
+        if (host == null)
+        {
+            return;
+        }
         for (final Block raw : sourceBlocksOf(info))
         {
-            // A Domum Ornamentum host block (its material lives in NBT, handled via the contained-block rows
-            // collected alongside it) is not a meaningful plain-substitution source — skip it so it doesn't
-            // show as a cycling, unpickable row.
+            // A Domum Ornamentum host block (its material lives in NBT, surfaced via the contained-block rows
+            // collected alongside it) is not a meaningful plain-substitution source — skip it as a row key. It
+            // still appears as a host of its materials' rows below.
             if (DomumMaterialRewriter.isMaterializedBlock(raw))
             {
                 continue;
@@ -184,9 +202,27 @@ public final class BlockSubstitutions
             final Block resolved = datapackTarget(raw);
             if (!DomumMaterialRewriter.isMaterializedBlock(resolved) && candidateFor(resolved).isPresent())
             {
-                out.add(resolved);
+                out.computeIfAbsent(resolved, k -> new LinkedHashSet<>()).add(host);
             }
         }
+    }
+
+    /**
+     * The ordered {@code source -> affected-host-blocks} map for a whole blueprint (or any block-entry
+     * iterable): every key is a candidate source the GUI shows as a row, mapped to the distinct blueprint
+     * blocks that a swap would affect (see {@link #collectCandidateSourcesWithHosts}). Key order is
+     * first-seen; the key set is exactly the rows the picker would show.
+     */
+    public static Map<Block, List<Block>> candidateSourceHosts(final Iterable<BlockInfo> entries)
+    {
+        final Map<Block, Set<Block>> hosts = new LinkedHashMap<>();
+        for (final BlockInfo info : entries)
+        {
+            collectCandidateSourcesWithHosts(info, hosts);
+        }
+        final Map<Block, List<Block>> out = new LinkedHashMap<>();
+        hosts.forEach((source, set) -> out.put(source, new ArrayList<>(set)));
+        return out;
     }
 
     /**
