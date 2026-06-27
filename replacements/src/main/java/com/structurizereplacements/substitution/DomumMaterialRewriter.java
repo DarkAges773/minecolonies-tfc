@@ -91,16 +91,15 @@ public final class DomumMaterialRewriter
     }
 
     /**
-     * A representative display {@link ItemStack} for a blueprint host block. Normally just
-     * {@code new ItemStack(host)}, but for a Domum Ornamentum materialized host it also copies the entry's
-     * {@code textureData} material map onto the stack — which is exactly where DO's {@code BlockItem.getName}
-     * reads it (`getOrCreateTagElement("textureData")`), so the stack reports its real material-aware name
-     * (e.g. "Oak Panel", "Dynamic Framed Oak") and renders the textured item, instead of the bare block's
-     * dynamic, unlocalized descriptionId. Returns an empty stack for an item-less host.
+     * Make a host display {@link ItemStack} material-aware: for a Domum Ornamentum materialized host, copy the
+     * blueprint entry's {@code textureData} material map onto the (already-built) {@code stack} — which is
+     * exactly where DO's {@code BlockItem.getName} reads it ({@code getOrCreateTagElement("textureData")}), so
+     * the stack reports its real name (e.g. "Oak Panel", "Dynamic Framed Oak") and renders the textured item
+     * instead of the bare block's dynamic, unlocalized descriptionId. A no-op (returns {@code stack} unchanged)
+     * for non-DO or empty stacks — the caller supplies the base stack, including any item-less fallback.
      */
-    public static ItemStack hostDisplayStack(@Nullable final Block host, @Nullable final CompoundTag tileEntityData)
+    public static ItemStack withMaterialNbt(final ItemStack stack, @Nullable final Block host, @Nullable final CompoundTag tileEntityData)
     {
-        final ItemStack stack = new ItemStack(host);
         if (stack.isEmpty()
                 || !(host instanceof IMateriallyTexturedBlock)
                 || tileEntityData == null

@@ -5,6 +5,7 @@ import com.structurizereplacements.Config;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
@@ -189,10 +190,12 @@ public final class BlockSubstitutions
         {
             return;
         }
-        // A material-aware display stack for the host: a plain block, or — for a Domum Ornamentum block — its
-        // material map copied on, so the host reports its real name (e.g. "Oak Panel") rather than the bare
-        // block's unlocalized dynamic descriptionId. Built once per entry, shared across the sources it feeds.
-        final ItemStack hostStack = DomumMaterialRewriter.hostDisplayStack(hostBlock, info.getTileEntityData());
+        // A material-aware display stack for the host: a plain block (with the item-less fallback so e.g. a
+        // potted plant shows its plant, not "Air"), or — for a Domum Ornamentum block — its material map copied
+        // on, so the host reports its real name (e.g. "Oak Panel") rather than the bare block's unlocalized
+        // dynamic descriptionId. Built once per entry, shared across the sources it feeds.
+        final ItemStack hostStack =
+                DomumMaterialRewriter.withMaterialNbt(iconStack(hostBlock), hostBlock, info.getTileEntityData());
         for (final Block raw : sourceBlocksOf(info))
         {
             // A Domum Ornamentum host block (its material lives in NBT, surfaced via the contained-block rows
@@ -208,6 +211,32 @@ public final class BlockSubstitutions
                 addDistinctStack(out.computeIfAbsent(resolved, k -> new ArrayList<>()), hostStack);
             }
         }
+    }
+
+    /**
+     * A best-effort display {@link ItemStack} for a block: normally {@code new ItemStack(block)}, but for an
+     * item-less block ({@code asItem() == AIR}) we fall back where we can — a {@link FlowerPotBlock} (e.g. TFC
+     * potted plants, registered with no {@code BlockItem}) shows its contained plant's item, which exists and
+     * is distinct per pot. Returns {@link ItemStack#EMPTY} when nothing can represent it. Shared by the GUI's
+     * row icons and the affected-host display so both name/icon item-less blocks the same way (a bare
+     * {@code new ItemStack} would otherwise read as "Air").
+     */
+    public static ItemStack iconStack(final Block block)
+    {
+        final ItemStack direct = new ItemStack(block);
+        if (!direct.isEmpty())
+        {
+            return direct;
+        }
+        if (block instanceof FlowerPotBlock pot)
+        {
+            final ItemStack content = new ItemStack(pot.getContent());
+            if (!content.isEmpty())
+            {
+                return content;
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     /** Append {@code stack} unless an item-and-NBT-equal one is already present (DO material combos differ by NBT). */

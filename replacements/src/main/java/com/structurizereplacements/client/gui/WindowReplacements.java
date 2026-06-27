@@ -19,7 +19,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
@@ -248,27 +247,12 @@ public class WindowReplacements extends AbstractWindowSkeleton
     }
 
     /**
-     * The icon to display for a candidate/source block. Normally {@code new ItemStack(block)}, but some blocks
-     * have no item ({@code block.asItem() == AIR}) — notably TFC's potted plants, registered with no BlockItem.
-     * For a {@link FlowerPotBlock} we fall back to the contained plant's item (which does exist and is distinct
-     * per pot, so it also makes the pick round-trip unambiguous). Returns {@link ItemStack#EMPTY} if nothing
-     * can represent the block.
+     * The icon to display for a candidate/source block — delegates to {@link BlockSubstitutions#iconStack}
+     * (item-less blocks like TFC potted plants fall back to their contained item; the same helper names the
+     * affected-host tooltip entries, so icons and tooltip stay consistent).
      */
     private static ItemStack iconFor(final Block block)
     {
-        final ItemStack direct = new ItemStack(block);
-        if (!direct.isEmpty())
-        {
-            return direct;
-        }
-        if (block instanceof FlowerPotBlock pot)
-        {
-            final ItemStack content = new ItemStack(pot.getContent());
-            if (!content.isEmpty())
-            {
-                return content;
-            }
-        }
-        return ItemStack.EMPTY;
+        return BlockSubstitutions.iconStack(block);
     }
 }
