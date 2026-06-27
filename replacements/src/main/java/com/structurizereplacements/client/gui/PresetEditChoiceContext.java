@@ -21,6 +21,8 @@ public class PresetEditChoiceContext implements ReplacementChoiceContext
 {
     private final String id;
     private final String name;
+    private final String folder;
+    private final Block icon;
     private final Map<Block, Block> picks;
     private Runnable reloader = () -> {};
 
@@ -28,6 +30,8 @@ public class PresetEditChoiceContext implements ReplacementChoiceContext
     {
         this.id = preset.id();
         this.name = preset.displayName().getString();
+        this.folder = preset.folder();
+        this.icon = preset.icon();
         this.picks = new LinkedHashMap<>(preset.picks());
     }
 
@@ -99,6 +103,6 @@ public class PresetEditChoiceContext implements ReplacementChoiceContext
 
     private void persist()
     {
-        PresetLibrary.update(new Preset(id, Component.literal(name), picks, true));
+        PresetLibrary.update(new Preset(id, Component.literal(name), folder, icon, picks, true));
     }
 }

@@ -200,17 +200,23 @@ public class WindowReplacements extends AbstractWindowSkeleton
 
         row.findPaneOfTypeByID("change", ButtonImage.class).setHandler(b -> openPickerFor(source));
 
-        // Per-row delete: only in preset-edit mode (its rows are the preset's own picks). Hidden otherwise, where
-        // rows come from the blueprint and clearing a pick keeps the row (showing "?" again).
-        final ButtonImage delete = row.findPaneOfTypeByID("delete", ButtonImage.class);
+        // Per-row red cross. In preset-edit mode it deletes the row (the rows are the preset's own picks). In the
+        // normal picker it resets just this row's pick back to the datapack default — shown only when a pick is set
+        // (an unset "?" row has nothing to reset).
+        final ButtonImage rowReset = row.findPaneOfTypeByID("rowReset", ButtonImage.class);
         if (context.allowRowDelete())
         {
-            delete.show();
-            delete.setHandler(b -> { context.removePick(source); reload(); });
+            rowReset.show();
+            rowReset.setHandler(b -> { context.removePick(source); reload(); });
+        }
+        else if (chosen != null)
+        {
+            rowReset.show();
+            rowReset.setHandler(b -> choose(source, null));
         }
         else
         {
-            delete.hide();
+            rowReset.hide();
         }
     }
 

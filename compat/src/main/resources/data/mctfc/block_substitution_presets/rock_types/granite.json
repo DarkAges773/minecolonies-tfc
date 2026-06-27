@@ -1,5 +1,6 @@
 {
   "name": "mctfc.preset.granite",
+  "icon": "tfc:rock/raw/granite",
   "picks": [
     {
       "from": "tfc:rock/bricks/dacite",

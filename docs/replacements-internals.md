@@ -249,6 +249,12 @@ preset is **not tied to one blueprint**: loading it substitutes whatever sources
 rest, so one preset re-palettes any building or a whole colony. No engine change was needed; presets ride the
 existing per-context `choose()` apply path and both sync channels.
 
+- **Folders + icons.** Presets carry a `folder` (the user library's subdirectory; a built-in's datapack subpath
+  under `block_substitution_presets/`) and an optional `icon` block (explicit, else derived from the first pick).
+  [WindowPresetList](../replacements/src/main/java/com/structurizereplacements/client/gui/WindowPresetList.java) is
+  navigable — it tracks the current folder, lists subfolders (drill-in) + an "Up" row + the presets in that folder,
+  each with its icon; **Save** lands in the current folder (a `folder/name` name nests further), **Clone** copies
+  into the current folder. The `:compat` rock presets ship under a **`rock_types`** folder so the root stays clean.
 - **Two sources, merged in the picker** ([WindowPresetList](../replacements/src/main/java/com/structurizereplacements/client/gui/WindowPresetList.java)):
   - **User library** — editable, client-only JSON under `config/structurizereplacements/presets/` (one file per
     preset), CRUD in [PresetLibrary](../replacements/src/main/java/com/structurizereplacements/client/preset/PresetLibrary.java).

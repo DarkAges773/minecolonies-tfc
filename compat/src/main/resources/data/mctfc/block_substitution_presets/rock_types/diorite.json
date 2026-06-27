@@ -1,5 +1,6 @@
 {
   "name": "mctfc.preset.diorite",
+  "icon": "tfc:rock/raw/diorite",
   "picks": [
     {
       "from": "tfc:rock/bricks/dacite",

@@ -26,8 +26,10 @@
             <text id="dstName" size="116 16" pos="200 2" color="white" wrap="false"/>
             <buttonimage id="change" label="$(com.ldtteam.structurize.gui.scantool.select)" size="68 17" pos="320 1"
                          source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
-            <buttonimage id="delete" label="$(structurizereplacements.gui.preset.row_delete)" size="22 17" pos="390 1"
-                         source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+            <!-- Per-row red cancel cross: resets this row's pick (back to the datapack default) in the normal
+                 picker, or deletes the row in preset-edit mode. The window shows/hides + wires it per context. -->
+            <buttonimage id="rowReset" size="16 16" pos="392 2"
+                         source="structurize:textures/gui/buildtool/cancel.png"/>
         </box>
     </list>
 

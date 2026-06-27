@@ -1,5 +1,6 @@
 {
   "name": "mctfc.preset.marble",
+  "icon": "tfc:rock/raw/marble",
   "picks": [
     {
       "from": "tfc:rock/bricks/dacite",

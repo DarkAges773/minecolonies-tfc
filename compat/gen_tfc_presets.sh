@@ -11,7 +11,9 @@ set -euo pipefail
 
 RES="$(cd "$(dirname "$0")" && pwd)/src/main/resources/data/mctfc"
 ROCK_TAGS="$RES/tags/blocks/subst/rock"
-OUT="$RES/block_substitution_presets"
+# Presets live under a "rock_types" subfolder so they appear grouped in Palette Swap's navigable preset picker.
+OUT="$RES/block_substitution_presets/rock_types"
+rm -rf "$OUT"
 mkdir -p "$OUT"
 
 node - "$ROCK_TAGS" "$OUT" <<'NODE'
@@ -54,7 +56,7 @@ for (const target of rocks) {
       if (from && s !== target) picks.push({ from, to });
     }
   }
-  const preset = { name: `mctfc.preset.${target}`, picks };
+  const preset = { name: `mctfc.preset.${target}`, icon: `tfc:rock/raw/${target}`, picks };
   fs.writeFileSync(path.join(outDir, `${target}.json`), JSON.stringify(preset, null, 2) + '\n');
   lang[`mctfc.preset.${target}`] = title(target);
 }

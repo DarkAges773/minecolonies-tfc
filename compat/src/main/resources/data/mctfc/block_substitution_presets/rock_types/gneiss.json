@@ -1,517 +1,518 @@
 {
-  "name": "mctfc.preset.chalk",
+  "name": "mctfc.preset.gneiss",
+  "icon": "tfc:rock/raw/gneiss",
   "picks": [
     {
       "from": "tfc:rock/bricks/dacite",
-      "to": "tfc:rock/bricks/chalk"
+      "to": "tfc:rock/bricks/gneiss"
     },
     {
       "from": "tfc:rock/bricks/granite",
-      "to": "tfc:rock/bricks/chalk"
+      "to": "tfc:rock/bricks/gneiss"
     },
     {
       "from": "tfc:rock/bricks/diorite",
-      "to": "tfc:rock/bricks/chalk"
+      "to": "tfc:rock/bricks/gneiss"
     },
     {
       "from": "tfc:rock/bricks/andesite",
-      "to": "tfc:rock/bricks/chalk"
+      "to": "tfc:rock/bricks/gneiss"
     },
     {
       "from": "tfc:rock/bricks/dacite_slab",
-      "to": "tfc:rock/bricks/chalk_slab"
+      "to": "tfc:rock/bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/bricks/granite_slab",
-      "to": "tfc:rock/bricks/chalk_slab"
+      "to": "tfc:rock/bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/bricks/diorite_slab",
-      "to": "tfc:rock/bricks/chalk_slab"
+      "to": "tfc:rock/bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/bricks/andesite_slab",
-      "to": "tfc:rock/bricks/chalk_slab"
+      "to": "tfc:rock/bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/bricks/dacite_stairs",
-      "to": "tfc:rock/bricks/chalk_stairs"
+      "to": "tfc:rock/bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/bricks/granite_stairs",
-      "to": "tfc:rock/bricks/chalk_stairs"
+      "to": "tfc:rock/bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/bricks/diorite_stairs",
-      "to": "tfc:rock/bricks/chalk_stairs"
+      "to": "tfc:rock/bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/bricks/andesite_stairs",
-      "to": "tfc:rock/bricks/chalk_stairs"
+      "to": "tfc:rock/bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/bricks/dacite_wall",
-      "to": "tfc:rock/bricks/chalk_wall"
+      "to": "tfc:rock/bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/bricks/granite_wall",
-      "to": "tfc:rock/bricks/chalk_wall"
+      "to": "tfc:rock/bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/bricks/diorite_wall",
-      "to": "tfc:rock/bricks/chalk_wall"
+      "to": "tfc:rock/bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/bricks/andesite_wall",
-      "to": "tfc:rock/bricks/chalk_wall"
+      "to": "tfc:rock/bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/button/dacite",
-      "to": "tfc:rock/button/chalk"
+      "to": "tfc:rock/button/gneiss"
     },
     {
       "from": "tfc:rock/button/granite",
-      "to": "tfc:rock/button/chalk"
+      "to": "tfc:rock/button/gneiss"
     },
     {
       "from": "tfc:rock/button/diorite",
-      "to": "tfc:rock/button/chalk"
+      "to": "tfc:rock/button/gneiss"
     },
     {
       "from": "tfc:rock/button/andesite",
-      "to": "tfc:rock/button/chalk"
+      "to": "tfc:rock/button/gneiss"
     },
     {
       "from": "tfc:rock/chiseled/dacite",
-      "to": "tfc:rock/chiseled/chalk"
+      "to": "tfc:rock/chiseled/gneiss"
     },
     {
       "from": "tfc:rock/chiseled/granite",
-      "to": "tfc:rock/chiseled/chalk"
+      "to": "tfc:rock/chiseled/gneiss"
     },
     {
       "from": "tfc:rock/chiseled/diorite",
-      "to": "tfc:rock/chiseled/chalk"
+      "to": "tfc:rock/chiseled/gneiss"
     },
     {
       "from": "tfc:rock/chiseled/andesite",
-      "to": "tfc:rock/chiseled/chalk"
+      "to": "tfc:rock/chiseled/gneiss"
     },
     {
       "from": "tfc:rock/cobble/dacite_slab",
-      "to": "tfc:rock/cobble/chalk_slab"
+      "to": "tfc:rock/cobble/gneiss_slab"
     },
     {
       "from": "tfc:rock/cobble/granite_slab",
-      "to": "tfc:rock/cobble/chalk_slab"
+      "to": "tfc:rock/cobble/gneiss_slab"
     },
     {
       "from": "tfc:rock/cobble/diorite_slab",
-      "to": "tfc:rock/cobble/chalk_slab"
+      "to": "tfc:rock/cobble/gneiss_slab"
     },
     {
       "from": "tfc:rock/cobble/andesite_slab",
-      "to": "tfc:rock/cobble/chalk_slab"
+      "to": "tfc:rock/cobble/gneiss_slab"
     },
     {
       "from": "tfc:rock/cobble/dacite_stairs",
-      "to": "tfc:rock/cobble/chalk_stairs"
+      "to": "tfc:rock/cobble/gneiss_stairs"
     },
     {
       "from": "tfc:rock/cobble/granite_stairs",
-      "to": "tfc:rock/cobble/chalk_stairs"
+      "to": "tfc:rock/cobble/gneiss_stairs"
     },
     {
       "from": "tfc:rock/cobble/diorite_stairs",
-      "to": "tfc:rock/cobble/chalk_stairs"
+      "to": "tfc:rock/cobble/gneiss_stairs"
     },
     {
       "from": "tfc:rock/cobble/andesite_stairs",
-      "to": "tfc:rock/cobble/chalk_stairs"
+      "to": "tfc:rock/cobble/gneiss_stairs"
     },
     {
       "from": "tfc:rock/cobble/dacite_wall",
-      "to": "tfc:rock/cobble/chalk_wall"
+      "to": "tfc:rock/cobble/gneiss_wall"
     },
     {
       "from": "tfc:rock/cobble/granite_wall",
-      "to": "tfc:rock/cobble/chalk_wall"
+      "to": "tfc:rock/cobble/gneiss_wall"
     },
     {
       "from": "tfc:rock/cobble/diorite_wall",
-      "to": "tfc:rock/cobble/chalk_wall"
+      "to": "tfc:rock/cobble/gneiss_wall"
     },
     {
       "from": "tfc:rock/cobble/andesite_wall",
-      "to": "tfc:rock/cobble/chalk_wall"
+      "to": "tfc:rock/cobble/gneiss_wall"
     },
     {
       "from": "tfc:rock/cracked_bricks/dacite",
-      "to": "tfc:rock/cracked_bricks/chalk"
+      "to": "tfc:rock/cracked_bricks/gneiss"
     },
     {
       "from": "tfc:rock/cracked_bricks/granite",
-      "to": "tfc:rock/cracked_bricks/chalk"
+      "to": "tfc:rock/cracked_bricks/gneiss"
     },
     {
       "from": "tfc:rock/cracked_bricks/diorite",
-      "to": "tfc:rock/cracked_bricks/chalk"
+      "to": "tfc:rock/cracked_bricks/gneiss"
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite",
-      "to": "tfc:rock/cracked_bricks/chalk"
+      "to": "tfc:rock/cracked_bricks/gneiss"
     },
     {
       "from": "tfc:rock/cracked_bricks/dacite_slab",
-      "to": "tfc:rock/cracked_bricks/chalk_slab"
+      "to": "tfc:rock/cracked_bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/cracked_bricks/granite_slab",
-      "to": "tfc:rock/cracked_bricks/chalk_slab"
+      "to": "tfc:rock/cracked_bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/cracked_bricks/diorite_slab",
-      "to": "tfc:rock/cracked_bricks/chalk_slab"
+      "to": "tfc:rock/cracked_bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite_slab",
-      "to": "tfc:rock/cracked_bricks/chalk_slab"
+      "to": "tfc:rock/cracked_bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/cracked_bricks/dacite_stairs",
-      "to": "tfc:rock/cracked_bricks/chalk_stairs"
+      "to": "tfc:rock/cracked_bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/cracked_bricks/granite_stairs",
-      "to": "tfc:rock/cracked_bricks/chalk_stairs"
+      "to": "tfc:rock/cracked_bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/cracked_bricks/diorite_stairs",
-      "to": "tfc:rock/cracked_bricks/chalk_stairs"
+      "to": "tfc:rock/cracked_bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite_stairs",
-      "to": "tfc:rock/cracked_bricks/chalk_stairs"
+      "to": "tfc:rock/cracked_bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/cracked_bricks/dacite_wall",
-      "to": "tfc:rock/cracked_bricks/chalk_wall"
+      "to": "tfc:rock/cracked_bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/cracked_bricks/granite_wall",
-      "to": "tfc:rock/cracked_bricks/chalk_wall"
+      "to": "tfc:rock/cracked_bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/cracked_bricks/diorite_wall",
-      "to": "tfc:rock/cracked_bricks/chalk_wall"
+      "to": "tfc:rock/cracked_bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite_wall",
-      "to": "tfc:rock/cracked_bricks/chalk_wall"
+      "to": "tfc:rock/cracked_bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/gravel/dacite",
-      "to": "tfc:rock/gravel/chalk"
+      "to": "tfc:rock/gravel/gneiss"
     },
     {
       "from": "tfc:rock/gravel/granite",
-      "to": "tfc:rock/gravel/chalk"
+      "to": "tfc:rock/gravel/gneiss"
     },
     {
       "from": "tfc:rock/gravel/diorite",
-      "to": "tfc:rock/gravel/chalk"
+      "to": "tfc:rock/gravel/gneiss"
     },
     {
       "from": "tfc:rock/gravel/andesite",
-      "to": "tfc:rock/gravel/chalk"
+      "to": "tfc:rock/gravel/gneiss"
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/cobble/dacite",
-      "to": "firmavanilla:mortared/tfc/rock/cobble/chalk"
+      "to": "firmavanilla:mortared/tfc/rock/cobble/gneiss"
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/cobble/granite",
-      "to": "firmavanilla:mortared/tfc/rock/cobble/chalk"
+      "to": "firmavanilla:mortared/tfc/rock/cobble/gneiss"
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/cobble/diorite",
-      "to": "firmavanilla:mortared/tfc/rock/cobble/chalk"
+      "to": "firmavanilla:mortared/tfc/rock/cobble/gneiss"
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/cobble/andesite",
-      "to": "firmavanilla:mortared/tfc/rock/cobble/chalk"
+      "to": "firmavanilla:mortared/tfc/rock/cobble/gneiss"
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/dacite",
-      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/chalk"
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/gneiss"
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/granite",
-      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/chalk"
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/gneiss"
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/diorite",
-      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/chalk"
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/gneiss"
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/andesite",
-      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/chalk"
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/gneiss"
     },
     {
       "from": "tfc:rock/mossy_bricks/dacite",
-      "to": "tfc:rock/mossy_bricks/chalk"
+      "to": "tfc:rock/mossy_bricks/gneiss"
     },
     {
       "from": "tfc:rock/mossy_bricks/granite",
-      "to": "tfc:rock/mossy_bricks/chalk"
+      "to": "tfc:rock/mossy_bricks/gneiss"
     },
     {
       "from": "tfc:rock/mossy_bricks/diorite",
-      "to": "tfc:rock/mossy_bricks/chalk"
+      "to": "tfc:rock/mossy_bricks/gneiss"
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite",
-      "to": "tfc:rock/mossy_bricks/chalk"
+      "to": "tfc:rock/mossy_bricks/gneiss"
     },
     {
       "from": "tfc:rock/mossy_bricks/dacite_slab",
-      "to": "tfc:rock/mossy_bricks/chalk_slab"
+      "to": "tfc:rock/mossy_bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/mossy_bricks/granite_slab",
-      "to": "tfc:rock/mossy_bricks/chalk_slab"
+      "to": "tfc:rock/mossy_bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/mossy_bricks/diorite_slab",
-      "to": "tfc:rock/mossy_bricks/chalk_slab"
+      "to": "tfc:rock/mossy_bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite_slab",
-      "to": "tfc:rock/mossy_bricks/chalk_slab"
+      "to": "tfc:rock/mossy_bricks/gneiss_slab"
     },
     {
       "from": "tfc:rock/mossy_bricks/dacite_stairs",
-      "to": "tfc:rock/mossy_bricks/chalk_stairs"
+      "to": "tfc:rock/mossy_bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/mossy_bricks/granite_stairs",
-      "to": "tfc:rock/mossy_bricks/chalk_stairs"
+      "to": "tfc:rock/mossy_bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/mossy_bricks/diorite_stairs",
-      "to": "tfc:rock/mossy_bricks/chalk_stairs"
+      "to": "tfc:rock/mossy_bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite_stairs",
-      "to": "tfc:rock/mossy_bricks/chalk_stairs"
+      "to": "tfc:rock/mossy_bricks/gneiss_stairs"
     },
     {
       "from": "tfc:rock/mossy_bricks/dacite_wall",
-      "to": "tfc:rock/mossy_bricks/chalk_wall"
+      "to": "tfc:rock/mossy_bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/mossy_bricks/granite_wall",
-      "to": "tfc:rock/mossy_bricks/chalk_wall"
+      "to": "tfc:rock/mossy_bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/mossy_bricks/diorite_wall",
-      "to": "tfc:rock/mossy_bricks/chalk_wall"
+      "to": "tfc:rock/mossy_bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite_wall",
-      "to": "tfc:rock/mossy_bricks/chalk_wall"
+      "to": "tfc:rock/mossy_bricks/gneiss_wall"
     },
     {
       "from": "tfc:rock/mossy_cobble/dacite_slab",
-      "to": "tfc:rock/mossy_cobble/chalk_slab"
+      "to": "tfc:rock/mossy_cobble/gneiss_slab"
     },
     {
       "from": "tfc:rock/mossy_cobble/granite_slab",
-      "to": "tfc:rock/mossy_cobble/chalk_slab"
+      "to": "tfc:rock/mossy_cobble/gneiss_slab"
     },
     {
       "from": "tfc:rock/mossy_cobble/diorite_slab",
-      "to": "tfc:rock/mossy_cobble/chalk_slab"
+      "to": "tfc:rock/mossy_cobble/gneiss_slab"
     },
     {
       "from": "tfc:rock/mossy_cobble/andesite_slab",
-      "to": "tfc:rock/mossy_cobble/chalk_slab"
+      "to": "tfc:rock/mossy_cobble/gneiss_slab"
     },
     {
       "from": "tfc:rock/mossy_cobble/dacite_stairs",
-      "to": "tfc:rock/mossy_cobble/chalk_stairs"
+      "to": "tfc:rock/mossy_cobble/gneiss_stairs"
     },
     {
       "from": "tfc:rock/mossy_cobble/granite_stairs",
-      "to": "tfc:rock/mossy_cobble/chalk_stairs"
+      "to": "tfc:rock/mossy_cobble/gneiss_stairs"
     },
     {
       "from": "tfc:rock/mossy_cobble/diorite_stairs",
-      "to": "tfc:rock/mossy_cobble/chalk_stairs"
+      "to": "tfc:rock/mossy_cobble/gneiss_stairs"
     },
     {
       "from": "tfc:rock/mossy_cobble/andesite_stairs",
-      "to": "tfc:rock/mossy_cobble/chalk_stairs"
+      "to": "tfc:rock/mossy_cobble/gneiss_stairs"
     },
     {
       "from": "tfc:rock/mossy_cobble/dacite_wall",
-      "to": "tfc:rock/mossy_cobble/chalk_wall"
+      "to": "tfc:rock/mossy_cobble/gneiss_wall"
     },
     {
       "from": "tfc:rock/mossy_cobble/granite_wall",
-      "to": "tfc:rock/mossy_cobble/chalk_wall"
+      "to": "tfc:rock/mossy_cobble/gneiss_wall"
     },
     {
       "from": "tfc:rock/mossy_cobble/diorite_wall",
-      "to": "tfc:rock/mossy_cobble/chalk_wall"
+      "to": "tfc:rock/mossy_cobble/gneiss_wall"
     },
     {
       "from": "tfc:rock/mossy_cobble/andesite_wall",
-      "to": "tfc:rock/mossy_cobble/chalk_wall"
+      "to": "tfc:rock/mossy_cobble/gneiss_wall"
     },
     {
       "from": "tfc:rock/pressure_plate/dacite",
-      "to": "tfc:rock/pressure_plate/chalk"
+      "to": "tfc:rock/pressure_plate/gneiss"
     },
     {
       "from": "tfc:rock/pressure_plate/granite",
-      "to": "tfc:rock/pressure_plate/chalk"
+      "to": "tfc:rock/pressure_plate/gneiss"
     },
     {
       "from": "tfc:rock/pressure_plate/diorite",
-      "to": "tfc:rock/pressure_plate/chalk"
+      "to": "tfc:rock/pressure_plate/gneiss"
     },
     {
       "from": "tfc:rock/pressure_plate/andesite",
-      "to": "tfc:rock/pressure_plate/chalk"
+      "to": "tfc:rock/pressure_plate/gneiss"
     },
     {
       "from": "tfc:rock/raw/dacite",
-      "to": "tfc:rock/raw/chalk"
+      "to": "tfc:rock/raw/gneiss"
     },
     {
       "from": "tfc:rock/raw/granite",
-      "to": "tfc:rock/raw/chalk"
+      "to": "tfc:rock/raw/gneiss"
     },
     {
       "from": "tfc:rock/raw/diorite",
-      "to": "tfc:rock/raw/chalk"
+      "to": "tfc:rock/raw/gneiss"
     },
     {
       "from": "tfc:rock/raw/andesite",
-      "to": "tfc:rock/raw/chalk"
+      "to": "tfc:rock/raw/gneiss"
     },
     {
       "from": "tfc:rock/raw/dacite_slab",
-      "to": "tfc:rock/raw/chalk_slab"
+      "to": "tfc:rock/raw/gneiss_slab"
     },
     {
       "from": "tfc:rock/raw/granite_slab",
-      "to": "tfc:rock/raw/chalk_slab"
+      "to": "tfc:rock/raw/gneiss_slab"
     },
     {
       "from": "tfc:rock/raw/diorite_slab",
-      "to": "tfc:rock/raw/chalk_slab"
+      "to": "tfc:rock/raw/gneiss_slab"
     },
     {
       "from": "tfc:rock/raw/andesite_slab",
-      "to": "tfc:rock/raw/chalk_slab"
+      "to": "tfc:rock/raw/gneiss_slab"
     },
     {
       "from": "tfc:rock/raw/dacite_stairs",
-      "to": "tfc:rock/raw/chalk_stairs"
+      "to": "tfc:rock/raw/gneiss_stairs"
     },
     {
       "from": "tfc:rock/raw/granite_stairs",
-      "to": "tfc:rock/raw/chalk_stairs"
+      "to": "tfc:rock/raw/gneiss_stairs"
     },
     {
       "from": "tfc:rock/raw/diorite_stairs",
-      "to": "tfc:rock/raw/chalk_stairs"
+      "to": "tfc:rock/raw/gneiss_stairs"
     },
     {
       "from": "tfc:rock/raw/andesite_stairs",
-      "to": "tfc:rock/raw/chalk_stairs"
+      "to": "tfc:rock/raw/gneiss_stairs"
     },
     {
       "from": "tfc:rock/raw/dacite_wall",
-      "to": "tfc:rock/raw/chalk_wall"
+      "to": "tfc:rock/raw/gneiss_wall"
     },
     {
       "from": "tfc:rock/raw/granite_wall",
-      "to": "tfc:rock/raw/chalk_wall"
+      "to": "tfc:rock/raw/gneiss_wall"
     },
     {
       "from": "tfc:rock/raw/diorite_wall",
-      "to": "tfc:rock/raw/chalk_wall"
+      "to": "tfc:rock/raw/gneiss_wall"
     },
     {
       "from": "tfc:rock/raw/andesite_wall",
-      "to": "tfc:rock/raw/chalk_wall"
+      "to": "tfc:rock/raw/gneiss_wall"
     },
     {
       "from": "tfc:rock/smooth/dacite",
-      "to": "tfc:rock/smooth/chalk"
+      "to": "tfc:rock/smooth/gneiss"
     },
     {
       "from": "tfc:rock/smooth/granite",
-      "to": "tfc:rock/smooth/chalk"
+      "to": "tfc:rock/smooth/gneiss"
     },
     {
       "from": "tfc:rock/smooth/diorite",
-      "to": "tfc:rock/smooth/chalk"
+      "to": "tfc:rock/smooth/gneiss"
     },
     {
       "from": "tfc:rock/smooth/andesite",
-      "to": "tfc:rock/smooth/chalk"
+      "to": "tfc:rock/smooth/gneiss"
     },
     {
       "from": "tfc:rock/smooth/dacite_slab",
-      "to": "tfc:rock/smooth/chalk_slab"
+      "to": "tfc:rock/smooth/gneiss_slab"
     },
     {
       "from": "tfc:rock/smooth/granite_slab",
-      "to": "tfc:rock/smooth/chalk_slab"
+      "to": "tfc:rock/smooth/gneiss_slab"
     },
     {
       "from": "tfc:rock/smooth/diorite_slab",
-      "to": "tfc:rock/smooth/chalk_slab"
+      "to": "tfc:rock/smooth/gneiss_slab"
     },
     {
       "from": "tfc:rock/smooth/andesite_slab",
-      "to": "tfc:rock/smooth/chalk_slab"
+      "to": "tfc:rock/smooth/gneiss_slab"
     },
     {
       "from": "tfc:rock/smooth/dacite_stairs",
-      "to": "tfc:rock/smooth/chalk_stairs"
+      "to": "tfc:rock/smooth/gneiss_stairs"
     },
     {
       "from": "tfc:rock/smooth/granite_stairs",
-      "to": "tfc:rock/smooth/chalk_stairs"
+      "to": "tfc:rock/smooth/gneiss_stairs"
     },
     {
       "from": "tfc:rock/smooth/diorite_stairs",
-      "to": "tfc:rock/smooth/chalk_stairs"
+      "to": "tfc:rock/smooth/gneiss_stairs"
     },
     {
       "from": "tfc:rock/smooth/andesite_stairs",
-      "to": "tfc:rock/smooth/chalk_stairs"
+      "to": "tfc:rock/smooth/gneiss_stairs"
     },
     {
       "from": "tfc:rock/smooth/dacite_wall",
-      "to": "tfc:rock/smooth/chalk_wall"
+      "to": "tfc:rock/smooth/gneiss_wall"
     },
     {
       "from": "tfc:rock/smooth/granite_wall",
-      "to": "tfc:rock/smooth/chalk_wall"
+      "to": "tfc:rock/smooth/gneiss_wall"
     },
     {
       "from": "tfc:rock/smooth/diorite_wall",
-      "to": "tfc:rock/smooth/chalk_wall"
+      "to": "tfc:rock/smooth/gneiss_wall"
     },
     {
       "from": "tfc:rock/smooth/andesite_wall",
-      "to": "tfc:rock/smooth/chalk_wall"
+      "to": "tfc:rock/smooth/gneiss_wall"
     }
   ]
 }

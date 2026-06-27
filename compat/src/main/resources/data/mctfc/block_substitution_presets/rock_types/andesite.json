@@ -1,5 +1,6 @@
 {
   "name": "mctfc.preset.andesite",
+  "icon": "tfc:rock/raw/andesite",
   "picks": [
     {
       "from": "tfc:rock/bricks/dacite",

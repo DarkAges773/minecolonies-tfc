@@ -6,8 +6,11 @@ import com.structurizereplacements.preset.BuiltinPresets;
 import com.structurizereplacements.preset.Preset;
 import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,10 +47,12 @@ public class SyncBuiltinPresetsMessage
         {
             final String id = buf.readUtf();
             final var name = buf.readComponent();
+            final String folder = buf.readUtf();
+            final Block icon = readNullableBlock(buf);
             final Map<Block, Block> picks = ChoiceCodec.read(buf);
             if (!picks.isEmpty())
             {
-                this.presets.add(new Preset(id, name, picks, false));
+                this.presets.add(new Preset(id, name, folder, icon, picks, false));
             }
         }
     }
@@ -59,8 +64,31 @@ public class SyncBuiltinPresetsMessage
         {
             buf.writeUtf(preset.id());
             buf.writeComponent(preset.displayName());
+            buf.writeUtf(preset.folder());
+            writeNullableBlock(buf, preset.icon());
             ChoiceCodec.write(buf, preset.picks());
         }
+    }
+
+    private static void writeNullableBlock(final FriendlyByteBuf buf, @Nullable final Block block)
+    {
+        final ResourceLocation id = block == null ? null : ForgeRegistries.BLOCKS.getKey(block);
+        buf.writeBoolean(id != null);
+        if (id != null)
+        {
+            buf.writeResourceLocation(id);
+        }
+    }
+
+    @Nullable
+    private static Block readNullableBlock(final FriendlyByteBuf buf)
+    {
+        if (!buf.readBoolean())
+        {
+            return null;
+        }
+        final ResourceLocation id = buf.readResourceLocation();
+        return ForgeRegistries.BLOCKS.containsKey(id) ? ForgeRegistries.BLOCKS.getValue(id) : null;
     }
 
     public void handle(final Supplier<NetworkEvent.Context> ctx)

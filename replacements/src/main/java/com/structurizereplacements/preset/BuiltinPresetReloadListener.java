@@ -26,6 +26,7 @@ import java.util.Map;
  * <pre>{@code
  * {
  *   "name": "mctfc.preset.granite",                          // translation key (or literal) for the display name
+ *   "icon": "tfc:rock/raw/granite",                          // optional: block for the row icon (else derived)
  *   "picks": [
  *     { "from": "minecraft:cobblestone", "to": "tfc:rock/cobble/granite" },
  *     { "from": "minecraft:stone_bricks", "to": "tfc:rock/bricks/granite" }
@@ -36,7 +37,9 @@ import java.util.Map;
  * <p>A pick whose {@code from}/{@code to} block id is absent (e.g. a TFC id in a standalone install) is skipped;
  * a preset left with no valid picks is dropped entirely, so a TFC preset never shows up — empty — without TFC.
  * {@code from}/{@code to} are <b>blocks</b> (the same keys the engine substitutes on), so a preset generalises
- * across blueprints. Loaded server-side and synced to clients (see {@code SyncBuiltinPresetsMessage}).
+ * across blueprints. The file's <b>subdirectory</b> under {@code block_substitution_presets/} becomes the preset's
+ * folder in the navigable picker (e.g. {@code .../rock_types/granite.json} → folder {@code "rock_types"}). Loaded
+ * server-side and synced to clients (see {@code SyncBuiltinPresetsMessage}).
  */
 public class BuiltinPresetReloadListener extends SimpleJsonResourceReloadListener
 {
@@ -61,6 +64,7 @@ public class BuiltinPresetReloadListener extends SimpleJsonResourceReloadListene
             {
                 final JsonObject root = GsonHelper.convertToJsonObject(files.get(file), "top element");
                 final String name = GsonHelper.getAsString(root, "name", file.getPath());
+                final Block icon = root.has("icon") ? block(GsonHelper.getAsString(root, "icon")) : null;
                 final Map<Block, Block> picks = new LinkedHashMap<>();
                 for (final JsonElement element : GsonHelper.getAsJsonArray(root, "picks"))
                 {
@@ -78,7 +82,12 @@ public class BuiltinPresetReloadListener extends SimpleJsonResourceReloadListene
                     // an empty preset that substitutes nothing.
                     continue;
                 }
-                presets.add(new Preset(file.toString(), Component.translatable(name), picks, false));
+                // Folder = the file's subdirectory under block_substitution_presets/ (e.g. "rock_types/granite"
+                // → "rock_types"); a top-level file has no folder.
+                final String path = file.getPath();
+                final int lastSlash = path.lastIndexOf('/');
+                final String folder = lastSlash < 0 ? "" : path.substring(0, lastSlash);
+                presets.add(new Preset(file.toString(), Component.translatable(name), folder, icon, picks, false));
             }
             catch (final Exception ex)
             {

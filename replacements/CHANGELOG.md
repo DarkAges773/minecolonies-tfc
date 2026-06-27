@@ -12,8 +12,13 @@ All notable changes to this mod are documented here. The format is based on
   the current picks under a name, **load** a saved set into any build (it merges, keeping picks it doesn't
   mention), **edit** a saved preset (retarget or delete individual picks), **clone** a built-in preset into your
   library, and **delete** your own. Your library is stored per-installation, so presets persist between sessions
-  and follow you across worlds, servers and colonies — build a palette once and reuse it everywhere. Mods and
-  datapacks can ship **read-only built-in presets** (`data/<namespace>/block_substitution_presets/*.json`).
+  and follow you across worlds, servers and colonies — build a palette once and reuse it everywhere. Presets are
+  organised into **folders** (the hub is navigable — drill into a folder, "Up" to climb out; save into the current
+  folder, or use a `folder/name` name to nest) and each shows an **icon**. Mods and datapacks can ship
+  **read-only built-in presets** (`data/<namespace>/block_substitution_presets/[<folder>/]*.json`, with an optional
+  `"icon"`).
+- The *Replace* picker rows now have a **per-row reset** (a small red cross) to clear just that row's pick back to
+  the default — the bottom *Reset* still clears the whole palette.
 - The opt-in default pick pools gained several families: **stained glass panes**, **candles**, **wool
   carpets**, Domum Ornamentum **floating carpets**, **banners** (standing and wall as separate pools), the
   colored Domum Ornamentum **brick** and **cobblestone "extra"** blocks, and its **bricks** and **stone
