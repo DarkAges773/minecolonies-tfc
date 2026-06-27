@@ -20,7 +20,7 @@ import java.util.Map;
 public class PresetEditChoiceContext implements ReplacementChoiceContext
 {
     private final String id;
-    private final String name;
+    private String name;
     private final String folder;
     private final Block icon;
     private final Map<Block, Block> picks;
@@ -93,6 +93,19 @@ public class PresetEditChoiceContext implements ReplacementChoiceContext
     public Component titleComponent()
     {
         return Component.translatable("structurizereplacements.gui.preset.edit.title", name);
+    }
+
+    @Override
+    public String editableName()
+    {
+        return name;
+    }
+
+    @Override
+    public void setName(final String newName)
+    {
+        this.name = newName;
+        persist();
     }
 
     @Override

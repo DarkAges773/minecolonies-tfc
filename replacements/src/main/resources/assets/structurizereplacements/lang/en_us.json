@@ -18,5 +18,8 @@
   "structurizereplacements.gui.preset.clone": "Clone",
   "structurizereplacements.gui.preset.clone_suffix": "(copy)",
   "structurizereplacements.gui.preset.delete": "Delete",
+  "structurizereplacements.gui.preset.delete.title": "Delete Preset?",
+  "structurizereplacements.gui.preset.delete.confirm": "Permanently delete \"%s\"? This can't be undone.",
+  "structurizereplacements.gui.confirm.cancel": "Cancel",
   "structurizereplacements.gui.preset.edit.title": "Edit Preset: %s"
 }

@@ -9,6 +9,10 @@
     <text id="title" size="100% 12" pos="0 6" textalign="MIDDLE" color="white"
           label="$(structurizereplacements.gui.replace.title)"/>
 
+    <!-- Editable preset name: shown only in the preset editor (replaces the static title there); the window
+         pre-fills it with the current name and commits renames as you type. -->
+    <input id="presetNameEdit" size="200 16" pos="110 4" maxlength="40"/>
+
     <!-- Palette-tier toggle: only shown (and only meaningful) in the per-building Build Options picker;
          hidden for the build wand. Top-left corner, clear of the centered title. -->
     <buttonimage id="paletteMode" label="$(structurizereplacements.gui.replace.palette.update)" size="56 16" pos="2 3"
@@ -33,11 +37,12 @@
         </box>
     </list>
 
-    <!-- "Presets" opens the save/load/edit hub; hidden inside the preset editor itself. -->
+    <!-- "Presets" opens the save/load/edit hub; hidden inside the preset editor itself. Done is centered (so it
+         stays centered on its own in the editor, where Presets/Reset are hidden), with Reset to its right. -->
     <buttonimage id="presets" label="$(structurizereplacements.gui.replace.presets)" size="80 17" pos="76 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
-    <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="80 17" pos="168 218"
+    <buttonimage id="done" label="$(gui.done)" size="80 17" pos="168 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
-    <buttonimage id="done" label="$(gui.done)" size="80 17" pos="260 218"
+    <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="80 17" pos="260 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 </window>

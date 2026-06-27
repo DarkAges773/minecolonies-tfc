@@ -10,7 +10,7 @@
     <!-- Save current picks as a new library preset: name field + button. The gray hint shows over the empty
          field (toggled off in onUpdate once the player types). -->
     <input id="presetName" size="220 18" pos="6 24" maxlength="40"/>
-    <text id="nameHint" size="206 12" pos="11 28" color="808080" label="$(structurizereplacements.gui.preset.name_hint)"/>
+    <text id="nameHint" size="206 12" pos="11 28" color="gray" label="$(structurizereplacements.gui.preset.name_hint)"/>
     <buttonimage id="save" label="$(structurizereplacements.gui.preset.save)" size="184 18" pos="230 24"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 

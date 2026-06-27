@@ -3,6 +3,7 @@ package com.structurizereplacements.client.gui;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,19 @@ public interface ReplacementChoiceContext
     {
         return false;
     }
+
+    /**
+     * If this context's name can be edited inline (the preset editor), the current name to show in an editable
+     * field; {@code null} for contexts with a fixed title (build wand / building). {@link #setName} commits a change.
+     */
+    @Nullable
+    default String editableName()
+    {
+        return null;
+    }
+
+    /** Rename this context (only meaningful when {@link #editableName()} is non-null), persisting as appropriate. */
+    default void setName(final String name) {}
 
     /**
      * Whether the window offers the "Presets" menu (save current picks / load a preset). True for the editable

@@ -11,9 +11,11 @@ set -euo pipefail
 
 RES="$(cd "$(dirname "$0")" && pwd)/src/main/resources/data/mctfc"
 ROCK_TAGS="$RES/tags/blocks/subst/rock"
-# Presets live under a "rock_types" subfolder so they appear grouped in Palette Swap's navigable preset picker.
-OUT="$RES/block_substitution_presets/rock_types"
-rm -rf "$OUT"
+# Presets live under "builtin/rocks/" so the read-only built-ins appear grouped (and separate from the
+# player's own root-level presets) in Palette Swap's navigable preset picker.
+PRESETS="$RES/block_substitution_presets"
+OUT="$PRESETS/builtin/rocks"
+rm -rf "$PRESETS/rock_types" "$PRESETS/builtin"
 mkdir -p "$OUT"
 
 node - "$ROCK_TAGS" "$OUT" <<'NODE'

@@ -254,7 +254,8 @@ existing per-context `choose()` apply path and both sync channels.
   [WindowPresetList](../replacements/src/main/java/com/structurizereplacements/client/gui/WindowPresetList.java) is
   navigable — it tracks the current folder, lists subfolders (drill-in) + an "Up" row + the presets in that folder,
   each with its icon; **Save** lands in the current folder (a `folder/name` name nests further), **Clone** copies
-  into the current folder. The `:compat` rock presets ship under a **`rock_types`** folder so the root stays clean.
+  into the **library root** (the player's own space, never the read-only folder). The `:compat` rock presets ship
+  under a **`builtin/rocks`** folder so the read-only built-ins stay grouped and out of the root.
 - **Two sources, merged in the picker** ([WindowPresetList](../replacements/src/main/java/com/structurizereplacements/client/gui/WindowPresetList.java)):
   - **User library** — editable, client-only JSON under `config/structurizereplacements/presets/` (one file per
     preset), CRUD in [PresetLibrary](../replacements/src/main/java/com/structurizereplacements/client/preset/PresetLibrary.java).

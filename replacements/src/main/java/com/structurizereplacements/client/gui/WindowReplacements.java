@@ -5,6 +5,7 @@ import com.ldtteam.blockui.PaneBuilders;
 import com.ldtteam.blockui.controls.ButtonImage;
 import com.ldtteam.blockui.controls.ItemIcon;
 import com.ldtteam.blockui.controls.Text;
+import com.ldtteam.blockui.controls.TextField;
 import com.ldtteam.blockui.views.BOWindow;
 import com.ldtteam.blockui.views.ScrollingList;
 import com.ldtteam.structurize.client.gui.AbstractWindowSkeleton;
@@ -102,6 +103,56 @@ public class WindowReplacements extends AbstractWindowSkeleton
         {
             modeButton.hide();
         }
+
+        // Preset editor: replace the static title with an editable name field pre-filled with the current name
+        // (renames commit as the player types — see onUpdate). Other contexts hide it and keep the title.
+        final TextField nameEdit = findPaneOfTypeByID("presetNameEdit", TextField.class);
+        final String editableName = context.editableName();
+        if (editableName != null)
+        {
+            nameEdit.setText(editableName);
+            nameEdit.show();
+            if (title != null)
+            {
+                title.hide();
+            }
+            // No global Reset in the preset editor — clearing all picks would just empty the preset; rows are
+            // removed individually with the per-row cross.
+            findPaneOfTypeByID("reset", ButtonImage.class).hide();
+        }
+        else
+        {
+            nameEdit.hide();
+        }
+    }
+
+    @Override
+    public void onUpdate()
+    {
+        super.onUpdate();
+        commitNameIfEditing();
+    }
+
+    /**
+     * Commit the preset-name field to the context (preset editor only). Runs each tick and again on return, so the
+     * latest text is persisted even if the player edits and clicks Done within the same tick. An empty field is
+     * ignored so a rename can't blank the name.
+     */
+    private void commitNameIfEditing()
+    {
+        if (context.editableName() == null)
+        {
+            return;
+        }
+        final TextField nameEdit = findPaneOfTypeByID("presetNameEdit", TextField.class);
+        if (nameEdit != null)
+        {
+            final String text = nameEdit.getText() == null ? "" : nameEdit.getText().trim();
+            if (!text.isEmpty() && !text.equals(context.editableName()))
+            {
+                context.setName(text);
+            }
+        }
     }
 
     private void togglePaletteMode()
@@ -133,8 +184,15 @@ public class WindowReplacements extends AbstractWindowSkeleton
 
     private void returnToParent()
     {
+        commitNameIfEditing();
         if (parent != null)
         {
+            // BOWindow.open() reuses the parent's cached screen, so its onOpened (and any refresh there) won't
+            // re-fire — refresh the preset list explicitly so a rename/edit shows when we return to it.
+            if (parent instanceof WindowPresetList presetList)
+            {
+                presetList.refresh();
+            }
             parent.open();
         }
         else

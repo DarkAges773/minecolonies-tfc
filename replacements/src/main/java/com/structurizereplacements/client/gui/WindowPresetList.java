@@ -65,6 +65,14 @@ public class WindowPresetList extends AbstractWindowSkeleton
         registerButton("save", this::saveCurrent);
         this.list = findPaneOfTypeByID("presets", ScrollingList.class);
         this.list.setDataProvider(() -> rows.size(), this::updateRow);
+
+        // The placeholder Text sits over the name field; disable it so it never captures clicks
+        // (canHandleClick is gated on enabled) — clicks fall through to the input behind it.
+        final Text hint = findPaneOfTypeByID("nameHint", Text.class);
+        if (hint != null)
+        {
+            hint.setEnabled(false);
+        }
     }
 
     @Override
@@ -96,8 +104,13 @@ public class WindowPresetList extends AbstractWindowSkeleton
         }
     }
 
-    /** Rebuild the rows for the current folder: an "Up" row (unless root), then subfolders, then presets. */
-    private void refresh()
+    /**
+     * Rebuild the rows for the current folder: an "Up" row (unless root), then subfolders, then presets. Re-reads
+     * the library from disk, so it reflects edits made in a child editor window. Package-visible so
+     * {@link WindowReplacements} can refresh this list when its preset editor returns here ({@code BOWindow.open()}
+     * reuses the cached screen, so the parent's {@code onOpened} doesn't re-fire).
+     */
+    void refresh()
     {
         final List<Preset> all = new ArrayList<>(PresetLibrary.all());
         all.addAll(BuiltinPresets.all());
@@ -174,7 +187,11 @@ public class WindowPresetList extends AbstractWindowSkeleton
             primary.setText(Component.translatable("structurizereplacements.gui.preset.edit"));
             primary.setHandler(b -> new WindowReplacements(new PresetEditChoiceContext(preset), this).open());
             delete.show();
-            delete.setHandler(b -> { PresetLibrary.delete(preset.id()); refresh(); });
+            delete.setHandler(b -> new WindowConfirm(this,
+                    Component.translatable("structurizereplacements.gui.preset.delete.title"),
+                    Component.translatable("structurizereplacements.gui.preset.delete.confirm", preset.displayName()),
+                    Component.translatable("structurizereplacements.gui.preset.delete"),
+                    () -> { PresetLibrary.delete(preset.id()); refresh(); }).open());
         }
         else
         {
@@ -182,7 +199,9 @@ public class WindowPresetList extends AbstractWindowSkeleton
             primary.setHandler(b -> {
                 final String copyName = preset.displayName().getString() + " "
                         + Component.translatable("structurizereplacements.gui.preset.clone_suffix").getString();
-                PresetLibrary.create(path, copyName, preset.picks(), preset.icon());
+                // Clones always land in the library root (the player's own space), not inside the read-only
+                // built-in folder they were cloned from.
+                PresetLibrary.create("", copyName, preset.picks(), preset.icon());
                 refresh();
             });
             delete.hide();
@@ -229,6 +248,12 @@ public class WindowPresetList extends AbstractWindowSkeleton
     {
         if (parent != null)
         {
+            // The picker's onOpened won't re-fire on reopen (BOWindow reuses its cached screen), so refresh its rows
+            // explicitly — otherwise a just-loaded preset's picks wouldn't show when we return to it.
+            if (parent instanceof WindowReplacements picker)
+            {
+                picker.reload();
+            }
             parent.open();
         }
         else
