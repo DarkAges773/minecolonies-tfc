@@ -6,5 +6,15 @@
   "structurizereplacements.gui.replace.affects": "Affects %s block type(s):",
   "structurizereplacements.gui.replace.palette.update": "Upgrade",
   "structurizereplacements.gui.replace.palette.current": "Current",
-  "structurizereplacements.gui.replace.palette.tooltip": "Palette shown: the tier being built (Upgrade) or the current tier (Current). Click to switch."
+  "structurizereplacements.gui.replace.palette.tooltip": "Palette shown: the tier being built (Upgrade) or the current tier (Current). Click to switch.",
+  "structurizereplacements.gui.replace.presets": "Presets",
+  "structurizereplacements.gui.preset.row_delete": "X",
+  "structurizereplacements.gui.preset.title": "Palette Presets",
+  "structurizereplacements.gui.preset.save": "Save Current",
+  "structurizereplacements.gui.preset.load": "Load",
+  "structurizereplacements.gui.preset.edit": "Edit",
+  "structurizereplacements.gui.preset.clone": "Clone",
+  "structurizereplacements.gui.preset.clone_suffix": "(copy)",
+  "structurizereplacements.gui.preset.delete": "Delete",
+  "structurizereplacements.gui.preset.edit.title": "Edit Preset: %s"
 }

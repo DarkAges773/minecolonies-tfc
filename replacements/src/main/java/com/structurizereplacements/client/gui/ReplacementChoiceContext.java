@@ -1,5 +1,6 @@
 package com.structurizereplacements.client.gui;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 
@@ -35,6 +36,31 @@ public interface ReplacementChoiceContext
 
     /** Apply a pick ({@code target == null} clears it), then persist/sync/refresh as appropriate. */
     void choose(Block source, Block target);
+
+    /**
+     * Remove the pick for {@code source} entirely. For blueprint-backed contexts (build wand / building) the row
+     * comes from the schematic and stays — so this just clears the pick (defaults to {@link #choose} with a null
+     * target). The preset editor overrides it to drop the row, since there its rows <i>are</i> the preset's picks.
+     */
+    default void removePick(final Block source)
+    {
+        choose(source, null);
+    }
+
+    /** Whether each row shows a delete button — only the preset editor (whose rows are the preset's own picks). */
+    default boolean allowRowDelete()
+    {
+        return false;
+    }
+
+    /**
+     * Whether the window offers the "Presets" menu (save current picks / load a preset). True for the editable
+     * build-wand and building contexts; false inside the preset editor itself (you're already editing one).
+     */
+    default boolean offersPresetMenu()
+    {
+        return true;
+    }
 
     /** Clear <i>all</i> picks back to the datapack defaults, then persist/sync/refresh as appropriate. */
     void reset();
@@ -78,5 +104,14 @@ public interface ReplacementChoiceContext
     default String titleKey()
     {
         return "structurizereplacements.gui.replace.title";
+    }
+
+    /**
+     * The full window title. Defaults to {@link #titleKey()} as a translatable; contexts that need a dynamic
+     * title (e.g. the preset editor showing the preset's name) override this directly.
+     */
+    default Component titleComponent()
+    {
+        return Component.translatable(titleKey());
     }
 }

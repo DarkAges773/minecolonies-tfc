@@ -17,19 +17,25 @@
     <list id="rows" size="416 190" pos="2 22" childspacing="-1">
         <box size="100% 20" linewidth="1">
             <!-- Name cells are kept fully inside the 20px row (pos y=2, height 16, like the icons): a taller cell
-                 spilling below the row made its hover tooltip bleed into the row beneath it. -->
+                 spilling below the row made its hover tooltip bleed into the row beneath it. The narrow "delete"
+                 button at the right is shown only in preset-edit mode (the window hides it otherwise). -->
             <itemicon id="srcIcon" size="16 16" pos="2 2"/>
-            <text id="srcName" size="150 16" pos="22 2" color="white" wrap="false"/>
-            <text id="arrow" size="14 16" pos="176 2" color="white" label="->"/>
-            <itemicon id="dstIcon" size="16 16" pos="192 2"/>
-            <text id="dstName" size="130 16" pos="212 2" color="white" wrap="false"/>
-            <buttonimage id="change" label="$(com.ldtteam.structurize.gui.scantool.select)" size="60 17" pos="350 1"
+            <text id="srcName" size="146 16" pos="20 2" color="white" wrap="false"/>
+            <text id="arrow" size="12 16" pos="168 2" color="white" label="->"/>
+            <itemicon id="dstIcon" size="16 16" pos="182 2"/>
+            <text id="dstName" size="116 16" pos="200 2" color="white" wrap="false"/>
+            <buttonimage id="change" label="$(com.ldtteam.structurize.gui.scantool.select)" size="68 17" pos="320 1"
+                         source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+            <buttonimage id="delete" label="$(structurizereplacements.gui.preset.row_delete)" size="22 17" pos="390 1"
                          source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
         </box>
     </list>
 
-    <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="60 17" pos="140 218"
+    <!-- "Presets" opens the save/load/edit hub; hidden inside the preset editor itself. -->
+    <buttonimage id="presets" label="$(structurizereplacements.gui.replace.presets)" size="80 17" pos="76 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
-    <buttonimage id="done" label="$(gui.done)" size="60 17" pos="220 218"
+    <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="80 17" pos="168 218"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+    <buttonimage id="done" label="$(gui.done)" size="80 17" pos="260 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 </window>

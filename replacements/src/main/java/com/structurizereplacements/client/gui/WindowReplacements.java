@@ -73,13 +73,22 @@ public class WindowReplacements extends AbstractWindowSkeleton
         registerButton("done", this::returnToParent);
         registerButton("reset", this::resetChoices);
         registerButton("paletteMode", this::togglePaletteMode);
+        registerButton("presets", this::openPresets);
         this.list = findPaneOfTypeByID("rows", ScrollingList.class);
         this.list.setDataProvider(() -> sources.size(), this::updateRow);
 
         final Text title = findPaneOfTypeByID("title", Text.class);
         if (title != null)
         {
-            title.setText(Component.translatable(context.titleKey()));
+            title.setText(context.titleComponent());
+        }
+
+        // The "Presets" hub is offered when editing real picks (build wand / building) but not while editing a
+        // preset itself.
+        final ButtonImage presetsButton = findPaneOfTypeByID("presets", ButtonImage.class);
+        if (!context.offersPresetMenu())
+        {
+            presetsButton.hide();
         }
 
         final ButtonImage modeButton = findPaneOfTypeByID("paletteMode", ButtonImage.class);
@@ -115,6 +124,11 @@ public class WindowReplacements extends AbstractWindowSkeleton
         this.context.reset();
         // Re-read rows so every source shows the default ("?") again.
         this.list.refreshElementPanes();
+    }
+
+    private void openPresets()
+    {
+        new WindowPresetList(context, this).open();
     }
 
     private void returnToParent()
@@ -185,6 +199,19 @@ public class WindowReplacements extends AbstractWindowSkeleton
         }
 
         row.findPaneOfTypeByID("change", ButtonImage.class).setHandler(b -> openPickerFor(source));
+
+        // Per-row delete: only in preset-edit mode (its rows are the preset's own picks). Hidden otherwise, where
+        // rows come from the blueprint and clearing a pick keeps the row (showing "?" again).
+        final ButtonImage delete = row.findPaneOfTypeByID("delete", ButtonImage.class);
+        if (context.allowRowDelete())
+        {
+            delete.show();
+            delete.setHandler(b -> { context.removePick(source); reload(); });
+        }
+        else
+        {
+            delete.hide();
+        }
     }
 
     /**

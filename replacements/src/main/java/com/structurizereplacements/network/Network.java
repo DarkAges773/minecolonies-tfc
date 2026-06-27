@@ -1,6 +1,7 @@
 package com.structurizereplacements.network;
 
 import com.structurizereplacements.StructurizeReplacements;
+import com.structurizereplacements.preset.BuiltinPresets;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,6 +42,11 @@ public final class Network
                 SyncSubstitutionRulesMessage::new,
                 SyncSubstitutionRulesMessage::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, SyncBuiltinPresetsMessage.class,
+                SyncBuiltinPresetsMessage::encode,
+                SyncBuiltinPresetsMessage::new,
+                SyncBuiltinPresetsMessage::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     /** Server → client: push the active ruleset snapshot to one player (join) or, when null, to everyone (reload). */
@@ -48,6 +54,20 @@ public final class Network
     {
         final SyncSubstitutionRulesMessage message =
                 new SyncSubstitutionRulesMessage(BlockSubstitutions.rules(), BlockSubstitutions.candidates());
+        if (player != null)
+        {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
+        }
+        else
+        {
+            CHANNEL.send(PacketDistributor.ALL.noArg(), message);
+        }
+    }
+
+    /** Server → client: push the built-in presets to one player (join) or, when null, to everyone (reload). */
+    public static void sendPresetsTo(final ServerPlayer player)
+    {
+        final SyncBuiltinPresetsMessage message = new SyncBuiltinPresetsMessage(BuiltinPresets.all());
         if (player != null)
         {
             CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);

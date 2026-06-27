@@ -241,6 +241,38 @@ swaps the material block(s) stored in DO "materialized" blocks' tile NBT. Hard-w
   has nothing to do with this mod. The refund economy itself is sound: item matching for DO frames proved
   NBT-strict in testing, so refunded old-texture frames do NOT satisfy new-texture requirements.
 
+## Palette presets (named, reusable pick sets)
+
+A **preset** is a named `Map<Block,Block>` of picks. Because the engine keys overrides by the *datapack-converted*
+block (`applyState` looks up `overrides.get(datapackTarget(source))`) — the same key the GUI rows already store — a
+preset is **not tied to one blueprint**: loading it substitutes whatever sources it recognises and ignores the
+rest, so one preset re-palettes any building or a whole colony. No engine change was needed; presets ride the
+existing per-context `choose()` apply path and both sync channels.
+
+- **Two sources, merged in the picker** ([WindowPresetList](../replacements/src/main/java/com/structurizereplacements/client/gui/WindowPresetList.java)):
+  - **User library** — editable, client-only JSON under `config/structurizereplacements/presets/` (one file per
+    preset), CRUD in [PresetLibrary](../replacements/src/main/java/com/structurizereplacements/client/preset/PresetLibrary.java).
+    Lives in the client config so it travels with the player across worlds/servers (never touches the server; a
+    preset only reaches the world when *applied*, through the already-permission-checked choice channels).
+  - **Built-in** — read-only, shipped as datapack data (`data/<ns>/block_substitution_presets/*.json`), loaded by
+    [BuiltinPresetReloadListener](../replacements/src/main/java/com/structurizereplacements/preset/BuiltinPresetReloadListener.java)
+    (mirrors the rule listener; a pick whose block id is absent is skipped, a preset left empty is dropped — so a
+    TFC preset never shows up without TFC) and synced server→client by
+    [SyncBuiltinPresetsMessage](../replacements/src/main/java/com/structurizereplacements/network/SyncBuiltinPresetsMessage.java)
+    on the **same** join/`/reload` trigger as the rule sync (memory-connection-guarded like it). Stored in
+    [BuiltinPresets](../replacements/src/main/java/com/structurizereplacements/preset/BuiltinPresets.java).
+- **GUI.** A **Presets** button on [WindowReplacements](../replacements/src/main/java/com/structurizereplacements/client/gui/WindowReplacements.java)
+  (offered for the build-wand and building contexts, hidden inside the editor) opens the hub: **Save current**
+  (snapshot the originating context's picks → new library preset), **Load** (merge a preset's picks into the
+  originating context, then return — the picker re-reads on open), **Edit** (library presets → reopen
+  `WindowReplacements` on a [PresetEditChoiceContext](../replacements/src/main/java/com/structurizereplacements/client/gui/PresetEditChoiceContext.java)
+  whose rows *are* the preset's picks; retarget reuses the candidate picker, and a per-row **delete** drops a
+  pick, persisting straight to the library JSON), **Clone** (built-in → editable copy), **Delete** (library only).
+  The per-row delete button is gated on `ReplacementChoiceContext.allowRowDelete()` (only the editor); the hub
+  button on `offersPresetMenu()`.
+- Built-in presets ship in `:compat` (per-TFC-rock-type stone presets — see
+  [compat-features.md](compat-features.md)); `:replacements` ships the mechanism only.
+
 In `:compat`:
 - ~~Real TFC rule sets~~ — **DONE** (see [compat-features.md](compat-features.md) → "TFC default
   substitutions"). Next: the broader MC↔TFC bridging (food/nutrition, requests/progression, animals).

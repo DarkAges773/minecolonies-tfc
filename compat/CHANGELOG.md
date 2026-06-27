@@ -7,6 +7,14 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **TFC rock-type palette presets** — one built-in preset per TFC rock (Granite, Basalt, Slate, Marble, …, 20 in
+  all), selectable from the new *Presets* button in the Replace picker. Loading one re-palettes a whole build onto
+  that single rock — every default stone form (raw/cobble/bricks/smooth/mossy/cracked/chiseled/slabs/stairs/walls,
+  plus magma for igneous rocks) swaps to the chosen rock's equivalent. Because picks are shared across buildings,
+  a colony forced onto the local stone can be re-styled in one click. (Requires the Palette Presets feature in
+  Palette Swap; the presets are read-only but can be cloned and tweaked.)
+
 ### Changed
 - **Cobblestone and mossy cobblestone are no longer interchangeable in the Replace picker.** Both still substitute
   to their non-falling cemented twin, but the GUI re-pick pool is now split: plain cemented cobble offers only the

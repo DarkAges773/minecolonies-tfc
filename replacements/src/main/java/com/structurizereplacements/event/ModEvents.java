@@ -4,6 +4,7 @@ import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.network.Network;
 import com.structurizereplacements.placement.ServerPlacementChoices;
 import com.structurizereplacements.placement.StagedChoices;
+import com.structurizereplacements.preset.BuiltinPresetReloadListener;
 import com.structurizereplacements.substitution.BlockSubstitutionReloadListener;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraftforge.event.AddReloadListenerEvent;
@@ -28,6 +29,7 @@ public final class ModEvents
     public static void onAddReloadListeners(final AddReloadListenerEvent event)
     {
         event.addListener(new BlockSubstitutionReloadListener());
+        event.addListener(new BuiltinPresetReloadListener());
     }
 
     /**
@@ -40,6 +42,7 @@ public final class ModEvents
     public static void onDatapackSync(final OnDatapackSyncEvent event)
     {
         Network.sendRulesTo(event.getPlayer());
+        Network.sendPresetsTo(event.getPlayer());
     }
 
     @SubscribeEvent
