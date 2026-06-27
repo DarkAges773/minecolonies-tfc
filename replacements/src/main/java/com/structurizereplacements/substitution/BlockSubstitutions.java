@@ -190,12 +190,20 @@ public final class BlockSubstitutions
         {
             return;
         }
-        // A material-aware display stack for the host: a plain block (with the item-less fallback so e.g. a
-        // potted plant shows its plant, not "Air"), or — for a Domum Ornamentum block — its material map copied
-        // on, so the host reports its real name (e.g. "Oak Panel") rather than the bare block's unlocalized
-        // dynamic descriptionId. Built once per entry, shared across the sources it feeds.
+        // Display the host as it will actually be built: apply the implicit datapack conversions (fixed rules,
+        // no player pick) first. MineColonies blueprints are vanilla, so e.g. an oak-planks host is implicitly
+        // converted to its TFC equivalent and a Domum Ornamentum frame's material is converted too — the host
+        // must show that, matching the (already-resolved) row, or the tooltip misleads by naming/showing the
+        // un-converted blueprint block that never gets placed.
+        final BlockInfo built = apply(info, null);
+        final BlockState builtState = built.getState();
+        final Block builtHost = builtState == null ? hostBlock : builtState.getBlock();
+        // A material-aware display stack for that built host: a plain block (with the item-less fallback so e.g.
+        // a potted plant shows its plant, not "Air"), or — for a Domum Ornamentum block — its (converted)
+        // material map copied on, so the host reports its real name (e.g. "Oak Panel") and textured icon rather
+        // than the bare block's unlocalized dynamic descriptionId. Built once per entry, shared across its sources.
         final ItemStack hostStack =
-                DomumMaterialRewriter.withMaterialNbt(iconStack(hostBlock), hostBlock, info.getTileEntityData());
+                DomumMaterialRewriter.withMaterialNbt(iconStack(builtHost), builtHost, built.getTileEntityData());
         for (final Block raw : sourceBlocksOf(info))
         {
             // A Domum Ornamentum host block (its material lives in NBT, surfaced via the contained-block rows
