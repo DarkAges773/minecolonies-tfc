@@ -13,6 +13,8 @@ import com.ldtteam.structurize.client.gui.WindowSelectRes;
 import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import com.structurizereplacements.substitution.CandidateRule;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -20,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +40,12 @@ import java.util.Map;
 public class WindowReplacements extends AbstractWindowSkeleton
 {
     private static final String RESOURCE = "gui/windowreplacements.xml";
+
+    /** Floor for the gentle auto-shrink in {@link #setFittedText} — below this text gets small, so ellipsize instead. */
+    private static final double MIN_TEXT_SCALE = 0.85;
+
+    /** Ellipsis appended to a name truncated to fit its cell; the full name is then offered on hover. */
+    private static final String ELLIPSIS = "…";
 
     private final ReplacementChoiceContext context;
     private final BOWindow parent;
@@ -150,13 +159,14 @@ public class WindowReplacements extends AbstractWindowSkeleton
         final List<ItemStack> hosts = affected.getOrDefault(source, List.of());
         row.findPaneOfTypeByID("srcIcon", ItemIcon.class).setItem(iconFor(source));
 
-        // Name carries a "(N)" badge when the swap touches more than one blueprint block type (e.g. the bare
-        // block plus a Domum Ornamentum frame that contains it); the full list is in the row tooltip.
+        // Name carries an always-shown "(N)" badge when the swap touches more than one blueprint block type
+        // (e.g. the bare block plus a Domum Ornamentum frame that contains it); only the name is ellipsized when
+        // long, never the badge. The full affected list is in the row tooltip.
         final Text srcName = row.findPaneOfTypeByID("srcName", Text.class);
-        srcName.setText(hosts.size() > 1
-                ? source.getName().copy().append(Component.literal(" (" + hosts.size() + ")"))
-                : source.getName());
-        attachAffectsTooltip(srcName, hosts);
+        final Component badge = hosts.size() > 1 ? Component.literal(" (" + hosts.size() + ")") : Component.empty();
+        final boolean srcCut = setFittedText(srcName, source.getName(), badge);
+        // Tooltip: the full source name when the cell had to truncate it, then the "affects" list (if any).
+        attachRowTooltip(srcName, srcCut ? source.getName() : null, hosts);
 
         final Block chosen = context.current().get(source);
         final ItemIcon dstIcon = row.findPaneOfTypeByID("dstIcon", ItemIcon.class);
@@ -164,40 +174,96 @@ public class WindowReplacements extends AbstractWindowSkeleton
         if (chosen != null)
         {
             dstIcon.setItem(iconFor(chosen));
-            dstName.setText(chosen.getName());
+            final boolean dstCut = setFittedText(dstName, chosen.getName(), Component.empty());
+            attachRowTooltip(dstName, dstCut ? chosen.getName() : null, List.of());
         }
         else
         {
             dstIcon.setItem(ItemStack.EMPTY);
-            dstName.setText(Component.literal("?"));
+            setFittedText(dstName, Component.literal("?"), Component.empty());
+            attachRowTooltip(dstName, null, List.of());
         }
 
         row.findPaneOfTypeByID("change", ButtonImage.class).setHandler(b -> openPickerFor(source));
     }
 
     /**
-     * Mount (or, on a recycled row, replace) a hover tooltip listing the distinct blueprint blocks a swap of
-     * this source would affect — chiefly so a material shared by a bare block and one or more Domum Ornamentum
-     * blocks reads as "affects N block(s)" with each named. Attached to the <b>source-name</b> cell only, not
-     * the whole row: the item icons carry their own auto tooltips and the Change button its own hover, so a
-     * row-wide tooltip would fight them. Cleared when there's nothing to show so a recycled row never carries a
-     * stale tooltip. Built here (not at row creation) because the affected set is per-source, and
-     * {@code build()} needs the pane already attached to a window — true inside {@code updateRow}.
+     * Set a name cell's text on a single line so a long block name (e.g. "Stripped Spruce Wood") stays in its
+     * row instead of wrapping and overlapping the row borders. Rendered at full size when it fits; otherwise the
+     * scale shrinks gently but only to {@link #MIN_TEXT_SCALE} (kept readable) — and if it still doesn't fit at
+     * that floor, the <b>name</b> is ellipsis-truncated. {@code suffix} (e.g. the always-shown {@code "(N)"}
+     * badge) is never truncated — its width is reserved so it stays fully visible. The cells are
+     * {@code wrap="false"}; scale/text reset every update because the list recycles row panes.
+     *
+     * @return true if the name had to be truncated (so the caller can offer the full name on hover).
      */
-    private static void attachAffectsTooltip(final Pane nameCell, final List<ItemStack> hosts)
+    private static boolean setFittedText(final Text cell, final Component name, final Component suffix)
     {
-        if (hosts.isEmpty())
+        final Font font = Minecraft.getInstance().font;
+        final int avail = cell.getWidth() - 1;
+        final Component full = name.copy().append(suffix);
+        final int fullPx = font.width(full);
+        if (avail <= 0 || fullPx <= avail)
+        {
+            cell.setText(full);
+            cell.setTextScale(1.0);
+            return false;
+        }
+        final double ratio = (double) avail / fullPx;
+        if (ratio >= MIN_TEXT_SCALE)
+        {
+            cell.setText(full);
+            cell.setTextScale(ratio);
+            return false;
+        }
+        // Won't fit even at the scale floor: render at the floor, keep the suffix intact, and ellipsis-truncate
+        // only the name to the budget that remains after reserving the suffix and ellipsis.
+        cell.setTextScale(MIN_TEXT_SCALE);
+        final int budget = (int) (avail / MIN_TEXT_SCALE) - font.width(suffix) - font.width(ELLIPSIS);
+        final String head = budget > 0 ? font.plainSubstrByWidth(name.getString(), budget) : "";
+        cell.setText(Component.literal(head + ELLIPSIS).append(suffix));
+        return true;
+    }
+
+    /**
+     * Mount (or, on a recycled row, replace) a name cell's hover tooltip: the {@code fullName} first when the
+     * cell had to truncate it (so the complete name is one hover away), then — for the source cell — the
+     * "affects N blocks" list naming each affected block. Attached to the <b>name cell</b> only, not the whole
+     * row: the item icons carry their own auto tooltips and the Change button its own hover, so a row-wide
+     * tooltip would fight them. Cleared when there's nothing to show so a recycled row never carries a stale
+     * tooltip. Built here because {@code build()} needs the pane already attached to a window — true inside
+     * {@code updateRow}.
+     */
+    private static void attachRowTooltip(final Pane nameCell, @Nullable final Component fullName, final List<ItemStack> hosts)
+    {
+        if (fullName == null && hosts.isEmpty())
         {
             nameCell.setHoverPane(null);
             return;
         }
-        final TooltipBuilder tooltip = PaneBuilders.tooltipBuilder()
-                .append(Component.translatable("structurizereplacements.gui.replace.affects", hosts.size()));
-        for (final ItemStack host : hosts)
+        final TooltipBuilder tooltip = PaneBuilders.tooltipBuilder();
+        if (fullName != null)
         {
-            // getHoverName() resolves the host's real material-aware name (e.g. a Domum Ornamentum frame's
-            // "Oak Panel"), which the bare block's name does not carry.
-            tooltip.appendNL(Component.literal(" - ").append(host.getHoverName()));
+            tooltip.append(fullName);
+        }
+        if (!hosts.isEmpty())
+        {
+            final Component header = Component.translatable("structurizereplacements.gui.replace.affects", hosts.size());
+            // First line uses append (no leading newline); a following block needs appendNL.
+            if (fullName == null)
+            {
+                tooltip.append(header);
+            }
+            else
+            {
+                tooltip.appendNL(header);
+            }
+            for (final ItemStack host : hosts)
+            {
+                // getHoverName() resolves the host's real material-aware name (e.g. a Domum Ornamentum frame's
+                // "Oak Panel"), which the bare block's name does not carry.
+                tooltip.appendNL(Component.literal(" - ").append(host.getHoverName()));
+            }
         }
         tooltip.hoverPane(nameCell).build();
     }

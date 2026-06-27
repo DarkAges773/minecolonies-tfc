@@ -1,8 +1,12 @@
 <window xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/ldtteam/BlockUI/version/1.20.1/src/main/resources/assets/blockui/gui/block_ui.xsd"
-        size="300 210" pause="false" lightbox="true">
+        pause="false" lightbox="true">
 
-    <text id="title" size="300 12" pos="0 6" textalign="MIDDLE" color="white"
+    <!-- No explicit window size: rely on BlockUI's default (BOWindow.DEFAULT_WIDTH/HEIGHT = 420x240), the same
+         default MineColonies' Build Options window uses, so the two match (and stay matched if BlockUI changes
+         it). The absolute child positions below are laid out for that 420x240 default. -->
+
+    <text id="title" size="100% 12" pos="0 6" textalign="MIDDLE" color="white"
           label="$(structurizereplacements.gui.replace.title)"/>
 
     <!-- Palette-tier toggle: only shown (and only meaningful) in the per-building Build Options picker;
@@ -10,20 +14,20 @@
     <buttonimage id="paletteMode" label="$(structurizereplacements.gui.replace.palette.update)" size="56 16" pos="2 3"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 
-    <list id="rows" size="296 158" pos="2 22" childspacing="-1">
+    <list id="rows" size="416 190" pos="2 22" childspacing="-1">
         <box size="100% 20" linewidth="1">
             <itemicon id="srcIcon" size="16 16" pos="2 2"/>
-            <text id="srcName" size="95 20" pos="22 5" color="white"/>
-            <text id="arrow" size="14 20" pos="118 5" color="white" label="->"/>
-            <itemicon id="dstIcon" size="16 16" pos="134 2"/>
-            <text id="dstName" size="60 20" pos="154 5" color="white"/>
-            <buttonimage id="change" label="$(com.ldtteam.structurize.gui.scantool.select)" size="60 17" pos="232 1"
+            <text id="srcName" size="150 20" pos="22 5" color="white" wrap="false"/>
+            <text id="arrow" size="14 20" pos="176 5" color="white" label="->"/>
+            <itemicon id="dstIcon" size="16 16" pos="192 2"/>
+            <text id="dstName" size="130 20" pos="212 5" color="white" wrap="false"/>
+            <buttonimage id="change" label="$(com.ldtteam.structurize.gui.scantool.select)" size="60 17" pos="350 1"
                          source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
         </box>
     </list>
 
-    <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="60 17" pos="80 188"
+    <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="60 17" pos="140 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
-    <buttonimage id="done" label="$(gui.done)" size="60 17" pos="160 188"
+    <buttonimage id="done" label="$(gui.done)" size="60 17" pos="220 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 </window>

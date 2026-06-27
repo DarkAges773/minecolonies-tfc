@@ -14,6 +14,15 @@ All notable changes to this mod are documented here. The format is based on
   material is oak planks now reads "affects 2 block types". Affected Domum Ornamentum blocks are named for
   their actual materials (e.g. "Oak Panel"), not a generic placeholder.
 
+### Changed
+- The **Replace** picker window is now the standard MineColonies window size (matching Build Options), giving
+  the name columns more room and showing more rows at once.
+
+### Fixed
+- Long block names in the **Replace** picker no longer wrap onto a second line and overlap the row borders —
+  each name stays on one line, shrinking slightly to fit and, if still too long, truncating with an ellipsis
+  (the full name shows on hover). The "(N)" affected-count badge always stays fully visible.
+
 ## [0.2.48] - 2026-06-12
 
 ### Added
