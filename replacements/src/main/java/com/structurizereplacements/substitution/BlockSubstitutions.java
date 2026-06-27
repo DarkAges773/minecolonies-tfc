@@ -3,17 +3,16 @@ package com.structurizereplacements.substitution;
 import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.Config;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -178,18 +177,22 @@ public final class BlockSubstitutions
      * this across a blueprint tells the GUI, per row, which distinct blueprint blocks a swap would affect —
      * the "affects N blocks" tooltip. Each source's host set preserves first-seen order.
      */
-    public static void collectCandidateSourcesWithHosts(final BlockInfo info, final Map<Block, Set<Block>> out)
+    public static void collectCandidateSourcesWithHosts(final BlockInfo info, final Map<Block, List<ItemStack>> out)
     {
         if (info == null)
         {
             return;
         }
         final BlockState state = info.getState();
-        final Block host = state == null ? null : state.getBlock();
-        if (host == null)
+        final Block hostBlock = state == null ? null : state.getBlock();
+        if (hostBlock == null)
         {
             return;
         }
+        // A material-aware display stack for the host: a plain block, or — for a Domum Ornamentum block — its
+        // material map copied on, so the host reports its real name (e.g. "Oak Panel") rather than the bare
+        // block's unlocalized dynamic descriptionId. Built once per entry, shared across the sources it feeds.
+        final ItemStack hostStack = DomumMaterialRewriter.hostDisplayStack(hostBlock, info.getTileEntityData());
         for (final Block raw : sourceBlocksOf(info))
         {
             // A Domum Ornamentum host block (its material lives in NBT, surfaced via the contained-block rows
@@ -202,27 +205,40 @@ public final class BlockSubstitutions
             final Block resolved = datapackTarget(raw);
             if (!DomumMaterialRewriter.isMaterializedBlock(resolved) && candidateFor(resolved).isPresent())
             {
-                out.computeIfAbsent(resolved, k -> new LinkedHashSet<>()).add(host);
+                addDistinctStack(out.computeIfAbsent(resolved, k -> new ArrayList<>()), hostStack);
             }
         }
     }
 
+    /** Append {@code stack} unless an item-and-NBT-equal one is already present (DO material combos differ by NBT). */
+    private static void addDistinctStack(final List<ItemStack> hosts, final ItemStack stack)
+    {
+        for (final ItemStack existing : hosts)
+        {
+            if (ItemStack.isSameItemSameTags(existing, stack))
+            {
+                return;
+            }
+        }
+        hosts.add(stack);
+    }
+
     /**
-     * The ordered {@code source -> affected-host-blocks} map for a whole blueprint (or any block-entry
+     * The ordered {@code source -> affected-host-stacks} map for a whole blueprint (or any block-entry
      * iterable): every key is a candidate source the GUI shows as a row, mapped to the distinct blueprint
-     * blocks that a swap would affect (see {@link #collectCandidateSourcesWithHosts}). Key order is
+     * blocks that a swap would affect, each as a material-aware display {@link ItemStack} (see
+     * {@link #collectCandidateSourcesWithHosts}). Hosts are deduped at material granularity, so the same
+     * Domum Ornamentum block with two material combos counts as two affected blocks. Key order is
      * first-seen; the key set is exactly the rows the picker would show.
      */
-    public static Map<Block, List<Block>> candidateSourceHosts(final Iterable<BlockInfo> entries)
+    public static Map<Block, List<ItemStack>> candidateSourceHosts(final Iterable<BlockInfo> entries)
     {
-        final Map<Block, Set<Block>> hosts = new LinkedHashMap<>();
+        final Map<Block, List<ItemStack>> hosts = new LinkedHashMap<>();
         for (final BlockInfo info : entries)
         {
             collectCandidateSourcesWithHosts(info, hosts);
         }
-        final Map<Block, List<Block>> out = new LinkedHashMap<>();
-        hosts.forEach((source, set) -> out.put(source, new ArrayList<>(set)));
-        return out;
+        return hosts;
     }
 
     /**

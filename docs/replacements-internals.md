@@ -64,10 +64,16 @@ In `:replacements` (generic):
     swap of that source touches, plus a `(N)` name badge when `N>1`. A material can reach the world through
     more than one blueprint block — the bare block *and* any Domum Ornamentum host carrying it — so the engine
     tracks, per candidate source, its set of **host** blocks (`BlockSubstitutions.collectCandidateSourcesWithHosts`
-    / `candidateSourceHosts`: bare block ⇒ itself; DO block ⇒ host of each contained material). Contexts expose
-    this via `ReplacementChoiceContext.affectedBlocks()` (built from the same blueprint scan that yields
-    `sources()`); `WindowReplacements.attachAffectsTooltip` mounts it on the row (rebuilt each `updateRow`, so
-    recycled rows never carry a stale tooltip).
+    / `candidateSourceHosts`: bare block ⇒ itself; DO block ⇒ host of each contained material). Hosts are carried
+    as material-aware **`ItemStack`s** (`DomumMaterialRewriter.hostDisplayStack` copies the entry's `textureData`
+    onto the stack — exactly where DO's `BlockItem.getName` reads it), so a DO host reports its real name
+    (e.g. "Oak Panel") via `stack.getHoverName()` instead of the bare block's unlocalized dynamic descriptionId;
+    they're deduped at material granularity (so the same DO block with two material combos is two affected
+    blocks, and the badge counts material combos). Contexts expose this via
+    `ReplacementChoiceContext.affectedBlocks()` (built from the same blueprint scan that yields `sources()`);
+    `WindowReplacements.attachAffectsTooltip` mounts it on the row (rebuilt each `updateRow`, so recycled rows
+    never carry a stale tooltip). The host stacks also stand ready to drive per-affected-block **icons** if/when
+    a richer hover panel replaces the text-only BlockUI `Tooltip`.
   **Caveats / follow-ups:** the per-placement GUI choice applies to creative-paste placement; per-blueprint
   session memory + row counts are unpolished. **Dedicated-server rule sync — DONE:** rules load server-side
   only, so the server pushes the active ruleset to clients via

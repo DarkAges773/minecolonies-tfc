@@ -8,6 +8,7 @@ import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.client.gui.ReplacementChoiceContext;
 import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
@@ -15,7 +16,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -47,9 +47,9 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
      * each candidate source mapped to the distinct mineshaft blocks it would affect (a bare block is its own
      * host; a Domum Ornamentum block hosts each material it carries) — drives the GUI's per-row tooltip.
      */
-    private final Map<Block, Set<Block>> accumulatedHosts = new LinkedHashMap<>();
+    private final Map<Block, List<ItemStack>> accumulatedHosts = new LinkedHashMap<>();
     private List<Block> sources = List.of();
-    private Map<Block, List<Block>> affected = Map.of();
+    private Map<Block, List<ItemStack>> affected = Map.of();
 
     public MineshaftChoiceContext(final Object view)
     {
@@ -70,7 +70,7 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
     }
 
     @Override
-    public Map<Block, List<Block>> affectedBlocks()
+    public Map<Block, List<ItemStack>> affectedBlocks()
     {
         return affected;
     }
@@ -146,8 +146,8 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
         if (accumulatedHosts.size() != beforeKeys || hostCount() != beforeHosts)
         {
             this.sources = new ArrayList<>(accumulatedHosts.keySet());
-            final Map<Block, List<Block>> snapshot = new LinkedHashMap<>();
-            accumulatedHosts.forEach((source, set) -> snapshot.put(source, new ArrayList<>(set)));
+            final Map<Block, List<ItemStack>> snapshot = new LinkedHashMap<>();
+            accumulatedHosts.forEach((source, hosts) -> snapshot.put(source, new ArrayList<>(hosts)));
             this.affected = snapshot;
             this.reloader.run();
         }
@@ -157,9 +157,9 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
     private int hostCount()
     {
         int total = 0;
-        for (final Set<Block> set : accumulatedHosts.values())
+        for (final List<ItemStack> hosts : accumulatedHosts.values())
         {
-            total += set.size();
+            total += hosts.size();
         }
         return total;
     }

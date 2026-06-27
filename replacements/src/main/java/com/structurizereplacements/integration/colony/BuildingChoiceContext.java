@@ -7,6 +7,7 @@ import com.ldtteam.structurize.storage.StructurePacks;
 import com.structurizereplacements.client.gui.ReplacementChoiceContext;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
 
     private Runnable reloader = () -> {};
     private List<Block> sources = List.of();
-    private Map<Block, List<Block>> affected = Map.of();
+    private Map<Block, List<ItemStack>> affected = Map.of();
 
     public BuildingChoiceContext(final Object view,
                                  final String targetPack,
@@ -73,7 +74,7 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
     }
 
     @Override
-    public Map<Block, List<Block>> affectedBlocks()
+    public Map<Block, List<ItemStack>> affectedBlocks()
     {
         return affected;
     }

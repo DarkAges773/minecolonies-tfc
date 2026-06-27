@@ -44,7 +44,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
     private final ScrollingList list;
     private List<Block> sources = List.of();
     /** Per-source: the distinct blueprint blocks a swap would affect (for the row tooltip + count badge). */
-    private Map<Block, List<Block>> affected = Map.of();
+    private Map<Block, List<ItemStack>> affected = Map.of();
 
     /** Build-wand default: edits the global session picks. */
     public WindowReplacements(final BOWindow parent)
@@ -148,7 +148,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
     private void updateRow(final int index, final Pane row)
     {
         final Block source = sources.get(index);
-        final List<Block> hosts = affected.getOrDefault(source, List.of());
+        final List<ItemStack> hosts = affected.getOrDefault(source, List.of());
         row.findPaneOfTypeByID("srcIcon", ItemIcon.class).setItem(iconFor(source));
 
         // Name carries a "(N)" badge when the swap touches more than one blueprint block type (e.g. the bare
@@ -184,7 +184,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
      * the affected set is per-source, and {@code build()} needs the row already attached to a window — true
      * inside {@code updateRow}.
      */
-    private static void attachAffectsTooltip(final Pane row, final List<Block> hosts)
+    private static void attachAffectsTooltip(final Pane row, final List<ItemStack> hosts)
     {
         if (hosts.isEmpty())
         {
@@ -193,9 +193,11 @@ public class WindowReplacements extends AbstractWindowSkeleton
         }
         final TooltipBuilder tooltip = PaneBuilders.tooltipBuilder()
                 .append(Component.translatable("structurizereplacements.gui.replace.affects", hosts.size()));
-        for (final Block host : hosts)
+        for (final ItemStack host : hosts)
         {
-            tooltip.appendNL(Component.literal(" - ").append(host.getName()));
+            // getHoverName() resolves the host's real material-aware name (e.g. a Domum Ornamentum frame's
+            // "Oak Panel"), which the bare block's name does not carry.
+            tooltip.appendNL(Component.literal(" - ").append(host.getHoverName()));
         }
         tooltip.hoverPane(row).build();
     }

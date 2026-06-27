@@ -6,6 +6,7 @@ import com.ldtteam.structurize.storage.rendering.RenderingCache;
 import com.ldtteam.structurize.storage.rendering.types.BlueprintPreviewData;
 import com.structurizereplacements.placement.ClientPlacementChoices;
 import com.structurizereplacements.substitution.BlockSubstitutions;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
@@ -23,7 +24,7 @@ import java.util.Map;
 public class BuildWandChoiceContext implements ReplacementChoiceContext
 {
     /** Built alongside {@link #sources()} from the same blueprint scan; surfaced via {@link #affectedBlocks()}. */
-    private Map<Block, List<Block>> affected = Map.of();
+    private Map<Block, List<ItemStack>> affected = Map.of();
 
     @Override
     public List<Block> sources()
@@ -39,7 +40,7 @@ public class BuildWandChoiceContext implements ReplacementChoiceContext
     }
 
     @Override
-    public Map<Block, List<Block>> affectedBlocks()
+    public Map<Block, List<ItemStack>> affectedBlocks()
     {
         return affected;
     }

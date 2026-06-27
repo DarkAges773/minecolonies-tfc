@@ -10,6 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -87,6 +88,32 @@ public final class DomumMaterialRewriter
                 && state.getBlock() instanceof IMateriallyTexturedBlock
                 && info.hasTileEntityData()
                 && info.getTileEntityData().contains(TEXTURE_DATA_KEY, Tag.TAG_COMPOUND);
+    }
+
+    /**
+     * A representative display {@link ItemStack} for a blueprint host block. Normally just
+     * {@code new ItemStack(host)}, but for a Domum Ornamentum materialized host it also copies the entry's
+     * {@code textureData} material map onto the stack — which is exactly where DO's {@code BlockItem.getName}
+     * reads it (`getOrCreateTagElement("textureData")`), so the stack reports its real material-aware name
+     * (e.g. "Oak Panel", "Dynamic Framed Oak") and renders the textured item, instead of the bare block's
+     * dynamic, unlocalized descriptionId. Returns an empty stack for an item-less host.
+     */
+    public static ItemStack hostDisplayStack(@Nullable final Block host, @Nullable final CompoundTag tileEntityData)
+    {
+        final ItemStack stack = new ItemStack(host);
+        if (stack.isEmpty()
+                || !(host instanceof IMateriallyTexturedBlock)
+                || tileEntityData == null
+                || !tileEntityData.contains(TEXTURE_DATA_KEY, Tag.TAG_COMPOUND))
+        {
+            return stack;
+        }
+        final CompoundTag textureData = tileEntityData.getCompound(TEXTURE_DATA_KEY);
+        if (!textureData.isEmpty())
+        {
+            stack.getOrCreateTag().put(TEXTURE_DATA_KEY, textureData.copy());
+        }
+        return stack;
     }
 
     /**

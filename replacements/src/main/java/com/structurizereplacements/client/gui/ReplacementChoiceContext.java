@@ -1,5 +1,6 @@
 package com.structurizereplacements.client.gui;
 
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 
 import java.util.List;
@@ -17,13 +18,14 @@ public interface ReplacementChoiceContext
     List<Block> sources();
 
     /**
-     * For each source row, the distinct blueprint blocks a swap of that source would affect — a bare
-     * candidate block is its own host; a Domum Ornamentum block is the host of every material it carries
-     * (so swapping oak planks reports both the bare oak-planks block and the framed block that contains it).
-     * Drives {@link WindowReplacements}'s per-row "affects N blocks" tooltip and count badge. A missing key
-     * or empty list means there's no detail to show; defaults to empty so contexts can opt in.
+     * For each source row, the distinct blueprint blocks a swap of that source would affect, as material-aware
+     * display {@link ItemStack}s — a bare candidate block is its own host; a Domum Ornamentum block is the host
+     * of every material it carries (so swapping oak planks reports both the bare oak-planks block and the
+     * framed block that contains it, the latter named for its actual materials). Deduped at material
+     * granularity. Drives {@link WindowReplacements}'s per-row "affects N blocks" tooltip and count badge. A
+     * missing key or empty list means there's no detail to show; defaults to empty so contexts can opt in.
      */
-    default Map<Block, List<Block>> affectedBlocks()
+    default Map<Block, List<ItemStack>> affectedBlocks()
     {
         return Map.of();
     }

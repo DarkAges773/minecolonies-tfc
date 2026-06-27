@@ -10,8 +10,9 @@ All notable changes to this mod are documented here. The format is based on
 ### Added
 - The **Replace** picker now shows, per row, which schematic blocks a swap affects — a hover tooltip lists
   each affected block and a `(N)` badge marks rows that touch more than one. This surfaces materials hidden
-  inside Domum Ornamentum blocks: e.g. an *Oak Planks* row that also recolours a framed block whose frame is
-  oak planks now reads "affects 2 block types" with both named.
+  inside Domum Ornamentum blocks: e.g. an *Oak Planks* row that also recolours a panel/framed block whose
+  material is oak planks now reads "affects 2 block types". Affected Domum Ornamentum blocks are named for
+  their actual materials (e.g. "Oak Panel"), not a generic placeholder.
 
 ## [0.2.48] - 2026-06-12
 
