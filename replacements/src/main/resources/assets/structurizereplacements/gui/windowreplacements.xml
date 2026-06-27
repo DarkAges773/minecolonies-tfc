@@ -16,11 +16,13 @@
 
     <list id="rows" size="416 190" pos="2 22" childspacing="-1">
         <box size="100% 20" linewidth="1">
+            <!-- Name cells are kept fully inside the 20px row (pos y=2, height 16, like the icons): a taller cell
+                 spilling below the row made its hover tooltip bleed into the row beneath it. -->
             <itemicon id="srcIcon" size="16 16" pos="2 2"/>
-            <text id="srcName" size="150 20" pos="22 5" color="white" wrap="false"/>
-            <text id="arrow" size="14 20" pos="176 5" color="white" label="->"/>
+            <text id="srcName" size="150 16" pos="22 2" color="white" wrap="false"/>
+            <text id="arrow" size="14 16" pos="176 2" color="white" label="->"/>
             <itemicon id="dstIcon" size="16 16" pos="192 2"/>
-            <text id="dstName" size="130 20" pos="212 5" color="white" wrap="false"/>
+            <text id="dstName" size="130 16" pos="212 2" color="white" wrap="false"/>
             <buttonimage id="change" label="$(com.ldtteam.structurize.gui.scantool.select)" size="60 17" pos="350 1"
                          source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
         </box>
