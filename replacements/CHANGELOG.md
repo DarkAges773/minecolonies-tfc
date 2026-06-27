@@ -7,6 +7,8 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.3.56] - 2026-06-27
+
 ### Added
 - The **Replace** picker now shows, per row, which schematic blocks a swap affects — a hover tooltip lists
   each affected block (with its icon) and a `(N)` badge marks rows that touch more than one. This surfaces
