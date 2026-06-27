@@ -2,7 +2,6 @@ package com.structurizereplacements.client.gui;
 
 import com.ldtteam.blockui.Pane;
 import com.ldtteam.blockui.PaneBuilders;
-import com.ldtteam.blockui.controls.AbstractTextBuilder.TooltipBuilder;
 import com.ldtteam.blockui.controls.ButtonImage;
 import com.ldtteam.blockui.controls.ItemIcon;
 import com.ldtteam.blockui.controls.Text;
@@ -16,6 +15,7 @@ import com.structurizereplacements.substitution.CandidateRule;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -228,11 +228,11 @@ public class WindowReplacements extends AbstractWindowSkeleton
     /**
      * Mount (or, on a recycled row, replace) a name cell's hover tooltip: the {@code fullName} first when the
      * cell had to truncate it (so the complete name is one hover away), then — for the source cell — the
-     * "affects N blocks" list naming each affected block. Attached to the <b>name cell</b> only, not the whole
-     * row: the item icons carry their own auto tooltips and the Change button its own hover, so a row-wide
-     * tooltip would fight them. Cleared when there's nothing to show so a recycled row never carries a stale
-     * tooltip. Built here because {@code build()} needs the pane already attached to a window — true inside
-     * {@code updateRow}.
+     * "affects N blocks" list, each affected block shown with its icon and material-aware name via
+     * {@link IconTooltip}. Attached to the <b>name cell</b> only, not the whole row: the item icons carry their
+     * own auto tooltips and the Change button its own hover, so a row-wide tooltip would fight them. Cleared
+     * when there's nothing to show so a recycled row never carries a stale tooltip. Built here because the hover
+     * pane needs the cell already attached to a window — true inside {@code updateRow}.
      */
     private static void attachRowTooltip(final Pane nameCell, @Nullable final Component fullName, final List<ItemStack> hosts)
     {
@@ -241,31 +241,36 @@ public class WindowReplacements extends AbstractWindowSkeleton
             nameCell.setHoverPane(null);
             return;
         }
-        final TooltipBuilder tooltip = PaneBuilders.tooltipBuilder();
+        if (hosts.isEmpty())
+        {
+            // Just the (truncated) full name — a plain text tooltip, no icon column.
+            PaneBuilders.tooltipBuilder().append(fullName).hoverPane(nameCell).build();
+            return;
+        }
+
+        // Affected list with icons: each row's label is indented past the icon gutter (IconTooltip draws the
+        // icon there). Header rows (the optional full name + "Affects N:") carry no icon.
+        final String indent = IconTooltip.indent();
+        final List<MutableComponent> texts = new ArrayList<>();
+        final List<ItemStack> icons = new ArrayList<>();
         if (fullName != null)
         {
-            tooltip.append(fullName);
+            texts.add(Component.literal(indent).append(fullName));
+            icons.add(null);
         }
-        if (!hosts.isEmpty())
+        texts.add(Component.literal(indent)
+                .append(Component.translatable("structurizereplacements.gui.replace.affects", hosts.size())));
+        icons.add(null);
+        for (final ItemStack host : hosts)
         {
-            final Component header = Component.translatable("structurizereplacements.gui.replace.affects", hosts.size());
-            // First line uses append (no leading newline); a following block needs appendNL.
-            if (fullName == null)
-            {
-                tooltip.append(header);
-            }
-            else
-            {
-                tooltip.appendNL(header);
-            }
-            for (final ItemStack host : hosts)
-            {
-                // getHoverName() resolves the host's real material-aware name (e.g. a Domum Ornamentum frame's
-                // "Oak Panel"), which the bare block's name does not carry.
-                tooltip.appendNL(Component.literal(" - ").append(host.getHoverName()));
-            }
+            // getHoverName() resolves the host's real material-aware name (e.g. a Domum Ornamentum frame's
+            // "Oak Panel"); the same stack renders the (textured) icon beside it.
+            texts.add(Component.literal(indent).append(host.getHoverName()));
+            icons.add(host);
         }
-        tooltip.hoverPane(nameCell).build();
+        final IconTooltip tooltip = new IconTooltip();
+        tooltip.setRows(texts, icons);
+        nameCell.setHoverPane(tooltip);
     }
 
     private void openPickerFor(final Block source)

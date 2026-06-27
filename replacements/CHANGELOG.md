@@ -9,10 +9,10 @@ All notable changes to this mod are documented here. The format is based on
 
 ### Added
 - The **Replace** picker now shows, per row, which schematic blocks a swap affects — a hover tooltip lists
-  each affected block and a `(N)` badge marks rows that touch more than one. This surfaces materials hidden
-  inside Domum Ornamentum blocks: e.g. an *Oak Planks* row that also recolours a panel/framed block whose
-  material is oak planks now reads "affects 2 block types". Affected Domum Ornamentum blocks are named for
-  their actual materials (e.g. "Oak Panel"), not a generic placeholder.
+  each affected block (with its icon) and a `(N)` badge marks rows that touch more than one. This surfaces
+  materials hidden inside Domum Ornamentum blocks: e.g. an *Oak Planks* row that also recolours a panel/framed
+  block whose material is oak planks now reads "affects 2 block types". Affected Domum Ornamentum blocks show
+  their actual textured material and are named accordingly (e.g. "Oak Panel"), not a generic placeholder.
 
 ### Changed
 - The **Replace** picker window is now the standard MineColonies window size (matching Build Options), giving
