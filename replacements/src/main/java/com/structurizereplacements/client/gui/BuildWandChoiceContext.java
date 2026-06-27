@@ -46,6 +46,12 @@ public class BuildWandChoiceContext implements ReplacementChoiceContext
     }
 
     @Override
+    public boolean wantsSchematicHint()
+    {
+        return true;
+    }
+
+    @Override
     public Map<Block, Block> current()
     {
         return ClientPlacementChoices.current();

@@ -37,6 +37,10 @@
         </box>
     </list>
 
+    <!-- Centered hint shown when the row list is empty. The window picks the message: "no rules loaded — enable
+         the default pack" (when the engine has no rules at all) takes priority over "select a schematic". -->
+    <text id="emptyHint" size="372 60" pos="24 88" textalign="MIDDLE" color="gray"/>
+
     <!-- "Presets" opens the save/load/edit hub; hidden inside the preset editor itself. Done is centered (so it
          stays centered on its own in the editor, where Presets/Reset are hidden), with Reset to its right. -->
     <buttonimage id="presets" label="$(structurizereplacements.gui.replace.presets)" size="80 17" pos="76 218"

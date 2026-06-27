@@ -68,6 +68,16 @@ public interface ReplacementChoiceContext
     default void setName(final String name) {}
 
     /**
+     * Whether an empty row list should prompt the player to select a schematic — true for the build-wand context
+     * (no blueprint previewed ⇒ nothing to edit). A building/preset editor leaves it false (empty there means
+     * something else, not "pick a schematic").
+     */
+    default boolean wantsSchematicHint()
+    {
+        return false;
+    }
+
+    /**
      * Whether the window offers the "Presets" menu (save current picks / load a preset). True for the editable
      * build-wand and building contexts; false inside the preset editor itself (you're already editing one).
      */

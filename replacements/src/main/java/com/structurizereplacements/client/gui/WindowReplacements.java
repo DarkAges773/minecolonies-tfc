@@ -206,8 +206,44 @@ public class WindowReplacements extends AbstractWindowSkeleton
     {
         this.sources = new ArrayList<>(context.sources());
         this.affected = context.affectedBlocks();
+        updateEmptyHint();
         super.onOpened();
         this.list.refreshElementPanes();
+    }
+
+    /**
+     * Centered hint for an empty row list. Priority: if the engine has <b>no</b> substitution rules at all, the
+     * picker can never have rows regardless of the schematic, so suggest enabling the default pack (this beats the
+     * "select a schematic" hint). Otherwise the build wand prompts to select a schematic. Nothing in the preset
+     * editor (empty there just means the preset has no picks).
+     */
+    private void updateEmptyHint()
+    {
+        final Text emptyHint = findPaneOfTypeByID("emptyHint", Text.class);
+        if (emptyHint == null)
+        {
+            return;
+        }
+        if (!sources.isEmpty())
+        {
+            emptyHint.hide();
+            return;
+        }
+        final boolean noRulesAtAll = BlockSubstitutions.candidates().isEmpty() && BlockSubstitutions.rules().isEmpty();
+        if (noRulesAtAll && context.editableName() == null)
+        {
+            emptyHint.setText(Component.translatable("structurizereplacements.gui.replace.no_rules_hint"));
+            emptyHint.show();
+        }
+        else if (context.wantsSchematicHint())
+        {
+            emptyHint.setText(Component.translatable("structurizereplacements.gui.replace.empty_hint"));
+            emptyHint.show();
+        }
+        else
+        {
+            emptyHint.hide();
+        }
     }
 
     @Override
@@ -222,6 +258,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
     {
         this.sources = new ArrayList<>(context.sources());
         this.affected = context.affectedBlocks();
+        updateEmptyHint();
         this.list.refreshElementPanes();
     }
 
