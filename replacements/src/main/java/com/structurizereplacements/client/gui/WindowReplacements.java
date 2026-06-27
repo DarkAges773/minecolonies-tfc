@@ -157,7 +157,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
         srcName.setText(hosts.size() > 1
                 ? source.getName().copy().append(Component.literal(" (" + hosts.size() + ")"))
                 : source.getName());
-        attachAffectsTooltip(row, hosts);
+        attachAffectsTooltip(srcName, hosts);
 
         final Block chosen = context.current().get(source);
         final ItemIcon dstIcon = row.findPaneOfTypeByID("dstIcon", ItemIcon.class);
@@ -177,18 +177,19 @@ public class WindowReplacements extends AbstractWindowSkeleton
     }
 
     /**
-     * Mount (or, on a recycled row, replace) a hover tooltip on the whole row listing the distinct blueprint
-     * blocks a swap of this source would affect — chiefly so a material shared by a bare block and one or
-     * more Domum Ornamentum blocks reads as "affects N block(s)" with each named. Cleared when there's
-     * nothing to show so a recycled row never carries a stale tooltip. Built here (not at row creation) because
-     * the affected set is per-source, and {@code build()} needs the row already attached to a window — true
-     * inside {@code updateRow}.
+     * Mount (or, on a recycled row, replace) a hover tooltip listing the distinct blueprint blocks a swap of
+     * this source would affect — chiefly so a material shared by a bare block and one or more Domum Ornamentum
+     * blocks reads as "affects N block(s)" with each named. Attached to the <b>source-name</b> cell only, not
+     * the whole row: the item icons carry their own auto tooltips and the Change button its own hover, so a
+     * row-wide tooltip would fight them. Cleared when there's nothing to show so a recycled row never carries a
+     * stale tooltip. Built here (not at row creation) because the affected set is per-source, and
+     * {@code build()} needs the pane already attached to a window — true inside {@code updateRow}.
      */
-    private static void attachAffectsTooltip(final Pane row, final List<ItemStack> hosts)
+    private static void attachAffectsTooltip(final Pane nameCell, final List<ItemStack> hosts)
     {
         if (hosts.isEmpty())
         {
-            row.setHoverPane(null);
+            nameCell.setHoverPane(null);
             return;
         }
         final TooltipBuilder tooltip = PaneBuilders.tooltipBuilder()
@@ -199,7 +200,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
             // "Oak Panel"), which the bare block's name does not carry.
             tooltip.appendNL(Component.literal(" - ").append(host.getHoverName()));
         }
-        tooltip.hoverPane(row).build();
+        tooltip.hoverPane(nameCell).build();
     }
 
     private void openPickerFor(final Block source)
