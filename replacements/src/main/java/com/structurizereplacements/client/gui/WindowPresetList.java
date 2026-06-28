@@ -185,7 +185,8 @@ public class WindowPresetList extends AbstractWindowSkeleton
         if (preset.editable())
         {
             primary.setText(Component.translatable("structurizereplacements.gui.preset.edit"));
-            primary.setHandler(b -> new WindowReplacements(new PresetEditChoiceContext(preset), this).open());
+            primary.setHandler(b -> new WindowReplacements(
+                    new PresetEditChoiceContext(preset, target::current), this).open());
             delete.show();
             delete.setHandler(b -> new WindowConfirm(this,
                     Component.translatable("structurizereplacements.gui.preset.delete.title"),

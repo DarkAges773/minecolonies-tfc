@@ -68,6 +68,21 @@ public interface ReplacementChoiceContext
     default void setName(final String name) {}
 
     /**
+     * Whether this context offers an "update from current" action — only the preset editor, which can fold the
+     * originating build/building's current picks into the preset being edited.
+     */
+    default boolean canUpdateFromCurrent()
+    {
+        return false;
+    }
+
+    /**
+     * Merge the originating context's current picks into this one: override on collision, add new, leave picks
+     * for sources not mentioned untouched (the preset editor only). No-op elsewhere.
+     */
+    default void updateFromCurrent() {}
+
+    /**
      * Whether an empty row list should prompt the player to select a schematic — true for the build-wand context
      * (no blueprint previewed ⇒ nothing to edit). A building/preset editor leaves it false (empty there means
      * something else, not "pick a schematic").

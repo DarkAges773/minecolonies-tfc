@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * {@link ReplacementChoiceContext} for editing a user-library {@link Preset} in place. Unlike the blueprint-backed
@@ -24,15 +25,18 @@ public class PresetEditChoiceContext implements ReplacementChoiceContext
     private final String folder;
     private final Block icon;
     private final Map<Block, Block> picks;
+    /** The originating context's current picks (the build/building the preset hub was opened from), for "update from current". */
+    private final Supplier<Map<Block, Block>> currentSupplier;
     private Runnable reloader = () -> {};
 
-    public PresetEditChoiceContext(final Preset preset)
+    public PresetEditChoiceContext(final Preset preset, final Supplier<Map<Block, Block>> currentSupplier)
     {
         this.id = preset.id();
         this.name = preset.displayName().getString();
         this.folder = preset.folder();
         this.icon = preset.icon();
         this.picks = new LinkedHashMap<>(preset.picks());
+        this.currentSupplier = currentSupplier;
     }
 
     @Override
@@ -106,6 +110,26 @@ public class PresetEditChoiceContext implements ReplacementChoiceContext
     {
         this.name = newName;
         persist();
+    }
+
+    @Override
+    public boolean canUpdateFromCurrent()
+    {
+        return true;
+    }
+
+    @Override
+    public void updateFromCurrent()
+    {
+        final Map<Block, Block> current = currentSupplier.get();
+        if (current == null || current.isEmpty())
+        {
+            return;
+        }
+        // putAll: override on collision, add new sources, leave the preset's other picks untouched.
+        picks.putAll(current);
+        persist();
+        reloader.run();
     }
 
     @Override

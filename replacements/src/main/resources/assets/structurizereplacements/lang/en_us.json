@@ -23,5 +23,7 @@
   "structurizereplacements.gui.preset.delete.title": "Delete Preset?",
   "structurizereplacements.gui.preset.delete.confirm": "Permanently delete \"%s\"? This can't be undone.",
   "structurizereplacements.gui.confirm.cancel": "Cancel",
-  "structurizereplacements.gui.preset.edit.title": "Edit Preset: %s"
+  "structurizereplacements.gui.preset.edit.title": "Edit Preset: %s",
+  "structurizereplacements.gui.preset.update_from_current": "Update",
+  "structurizereplacements.gui.preset.update_from_current.tooltip": "Update from current: add the picks from your current build and override any that clash, keeping the preset's other picks."
 }

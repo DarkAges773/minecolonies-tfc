@@ -75,6 +75,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
         registerButton("reset", this::resetChoices);
         registerButton("paletteMode", this::togglePaletteMode);
         registerButton("presets", this::openPresets);
+        registerButton("updateFromCurrent", context::updateFromCurrent);
         this.list = findPaneOfTypeByID("rows", ScrollingList.class);
         this.list.setDataProvider(() -> sources.size(), this::updateRow);
 
@@ -108,6 +109,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
         // (renames commit as the player types — see onUpdate). Other contexts hide it and keep the title.
         final TextField nameEdit = findPaneOfTypeByID("presetNameEdit", TextField.class);
         final String editableName = context.editableName();
+        final ButtonImage updateButton = findPaneOfTypeByID("updateFromCurrent", ButtonImage.class);
         if (editableName != null)
         {
             nameEdit.setText(editableName);
@@ -117,12 +119,16 @@ public class WindowReplacements extends AbstractWindowSkeleton
                 title.hide();
             }
             // No global Reset in the preset editor — clearing all picks would just empty the preset; rows are
-            // removed individually with the per-row cross.
+            // removed individually with the per-row cross. The "Update from current" button takes its slot.
             findPaneOfTypeByID("reset", ButtonImage.class).hide();
+            updateButton.show();
+            PaneBuilders.singleLineTooltip(
+                    Component.translatable("structurizereplacements.gui.preset.update_from_current.tooltip"), updateButton);
         }
         else
         {
             nameEdit.hide();
+            updateButton.hide();
         }
     }
 

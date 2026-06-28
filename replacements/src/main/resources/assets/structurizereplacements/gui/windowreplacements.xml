@@ -49,4 +49,8 @@
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
     <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="80 17" pos="260 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+    <!-- Preset editor only (takes the Reset slot, which is hidden there): merge the current build's picks into the
+         preset. A hover tooltip explains the merge since the label is abbreviated to fit. -->
+    <buttonimage id="updateFromCurrent" label="$(structurizereplacements.gui.preset.update_from_current)" size="80 17" pos="260 218"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 </window>
