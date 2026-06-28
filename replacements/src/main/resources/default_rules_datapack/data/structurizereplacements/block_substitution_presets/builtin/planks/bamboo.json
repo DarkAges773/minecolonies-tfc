@@ -1,0 +1,526 @@
+{
+  "name": "structurizereplacements.preset.wood.bamboo",
+  "icon": "minecraft:bamboo_planks",
+  "picks": [
+    {
+      "from": "minecraft:oak_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:spruce_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:birch_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:jungle_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:acacia_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:dark_oak_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:mangrove_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:cherry_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:crimson_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:warped_planks",
+      "to": "minecraft:bamboo_planks"
+    },
+    {
+      "from": "minecraft:oak_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:spruce_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:birch_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:jungle_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:acacia_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:dark_oak_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:mangrove_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:cherry_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:crimson_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:warped_stairs",
+      "to": "minecraft:bamboo_stairs"
+    },
+    {
+      "from": "minecraft:oak_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:spruce_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:birch_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:jungle_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:acacia_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:dark_oak_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:mangrove_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:cherry_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:crimson_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:warped_slab",
+      "to": "minecraft:bamboo_slab"
+    },
+    {
+      "from": "minecraft:oak_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:spruce_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:birch_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:jungle_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:acacia_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:dark_oak_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:mangrove_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:cherry_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:crimson_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:warped_fence",
+      "to": "minecraft:bamboo_fence"
+    },
+    {
+      "from": "minecraft:oak_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:spruce_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:birch_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:jungle_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:acacia_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:dark_oak_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:mangrove_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:cherry_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:crimson_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:warped_fence_gate",
+      "to": "minecraft:bamboo_fence_gate"
+    },
+    {
+      "from": "minecraft:oak_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:spruce_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:birch_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:jungle_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:acacia_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:dark_oak_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:mangrove_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:cherry_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:crimson_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:warped_door",
+      "to": "minecraft:bamboo_door"
+    },
+    {
+      "from": "minecraft:oak_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:spruce_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:birch_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:jungle_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:acacia_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:dark_oak_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:mangrove_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:cherry_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:crimson_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:warped_trapdoor",
+      "to": "minecraft:bamboo_trapdoor"
+    },
+    {
+      "from": "minecraft:oak_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:spruce_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:birch_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:jungle_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:acacia_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:dark_oak_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:mangrove_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:cherry_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:crimson_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:warped_button",
+      "to": "minecraft:bamboo_button"
+    },
+    {
+      "from": "minecraft:oak_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:spruce_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:birch_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:jungle_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:acacia_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:dark_oak_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:mangrove_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:cherry_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:crimson_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:warped_pressure_plate",
+      "to": "minecraft:bamboo_pressure_plate"
+    },
+    {
+      "from": "minecraft:oak_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:spruce_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:birch_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:jungle_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:acacia_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:dark_oak_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:mangrove_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:cherry_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:crimson_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:warped_sign",
+      "to": "minecraft:bamboo_sign"
+    },
+    {
+      "from": "minecraft:oak_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:spruce_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:birch_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:jungle_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:acacia_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:dark_oak_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:mangrove_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:cherry_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:crimson_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:warped_wall_sign",
+      "to": "minecraft:bamboo_wall_sign"
+    },
+    {
+      "from": "minecraft:oak_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:spruce_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:birch_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:jungle_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:acacia_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:dark_oak_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:mangrove_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:cherry_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:crimson_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:warped_hanging_sign",
+      "to": "minecraft:bamboo_hanging_sign"
+    },
+    {
+      "from": "minecraft:oak_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    },
+    {
+      "from": "minecraft:spruce_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    },
+    {
+      "from": "minecraft:birch_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    },
+    {
+      "from": "minecraft:jungle_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    },
+    {
+      "from": "minecraft:acacia_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    },
+    {
+      "from": "minecraft:dark_oak_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    },
+    {
+      "from": "minecraft:mangrove_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    },
+    {
+      "from": "minecraft:cherry_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    },
+    {
+      "from": "minecraft:crimson_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    },
+    {
+      "from": "minecraft:warped_wall_hanging_sign",
+      "to": "minecraft:bamboo_wall_hanging_sign"
+    }
+  ]
+}

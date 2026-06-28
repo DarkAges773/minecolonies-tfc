@@ -1,0 +1,150 @@
+{
+  "name": "structurizereplacements.preset.wood.spruce",
+  "icon": "minecraft:spruce_log",
+  "picks": [
+    {
+      "from": "minecraft:oak_log",
+      "to": "minecraft:spruce_log"
+    },
+    {
+      "from": "minecraft:birch_log",
+      "to": "minecraft:spruce_log"
+    },
+    {
+      "from": "minecraft:jungle_log",
+      "to": "minecraft:spruce_log"
+    },
+    {
+      "from": "minecraft:acacia_log",
+      "to": "minecraft:spruce_log"
+    },
+    {
+      "from": "minecraft:dark_oak_log",
+      "to": "minecraft:spruce_log"
+    },
+    {
+      "from": "minecraft:mangrove_log",
+      "to": "minecraft:spruce_log"
+    },
+    {
+      "from": "minecraft:cherry_log",
+      "to": "minecraft:spruce_log"
+    },
+    {
+      "from": "minecraft:crimson_stem",
+      "to": "minecraft:spruce_log"
+    },
+    {
+      "from": "minecraft:warped_stem",
+      "to": "minecraft:spruce_log"
+    },
+    {
+      "from": "minecraft:oak_wood",
+      "to": "minecraft:spruce_wood"
+    },
+    {
+      "from": "minecraft:birch_wood",
+      "to": "minecraft:spruce_wood"
+    },
+    {
+      "from": "minecraft:jungle_wood",
+      "to": "minecraft:spruce_wood"
+    },
+    {
+      "from": "minecraft:acacia_wood",
+      "to": "minecraft:spruce_wood"
+    },
+    {
+      "from": "minecraft:dark_oak_wood",
+      "to": "minecraft:spruce_wood"
+    },
+    {
+      "from": "minecraft:mangrove_wood",
+      "to": "minecraft:spruce_wood"
+    },
+    {
+      "from": "minecraft:cherry_wood",
+      "to": "minecraft:spruce_wood"
+    },
+    {
+      "from": "minecraft:crimson_hyphae",
+      "to": "minecraft:spruce_wood"
+    },
+    {
+      "from": "minecraft:warped_hyphae",
+      "to": "minecraft:spruce_wood"
+    },
+    {
+      "from": "minecraft:stripped_oak_log",
+      "to": "minecraft:stripped_spruce_log"
+    },
+    {
+      "from": "minecraft:stripped_birch_log",
+      "to": "minecraft:stripped_spruce_log"
+    },
+    {
+      "from": "minecraft:stripped_jungle_log",
+      "to": "minecraft:stripped_spruce_log"
+    },
+    {
+      "from": "minecraft:stripped_acacia_log",
+      "to": "minecraft:stripped_spruce_log"
+    },
+    {
+      "from": "minecraft:stripped_dark_oak_log",
+      "to": "minecraft:stripped_spruce_log"
+    },
+    {
+      "from": "minecraft:stripped_mangrove_log",
+      "to": "minecraft:stripped_spruce_log"
+    },
+    {
+      "from": "minecraft:stripped_cherry_log",
+      "to": "minecraft:stripped_spruce_log"
+    },
+    {
+      "from": "minecraft:stripped_crimson_stem",
+      "to": "minecraft:stripped_spruce_log"
+    },
+    {
+      "from": "minecraft:stripped_warped_stem",
+      "to": "minecraft:stripped_spruce_log"
+    },
+    {
+      "from": "minecraft:stripped_oak_wood",
+      "to": "minecraft:stripped_spruce_wood"
+    },
+    {
+      "from": "minecraft:stripped_birch_wood",
+      "to": "minecraft:stripped_spruce_wood"
+    },
+    {
+      "from": "minecraft:stripped_jungle_wood",
+      "to": "minecraft:stripped_spruce_wood"
+    },
+    {
+      "from": "minecraft:stripped_acacia_wood",
+      "to": "minecraft:stripped_spruce_wood"
+    },
+    {
+      "from": "minecraft:stripped_dark_oak_wood",
+      "to": "minecraft:stripped_spruce_wood"
+    },
+    {
+      "from": "minecraft:stripped_mangrove_wood",
+      "to": "minecraft:stripped_spruce_wood"
+    },
+    {
+      "from": "minecraft:stripped_cherry_wood",
+      "to": "minecraft:stripped_spruce_wood"
+    },
+    {
+      "from": "minecraft:stripped_crimson_hyphae",
+      "to": "minecraft:stripped_spruce_wood"
+    },
+    {
+      "from": "minecraft:stripped_warped_hyphae",
+      "to": "minecraft:stripped_spruce_wood"
+    }
+  ]
+}

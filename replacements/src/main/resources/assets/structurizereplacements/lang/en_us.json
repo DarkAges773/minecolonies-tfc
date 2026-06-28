@@ -26,5 +26,16 @@
   "structurizereplacements.gui.confirm.cancel": "Cancel",
   "structurizereplacements.gui.preset.edit.title": "Edit Preset: %s",
   "structurizereplacements.gui.preset.update_from_current": "Update",
-  "structurizereplacements.gui.preset.update_from_current.tooltip": "Update from current: add the picks from your current build and override any that clash, keeping the preset's other picks."
+  "structurizereplacements.gui.preset.update_from_current.tooltip": "Update from current: add the picks from your current build and override any that clash, keeping the preset's other picks.",
+  "structurizereplacements.preset.wood.oak": "Oak",
+  "structurizereplacements.preset.wood.spruce": "Spruce",
+  "structurizereplacements.preset.wood.birch": "Birch",
+  "structurizereplacements.preset.wood.jungle": "Jungle",
+  "structurizereplacements.preset.wood.acacia": "Acacia",
+  "structurizereplacements.preset.wood.dark_oak": "Dark Oak",
+  "structurizereplacements.preset.wood.mangrove": "Mangrove",
+  "structurizereplacements.preset.wood.cherry": "Cherry",
+  "structurizereplacements.preset.wood.crimson": "Crimson",
+  "structurizereplacements.preset.wood.warped": "Warped",
+  "structurizereplacements.preset.wood.bamboo": "Bamboo"
 }
