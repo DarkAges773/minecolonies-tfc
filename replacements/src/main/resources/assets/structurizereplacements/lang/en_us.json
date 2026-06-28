@@ -10,6 +10,7 @@
   "structurizereplacements.gui.replace.presets": "Presets",
   "structurizereplacements.gui.replace.empty_hint": "Select a schematic with the build tool to edit its block palette.",
   "structurizereplacements.gui.replace.no_rules_hint": "No block replacement rules are loaded, so there's nothing to swap. Enable the built-in defaults in the world's Data Packs screen, or run:\n/datapack enable \"structurizereplacements_defaults\"",
+  "structurizereplacements.gui.replace.no_candidates": "No replacement options are available for %s.",
   "structurizereplacements.gui.preset.title": "Palette Presets",
   "structurizereplacements.gui.preset.save": "Save Current",
   "structurizereplacements.gui.preset.load": "Load",

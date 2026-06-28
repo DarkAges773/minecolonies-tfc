@@ -124,20 +124,29 @@ public final class PresetLibrary
             final String name = obj.has("name") ? obj.get("name").getAsString() : lastSegment(id);
             final Block icon = obj.has("icon") ? block(obj.get("icon").getAsString()) : null;
             final Map<Block, Block> picks = new LinkedHashMap<>();
+            final List<Preset.UnresolvedPick> unresolved = new ArrayList<>();
             if (obj.has("picks"))
             {
                 for (final var element : obj.getAsJsonArray("picks"))
                 {
                     final JsonObject entry = element.getAsJsonObject();
-                    final Block from = block(entry.get("from").getAsString());
-                    final Block to = block(entry.get("to").getAsString());
+                    final String fromId = entry.get("from").getAsString();
+                    final String toId = entry.get("to").getAsString();
+                    final Block from = block(fromId);
+                    final Block to = block(toId);
                     if (from != null && to != null)
                     {
                         picks.put(from, to);
                     }
+                    else
+                    {
+                        // A block id not registered in this world (e.g. a TFC pick opened without TFC). Keep the raw
+                        // ids so a later save re-emits them unchanged instead of silently dropping the pick.
+                        unresolved.add(new Preset.UnresolvedPick(fromId, toId));
+                    }
                 }
             }
-            return new Preset(id, Component.literal(name), parentOf(id), icon, picks, true);
+            return new Preset(id, Component.literal(name), parentOf(id), icon, picks, true, unresolved);
         }
         catch (final Exception ex)
         {
@@ -174,6 +183,14 @@ public final class PresetLibrary
                     picks.add(entry);
                 }
             });
+            // Re-emit picks for blocks absent in this world verbatim, so editing a cross-mod preset never deletes them.
+            for (final Preset.UnresolvedPick u : preset.unresolved())
+            {
+                final JsonObject entry = new JsonObject();
+                entry.addProperty("from", u.from());
+                entry.addProperty("to", u.to());
+                picks.add(entry);
+            }
             obj.add("picks", picks);
             try (Writer writer = Files.newBufferedWriter(file))
             {
@@ -203,7 +220,18 @@ public final class PresetLibrary
         final List<String> segments = new ArrayList<>();
         for (final String seg : raw.split("/"))
         {
-            final String slug = seg.toLowerCase().replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
+            String slug = seg.toLowerCase().replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
+            if (slug.isEmpty())
+            {
+                // An all-non-ASCII segment (Cyrillic/CJK/…) strips to nothing; fall back to a stable short hash of
+                // the original so distinct names map to distinct files instead of all colliding on "preset". The
+                // human-readable name lives in the JSON "name" field, so the opaque filename is invisible in-game.
+                final String trimmed = seg.trim();
+                if (!trimmed.isEmpty())
+                {
+                    slug = "preset_" + Integer.toHexString(trimmed.hashCode() & 0x7fffffff);
+                }
+            }
             if (!slug.isEmpty())
             {
                 segments.add(slug);

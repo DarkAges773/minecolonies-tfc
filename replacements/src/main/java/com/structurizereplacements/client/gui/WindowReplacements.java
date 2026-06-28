@@ -121,13 +121,20 @@ public class WindowReplacements extends AbstractWindowSkeleton
             // No global Reset in the preset editor — clearing all picks would just empty the preset; rows are
             // removed individually with the per-row cross. The "Update from current" button takes its slot.
             findPaneOfTypeByID("reset", ButtonImage.class).hide();
+        }
+        else
+        {
+            nameEdit.hide();
+        }
+
+        if (context.canUpdateFromCurrent())
+        {
             updateButton.show();
             PaneBuilders.singleLineTooltip(
                     Component.translatable("structurizereplacements.gui.preset.update_from_current.tooltip"), updateButton);
         }
         else
         {
-            nameEdit.hide();
             updateButton.hide();
         }
     }
@@ -436,6 +443,18 @@ public class WindowReplacements extends AbstractWindowSkeleton
                 pool.add(icon);
             }
         });
+
+        // Every candidate filtered out (all air/materialized/itemless) — opening the picker would show an empty
+        // list with no explanation, so tell the player instead and don't open it.
+        if (pool.isEmpty())
+        {
+            if (Minecraft.getInstance().player != null)
+            {
+                Minecraft.getInstance().player.displayClientMessage(
+                        Component.translatable("structurizereplacements.gui.replace.no_candidates", source.getName()), true);
+            }
+            return;
+        }
 
         final Block current = context.current().get(source);
         final Component title = Component.translatable("com.ldtteam.structurize.gui.scantool.replace")

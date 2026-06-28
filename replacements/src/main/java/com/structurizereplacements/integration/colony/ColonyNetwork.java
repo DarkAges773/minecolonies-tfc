@@ -4,10 +4,12 @@ import com.structurizereplacements.StructurizeReplacements;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
+import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Network channel for the colony-mod integration (one shared channel for whichever fork is loaded —
@@ -32,7 +34,10 @@ public final class ColonyNetwork
         CHANNEL.registerMessage(id++, SetBuildingChoicesMessage.class,
                 SetBuildingChoicesMessage::encode,
                 SetBuildingChoicesMessage::new,
-                SetBuildingChoicesMessage::handle);
+                SetBuildingChoicesMessage::handle,
+                // Client → server only: Forge rejects the packet (and never runs the handler) if it ever arrives
+                // on the wrong side, matching the directional discipline of the core channel in Network.java.
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     /** Client → server: set a single building's hut-palette replacement choices. */

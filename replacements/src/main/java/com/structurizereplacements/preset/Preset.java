@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,14 +34,28 @@ import java.util.Map;
  *                    picks (see {@link #iconBlock()}).
  * @param picks       source → target map (insertion order preserved for stable editor rows; immutable).
  * @param editable    whether this preset can be edited/deleted in place (user library) vs only cloned (built-in).
+ * @param unresolved  picks whose source/target block id is not registered in the current game (e.g. a TFC preset
+ *                    opened in a world without TFC). Carried through the read/write round-trip verbatim so editing
+ *                    a preset never silently deletes picks for an absent mod; immutable, empty for fresh presets.
  */
 public record Preset(String id, Component displayName, String folder, @Nullable Block icon,
-                     Map<Block, Block> picks, boolean editable)
+                     Map<Block, Block> picks, boolean editable, List<UnresolvedPick> unresolved)
 {
+    /** A raw {@code from → to} id pair that couldn't be resolved to registered blocks; preserved as-is on save. */
+    public record UnresolvedPick(String from, String to) {}
+
+    /** Convenience constructor for presets with no unresolved (absent-mod) picks. */
+    public Preset(final String id, final Component displayName, final String folder, @Nullable final Block icon,
+                  final Map<Block, Block> picks, final boolean editable)
+    {
+        this(id, displayName, folder, icon, picks, editable, List.of());
+    }
+
     public Preset
     {
         folder = folder == null ? "" : folder;
         picks = Collections.unmodifiableMap(new LinkedHashMap<>(picks));
+        unresolved = unresolved == null ? List.of() : List.copyOf(unresolved);
     }
 
     /** The block to show as this preset's icon: the explicit {@link #icon} if set, else the first pick's target. */

@@ -25,6 +25,8 @@ public class PresetEditChoiceContext implements ReplacementChoiceContext
     private final String folder;
     private final Block icon;
     private final Map<Block, Block> picks;
+    /** Picks for blocks absent in this world; carried untouched so editing here never deletes a cross-mod preset's picks. */
+    private final List<Preset.UnresolvedPick> unresolved;
     /** The originating context's current picks (the build/building the preset hub was opened from), for "update from current". */
     private final Supplier<Map<Block, Block>> currentSupplier;
     private Runnable reloader = () -> {};
@@ -36,6 +38,7 @@ public class PresetEditChoiceContext implements ReplacementChoiceContext
         this.folder = preset.folder();
         this.icon = preset.icon();
         this.picks = new LinkedHashMap<>(preset.picks());
+        this.unresolved = preset.unresolved();
         this.currentSupplier = currentSupplier;
     }
 
@@ -140,6 +143,6 @@ public class PresetEditChoiceContext implements ReplacementChoiceContext
 
     private void persist()
     {
-        PresetLibrary.update(new Preset(id, Component.literal(name), folder, icon, picks, true));
+        PresetLibrary.update(new Preset(id, Component.literal(name), folder, icon, picks, true, unresolved));
     }
 }

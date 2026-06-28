@@ -30,6 +30,17 @@ All notable changes to this mod are documented here. The format is based on
   per-building palette) against the loaded candidate pools, dropping any that the GUI couldn't legitimately
   offer. Previously a modified client could submit an arbitrary source→target swap (e.g. a hand-crafted preset)
   and the server would apply it, bypassing the candidate pools; picks outside a pool are now rejected server-side.
+- A malformed or modified client packet can no longer **wipe a building's saved palette**: a per-building update
+  whose picks all fail validation is now dropped instead of being treated as a "clear all".
+
+### Fixed
+- **Editing a saved preset in a world that's missing a mod it references** (e.g. a TFC preset opened without TFC)
+  no longer deletes that mod's picks. Picks for blocks not present in the current game are now preserved untouched
+  and re-saved, so the preset stays intact when you reopen it where those blocks exist again.
+- The *Replace* picker now shows a brief message instead of opening an **empty selection window** when a row's
+  candidate pool has nothing pickable.
+- Presets whose names are entirely **non-Latin** (Cyrillic, CJK, …) now each get a distinct file on disk instead
+  of all collapsing onto the same one (the in-game preset name was always preserved either way).
 
 ## [0.3.56] - 2026-06-27
 

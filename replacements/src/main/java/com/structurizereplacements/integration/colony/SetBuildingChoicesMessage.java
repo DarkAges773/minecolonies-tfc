@@ -70,6 +70,13 @@ public class SetBuildingChoicesMessage
                     validated.put(from, to);
                 }
             });
+            // An empty incoming map is the legitimate "clear all picks" signal (sent by reset()); a non-empty map
+            // whose picks all fail validation is a malformed/forged payload — drop it rather than letting it wipe
+            // the building's existing palette (which a null would do).
+            if (!choices.isEmpty() && validated.isEmpty())
+            {
+                return;
+            }
             final Map<Block, Block> applied = validated.isEmpty() ? null : validated;
             if (mineshaft)
             {
