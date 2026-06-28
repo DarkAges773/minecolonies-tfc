@@ -61,6 +61,9 @@ const PLANK_FORMS = ['planks', 'stairs', 'slab', 'fence', 'fence_gate', 'door', 
                      'chest', 'trapped_chest', 'lectern', 'scribing_table', 'decorative_bookshelf', 'barrel', 'workbench'];
 const LOG_FORMS = ['log', 'wood', 'stripped_log', 'stripped_wood'];
 const SOIL_FORMS = ['dirt', 'coarse_dirt', 'rooted_dirt', 'grass', 'grass_path'];
+// firmavanilla deepslate-tile rock forms (tags live under subst/firmavanilla, not subst/rock). Vanilla deepslate
+// resolves to basalt (so basalt is a rock source); its tile forms resolve to firmavanilla:<form>/basalt.
+const TILE_FORMS = ['tiles', 'cracked_tiles', 'tile_stairs', 'tile_slab', 'tile_wall'];
 
 // A wood form's source map merges all three namespaces' tags, so a source id resolves to whichever mod owns that
 // wood (tfc:.../oak, afc:.../cypress, beneath:.../crimson).
@@ -77,12 +80,17 @@ const WOOD_SRC = [...new Set(RULE_FILES.flatMap(f => fs.existsSync(f)
       .map(e => keyOf(e.to))
   : []))].filter(w => realWoods.has(w)).sort();
 
+const ROCK_FORMS = fs.readdirSync(path.join(SUBST(MAIN), 'rock')).filter(f => f.endsWith('.json')).map(f => f.slice(0, -5));
+const ROCK_DIR = path.join(SUBST(MAIN), 'rock'), FV_DIR = path.join(SUBST(MAIN), 'firmavanilla'), SOIL_DIR = path.join(SUBST(MAIN), 'soil');
+
 const GROUPS = [
-  { folder: 'rocks', out: OUT(MAIN), srcDir: path.join(SUBST(MAIN), 'rock'), tgtDir: path.join(SUBST(MAIN), 'rock'),
-    tags: fs.readdirSync(path.join(SUBST(MAIN), 'rock')).filter(f => f.endsWith('.json')).map(f => f.slice(0, -5)),
-    sources: ['dacite', 'granite', 'diorite', 'andesite'], iconTpl: r => `tfc:rock/raw/${r}`, nameKey: r => `mctfc.preset.${r}` },
-  { folder: 'dirt', out: OUT(MAIN), srcDir: path.join(SUBST(MAIN), 'soil'), tgtDir: path.join(SUBST(MAIN), 'soil'),
-    tags: SOIL_FORMS, sources: ['loam'], iconTpl: s => `tfc:dirt/${s}`, nameKey: s => `mctfc.preset.soil.${s}` },
+  // Rocks include firmavanilla's deepslate tile forms, and basalt is a source (vanilla deepslate -> basalt), so a
+  // rock preset re-styles a deepslate build too.
+  { folder: 'rocks', out: OUT(MAIN), tags: [...ROCK_FORMS, ...TILE_FORMS],
+    dirOf: f => TILE_FORMS.includes(f) ? FV_DIR : ROCK_DIR,
+    sources: ['dacite', 'granite', 'diorite', 'andesite', 'basalt'], iconTpl: r => `tfc:rock/raw/${r}`, nameKey: r => `mctfc.preset.${r}` },
+  { folder: 'dirt', out: OUT(MAIN), tags: SOIL_FORMS, dirOf: () => SOIL_DIR,
+    sources: ['loam'], iconTpl: s => `tfc:dirt/${s}`, nameKey: s => `mctfc.preset.soil.${s}` },
 
   // Wood: union-of-namespaces sources -> base TFC / AFC / Beneath wood targets (target tags pick the namespace).
   ...[['planks', PLANK_FORMS, 'planks'], ['logs', LOG_FORMS, 'log']].flatMap(([folder, forms, iconForm]) =>
@@ -98,8 +106,11 @@ const lang = {};
 const counts = {};
 
 for (const g of GROUPS) {
-  const srcMaps = Object.fromEntries(g.tags.map(t => [t, g.wood ? mergedWood(t) : readTag(g.srcDir, t)]));
-  const tgtMaps = Object.fromEntries(g.tags.map(t => [t, readTag(g.tgtDir, t)]));
+  const srcMaps = {}, tgtMaps = {};
+  for (const t of g.tags) {
+    if (g.wood) { srcMaps[t] = mergedWood(t); tgtMaps[t] = readTag(g.tgtDir, t); }
+    else { srcMaps[t] = tgtMaps[t] = readTag(g.dirOf(t), t); }
+  }
   const targets = [...new Set(g.tags.flatMap(t => Object.keys(tgtMaps[t])))].sort();
   fs.mkdirSync(path.join(g.out, g.folder), { recursive: true });
 

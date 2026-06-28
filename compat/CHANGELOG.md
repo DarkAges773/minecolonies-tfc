@@ -12,7 +12,9 @@ All notable changes to this mod are documented here. The format is based on
   each re-palettes a whole build onto one material because picks are shared across buildings (so a colony forced
   onto the local material is re-styled in one click). Groups:
   - **Rock types** — one per TFC rock (Granite, Basalt, Slate, …, 20), swapping every default stone form
-    (raw/cobble/bricks/smooth/mossy/cracked/chiseled/slabs/stairs/walls, plus magma for igneous rocks).
+    (raw/cobble/bricks/smooth/mossy/cracked/chiseled/slabs/stairs/walls, plus magma for igneous rocks). Also covers
+    **deepslate** builds — vanilla deepslate resolves to basalt (and its tile forms to firmavanilla's deepslate
+    tiles), so basalt is a source and the firmavanilla tile forms are included.
   - **Planks** and **Logs** — one per wood, kept as separate groups. *Planks* covers the whole plank family —
     planks/stairs/slabs/fences/gates/doors/trapdoors/buttons/pressure-plates/signs **plus** chests, trapped chests,
     lecterns, scribing tables, bookshelves, item barrels and workbenches; *Logs* covers logs/wood/stripped. Both

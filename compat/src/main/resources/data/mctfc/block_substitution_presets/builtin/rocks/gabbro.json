@@ -19,6 +19,10 @@
       "to": "tfc:rock/bricks/gabbro"
     },
     {
+      "from": "tfc:rock/bricks/basalt",
+      "to": "tfc:rock/bricks/gabbro"
+    },
+    {
       "from": "tfc:rock/bricks/dacite_slab",
       "to": "tfc:rock/bricks/gabbro_slab"
     },
@@ -32,6 +36,10 @@
     },
     {
       "from": "tfc:rock/bricks/andesite_slab",
+      "to": "tfc:rock/bricks/gabbro_slab"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt_slab",
       "to": "tfc:rock/bricks/gabbro_slab"
     },
     {
@@ -51,6 +59,10 @@
       "to": "tfc:rock/bricks/gabbro_stairs"
     },
     {
+      "from": "tfc:rock/bricks/basalt_stairs",
+      "to": "tfc:rock/bricks/gabbro_stairs"
+    },
+    {
       "from": "tfc:rock/bricks/dacite_wall",
       "to": "tfc:rock/bricks/gabbro_wall"
     },
@@ -64,6 +76,10 @@
     },
     {
       "from": "tfc:rock/bricks/andesite_wall",
+      "to": "tfc:rock/bricks/gabbro_wall"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt_wall",
       "to": "tfc:rock/bricks/gabbro_wall"
     },
     {
@@ -83,6 +99,10 @@
       "to": "tfc:rock/button/gabbro"
     },
     {
+      "from": "tfc:rock/button/basalt",
+      "to": "tfc:rock/button/gabbro"
+    },
+    {
       "from": "tfc:rock/chiseled/dacite",
       "to": "tfc:rock/chiseled/gabbro"
     },
@@ -96,6 +116,10 @@
     },
     {
       "from": "tfc:rock/chiseled/andesite",
+      "to": "tfc:rock/chiseled/gabbro"
+    },
+    {
+      "from": "tfc:rock/chiseled/basalt",
       "to": "tfc:rock/chiseled/gabbro"
     },
     {
@@ -115,6 +139,10 @@
       "to": "tfc:rock/cobble/gabbro_slab"
     },
     {
+      "from": "tfc:rock/cobble/basalt_slab",
+      "to": "tfc:rock/cobble/gabbro_slab"
+    },
+    {
       "from": "tfc:rock/cobble/dacite_stairs",
       "to": "tfc:rock/cobble/gabbro_stairs"
     },
@@ -128,6 +156,10 @@
     },
     {
       "from": "tfc:rock/cobble/andesite_stairs",
+      "to": "tfc:rock/cobble/gabbro_stairs"
+    },
+    {
+      "from": "tfc:rock/cobble/basalt_stairs",
       "to": "tfc:rock/cobble/gabbro_stairs"
     },
     {
@@ -147,6 +179,10 @@
       "to": "tfc:rock/cobble/gabbro_wall"
     },
     {
+      "from": "tfc:rock/cobble/basalt_wall",
+      "to": "tfc:rock/cobble/gabbro_wall"
+    },
+    {
       "from": "tfc:rock/cracked_bricks/dacite",
       "to": "tfc:rock/cracked_bricks/gabbro"
     },
@@ -160,6 +196,10 @@
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite",
+      "to": "tfc:rock/cracked_bricks/gabbro"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt",
       "to": "tfc:rock/cracked_bricks/gabbro"
     },
     {
@@ -179,6 +219,10 @@
       "to": "tfc:rock/cracked_bricks/gabbro_slab"
     },
     {
+      "from": "tfc:rock/cracked_bricks/basalt_slab",
+      "to": "tfc:rock/cracked_bricks/gabbro_slab"
+    },
+    {
       "from": "tfc:rock/cracked_bricks/dacite_stairs",
       "to": "tfc:rock/cracked_bricks/gabbro_stairs"
     },
@@ -192,6 +236,10 @@
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite_stairs",
+      "to": "tfc:rock/cracked_bricks/gabbro_stairs"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt_stairs",
       "to": "tfc:rock/cracked_bricks/gabbro_stairs"
     },
     {
@@ -211,6 +259,10 @@
       "to": "tfc:rock/cracked_bricks/gabbro_wall"
     },
     {
+      "from": "tfc:rock/cracked_bricks/basalt_wall",
+      "to": "tfc:rock/cracked_bricks/gabbro_wall"
+    },
+    {
       "from": "tfc:rock/gravel/dacite",
       "to": "tfc:rock/gravel/gabbro"
     },
@@ -224,6 +276,10 @@
     },
     {
       "from": "tfc:rock/gravel/andesite",
+      "to": "tfc:rock/gravel/gabbro"
+    },
+    {
+      "from": "tfc:rock/gravel/basalt",
       "to": "tfc:rock/gravel/gabbro"
     },
     {
@@ -243,6 +299,10 @@
       "to": "tfc:rock/magma/gabbro"
     },
     {
+      "from": "tfc:rock/magma/basalt",
+      "to": "tfc:rock/magma/gabbro"
+    },
+    {
       "from": "firmavanilla:mortared/tfc/rock/cobble/dacite",
       "to": "firmavanilla:mortared/tfc/rock/cobble/gabbro"
     },
@@ -256,6 +316,10 @@
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/cobble/andesite",
+      "to": "firmavanilla:mortared/tfc/rock/cobble/gabbro"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/cobble/basalt",
       "to": "firmavanilla:mortared/tfc/rock/cobble/gabbro"
     },
     {
@@ -275,6 +339,10 @@
       "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/gabbro"
     },
     {
+      "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/basalt",
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/gabbro"
+    },
+    {
       "from": "tfc:rock/mossy_bricks/dacite",
       "to": "tfc:rock/mossy_bricks/gabbro"
     },
@@ -288,6 +356,10 @@
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite",
+      "to": "tfc:rock/mossy_bricks/gabbro"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt",
       "to": "tfc:rock/mossy_bricks/gabbro"
     },
     {
@@ -307,6 +379,10 @@
       "to": "tfc:rock/mossy_bricks/gabbro_slab"
     },
     {
+      "from": "tfc:rock/mossy_bricks/basalt_slab",
+      "to": "tfc:rock/mossy_bricks/gabbro_slab"
+    },
+    {
       "from": "tfc:rock/mossy_bricks/dacite_stairs",
       "to": "tfc:rock/mossy_bricks/gabbro_stairs"
     },
@@ -320,6 +396,10 @@
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite_stairs",
+      "to": "tfc:rock/mossy_bricks/gabbro_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt_stairs",
       "to": "tfc:rock/mossy_bricks/gabbro_stairs"
     },
     {
@@ -339,6 +419,10 @@
       "to": "tfc:rock/mossy_bricks/gabbro_wall"
     },
     {
+      "from": "tfc:rock/mossy_bricks/basalt_wall",
+      "to": "tfc:rock/mossy_bricks/gabbro_wall"
+    },
+    {
       "from": "tfc:rock/mossy_cobble/dacite_slab",
       "to": "tfc:rock/mossy_cobble/gabbro_slab"
     },
@@ -352,6 +436,10 @@
     },
     {
       "from": "tfc:rock/mossy_cobble/andesite_slab",
+      "to": "tfc:rock/mossy_cobble/gabbro_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/basalt_slab",
       "to": "tfc:rock/mossy_cobble/gabbro_slab"
     },
     {
@@ -371,6 +459,10 @@
       "to": "tfc:rock/mossy_cobble/gabbro_stairs"
     },
     {
+      "from": "tfc:rock/mossy_cobble/basalt_stairs",
+      "to": "tfc:rock/mossy_cobble/gabbro_stairs"
+    },
+    {
       "from": "tfc:rock/mossy_cobble/dacite_wall",
       "to": "tfc:rock/mossy_cobble/gabbro_wall"
     },
@@ -384,6 +476,10 @@
     },
     {
       "from": "tfc:rock/mossy_cobble/andesite_wall",
+      "to": "tfc:rock/mossy_cobble/gabbro_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/basalt_wall",
       "to": "tfc:rock/mossy_cobble/gabbro_wall"
     },
     {
@@ -403,6 +499,10 @@
       "to": "tfc:rock/pressure_plate/gabbro"
     },
     {
+      "from": "tfc:rock/pressure_plate/basalt",
+      "to": "tfc:rock/pressure_plate/gabbro"
+    },
+    {
       "from": "tfc:rock/raw/dacite",
       "to": "tfc:rock/raw/gabbro"
     },
@@ -416,6 +516,10 @@
     },
     {
       "from": "tfc:rock/raw/andesite",
+      "to": "tfc:rock/raw/gabbro"
+    },
+    {
+      "from": "tfc:rock/raw/basalt",
       "to": "tfc:rock/raw/gabbro"
     },
     {
@@ -435,6 +539,10 @@
       "to": "tfc:rock/raw/gabbro_slab"
     },
     {
+      "from": "tfc:rock/raw/basalt_slab",
+      "to": "tfc:rock/raw/gabbro_slab"
+    },
+    {
       "from": "tfc:rock/raw/dacite_stairs",
       "to": "tfc:rock/raw/gabbro_stairs"
     },
@@ -448,6 +556,10 @@
     },
     {
       "from": "tfc:rock/raw/andesite_stairs",
+      "to": "tfc:rock/raw/gabbro_stairs"
+    },
+    {
+      "from": "tfc:rock/raw/basalt_stairs",
       "to": "tfc:rock/raw/gabbro_stairs"
     },
     {
@@ -467,6 +579,10 @@
       "to": "tfc:rock/raw/gabbro_wall"
     },
     {
+      "from": "tfc:rock/raw/basalt_wall",
+      "to": "tfc:rock/raw/gabbro_wall"
+    },
+    {
       "from": "tfc:rock/smooth/dacite",
       "to": "tfc:rock/smooth/gabbro"
     },
@@ -480,6 +596,10 @@
     },
     {
       "from": "tfc:rock/smooth/andesite",
+      "to": "tfc:rock/smooth/gabbro"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt",
       "to": "tfc:rock/smooth/gabbro"
     },
     {
@@ -499,6 +619,10 @@
       "to": "tfc:rock/smooth/gabbro_slab"
     },
     {
+      "from": "tfc:rock/smooth/basalt_slab",
+      "to": "tfc:rock/smooth/gabbro_slab"
+    },
+    {
       "from": "tfc:rock/smooth/dacite_stairs",
       "to": "tfc:rock/smooth/gabbro_stairs"
     },
@@ -512,6 +636,10 @@
     },
     {
       "from": "tfc:rock/smooth/andesite_stairs",
+      "to": "tfc:rock/smooth/gabbro_stairs"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt_stairs",
       "to": "tfc:rock/smooth/gabbro_stairs"
     },
     {
@@ -529,6 +657,110 @@
     {
       "from": "tfc:rock/smooth/andesite_wall",
       "to": "tfc:rock/smooth/gabbro_wall"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt_wall",
+      "to": "tfc:rock/smooth/gabbro_wall"
+    },
+    {
+      "from": "firmavanilla:tiles/dacite",
+      "to": "firmavanilla:tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:tiles/granite",
+      "to": "firmavanilla:tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:tiles/diorite",
+      "to": "firmavanilla:tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:tiles/andesite",
+      "to": "firmavanilla:tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:tiles/basalt",
+      "to": "firmavanilla:tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/dacite",
+      "to": "firmavanilla:cracked_tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/granite",
+      "to": "firmavanilla:cracked_tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/diorite",
+      "to": "firmavanilla:cracked_tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/andesite",
+      "to": "firmavanilla:cracked_tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/basalt",
+      "to": "firmavanilla:cracked_tiles/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/dacite",
+      "to": "firmavanilla:tile_stairs/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/granite",
+      "to": "firmavanilla:tile_stairs/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/diorite",
+      "to": "firmavanilla:tile_stairs/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/andesite",
+      "to": "firmavanilla:tile_stairs/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/basalt",
+      "to": "firmavanilla:tile_stairs/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_slab/dacite",
+      "to": "firmavanilla:tile_slab/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_slab/granite",
+      "to": "firmavanilla:tile_slab/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_slab/diorite",
+      "to": "firmavanilla:tile_slab/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_slab/andesite",
+      "to": "firmavanilla:tile_slab/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_slab/basalt",
+      "to": "firmavanilla:tile_slab/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_wall/dacite",
+      "to": "firmavanilla:tile_wall/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_wall/granite",
+      "to": "firmavanilla:tile_wall/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_wall/diorite",
+      "to": "firmavanilla:tile_wall/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_wall/andesite",
+      "to": "firmavanilla:tile_wall/gabbro"
+    },
+    {
+      "from": "firmavanilla:tile_wall/basalt",
+      "to": "firmavanilla:tile_wall/gabbro"
     }
   ]
 }

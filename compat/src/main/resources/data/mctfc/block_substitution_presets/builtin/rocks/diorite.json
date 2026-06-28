@@ -15,6 +15,10 @@
       "to": "tfc:rock/bricks/diorite"
     },
     {
+      "from": "tfc:rock/bricks/basalt",
+      "to": "tfc:rock/bricks/diorite"
+    },
+    {
       "from": "tfc:rock/bricks/dacite_slab",
       "to": "tfc:rock/bricks/diorite_slab"
     },
@@ -24,6 +28,10 @@
     },
     {
       "from": "tfc:rock/bricks/andesite_slab",
+      "to": "tfc:rock/bricks/diorite_slab"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt_slab",
       "to": "tfc:rock/bricks/diorite_slab"
     },
     {
@@ -39,6 +47,10 @@
       "to": "tfc:rock/bricks/diorite_stairs"
     },
     {
+      "from": "tfc:rock/bricks/basalt_stairs",
+      "to": "tfc:rock/bricks/diorite_stairs"
+    },
+    {
       "from": "tfc:rock/bricks/dacite_wall",
       "to": "tfc:rock/bricks/diorite_wall"
     },
@@ -48,6 +60,10 @@
     },
     {
       "from": "tfc:rock/bricks/andesite_wall",
+      "to": "tfc:rock/bricks/diorite_wall"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt_wall",
       "to": "tfc:rock/bricks/diorite_wall"
     },
     {
@@ -63,6 +79,10 @@
       "to": "tfc:rock/button/diorite"
     },
     {
+      "from": "tfc:rock/button/basalt",
+      "to": "tfc:rock/button/diorite"
+    },
+    {
       "from": "tfc:rock/chiseled/dacite",
       "to": "tfc:rock/chiseled/diorite"
     },
@@ -72,6 +92,10 @@
     },
     {
       "from": "tfc:rock/chiseled/andesite",
+      "to": "tfc:rock/chiseled/diorite"
+    },
+    {
+      "from": "tfc:rock/chiseled/basalt",
       "to": "tfc:rock/chiseled/diorite"
     },
     {
@@ -87,6 +111,10 @@
       "to": "tfc:rock/cobble/diorite_slab"
     },
     {
+      "from": "tfc:rock/cobble/basalt_slab",
+      "to": "tfc:rock/cobble/diorite_slab"
+    },
+    {
       "from": "tfc:rock/cobble/dacite_stairs",
       "to": "tfc:rock/cobble/diorite_stairs"
     },
@@ -96,6 +124,10 @@
     },
     {
       "from": "tfc:rock/cobble/andesite_stairs",
+      "to": "tfc:rock/cobble/diorite_stairs"
+    },
+    {
+      "from": "tfc:rock/cobble/basalt_stairs",
       "to": "tfc:rock/cobble/diorite_stairs"
     },
     {
@@ -111,6 +143,10 @@
       "to": "tfc:rock/cobble/diorite_wall"
     },
     {
+      "from": "tfc:rock/cobble/basalt_wall",
+      "to": "tfc:rock/cobble/diorite_wall"
+    },
+    {
       "from": "tfc:rock/cracked_bricks/dacite",
       "to": "tfc:rock/cracked_bricks/diorite"
     },
@@ -120,6 +156,10 @@
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite",
+      "to": "tfc:rock/cracked_bricks/diorite"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt",
       "to": "tfc:rock/cracked_bricks/diorite"
     },
     {
@@ -135,6 +175,10 @@
       "to": "tfc:rock/cracked_bricks/diorite_slab"
     },
     {
+      "from": "tfc:rock/cracked_bricks/basalt_slab",
+      "to": "tfc:rock/cracked_bricks/diorite_slab"
+    },
+    {
       "from": "tfc:rock/cracked_bricks/dacite_stairs",
       "to": "tfc:rock/cracked_bricks/diorite_stairs"
     },
@@ -144,6 +188,10 @@
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite_stairs",
+      "to": "tfc:rock/cracked_bricks/diorite_stairs"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt_stairs",
       "to": "tfc:rock/cracked_bricks/diorite_stairs"
     },
     {
@@ -159,6 +207,10 @@
       "to": "tfc:rock/cracked_bricks/diorite_wall"
     },
     {
+      "from": "tfc:rock/cracked_bricks/basalt_wall",
+      "to": "tfc:rock/cracked_bricks/diorite_wall"
+    },
+    {
       "from": "tfc:rock/gravel/dacite",
       "to": "tfc:rock/gravel/diorite"
     },
@@ -168,6 +220,10 @@
     },
     {
       "from": "tfc:rock/gravel/andesite",
+      "to": "tfc:rock/gravel/diorite"
+    },
+    {
+      "from": "tfc:rock/gravel/basalt",
       "to": "tfc:rock/gravel/diorite"
     },
     {
@@ -183,6 +239,10 @@
       "to": "tfc:rock/magma/diorite"
     },
     {
+      "from": "tfc:rock/magma/basalt",
+      "to": "tfc:rock/magma/diorite"
+    },
+    {
       "from": "firmavanilla:mortared/tfc/rock/cobble/dacite",
       "to": "firmavanilla:mortared/tfc/rock/cobble/diorite"
     },
@@ -192,6 +252,10 @@
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/cobble/andesite",
+      "to": "firmavanilla:mortared/tfc/rock/cobble/diorite"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/cobble/basalt",
       "to": "firmavanilla:mortared/tfc/rock/cobble/diorite"
     },
     {
@@ -207,6 +271,10 @@
       "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/diorite"
     },
     {
+      "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/basalt",
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/diorite"
+    },
+    {
       "from": "tfc:rock/mossy_bricks/dacite",
       "to": "tfc:rock/mossy_bricks/diorite"
     },
@@ -216,6 +284,10 @@
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite",
+      "to": "tfc:rock/mossy_bricks/diorite"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt",
       "to": "tfc:rock/mossy_bricks/diorite"
     },
     {
@@ -231,6 +303,10 @@
       "to": "tfc:rock/mossy_bricks/diorite_slab"
     },
     {
+      "from": "tfc:rock/mossy_bricks/basalt_slab",
+      "to": "tfc:rock/mossy_bricks/diorite_slab"
+    },
+    {
       "from": "tfc:rock/mossy_bricks/dacite_stairs",
       "to": "tfc:rock/mossy_bricks/diorite_stairs"
     },
@@ -240,6 +316,10 @@
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite_stairs",
+      "to": "tfc:rock/mossy_bricks/diorite_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt_stairs",
       "to": "tfc:rock/mossy_bricks/diorite_stairs"
     },
     {
@@ -255,6 +335,10 @@
       "to": "tfc:rock/mossy_bricks/diorite_wall"
     },
     {
+      "from": "tfc:rock/mossy_bricks/basalt_wall",
+      "to": "tfc:rock/mossy_bricks/diorite_wall"
+    },
+    {
       "from": "tfc:rock/mossy_cobble/dacite_slab",
       "to": "tfc:rock/mossy_cobble/diorite_slab"
     },
@@ -264,6 +348,10 @@
     },
     {
       "from": "tfc:rock/mossy_cobble/andesite_slab",
+      "to": "tfc:rock/mossy_cobble/diorite_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/basalt_slab",
       "to": "tfc:rock/mossy_cobble/diorite_slab"
     },
     {
@@ -279,6 +367,10 @@
       "to": "tfc:rock/mossy_cobble/diorite_stairs"
     },
     {
+      "from": "tfc:rock/mossy_cobble/basalt_stairs",
+      "to": "tfc:rock/mossy_cobble/diorite_stairs"
+    },
+    {
       "from": "tfc:rock/mossy_cobble/dacite_wall",
       "to": "tfc:rock/mossy_cobble/diorite_wall"
     },
@@ -288,6 +380,10 @@
     },
     {
       "from": "tfc:rock/mossy_cobble/andesite_wall",
+      "to": "tfc:rock/mossy_cobble/diorite_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/basalt_wall",
       "to": "tfc:rock/mossy_cobble/diorite_wall"
     },
     {
@@ -303,6 +399,10 @@
       "to": "tfc:rock/pressure_plate/diorite"
     },
     {
+      "from": "tfc:rock/pressure_plate/basalt",
+      "to": "tfc:rock/pressure_plate/diorite"
+    },
+    {
       "from": "tfc:rock/raw/dacite",
       "to": "tfc:rock/raw/diorite"
     },
@@ -312,6 +412,10 @@
     },
     {
       "from": "tfc:rock/raw/andesite",
+      "to": "tfc:rock/raw/diorite"
+    },
+    {
+      "from": "tfc:rock/raw/basalt",
       "to": "tfc:rock/raw/diorite"
     },
     {
@@ -327,6 +431,10 @@
       "to": "tfc:rock/raw/diorite_slab"
     },
     {
+      "from": "tfc:rock/raw/basalt_slab",
+      "to": "tfc:rock/raw/diorite_slab"
+    },
+    {
       "from": "tfc:rock/raw/dacite_stairs",
       "to": "tfc:rock/raw/diorite_stairs"
     },
@@ -336,6 +444,10 @@
     },
     {
       "from": "tfc:rock/raw/andesite_stairs",
+      "to": "tfc:rock/raw/diorite_stairs"
+    },
+    {
+      "from": "tfc:rock/raw/basalt_stairs",
       "to": "tfc:rock/raw/diorite_stairs"
     },
     {
@@ -351,6 +463,10 @@
       "to": "tfc:rock/raw/diorite_wall"
     },
     {
+      "from": "tfc:rock/raw/basalt_wall",
+      "to": "tfc:rock/raw/diorite_wall"
+    },
+    {
       "from": "tfc:rock/smooth/dacite",
       "to": "tfc:rock/smooth/diorite"
     },
@@ -360,6 +476,10 @@
     },
     {
       "from": "tfc:rock/smooth/andesite",
+      "to": "tfc:rock/smooth/diorite"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt",
       "to": "tfc:rock/smooth/diorite"
     },
     {
@@ -375,6 +495,10 @@
       "to": "tfc:rock/smooth/diorite_slab"
     },
     {
+      "from": "tfc:rock/smooth/basalt_slab",
+      "to": "tfc:rock/smooth/diorite_slab"
+    },
+    {
       "from": "tfc:rock/smooth/dacite_stairs",
       "to": "tfc:rock/smooth/diorite_stairs"
     },
@@ -384,6 +508,10 @@
     },
     {
       "from": "tfc:rock/smooth/andesite_stairs",
+      "to": "tfc:rock/smooth/diorite_stairs"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt_stairs",
       "to": "tfc:rock/smooth/diorite_stairs"
     },
     {
@@ -397,6 +525,90 @@
     {
       "from": "tfc:rock/smooth/andesite_wall",
       "to": "tfc:rock/smooth/diorite_wall"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt_wall",
+      "to": "tfc:rock/smooth/diorite_wall"
+    },
+    {
+      "from": "firmavanilla:tiles/dacite",
+      "to": "firmavanilla:tiles/diorite"
+    },
+    {
+      "from": "firmavanilla:tiles/granite",
+      "to": "firmavanilla:tiles/diorite"
+    },
+    {
+      "from": "firmavanilla:tiles/andesite",
+      "to": "firmavanilla:tiles/diorite"
+    },
+    {
+      "from": "firmavanilla:tiles/basalt",
+      "to": "firmavanilla:tiles/diorite"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/dacite",
+      "to": "firmavanilla:cracked_tiles/diorite"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/granite",
+      "to": "firmavanilla:cracked_tiles/diorite"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/andesite",
+      "to": "firmavanilla:cracked_tiles/diorite"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/basalt",
+      "to": "firmavanilla:cracked_tiles/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/dacite",
+      "to": "firmavanilla:tile_stairs/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/granite",
+      "to": "firmavanilla:tile_stairs/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/andesite",
+      "to": "firmavanilla:tile_stairs/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/basalt",
+      "to": "firmavanilla:tile_stairs/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_slab/dacite",
+      "to": "firmavanilla:tile_slab/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_slab/granite",
+      "to": "firmavanilla:tile_slab/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_slab/andesite",
+      "to": "firmavanilla:tile_slab/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_slab/basalt",
+      "to": "firmavanilla:tile_slab/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_wall/dacite",
+      "to": "firmavanilla:tile_wall/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_wall/granite",
+      "to": "firmavanilla:tile_wall/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_wall/andesite",
+      "to": "firmavanilla:tile_wall/diorite"
+    },
+    {
+      "from": "firmavanilla:tile_wall/basalt",
+      "to": "firmavanilla:tile_wall/diorite"
     }
   ]
 }

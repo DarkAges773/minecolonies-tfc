@@ -529,6 +529,86 @@
     {
       "from": "tfc:rock/smooth/andesite_wall",
       "to": "tfc:rock/smooth/basalt_wall"
+    },
+    {
+      "from": "firmavanilla:tiles/dacite",
+      "to": "firmavanilla:tiles/basalt"
+    },
+    {
+      "from": "firmavanilla:tiles/granite",
+      "to": "firmavanilla:tiles/basalt"
+    },
+    {
+      "from": "firmavanilla:tiles/diorite",
+      "to": "firmavanilla:tiles/basalt"
+    },
+    {
+      "from": "firmavanilla:tiles/andesite",
+      "to": "firmavanilla:tiles/basalt"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/dacite",
+      "to": "firmavanilla:cracked_tiles/basalt"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/granite",
+      "to": "firmavanilla:cracked_tiles/basalt"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/diorite",
+      "to": "firmavanilla:cracked_tiles/basalt"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/andesite",
+      "to": "firmavanilla:cracked_tiles/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/dacite",
+      "to": "firmavanilla:tile_stairs/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/granite",
+      "to": "firmavanilla:tile_stairs/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/diorite",
+      "to": "firmavanilla:tile_stairs/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/andesite",
+      "to": "firmavanilla:tile_stairs/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_slab/dacite",
+      "to": "firmavanilla:tile_slab/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_slab/granite",
+      "to": "firmavanilla:tile_slab/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_slab/diorite",
+      "to": "firmavanilla:tile_slab/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_slab/andesite",
+      "to": "firmavanilla:tile_slab/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_wall/dacite",
+      "to": "firmavanilla:tile_wall/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_wall/granite",
+      "to": "firmavanilla:tile_wall/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_wall/diorite",
+      "to": "firmavanilla:tile_wall/basalt"
+    },
+    {
+      "from": "firmavanilla:tile_wall/andesite",
+      "to": "firmavanilla:tile_wall/basalt"
     }
   ]
 }

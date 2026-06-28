@@ -19,6 +19,10 @@
       "to": "tfc:rock/bricks/schist"
     },
     {
+      "from": "tfc:rock/bricks/basalt",
+      "to": "tfc:rock/bricks/schist"
+    },
+    {
       "from": "tfc:rock/bricks/dacite_slab",
       "to": "tfc:rock/bricks/schist_slab"
     },
@@ -32,6 +36,10 @@
     },
     {
       "from": "tfc:rock/bricks/andesite_slab",
+      "to": "tfc:rock/bricks/schist_slab"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt_slab",
       "to": "tfc:rock/bricks/schist_slab"
     },
     {
@@ -51,6 +59,10 @@
       "to": "tfc:rock/bricks/schist_stairs"
     },
     {
+      "from": "tfc:rock/bricks/basalt_stairs",
+      "to": "tfc:rock/bricks/schist_stairs"
+    },
+    {
       "from": "tfc:rock/bricks/dacite_wall",
       "to": "tfc:rock/bricks/schist_wall"
     },
@@ -64,6 +76,10 @@
     },
     {
       "from": "tfc:rock/bricks/andesite_wall",
+      "to": "tfc:rock/bricks/schist_wall"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt_wall",
       "to": "tfc:rock/bricks/schist_wall"
     },
     {
@@ -83,6 +99,10 @@
       "to": "tfc:rock/button/schist"
     },
     {
+      "from": "tfc:rock/button/basalt",
+      "to": "tfc:rock/button/schist"
+    },
+    {
       "from": "tfc:rock/chiseled/dacite",
       "to": "tfc:rock/chiseled/schist"
     },
@@ -96,6 +116,10 @@
     },
     {
       "from": "tfc:rock/chiseled/andesite",
+      "to": "tfc:rock/chiseled/schist"
+    },
+    {
+      "from": "tfc:rock/chiseled/basalt",
       "to": "tfc:rock/chiseled/schist"
     },
     {
@@ -115,6 +139,10 @@
       "to": "tfc:rock/cobble/schist_slab"
     },
     {
+      "from": "tfc:rock/cobble/basalt_slab",
+      "to": "tfc:rock/cobble/schist_slab"
+    },
+    {
       "from": "tfc:rock/cobble/dacite_stairs",
       "to": "tfc:rock/cobble/schist_stairs"
     },
@@ -128,6 +156,10 @@
     },
     {
       "from": "tfc:rock/cobble/andesite_stairs",
+      "to": "tfc:rock/cobble/schist_stairs"
+    },
+    {
+      "from": "tfc:rock/cobble/basalt_stairs",
       "to": "tfc:rock/cobble/schist_stairs"
     },
     {
@@ -147,6 +179,10 @@
       "to": "tfc:rock/cobble/schist_wall"
     },
     {
+      "from": "tfc:rock/cobble/basalt_wall",
+      "to": "tfc:rock/cobble/schist_wall"
+    },
+    {
       "from": "tfc:rock/cracked_bricks/dacite",
       "to": "tfc:rock/cracked_bricks/schist"
     },
@@ -160,6 +196,10 @@
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite",
+      "to": "tfc:rock/cracked_bricks/schist"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt",
       "to": "tfc:rock/cracked_bricks/schist"
     },
     {
@@ -179,6 +219,10 @@
       "to": "tfc:rock/cracked_bricks/schist_slab"
     },
     {
+      "from": "tfc:rock/cracked_bricks/basalt_slab",
+      "to": "tfc:rock/cracked_bricks/schist_slab"
+    },
+    {
       "from": "tfc:rock/cracked_bricks/dacite_stairs",
       "to": "tfc:rock/cracked_bricks/schist_stairs"
     },
@@ -192,6 +236,10 @@
     },
     {
       "from": "tfc:rock/cracked_bricks/andesite_stairs",
+      "to": "tfc:rock/cracked_bricks/schist_stairs"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt_stairs",
       "to": "tfc:rock/cracked_bricks/schist_stairs"
     },
     {
@@ -211,6 +259,10 @@
       "to": "tfc:rock/cracked_bricks/schist_wall"
     },
     {
+      "from": "tfc:rock/cracked_bricks/basalt_wall",
+      "to": "tfc:rock/cracked_bricks/schist_wall"
+    },
+    {
       "from": "tfc:rock/gravel/dacite",
       "to": "tfc:rock/gravel/schist"
     },
@@ -224,6 +276,10 @@
     },
     {
       "from": "tfc:rock/gravel/andesite",
+      "to": "tfc:rock/gravel/schist"
+    },
+    {
+      "from": "tfc:rock/gravel/basalt",
       "to": "tfc:rock/gravel/schist"
     },
     {
@@ -243,6 +299,10 @@
       "to": "firmavanilla:mortared/tfc/rock/cobble/schist"
     },
     {
+      "from": "firmavanilla:mortared/tfc/rock/cobble/basalt",
+      "to": "firmavanilla:mortared/tfc/rock/cobble/schist"
+    },
+    {
       "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/dacite",
       "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/schist"
     },
@@ -256,6 +316,10 @@
     },
     {
       "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/andesite",
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/schist"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/basalt",
       "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/schist"
     },
     {
@@ -275,6 +339,10 @@
       "to": "tfc:rock/mossy_bricks/schist"
     },
     {
+      "from": "tfc:rock/mossy_bricks/basalt",
+      "to": "tfc:rock/mossy_bricks/schist"
+    },
+    {
       "from": "tfc:rock/mossy_bricks/dacite_slab",
       "to": "tfc:rock/mossy_bricks/schist_slab"
     },
@@ -288,6 +356,10 @@
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite_slab",
+      "to": "tfc:rock/mossy_bricks/schist_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt_slab",
       "to": "tfc:rock/mossy_bricks/schist_slab"
     },
     {
@@ -307,6 +379,10 @@
       "to": "tfc:rock/mossy_bricks/schist_stairs"
     },
     {
+      "from": "tfc:rock/mossy_bricks/basalt_stairs",
+      "to": "tfc:rock/mossy_bricks/schist_stairs"
+    },
+    {
       "from": "tfc:rock/mossy_bricks/dacite_wall",
       "to": "tfc:rock/mossy_bricks/schist_wall"
     },
@@ -320,6 +396,10 @@
     },
     {
       "from": "tfc:rock/mossy_bricks/andesite_wall",
+      "to": "tfc:rock/mossy_bricks/schist_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt_wall",
       "to": "tfc:rock/mossy_bricks/schist_wall"
     },
     {
@@ -339,6 +419,10 @@
       "to": "tfc:rock/mossy_cobble/schist_slab"
     },
     {
+      "from": "tfc:rock/mossy_cobble/basalt_slab",
+      "to": "tfc:rock/mossy_cobble/schist_slab"
+    },
+    {
       "from": "tfc:rock/mossy_cobble/dacite_stairs",
       "to": "tfc:rock/mossy_cobble/schist_stairs"
     },
@@ -352,6 +436,10 @@
     },
     {
       "from": "tfc:rock/mossy_cobble/andesite_stairs",
+      "to": "tfc:rock/mossy_cobble/schist_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/basalt_stairs",
       "to": "tfc:rock/mossy_cobble/schist_stairs"
     },
     {
@@ -371,6 +459,10 @@
       "to": "tfc:rock/mossy_cobble/schist_wall"
     },
     {
+      "from": "tfc:rock/mossy_cobble/basalt_wall",
+      "to": "tfc:rock/mossy_cobble/schist_wall"
+    },
+    {
       "from": "tfc:rock/pressure_plate/dacite",
       "to": "tfc:rock/pressure_plate/schist"
     },
@@ -384,6 +476,10 @@
     },
     {
       "from": "tfc:rock/pressure_plate/andesite",
+      "to": "tfc:rock/pressure_plate/schist"
+    },
+    {
+      "from": "tfc:rock/pressure_plate/basalt",
       "to": "tfc:rock/pressure_plate/schist"
     },
     {
@@ -403,6 +499,10 @@
       "to": "tfc:rock/raw/schist"
     },
     {
+      "from": "tfc:rock/raw/basalt",
+      "to": "tfc:rock/raw/schist"
+    },
+    {
       "from": "tfc:rock/raw/dacite_slab",
       "to": "tfc:rock/raw/schist_slab"
     },
@@ -416,6 +516,10 @@
     },
     {
       "from": "tfc:rock/raw/andesite_slab",
+      "to": "tfc:rock/raw/schist_slab"
+    },
+    {
+      "from": "tfc:rock/raw/basalt_slab",
       "to": "tfc:rock/raw/schist_slab"
     },
     {
@@ -435,6 +539,10 @@
       "to": "tfc:rock/raw/schist_stairs"
     },
     {
+      "from": "tfc:rock/raw/basalt_stairs",
+      "to": "tfc:rock/raw/schist_stairs"
+    },
+    {
       "from": "tfc:rock/raw/dacite_wall",
       "to": "tfc:rock/raw/schist_wall"
     },
@@ -448,6 +556,10 @@
     },
     {
       "from": "tfc:rock/raw/andesite_wall",
+      "to": "tfc:rock/raw/schist_wall"
+    },
+    {
+      "from": "tfc:rock/raw/basalt_wall",
       "to": "tfc:rock/raw/schist_wall"
     },
     {
@@ -467,6 +579,10 @@
       "to": "tfc:rock/smooth/schist"
     },
     {
+      "from": "tfc:rock/smooth/basalt",
+      "to": "tfc:rock/smooth/schist"
+    },
+    {
       "from": "tfc:rock/smooth/dacite_slab",
       "to": "tfc:rock/smooth/schist_slab"
     },
@@ -480,6 +596,10 @@
     },
     {
       "from": "tfc:rock/smooth/andesite_slab",
+      "to": "tfc:rock/smooth/schist_slab"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt_slab",
       "to": "tfc:rock/smooth/schist_slab"
     },
     {
@@ -499,6 +619,10 @@
       "to": "tfc:rock/smooth/schist_stairs"
     },
     {
+      "from": "tfc:rock/smooth/basalt_stairs",
+      "to": "tfc:rock/smooth/schist_stairs"
+    },
+    {
       "from": "tfc:rock/smooth/dacite_wall",
       "to": "tfc:rock/smooth/schist_wall"
     },
@@ -513,6 +637,110 @@
     {
       "from": "tfc:rock/smooth/andesite_wall",
       "to": "tfc:rock/smooth/schist_wall"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt_wall",
+      "to": "tfc:rock/smooth/schist_wall"
+    },
+    {
+      "from": "firmavanilla:tiles/dacite",
+      "to": "firmavanilla:tiles/schist"
+    },
+    {
+      "from": "firmavanilla:tiles/granite",
+      "to": "firmavanilla:tiles/schist"
+    },
+    {
+      "from": "firmavanilla:tiles/diorite",
+      "to": "firmavanilla:tiles/schist"
+    },
+    {
+      "from": "firmavanilla:tiles/andesite",
+      "to": "firmavanilla:tiles/schist"
+    },
+    {
+      "from": "firmavanilla:tiles/basalt",
+      "to": "firmavanilla:tiles/schist"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/dacite",
+      "to": "firmavanilla:cracked_tiles/schist"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/granite",
+      "to": "firmavanilla:cracked_tiles/schist"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/diorite",
+      "to": "firmavanilla:cracked_tiles/schist"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/andesite",
+      "to": "firmavanilla:cracked_tiles/schist"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/basalt",
+      "to": "firmavanilla:cracked_tiles/schist"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/dacite",
+      "to": "firmavanilla:tile_stairs/schist"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/granite",
+      "to": "firmavanilla:tile_stairs/schist"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/diorite",
+      "to": "firmavanilla:tile_stairs/schist"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/andesite",
+      "to": "firmavanilla:tile_stairs/schist"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/basalt",
+      "to": "firmavanilla:tile_stairs/schist"
+    },
+    {
+      "from": "firmavanilla:tile_slab/dacite",
+      "to": "firmavanilla:tile_slab/schist"
+    },
+    {
+      "from": "firmavanilla:tile_slab/granite",
+      "to": "firmavanilla:tile_slab/schist"
+    },
+    {
+      "from": "firmavanilla:tile_slab/diorite",
+      "to": "firmavanilla:tile_slab/schist"
+    },
+    {
+      "from": "firmavanilla:tile_slab/andesite",
+      "to": "firmavanilla:tile_slab/schist"
+    },
+    {
+      "from": "firmavanilla:tile_slab/basalt",
+      "to": "firmavanilla:tile_slab/schist"
+    },
+    {
+      "from": "firmavanilla:tile_wall/dacite",
+      "to": "firmavanilla:tile_wall/schist"
+    },
+    {
+      "from": "firmavanilla:tile_wall/granite",
+      "to": "firmavanilla:tile_wall/schist"
+    },
+    {
+      "from": "firmavanilla:tile_wall/diorite",
+      "to": "firmavanilla:tile_wall/schist"
+    },
+    {
+      "from": "firmavanilla:tile_wall/andesite",
+      "to": "firmavanilla:tile_wall/schist"
+    },
+    {
+      "from": "firmavanilla:tile_wall/basalt",
+      "to": "firmavanilla:tile_wall/schist"
     }
   ]
 }
