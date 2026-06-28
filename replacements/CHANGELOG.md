@@ -19,7 +19,7 @@ All notable changes to this mod are documented here. The format is based on
   `"icon"`).
 - The *Replace* picker rows now have a **per-row reset** (a small red cross) to clear just that row's pick back to
   the default — the bottom *Reset* still clears the whole palette.
-- The opt-in default pick pools gained several families: **stained glass panes**, **candles**, **wool
+- The opt-in default pick pools gained several families: **stained glass panes**, **candles**, **froglights**, **wool
   carpets**, Domum Ornamentum **floating carpets**, **banners** (standing and wall as separate pools), the
   colored Domum Ornamentum **brick** and **cobblestone "extra"** blocks, and its **bricks** and **stone
   bricks** (roan/beige/brown/cream/sand). The tall-flowers pool now also includes the **pitcher plant**, and

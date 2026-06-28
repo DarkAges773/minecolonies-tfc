@@ -45,6 +45,7 @@
     { "from_tag": "structurizereplacements:subst/concrete_powder",    "to_tag": "structurizereplacements:subst/concrete_powder" },
     { "from_tag": "minecraft:beds",                                   "to_tag": "minecraft:beds" },
     { "from_tag": "minecraft:candles",                                "to_tag": "minecraft:candles" },
+    { "from_tag": "structurizereplacements:subst/froglights",         "to_tag": "structurizereplacements:subst/froglights" },
     { "from_tag": "structurizereplacements:subst/standing_banners",   "to_tag": "structurizereplacements:subst/standing_banners" },
     { "from_tag": "structurizereplacements:subst/wall_banners",       "to_tag": "structurizereplacements:subst/wall_banners" },
 
