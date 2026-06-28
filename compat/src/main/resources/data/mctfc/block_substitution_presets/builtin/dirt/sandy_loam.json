@@ -1,0 +1,26 @@
+{
+  "name": "mctfc.preset.soil.sandy_loam",
+  "icon": "tfc:dirt/sandy_loam",
+  "picks": [
+    {
+      "from": "tfc:dirt/loam",
+      "to": "tfc:dirt/sandy_loam"
+    },
+    {
+      "from": "firmavanilla:coarse_dirt/loam",
+      "to": "firmavanilla:coarse_dirt/sandy_loam"
+    },
+    {
+      "from": "tfc:rooted_dirt/loam",
+      "to": "tfc:rooted_dirt/sandy_loam"
+    },
+    {
+      "from": "tfc:grass/loam",
+      "to": "tfc:grass/sandy_loam"
+    },
+    {
+      "from": "tfc:grass_path/loam",
+      "to": "tfc:grass_path/sandy_loam"
+    }
+  ]
+}

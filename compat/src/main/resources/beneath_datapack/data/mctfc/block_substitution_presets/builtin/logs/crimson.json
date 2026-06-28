@@ -1,0 +1,246 @@
+{
+  "name": "mctfc.preset.wood.crimson",
+  "icon": "beneath:wood/log/crimson",
+  "picks": [
+    {
+      "from": "tfc:wood/log/acacia",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "afc:wood/log/baobab",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "afc:wood/log/cypress",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "tfc:wood/log/douglas_fir",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "afc:wood/log/eucalyptus",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "afc:wood/log/fig",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "tfc:wood/log/hickory",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "tfc:wood/log/kapok",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "tfc:wood/log/mangrove",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "tfc:wood/log/oak",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "tfc:wood/log/palm",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "tfc:wood/log/pine",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "tfc:wood/log/spruce",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "afc:wood/log/teak",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "beneath:wood/log/warped",
+      "to": "beneath:wood/log/crimson"
+    },
+    {
+      "from": "tfc:wood/wood/acacia",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "afc:wood/wood/baobab",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "afc:wood/wood/cypress",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "tfc:wood/wood/douglas_fir",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "afc:wood/wood/eucalyptus",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "afc:wood/wood/fig",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "tfc:wood/wood/hickory",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "tfc:wood/wood/kapok",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "tfc:wood/wood/mangrove",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "tfc:wood/wood/oak",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "tfc:wood/wood/palm",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "tfc:wood/wood/pine",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "tfc:wood/wood/spruce",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "afc:wood/wood/teak",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "beneath:wood/wood/warped",
+      "to": "beneath:wood/wood/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_log/acacia",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_log/baobab",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_log/cypress",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_log/douglas_fir",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_log/eucalyptus",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_log/fig",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_log/hickory",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_log/kapok",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_log/mangrove",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_log/oak",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_log/palm",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_log/pine",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_log/spruce",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_log/teak",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "beneath:wood/stripped_log/warped",
+      "to": "beneath:wood/stripped_log/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/acacia",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_wood/baobab",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_wood/cypress",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/douglas_fir",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_wood/eucalyptus",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_wood/fig",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/hickory",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/kapok",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/mangrove",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/oak",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/palm",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/pine",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/spruce",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "afc:wood/stripped_wood/teak",
+      "to": "beneath:wood/stripped_wood/crimson"
+    },
+    {
+      "from": "beneath:wood/stripped_wood/warped",
+      "to": "beneath:wood/stripped_wood/crimson"
+    }
+  ]
+}

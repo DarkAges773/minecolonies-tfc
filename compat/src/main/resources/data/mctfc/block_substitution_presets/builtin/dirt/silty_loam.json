@@ -1,0 +1,26 @@
+{
+  "name": "mctfc.preset.soil.silty_loam",
+  "icon": "tfc:dirt/silty_loam",
+  "picks": [
+    {
+      "from": "tfc:dirt/loam",
+      "to": "tfc:dirt/silty_loam"
+    },
+    {
+      "from": "firmavanilla:coarse_dirt/loam",
+      "to": "firmavanilla:coarse_dirt/silty_loam"
+    },
+    {
+      "from": "tfc:rooted_dirt/loam",
+      "to": "tfc:rooted_dirt/silty_loam"
+    },
+    {
+      "from": "tfc:grass/loam",
+      "to": "tfc:grass/silty_loam"
+    },
+    {
+      "from": "tfc:grass_path/loam",
+      "to": "tfc:grass_path/silty_loam"
+    }
+  ]
+}

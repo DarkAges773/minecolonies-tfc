@@ -1,0 +1,1146 @@
+{
+  "name": "mctfc.preset.wood.warped",
+  "icon": "beneath:wood/planks/warped",
+  "picks": [
+    {
+      "from": "tfc:wood/planks/acacia",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "afc:wood/planks/baobab",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "beneath:wood/planks/crimson",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "afc:wood/planks/cypress",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "afc:wood/planks/fig",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "tfc:wood/planks/hickory",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "tfc:wood/planks/kapok",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "tfc:wood/planks/oak",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "tfc:wood/planks/palm",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "tfc:wood/planks/pine",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "tfc:wood/planks/spruce",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "afc:wood/planks/teak",
+      "to": "beneath:wood/planks/warped"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "afc:wood/planks/baobab_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "afc:wood/planks/cypress_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "afc:wood/planks/fig_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/oak_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/palm_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/pine_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "afc:wood/planks/teak_stairs",
+      "to": "beneath:wood/planks/warped_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "afc:wood/planks/baobab_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "afc:wood/planks/cypress_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "afc:wood/planks/fig_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "tfc:wood/planks/oak_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "tfc:wood/planks/palm_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "tfc:wood/planks/pine_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "afc:wood/planks/teak_slab",
+      "to": "beneath:wood/planks/warped_slab"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "afc:wood/planks/baobab_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "afc:wood/planks/cypress_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "afc:wood/planks/fig_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "tfc:wood/planks/oak_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "tfc:wood/planks/palm_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "tfc:wood/planks/pine_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "afc:wood/planks/teak_fence",
+      "to": "beneath:wood/planks/warped_fence"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/baobab_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/cypress_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/fig_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/oak_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/palm_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/pine_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/teak_fence_gate",
+      "to": "beneath:wood/planks/warped_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "afc:wood/planks/baobab_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "afc:wood/planks/cypress_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "afc:wood/planks/fig_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "tfc:wood/planks/oak_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "tfc:wood/planks/palm_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "tfc:wood/planks/pine_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "afc:wood/planks/teak_door",
+      "to": "beneath:wood/planks/warped_door"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/baobab_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/cypress_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/fig_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/oak_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/palm_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/pine_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/teak_trapdoor",
+      "to": "beneath:wood/planks/warped_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "afc:wood/planks/baobab_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "afc:wood/planks/cypress_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "afc:wood/planks/fig_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "tfc:wood/planks/oak_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "tfc:wood/planks/palm_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "tfc:wood/planks/pine_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "afc:wood/planks/teak_button",
+      "to": "beneath:wood/planks/warped_button"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/baobab_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/cypress_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/fig_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/oak_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/palm_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/pine_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/teak_pressure_plate",
+      "to": "beneath:wood/planks/warped_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "afc:wood/planks/baobab_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "afc:wood/planks/cypress_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "afc:wood/planks/fig_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "tfc:wood/planks/oak_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "tfc:wood/planks/palm_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "tfc:wood/planks/pine_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "afc:wood/planks/teak_sign",
+      "to": "beneath:wood/planks/warped_sign"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/baobab_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/cypress_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/fig_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/oak_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/palm_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/pine_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/teak_wall_sign",
+      "to": "beneath:wood/planks/warped_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/acacia",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/baobab",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "beneath:wood/planks/hanging_sign/copper/crimson",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/cypress",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/douglas_fir",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/eucalyptus",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/fig",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/hickory",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/kapok",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/mangrove",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/oak",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/palm",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/pine",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/spruce",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/teak",
+      "to": "beneath:wood/planks/hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/acacia",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/baobab",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "beneath:wood/planks/wall_hanging_sign/copper/crimson",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/cypress",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/douglas_fir",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/eucalyptus",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/fig",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/hickory",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/kapok",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/mangrove",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/oak",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/palm",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/pine",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/spruce",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/teak",
+      "to": "beneath:wood/planks/wall_hanging_sign/copper/warped"
+    },
+    {
+      "from": "tfc:wood/chest/acacia",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "afc:wood/chest/baobab",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "beneath:wood/chest/crimson",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "afc:wood/chest/cypress",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "tfc:wood/chest/douglas_fir",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "afc:wood/chest/eucalyptus",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "afc:wood/chest/fig",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "tfc:wood/chest/hickory",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "tfc:wood/chest/kapok",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "tfc:wood/chest/mangrove",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "tfc:wood/chest/oak",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "tfc:wood/chest/palm",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "tfc:wood/chest/pine",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "tfc:wood/chest/spruce",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "afc:wood/chest/teak",
+      "to": "beneath:wood/chest/warped"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/acacia",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "afc:wood/trapped_chest/baobab",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "beneath:wood/trapped_chest/crimson",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "afc:wood/trapped_chest/cypress",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/douglas_fir",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "afc:wood/trapped_chest/eucalyptus",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "afc:wood/trapped_chest/fig",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/hickory",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/kapok",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/mangrove",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/oak",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/palm",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/pine",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/spruce",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "afc:wood/trapped_chest/teak",
+      "to": "beneath:wood/trapped_chest/warped"
+    },
+    {
+      "from": "tfc:wood/lectern/acacia",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "afc:wood/lectern/baobab",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "beneath:wood/lectern/crimson",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "afc:wood/lectern/cypress",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "tfc:wood/lectern/douglas_fir",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "afc:wood/lectern/eucalyptus",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "afc:wood/lectern/fig",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "tfc:wood/lectern/hickory",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "tfc:wood/lectern/kapok",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "tfc:wood/lectern/mangrove",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "tfc:wood/lectern/oak",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "tfc:wood/lectern/palm",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "tfc:wood/lectern/pine",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "tfc:wood/lectern/spruce",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "afc:wood/lectern/teak",
+      "to": "beneath:wood/lectern/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/acacia",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/baobab",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/crimson",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/cypress",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/douglas_fir",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/eucalyptus",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/fig",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/hickory",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/kapok",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/mangrove",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/oak",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/palm",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/pine",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/spruce",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:bookshelf/teak",
+      "to": "firmavanilla:bookshelf/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/acacia",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/baobab",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/crimson",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/cypress",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/douglas_fir",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/eucalyptus",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/fig",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/hickory",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/kapok",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/mangrove",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/oak",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/palm",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/pine",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/spruce",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "firmavanilla:barrel/teak",
+      "to": "firmavanilla:barrel/warped"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "afc:wood/planks/baobab_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "afc:wood/planks/cypress_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "afc:wood/planks/fig_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/oak_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/palm_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/pine_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    },
+    {
+      "from": "afc:wood/planks/teak_workbench",
+      "to": "beneath:wood/planks/warped_workbench"
+    }
+  ]
+}

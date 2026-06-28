@@ -1,0 +1,26 @@
+{
+  "name": "mctfc.preset.soil.silt",
+  "icon": "tfc:dirt/silt",
+  "picks": [
+    {
+      "from": "tfc:dirt/loam",
+      "to": "tfc:dirt/silt"
+    },
+    {
+      "from": "firmavanilla:coarse_dirt/loam",
+      "to": "firmavanilla:coarse_dirt/silt"
+    },
+    {
+      "from": "tfc:rooted_dirt/loam",
+      "to": "tfc:rooted_dirt/silt"
+    },
+    {
+      "from": "tfc:grass/loam",
+      "to": "tfc:grass/silt"
+    },
+    {
+      "from": "tfc:grass_path/loam",
+      "to": "tfc:grass_path/silt"
+    }
+  ]
+}

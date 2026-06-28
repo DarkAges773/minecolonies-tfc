@@ -8,12 +8,21 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
-- **TFC rock-type palette presets** — one built-in preset per TFC rock (Granite, Basalt, Slate, Marble, …, 20 in
-  all), selectable from the new *Presets* button in the Replace picker. Loading one re-palettes a whole build onto
-  that single rock — every default stone form (raw/cobble/bricks/smooth/mossy/cracked/chiseled/slabs/stairs/walls,
-  plus magma for igneous rocks) swaps to the chosen rock's equivalent. Because picks are shared across buildings,
-  a colony forced onto the local stone can be re-styled in one click. (Requires the Palette Presets feature in
-  Palette Swap; the presets are read-only but can be cloned and tweaked.)
+- **TFC built-in palette presets** — read-only presets in the *Presets* picker (under a **Built-in** folder),
+  each re-palettes a whole build onto one material because picks are shared across buildings (so a colony forced
+  onto the local material is re-styled in one click). Groups:
+  - **Rock types** — one per TFC rock (Granite, Basalt, Slate, …, 20), swapping every default stone form
+    (raw/cobble/bricks/smooth/mossy/cracked/chiseled/slabs/stairs/walls, plus magma for igneous rocks).
+  - **Planks** and **Logs** — one per wood, kept as separate groups. *Planks* covers the whole plank family —
+    planks/stairs/slabs/fences/gates/doors/trapdoors/buttons/pressure-plates/signs **plus** chests, trapped chests,
+    lecterns, scribing tables, bookshelves, item barrels and workbenches; *Logs* covers logs/wood/stripped. Both
+    cover the base TFC woods, and — when **ArborFirmaCraft** or **Beneath** are installed — their woods too (via the
+    same optional datapacks, so they appear only with the mod). Wood sources span all three namespaces, so a build
+    is re-woned correctly even where AFC re-routes a vanilla wood (e.g. spruce → cypress).
+  - **Dirt** — one per TFC soil type (Sandy Loam, Silt, Silty Loam), swapping dirt/coarse dirt/rooted dirt/grass/
+    grass path.
+
+  (Requires the Palette Presets feature in Palette Swap; the presets are read-only but can be cloned and tweaked.)
 
 ### Changed
 - **Cobblestone and mossy cobblestone are no longer interchangeable in the Replace picker.** Both still substitute

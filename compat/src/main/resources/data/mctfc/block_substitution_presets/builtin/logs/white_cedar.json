@@ -1,0 +1,262 @@
+{
+  "name": "mctfc.preset.wood.white_cedar",
+  "icon": "tfc:wood/log/white_cedar",
+  "picks": [
+    {
+      "from": "tfc:wood/log/acacia",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "afc:wood/log/baobab",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "beneath:wood/log/crimson",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "afc:wood/log/cypress",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/log/douglas_fir",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "afc:wood/log/eucalyptus",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "afc:wood/log/fig",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/log/hickory",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/log/kapok",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/log/mangrove",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/log/oak",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/log/palm",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/log/pine",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/log/spruce",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "afc:wood/log/teak",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "beneath:wood/log/warped",
+      "to": "tfc:wood/log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/wood/acacia",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/wood/baobab",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "beneath:wood/wood/crimson",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/wood/cypress",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/wood/douglas_fir",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/wood/eucalyptus",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/wood/fig",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/wood/hickory",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/wood/kapok",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/wood/mangrove",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/wood/oak",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/wood/palm",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/wood/pine",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/wood/spruce",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/wood/teak",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "beneath:wood/wood/warped",
+      "to": "tfc:wood/wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_log/acacia",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_log/baobab",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "beneath:wood/stripped_log/crimson",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_log/cypress",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_log/douglas_fir",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_log/eucalyptus",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_log/fig",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_log/hickory",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_log/kapok",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_log/mangrove",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_log/oak",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_log/palm",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_log/pine",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_log/spruce",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_log/teak",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "beneath:wood/stripped_log/warped",
+      "to": "tfc:wood/stripped_log/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/acacia",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_wood/baobab",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "beneath:wood/stripped_wood/crimson",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_wood/cypress",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/douglas_fir",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_wood/eucalyptus",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_wood/fig",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/hickory",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/kapok",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/mangrove",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/oak",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/palm",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/pine",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "tfc:wood/stripped_wood/spruce",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "afc:wood/stripped_wood/teak",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    },
+    {
+      "from": "beneath:wood/stripped_wood/warped",
+      "to": "tfc:wood/stripped_wood/white_cedar"
+    }
+  ]
+}
