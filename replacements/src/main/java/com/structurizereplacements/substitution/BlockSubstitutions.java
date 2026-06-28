@@ -90,6 +90,24 @@ public final class BlockSubstitutions
     }
 
     /**
+     * Server-authoritative validity check for a player-submitted pick ({@code from} → chosen {@code to}): the
+     * source must have a candidate pool and the target must be a legal member of it — exactly what the GUI
+     * offers ({@link #candidateFor} for the pool, then the same air / Domum-Ornamentum-materialized filtering
+     * the picker applies). The inbound choice packets filter through this, so a modified client can't bypass the
+     * candidate pools to substitute an arbitrary block (the rules load server-side, so this check is
+     * authoritative even when the client claims otherwise).
+     */
+    public static boolean isAllowedChoice(final Block from, final Block to)
+    {
+        if (from == null || to == null || to.defaultBlockState().isAir() || isMaterializedSource(to))
+        {
+            return false;
+        }
+        final Optional<CandidateRule> rule = candidateFor(from);
+        return rule.isPresent() && to.defaultBlockState().is(rule.get().toTag());
+    }
+
+    /**
      * Apply the active ruleset to a blueprint position. Returns the original {@code info} unchanged
      * when substitution is disabled, no rule matches, or the rule is a no-op; otherwise returns a new
      * {@link BlockInfo} carrying the replacement state with compatible properties copied over.

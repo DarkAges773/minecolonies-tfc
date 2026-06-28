@@ -3,6 +3,7 @@ package com.structurizereplacements.integration.colony;
 import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
+import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
@@ -10,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.network.NetworkEvent;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -59,7 +61,16 @@ public class SetBuildingChoicesMessage
             }
             final ServerLevel level = sender.serverLevel();
             final Object building = bridge.buildingAt(level, buildingPos);
-            final Map<Block, Block> applied = choices.isEmpty() ? null : choices;
+            // Validate against the server's candidate pools — keep only picks the GUI could legitimately offer,
+            // so a modified client can't store an arbitrary substitution on the building.
+            final Map<Block, Block> validated = new LinkedHashMap<>();
+            choices.forEach((from, to) -> {
+                if (BlockSubstitutions.isAllowedChoice(from, to))
+                {
+                    validated.put(from, to);
+                }
+            });
+            final Map<Block, Block> applied = validated.isEmpty() ? null : validated;
             if (mineshaft)
             {
                 if (!(building instanceof MineshaftChoiceHolder holder))

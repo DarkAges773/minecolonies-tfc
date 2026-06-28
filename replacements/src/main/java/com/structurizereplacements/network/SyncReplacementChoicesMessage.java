@@ -1,6 +1,7 @@
 package com.structurizereplacements.network;
 
 import com.structurizereplacements.placement.ServerPlacementChoices;
+import com.structurizereplacements.substitution.BlockSubstitutions;
 import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -72,7 +73,9 @@ public class SyncReplacementChoicesMessage
             choices.forEach((fromId, toId) -> {
                 final Block from = block(fromId);
                 final Block to = block(toId);
-                if (from != null && to != null)
+                // Validate against the server's candidate pools — drop any pick a modified client forged outside
+                // what the GUI could offer, so it can't substitute an arbitrary block.
+                if (from != null && to != null && BlockSubstitutions.isAllowedChoice(from, to))
                 {
                     resolved.put(from, to);
                 }

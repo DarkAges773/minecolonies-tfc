@@ -25,6 +25,12 @@ All notable changes to this mod are documented here. The format is based on
   bricks** (roan/beige/brown/cream/sand). The tall-flowers pool now also includes the **pitcher plant**, and
   the terracotta pool offers plain terracotta.
 
+### Security
+- **The server now validates replacement picks** sent by clients (both the build-wand session picks and the
+  per-building palette) against the loaded candidate pools, dropping any that the GUI couldn't legitimately
+  offer. Previously a modified client could submit an arbitrary source→target swap (e.g. a hand-crafted preset)
+  and the server would apply it, bypassing the candidate pools; picks outside a pool are now rejected server-side.
+
 ## [0.3.56] - 2026-06-27
 
 ### Added
