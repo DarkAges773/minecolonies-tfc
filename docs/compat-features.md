@@ -296,6 +296,20 @@ diet-variety scoring); rotten handling is **skip-only** (disposal will be a futu
 - **Config** ([Config](../compat/src/main/java/com/mctfc/Config.java)): `foodColonyStorageDecay` (`config/mctfc-common.toml`,
   default 0.25). Lang: the trait tooltip key `mctfc.food_trait.colony_storage` (TFC's `FoodTrait#addTooltipInfo` calls
   `Component.translatable(translationKey)` directly, so the key *is* the lang key).
+- **D — food templates are non-decaying** (so MineColonies GUIs don't show TFC food as rotten). MineColonies builds its
+  food lists in `CompatibilityManager.discoverFood` (`food`/`edibles` → the dish picker, the menu, food requests), the
+  restaurant menu persists its dishes, and the cook's auto-request lists raw ingredients — all *real* food stacks whose
+  TFC creation date ages, so they render spoiled over time. [FoodTemplates](../compat/src/main/java/com/mctfc/food/FoodTemplates.java)
+  stamps a template stack with TFC's **persistent** `NEVER_DECAY_CREATION_DATE` (`-2`, which `getRottenDate` maps to
+  "never rots"). **Crucially not** `FoodCapability.setStackNonDecaying`: that only flips the *transient* `isNonDecaying`
+  flag, which TFC's `serializeNBT` doesn't persist — it's lost on save/sync (leaving `creationDate = -1`, an ancient
+  date), so a menu/request marked that way *still* rotted once stored or sent to the client (the bug we first shipped).
+  The creation-date sentinel is serialized + synced like any food date, so it stays fresh. Applied at four template
+  points: `MixinCompatibilityManager` `@ModifyVariable` on `discoverFood` (picker + new adds), `MixinRestaurantMenuModule`
+  `@ModifyVariable` on `addMenuItem` (re-stamp after the client→server add round-trip) + `@Inject` at `deserializeNBT`
+  TAIL (clean up old saves), and `CookBehavior.requestMissing` (the raw-ingredient request stacks). **Cosmetic only:**
+  decay is a capability, not the item tag, and `ItemStorage` is caps-blind (see the FIFO follow-up note above), so menu
+  matching / serving / request fulfillment never depended on it.
 - **Verified to load:** compiles; all three mixins apply (`AbstractTileEntityRackAccessor`/`MixinRackInventory` into the
   rack, `MixinFoodUtils` into `FoodUtils`); trait registers; runs in a live colony world without crash. **In-world
   behaviour** (food actually preserving in racks, FIFO order, rotten skipped) still to be confirmed in gameplay.

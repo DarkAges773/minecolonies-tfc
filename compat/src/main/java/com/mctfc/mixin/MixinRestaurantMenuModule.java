@@ -1,10 +1,13 @@
 package com.mctfc.mixin;
 
 import com.mctfc.Config;
+import com.mctfc.food.FoodTemplates;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.buildings.modules.AbstractBuildingModule;
+import com.minecolonies.api.crafting.ItemStorage;
 import com.minecolonies.core.colony.buildings.modules.RestaurantMenuModule;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Final;
@@ -13,8 +16,14 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Scales the dining hall's food stock target to actual colony demand instead of stack size, so the Chef doesn't
@@ -45,6 +54,43 @@ public abstract class MixinRestaurantMenuModule
     @Shadow
     @Final
     private boolean canCook;
+
+    @Shadow
+    @Final
+    protected Set<ItemStorage> menu;
+
+    /**
+     * Mark a dish <b>non-decaying</b> as it's added to the menu (a menu item is a template, not real food). The
+     * candidate is already non-decaying via {@code MixinCompatibilityManager}, but it round-trips client→server on
+     * add, so we re-stamp it server-side at the point of storage to be sure. See {@link FoodTemplates}.
+     */
+    @ModifyVariable(method = "addMenuItem", at = @At("HEAD"), argsOnly = true)
+    private ItemStack mctfc$nonDecayingMenuAdd(final ItemStack stack)
+    {
+        return FoodTemplates.nonDecaying(stack);
+    }
+
+    /**
+     * Freshen menu entries on load so an old save's menu doesn't render rotten — entries saved before the fix (or with
+     * the now-superseded transient marker) carry an aging creation date. We rebuild each as a non-decaying template
+     * ({@link FoodTemplates}, a no-op for non-TFC food). Cosmetic only — decay lives in a capability, not the item tag,
+     * so menu matching/serving is unchanged.
+     */
+    @Inject(method = "deserializeNBT", at = @At("TAIL"))
+    private void mctfc$freshenMenu(final CompoundTag compound, final CallbackInfo ci)
+    {
+        if (menu.isEmpty())
+        {
+            return;
+        }
+        final List<ItemStorage> fresh = new ArrayList<>(menu.size());
+        for (final ItemStorage entry : menu)
+        {
+            fresh.add(new ItemStorage(FoodTemplates.nonDecaying(entry.getItemStack())));
+        }
+        menu.clear();
+        menu.addAll(fresh);
+    }
 
     @Inject(method = "getExpectedStock", at = @At("HEAD"), cancellable = true)
     private void mctfc$demandStock(final CallbackInfoReturnable<Integer> cir)

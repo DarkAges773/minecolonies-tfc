@@ -6,6 +6,7 @@ import com.mctfc.furnace.FurnaceFuelScope;
 import com.mctfc.furnace.FurnaceProcess;
 import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.furnace.FurnaceWorker;
+import com.mctfc.food.FoodTemplates;
 import com.mctfc.mixin.FurnaceBlockEntityAccessor;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.requestsystem.request.IRequest;
@@ -488,7 +489,10 @@ public class CookBehavior implements FurnaceBehavior
             if (have < target)
             {
                 shortfall += target - have;
-                request.addAll(raws);
+                for (final ItemStack raw : raws)
+                {
+                    request.add(FoodTemplates.nonDecaying(raw)); // so the request GUI shows the ingredient fresh, not rotten
+                }
             }
         }
         if (request.isEmpty())

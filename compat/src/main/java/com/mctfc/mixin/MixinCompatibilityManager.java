@@ -2,6 +2,7 @@ package com.mctfc.mixin;
 
 import com.minecolonies.api.compatibility.CompatibilityManager;
 import com.minecolonies.api.crafting.ItemStorage;
+import com.mctfc.food.FoodTemplates;
 import com.mctfc.furnace.FurnaceFuel;
 import com.mctfc.smelter.SmelterRecipes;
 import net.minecraft.world.item.Item;
@@ -10,6 +11,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.LinkedHashSet;
@@ -30,6 +32,18 @@ import java.util.Set;
 @Mixin(CompatibilityManager.class)
 public class MixinCompatibilityManager
 {
+    /**
+     * Mark the food MineColonies discovers as <b>non-decaying</b>. {@code discoverFood} stores each food as a template
+     * {@link ItemStorage} in the {@code food}/{@code edibles} lists (which feed the restaurant-menu picker, the menu,
+     * and food requests). TFC stamps a creation date on those template stacks, so over time they render as
+     * decaying/rotten — see {@link FoodTemplates} for why we use the persistent never-decay sentinel here.
+     */
+    @ModifyVariable(method = "discoverFood", at = @At("HEAD"), argsOnly = true, remap = false)
+    private ItemStack mctfc$nonDecayingFood(final ItemStack stack)
+    {
+        return FoodTemplates.nonDecaying(stack);
+    }
+
     @Inject(method = "getSmeltableOres", at = @At("HEAD"), cancellable = true, remap = false)
     private void mctfc$tfcSmeltableOres(final CallbackInfoReturnable<Set<ItemStorage>> cir)
     {
