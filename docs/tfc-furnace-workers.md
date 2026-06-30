@@ -148,6 +148,19 @@ Each behaviour supplies its own `requiredTemp`, which *is* the hut split — for
 - **Smelter** → the metal's melt temp (from the heating recipe).
 - **Cook** → the food's cooking temp (~200°C), so logs/peat work for cooking but never for metal.
 
+### Device fuel tags — restrict each hut to its TFC device's fuels  — **DONE**
+The temperature gate alone leaves a wrinkle: at ~200 °C the cook *could* burn coal, and a low-tin melt *could* run
+off a stick bundle — neither authentic. So on top of the temp gate, each converted hut is restricted to the **TFC
+device fuel tag** its real counterpart uses ([`FurnaceFuelScope`](../compat/src/main/java/com/mctfc/furnace/FurnaceFuelScope.java)):
+- **Smelter** (a charcoal forge) → `tfc:forge_fuel` (`#minecraft:coals` = coal, charcoal, bituminous coal, lignite).
+- **Cook** (a firepit) → `tfc:firepit_fuel` (`#minecraft:logs` incl. TFC logs, peat, stick bundles, driftwood, …).
+
+Reusing TFC's own tags keeps it authentic, **datapack-overridable**, and addon-extensible. It's enforced in **two**
+places: the behaviour's `fuelAllowed` (so even the empty-list fallback respects it — a cook never burns coal), and
+the **fuel-list GUI** ([`MixinItemListModuleView`](../compat/src/main/java/com/mctfc/mixin/MixinItemListModuleView.java)
+filters the shared `itemlist_fuel` candidate set down to the hut's tag, since MineColonies' `getFuel()` is global —
+one fuel module feeds every furnace hut). Other (still-vanilla) huts are left on the full list.
+
 Fuel reference (TFC data): charcoal 1800 t / 1350 °C · coal 2200 t / 1415 °C · logs ~1000–1750 t / ~600–720 °C.
 
 **As built (§3):** fuel physically sits in the furnace's **fuel slot** (so it drops on break and shows in the

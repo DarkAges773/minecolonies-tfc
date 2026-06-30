@@ -33,6 +33,12 @@ All notable changes to this mod are documented here. The format is based on
   (Requires the Palette Presets feature in Palette Swap; the presets are read-only but can be cloned and tweaked.)
 
 ### Changed
+- **Furnace huts now restrict fuel to the matching TFC device's fuels.** The Smeltery (a charcoal forge) takes only
+  **forge fuels** — the coals (coal, charcoal, bituminous coal, lignite) — and the Cook's dining hall (a firepit)
+  takes only **firepit fuels** — woods (logs), peat, stick bundles, driftwood, etc. This applies both to the fuel
+  list you configure in the hut and to what the worker will actually burn, so you can't, say, run a cook off coal or
+  a smeltery off logs. It uses TFC's own `forge_fuel`/`firepit_fuel` tags, so datapacks and addons that add fuels
+  flow through automatically.
 - **Cobblestone and mossy cobblestone are no longer interchangeable in the Replace picker.** Both still substitute
   to their non-falling cemented twin, but the GUI re-pick pool is now split: plain cemented cobble offers only the
   other rocks' plain cobble, and mossy offers only mossy — you can't swap a wall between plain and mossy.

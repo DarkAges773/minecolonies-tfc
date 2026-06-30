@@ -2,6 +2,7 @@ package com.mctfc.smelter;
 
 import com.mctfc.furnace.FurnaceBehavior;
 import com.mctfc.furnace.FurnaceFuel;
+import com.mctfc.furnace.FurnaceFuelScope;
 import com.mctfc.furnace.FurnaceProcess;
 import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.furnace.FurnaceWorker;
@@ -910,13 +911,15 @@ public class SmelterBehavior implements FurnaceBehavior
     }
 
     /**
-     * A TFC fuel the player permits via the hut's <b>fuel</b> list (an allow-list). The list only constrains once
-     * it actually names a TFC fuel; the vanilla default (coal/charcoal) that maps to no TFC fuel must not starve
-     * the smelter, so we fall back to "any TFC fuel" until the player curates the list with real TFC fuels.
+     * A TFC fuel the player permits via the hut's <b>fuel</b> list (an allow-list). The smelter only burns TFC
+     * <b>forge</b> fuels ({@link FurnaceFuelScope#SMELTER} — the coals: coal/charcoal/bituminous/lignite), matching
+     * what a TFC charcoal forge takes. Within that, the list only constrains once it actually names a forge fuel;
+     * the vanilla default (coal/charcoal) that maps to no curated TFC fuel must not starve the smelter, so we fall
+     * back to "any forge fuel" until the player curates the list.
      */
     private boolean fuelAllowed(final ItemStack stack)
     {
-        if (!FurnaceFuel.isFuel(stack))
+        if (!FurnaceFuel.isFuel(stack) || !stack.is(FurnaceFuelScope.SMELTER))
         {
             return false;
         }

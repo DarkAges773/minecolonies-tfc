@@ -2,6 +2,7 @@ package com.mctfc.cook;
 
 import com.mctfc.furnace.FurnaceBehavior;
 import com.mctfc.furnace.FurnaceFuel;
+import com.mctfc.furnace.FurnaceFuelScope;
 import com.mctfc.furnace.FurnaceProcess;
 import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.furnace.FurnaceWorker;
@@ -410,13 +411,14 @@ public class CookBehavior implements FurnaceBehavior
     // --- Hut fuel allow-list (the player-configured "fuel" list) -------------------------------------------
 
     /**
-     * A TFC fuel the player permits via the hut's <b>fuel</b> list (an allow-list). The list only constrains once it
-     * actually names a TFC fuel, so the vanilla default that maps to no TFC fuel can't starve the cook (mirrors the
-     * smelter's {@code fuelAllowed}).
+     * A TFC fuel the player permits via the hut's <b>fuel</b> list (an allow-list). The cook only burns TFC
+     * <b>firepit</b> fuels ({@link FurnaceFuelScope#COOK} — woods/peat/sticks), matching what a TFC firepit takes, so
+     * even the empty-list fallback never lets it burn coals. Within that, the list only constrains once it actually
+     * names a firepit fuel, so the vanilla default can't starve the cook (mirrors the smelter's {@code fuelAllowed}).
      */
     private boolean fuelAllowed(final ItemStack stack)
     {
-        if (!FurnaceFuel.isFuel(stack))
+        if (!FurnaceFuel.isFuel(stack) || !stack.is(FurnaceFuelScope.COOK))
         {
             return false;
         }
