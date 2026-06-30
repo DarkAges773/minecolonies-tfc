@@ -34,6 +34,10 @@ All notable changes to this mod are documented here. The format is based on
   (Requires the Palette Presets feature in Palette Swap; the presets are read-only but can be cloned and tweaked.)
 
 ### Changed
+- **The dining hall menu only offers TFC food now.** The dish picker previously listed every edible item (vanilla and
+  modded foods that don't work in TFC's nutrition/spoilage system); it's now limited to **TFC-tracked food** (anything
+  carrying TFC's food data — including modded foods a datapack has integrated). Any non-TFC dish already on a menu is
+  removed on the next world load.
 - **Furnace huts now restrict fuel to the matching TFC device's fuels.** The Smeltery (a charcoal forge) takes only
   **forge fuels** — the coals (coal, charcoal, bituminous coal, lignite) — and the Cook's dining hall (a firepit)
   takes only **firepit fuels** — woods (logs), peat, stick bundles, driftwood, etc. This applies both to the fuel

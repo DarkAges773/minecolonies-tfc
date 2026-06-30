@@ -71,10 +71,11 @@ public abstract class MixinRestaurantMenuModule
     }
 
     /**
-     * Freshen menu entries on load so an old save's menu doesn't render rotten — entries saved before the fix (or with
-     * the now-superseded transient marker) carry an aging creation date. We rebuild each as a non-decaying template
-     * ({@link FoodTemplates}, a no-op for non-TFC food). Cosmetic only — decay lives in a capability, not the item tag,
-     * so menu matching/serving is unchanged.
+     * On load: <b>drop non-TFC dishes</b> from the menu and <b>freshen</b> the rest. A TFC colony's menu should hold
+     * only TFC-tracked food (the picker is filtered to it via {@code MixinCompatibilityManager}); this strips any
+     * non-TFC entry saved before that filter. The kept entries are rebuilt as non-decaying templates ({@link
+     * FoodTemplates}) so an old save's menu doesn't render rotten. Cosmetic/curation only — decay lives in a
+     * capability, not the item tag, so menu matching/serving is unchanged.
      */
     @Inject(method = "deserializeNBT", at = @At("TAIL"))
     private void mctfc$freshenMenu(final CompoundTag compound, final CallbackInfo ci)
@@ -83,13 +84,16 @@ public abstract class MixinRestaurantMenuModule
         {
             return;
         }
-        final List<ItemStorage> fresh = new ArrayList<>(menu.size());
+        final List<ItemStorage> kept = new ArrayList<>(menu.size());
         for (final ItemStorage entry : menu)
         {
-            fresh.add(new ItemStorage(FoodTemplates.nonDecaying(entry.getItemStack())));
+            if (FoodTemplates.isTfcFood(entry.getItemStack()))
+            {
+                kept.add(new ItemStorage(FoodTemplates.nonDecaying(entry.getItemStack())));
+            }
         }
         menu.clear();
-        menu.addAll(fresh);
+        menu.addAll(kept);
     }
 
     @Inject(method = "getExpectedStock", at = @At("HEAD"), cancellable = true)

@@ -24,6 +24,13 @@ public final class FoodTemplates
 {
     private FoodTemplates() {}
 
+    /** Whether this stack is a <b>TFC-tracked food</b> (carries the TFC food capability) — i.e. "compatible with TFC",
+     * participating in TFC's nutrition/decay. Vanilla/modded foods not given the cap return {@code false}. */
+    public static boolean isTfcFood(final ItemStack stack)
+    {
+        return stack != null && !stack.isEmpty() && FoodCapability.has(stack);
+    }
+
     /** A non-decaying copy of {@code stack} if it's TFC food; otherwise {@code stack} unchanged. */
     public static ItemStack nonDecaying(final ItemStack stack)
     {

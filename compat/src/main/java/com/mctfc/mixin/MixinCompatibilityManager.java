@@ -44,6 +44,18 @@ public class MixinCompatibilityManager
         return FoodTemplates.nonDecaying(stack);
     }
 
+    /**
+     * Restrict the discovered <b>edible</b> food to <b>TFC-tracked</b> food (those with the TFC food capability). This
+     * is the candidate source for the restaurant-menu dish picker, so non-TFC vanilla/modded foods — which don't
+     * participate in TFC's nutrition/decay and so don't belong on a TFC colony's menu — are dropped from it. (Also the
+     * netherminer's edible-food list, which in a TFC world should likewise be TFC food.)
+     */
+    @Inject(method = "getEdibles", at = @At("RETURN"), remap = false)
+    private void mctfc$tfcEdiblesOnly(final int minNutrition, final CallbackInfoReturnable<Set<ItemStorage>> cir)
+    {
+        cir.getReturnValue().removeIf(storage -> !FoodTemplates.isTfcFood(storage.getItemStack()));
+    }
+
     @Inject(method = "getSmeltableOres", at = @At("HEAD"), cancellable = true, remap = false)
     private void mctfc$tfcSmeltableOres(final CallbackInfoReturnable<Set<ItemStorage>> cir)
     {

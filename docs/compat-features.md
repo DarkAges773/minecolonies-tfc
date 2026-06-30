@@ -310,6 +310,12 @@ diet-variety scoring); rotten handling is **skip-only** (disposal will be a futu
   TAIL (clean up old saves), and `CookBehavior.requestMissing` (the raw-ingredient request stacks). **Cosmetic only:**
   decay is a capability, not the item tag, and `ItemStorage` is caps-blind (see the FIFO follow-up note above), so menu
   matching / serving / request fulfillment never depended on it.
+- **E — restaurant menu is TFC-food-only.** A TFC colony's menu should hold only TFC-tracked food, not the vanilla/modded
+  foods that don't participate in TFC nutrition/decay. `MixinCompatibilityManager` `@Inject`s `getEdibles` RETURN to drop
+  any non-`FoodCapability.has` stack — so the dish picker (and, consistently, the netherminer's edible-food list, the
+  other `getEdibles` consumer) offers TFC food only — and `MixinRestaurantMenuModule`'s `deserializeNBT` hook drops any
+  non-TFC dish already saved on a menu. The "TFC food" test is `FoodTemplates.isTfcFood` (= has the food capability), so
+  modded foods a datapack has integrated into TFC are kept.
 - **Verified to load:** compiles; all three mixins apply (`AbstractTileEntityRackAccessor`/`MixinRackInventory` into the
   rack, `MixinFoodUtils` into `FoodUtils`); trait registers; runs in a live colony world without crash. **In-world
   behaviour** (food actually preserving in racks, FIFO order, rotten skipped) still to be confirmed in gameplay.
