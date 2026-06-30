@@ -18,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -169,5 +170,19 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
     public IAIState state()
     {
         return ((AbstractAISkeleton<?>) (Object) this).getState();
+    }
+
+    /**
+     * {@code checkForImportantJobs} is declared on {@code AbstractEntityAIUsesFurnace} (this mixin's target) and
+     * overridden by subclasses (the Cook serves food); the {@code @Invoker} dispatches virtually, so on a Cook it
+     * reaches the override. Workers that don't override it get the base {@code START_WORKING}.
+     */
+    @Invoker(value = "checkForImportantJobs", remap = false)
+    protected abstract IAIState mctfc$checkForImportantJobs();
+
+    @Override
+    public IAIState checkImportantJobs()
+    {
+        return mctfc$checkForImportantJobs();
     }
 }

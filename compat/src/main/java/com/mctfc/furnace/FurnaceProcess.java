@@ -32,6 +32,10 @@ public class FurnaceProcess implements INBTSerializable<CompoundTag>
     private int fuelTicks;
     /** Temperature (°C) of the carried fuel, so we know whether it's hot enough for the next operation. */
     private float fuelTemp;
+    /** Which kind of operation is loaded — the key into {@link FurnaceProcessings} that finishes it (e.g. the
+     * smelter's casting vs. the cook's food heating). Empty until a worker loads the furnace; an empty/unknown
+     * kind falls back to the first-registered completer (back-compat for pre-{@code kind} saves). */
+    private String kind = "";
 
     public Phase phase()
     {
@@ -41,6 +45,16 @@ public class FurnaceProcess implements INBTSerializable<CompoundTag>
     public void setPhase(final Phase phase)
     {
         this.phase = phase;
+    }
+
+    public String kind()
+    {
+        return kind;
+    }
+
+    public void setKind(final String kind)
+    {
+        this.kind = kind == null ? "" : kind;
     }
 
     public int fuelTicks()
@@ -71,6 +85,7 @@ public class FurnaceProcess implements INBTSerializable<CompoundTag>
         tag.putByte("Phase", (byte) phase.ordinal());
         tag.putInt("FuelTicks", fuelTicks);
         tag.putFloat("FuelTemp", fuelTemp);
+        tag.putString("Kind", kind);
         return tag;
     }
 
@@ -81,5 +96,6 @@ public class FurnaceProcess implements INBTSerializable<CompoundTag>
         phase = ordinal >= 0 && ordinal < Phase.values().length ? Phase.values()[ordinal] : Phase.IDLE;
         fuelTicks = tag.getInt("FuelTicks");
         fuelTemp = tag.getFloat("FuelTemp");
+        kind = tag.getString("Kind");
     }
 }

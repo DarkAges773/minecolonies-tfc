@@ -18,17 +18,24 @@ import net.minecraftforge.fluids.capability.IFluidHandlerItem;
  * below melting (iron instead becomes a hot raw bloom), and the input ore is consumed. The worker later hauls
  * the finished item out to the racks.
  */
-public final class SmelterProcessing
+public final class SmelterProcessing implements com.mctfc.furnace.FurnaceProcessing
 {
+    /** The {@link com.mctfc.furnace.FurnaceProcessings} kind the smelter stamps onto a furnace it loads. */
+    public static final String KIND = "smelt";
+
     private static final int INPUT  = 0;
     private static final int RESULT = 2;
     /** Heat the just-cast ingot/bloom to this many °C below its melting point — hot, but solidified. */
     private static final float BELOW_MELT = 1.0f;
 
-    private SmelterProcessing() {}
+    @Override
+    public void complete(final AbstractFurnaceBlockEntity furnace)
+    {
+        completeMelt(furnace);
+    }
 
     /** Finish the melt loaded in this furnace, placing the result in its result slot. */
-    public static void complete(final AbstractFurnaceBlockEntity furnace)
+    public static void completeMelt(final AbstractFurnaceBlockEntity furnace)
     {
         final ItemStack ore = furnace.getItem(INPUT);
         final Output output = SmelterRecipes.outputFor(ore);

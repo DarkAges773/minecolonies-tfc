@@ -3,19 +3,24 @@ package com.mctfc;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.AddType;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.BlockGrassPathPlacementHandler;
+import com.mctfc.cook.CookBehavior;
+import com.mctfc.cook.CookProcessing;
 import com.mctfc.furnace.FurnaceBehaviors;
 import com.mctfc.furnace.FurnaceProcessCapability;
+import com.mctfc.furnace.FurnaceProcessings;
 import com.mctfc.settings.BeeFrameSetting;
 import com.mctfc.settings.BeeFrameSettingFactory;
 import com.mctfc.settings.BuildingSettings;
 import com.mctfc.settings.BuildingStockSeeds;
 import com.mctfc.smelter.SmelterBehavior;
+import com.mctfc.smelter.SmelterProcessing;
 import com.mctfc.smelter.SmelterRecipes;
 import com.minecolonies.api.colony.requestsystem.StandardFactoryController;
 import com.minecolonies.core.colony.buildings.modules.settings.IntSetting;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingBeekeeper;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingSmeltery;
 import com.minecolonies.core.entity.ai.workers.crafting.EntityAIWorkSmelter;
+import com.minecolonies.core.entity.ai.workers.service.EntityAIWorkCook;
 import com.mctfc.data.AfcDataPack;
 import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.FirmaLifeDataPack;
@@ -52,10 +57,18 @@ public class MineColoniesTFC
         // Per-furnace process store: attach our FurnaceProcess capability to every vanilla furnace BE so an
         // in-progress TFC operation (ore + mold + finish tick + carried fuel) persists with the furnace.
         FurnaceProcessCapability.init(modBus);
+        // Furnace completers, keyed by the kind a worker stamps onto a furnace it loads — the furnace runs the right
+        // one when its flame dies (smelter: casting; cook: food heating). Smelter is registered first, so it's also
+        // the back-compat default for furnaces saved before kinds existed.
+        FurnaceProcessings.register(SmelterProcessing.KIND, new SmelterProcessing());
+        FurnaceProcessings.register(CookProcessing.KIND, new CookProcessing());
         // TFC smelter: replace the MineColonies Smelter's vanilla furnace loop with TFC ore-melting/casting
         // (collapsed: ~100 mB of ore → one ingot, or an iron bloom). Installed per-AI by
-        // MixinAbstractEntityAIUsesFurnace; other furnace workers (cook, …) stay vanilla until they get a behavior.
+        // MixinAbstractEntityAIUsesFurnace; other furnace workers stay vanilla until they get a behavior.
         FurnaceBehaviors.register(EntityAIWorkSmelter.class, SmelterBehavior::new);
+        // TFC cook (dining hall): replace the Cook's vanilla furnace cooking with TFC food heating (raw → cooked
+        // food, decay preserved, gated to the restaurant menu). Its food-serving duties are left untouched.
+        FurnaceBehaviors.register(EntityAIWorkCook.class, CookBehavior::new);
         // Add our per-hut settings to the relevant buildings' Settings tab (MixinAbstractBuildingModule grafts
         // these onto each building's SettingsModule as it's built). Smeltery: the ore-restock low-water threshold.
         BuildingSettings.register(b -> b instanceof BuildingSmeltery, SmelterBehavior.ORE_THRESHOLD,

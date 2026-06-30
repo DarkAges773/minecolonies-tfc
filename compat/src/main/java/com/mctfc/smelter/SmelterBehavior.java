@@ -454,6 +454,7 @@ public class SmelterBehavior implements FurnaceBehavior
             be.setItem(FURNACE_RESULT, mold);
             cap.setPool(FurnaceFuel.burn(cap.pool(), meltTemp, meltDuration, level, this::fuelAllowed, be, FURNACE_FUEL, source));
         }
+        cap.setKind(SmelterProcessing.KIND); // so the furnace finishes it with the casting completer, not the cook's
         cap.setPhase(FurnaceProcess.Phase.MELTING);
         light(be, meltDuration);
     }

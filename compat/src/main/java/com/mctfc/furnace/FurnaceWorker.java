@@ -54,4 +54,13 @@ public interface FurnaceWorker
 
     /** The AI's current state (for handlers that need to stay put: {@code return ai.state()}). */
     IAIState state();
+
+    /**
+     * Run the worker's own {@code checkForImportantJobs} pre-check and return where it wants to go — or
+     * {@code START_WORKING} if it has nothing more pressing than its furnace work. Furnace workers with extra
+     * duties override this in MineColonies (the Cook serves food / fetches it to serve); a behavior calls this
+     * first so those duties still run even though it has replaced the vanilla furnace loop. For workers with no
+     * override (the Smelter) it simply returns {@code START_WORKING}.
+     */
+    IAIState checkImportantJobs();
 }

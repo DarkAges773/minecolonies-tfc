@@ -20,7 +20,8 @@ the vanilla furnace **player-decorative** ([VanillaFurnaceHandler](../compat/src
 so the goal here is to give the *workers* TFC-correct processing while keeping the existing buildings/GUIs.
 
 Most furnace huts are tractable (they fulfil specific craftable recipes); the **Smelter** and **Cook** are the
-hard, novel ones. This doc covers the smelter in full and the shared framework the cook will reuse.
+hard, novel ones. Both are now done (§5, §6); this doc covers the smelter in full and the shared framework the cook
+reuses.
 
 ---
 
@@ -41,7 +42,7 @@ mixin is a thin **dispatcher** that routes to a pluggable strategy:
   one registration line, no new mixin code.**
 - **`MixinAbstractEntityAIUsesFurnace`** ([src](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIUsesFurnace.java))
   — ctor TAIL: build the behaviour for this AI's class (if registered) and register its states; `startWorking`
-  HEAD cancellable: route to `behaviour.startWorking()`. Unconverted huts (Cook today) run vanilla untouched.
+  HEAD cancellable: route to `behaviour.startWorking()`. Unconverted huts (Bakery, Kitchen, …) run vanilla untouched.
 
 ### Mixin gotcha (cost a crash to learn)
 `@Shadow` of **inherited** members fails to apply (`"method … was not located in the target class"`) — same
@@ -196,12 +197,69 @@ separate feature — see [compat-features.md](compat-features.md).)
 
 ---
 
-## 6. Cook — reuse target  — **PLANNED**
+## 6. Cook — reuse target  — **DONE**
 
-The Cook converts by: a `CookBehavior implements FurnaceBehavior` + one `FurnaceBehaviors.register` line. It
-reuses `FurnaceFuel` unchanged (passing the food's cook temp, ~200 °C, so cheap firepit fuels work) and the
-furnace-container model (raw food in input, cooked food in result). Recipe source = TFC `heating` food recipes
-(raw → cooked, preserving food data via `copy_food`); optional later: `pot` soups.
+The Cook (dining hall, `BuildingCook`) converts exactly as designed: a `CookBehavior implements FurnaceBehavior`
+([src](../compat/src/main/java/com/mctfc/cook/CookBehavior.java)) + one `FurnaceBehaviors.register(EntityAIWorkCook.class, …)`
+line. It reuses `FurnaceFuel` unchanged (passing the food's cook temp, ~200 °C from the recipe, so cheap fuels like
+logs/peat qualify but never reach metal-melting temperatures) and the furnace-container model (raw food in the input
+slot, cooked food in the result slot).
+
+### Recipe source — TFC `heating` food recipes
+[`CookRecipes`](../compat/src/main/java/com/mctfc/cook/CookRecipes.java) reads TFC directly rather than hard-coding a
+table (unlike the smelter's ore map): a **cookable** stack is one with a `tfc:heating` recipe whose output is an
+**item** (raw → cooked food) rather than a fluid (an ore melt). The cooked stack is produced with
+`HeatingRecipe.assemble(new ItemStackInventory(raw), …)`, which applies TFC's `tfc:copy_food` modifier so the cooked
+food **inherits the raw food's decay/creation date**.
+
+### Menu-gated (mirrors vanilla `isSmeltable`)
+The vanilla cook only cooks a raw food whose result is on the **restaurant menu**; we keep that, computing the result
+via TFC heating instead of a vanilla furnace recipe (TFC food has none — which is exactly why the vanilla cook never
+cooks it). Menu membership is matched by **item** (ignoring TFC food-data NBT). The menu's own raw-ingredient
+auto-request (`getFirstSmeltingRecipeByResult`, a *vanilla* furnace lookup) doesn't fire for TFC food, so for now the
+player stocks raw food — a low-water auto-request (the smelter's §8 stage 4) is the natural follow-up.
+
+### Serving is preserved
+The Cook does two jobs: **serve food** (`EntityAIWorkCook#checkForImportantJobs` → serve citizens/players / fetch food
+to serve) and furnace-cook. The dispatcher replaces the whole `startWorking`, so `CookBehavior.startWorking()` runs the
+Cook's own serving check **first** — reached through a new `FurnaceWorker#checkImportantJobs()` bridge backed by an
+`@Invoker` on `checkForImportantJobs` (declared on the furnace base, dispatched virtually to the Cook's override) — and
+only runs the cooking loop when there's nothing to serve. After each furnace sweep the loop returns to `START_WORKING`
+(not looping its own stages like the smelter) so serving is re-checked between sweeps, keeping it as responsive as
+vanilla. `canGoIdle` is left at the default `false` (the cook keeps its work AI running to serve, like the vanilla cook).
+
+### One piece at a time
+TFC cooks food **one piece at a time** (a furnace/firepit heats a single item), so each furnace cooks **one** item per
+`litTime` cycle (`COOK_BATCH = 1`) — *not* a whole stack in a single item's time. Throughput comes from running the
+hut's furnaces in **parallel** (like a TFC grill's slots), not from batch-cooking. So one item ≈ `cookTemp ×
+heat_capacity / 3` ≈ 67 ticks (~3.3 s) for a 1.0-heat-capacity food, and a hut with five furnaces cooks five at a time.
+(An early version loaded a whole stack and cooked it in one item's time — the 16-steaks-in-three-seconds bug — fixed by
+cooking one piece per cycle.)
+
+### Worker flow — two stages (no molds)
+Simpler than the smelter (no casting/mold cooling, so no third stage), in [CookBehavior](../compat/src/main/java/com/mctfc/cook/CookBehavior.java):
+1. **`BATCH_STAGING`** (at the hut) — top the carried inventory up with fuel + a small buffer of menu-cookable raw food
+   from the racks (`idle × STAGE_BUFFER`), so the worker reloads each furnace several times from hand before trekking
+   back to re-stage, without hoarding perishable food.
+2. **`TEND_FURNACES`** (one sweep) — each finished furnace's cooked food is hauled into the worker's inventory (the
+   deliverable the dump ships to the racks, where the colony food-preservation trait protects it) and, if raw food is
+   in hand, the furnace is reloaded with one piece; each idle furnace is loaded (one raw → input, fuel through the fuel
+   slot; cap stamped `cook`, `litTime` lit for one item's time, cap → `MELTING`).
+
+Completion is furnace-driven like the smelter: when `litTime` burns out, `MixinAbstractFurnaceBlockEntity` runs the
+[`CookProcessing`](../compat/src/main/java/com/mctfc/cook/CookProcessing.java) completer (selected by the cap's `kind`)
+which turns the raw food in the input slot into cooked food in the result slot. Cook duration comes from TFC's heat
+model (`cookTemp × heat_capacity / 3`, floored, shortened by **Adaptability** — the cook's primary skill).
+
+### Type-aware completion (shared framework change)
+The autonomous-completion mixin used to hard-code the smelter. It now dispatches by a **`kind`** stamped into the
+`FurnaceProcess` cap when a worker loads a furnace, through a [`FurnaceProcessings`](../compat/src/main/java/com/mctfc/furnace/FurnaceProcessings.java)
+registry of [`FurnaceProcessing`](../compat/src/main/java/com/mctfc/furnace/FurnaceProcessing.java) completers
+(smelter → casting, cook → food heating). The kind persists in furnace NBT, so a cook resumes correctly after a reload;
+an empty/unknown kind (a pre-`kind` save) falls back to the first-registered completer (the smelter). Adding a converted
+hut stays "a behavior + a completer + two registration lines, no new mixin."
+
+Optional later: `pot` soups (need TFC device work, not a furnace heating recipe).
 
 ---
 
@@ -320,4 +378,7 @@ rides the colony's dump/warehouse logistics instead of our self-managed rack wri
    batched cadence; no keep mixin), (d) ✅ requests (low-water `ore_threshold` setting; `MIN` = warehouse
    reserve; extensible `BuildingSettings` registry), (e) ✅ molds via minimum-stock (default 1 stack seeded via
    `BuildingStockSeeds` at first build). Block-style ore list.
-6. ⬜ `CookBehavior` (§6).
+6. ✅ `CookBehavior` (§6): serve-first `startWorking` (preserving dining-hall serving via the `checkImportantJobs`
+   bridge), two-stage menu-gated cook loop (raw → cooked TFC food via `heating` recipes, decay preserved by
+   `copy_food`), `FurnaceFuel` reused at ~200 °C, and the type-aware completion registry (`FurnaceProcessings` keyed
+   on a cap `kind`) so the cook and smelter finish their own operations.

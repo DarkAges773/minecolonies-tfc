@@ -398,9 +398,10 @@ MineColonies path reaches the same way, so this is split by who crafts:
     just sandwiches.
   - Gated to no-op unless the output is a TFC food. Non-food crafting is untouched.
 - **Scope:** the `RecipeStorage` path is *all* colony crafters (Baker, cook-assistant, …) and covers crafting-table
-  dynamic foods (sandwiches). **Not** covered: the cook's *furnace* output (`extractFromFurnace`, separate from
-  `RecipeStorage`) and **dynamic foods made in TFC devices** — salads (TFC salad GUI) and soups (`tfc:pot`) — both
-  of which belong with the Cook→TFC conversion (`docs/tfc-furnace-workers.md` §6).
+  dynamic foods (sandwiches). The cook's *furnace* output is handled separately by the **Cook→TFC conversion** (now
+  done — `docs/tfc-furnace-workers.md` §6): the cook heats raw TFC food into cooked food via TFC `heating` recipes,
+  preserving decay through `copy_food`. **Still not** covered: **dynamic foods made in TFC devices** — salads (TFC
+  salad GUI) and soups (`tfc:pot`) — which need TFC device work rather than a furnace heating recipe.
 
 **Knives match damage-agnostically (so the crafter doesn't stall on a worn knife).** The sandwich recipe wears a
 TFC knife each craft (`tfc:damage_inputs_shaped_crafting`), and tool durability lives in the item's `Damage` NBT.

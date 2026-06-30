@@ -8,6 +8,12 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **The dining hall Cook now cooks raw TFC food** in its furnaces. TFC food isn't vanilla-furnace-smeltable, so the
+  Cook never used to cook it; now it heats raw TFC food into its cooked form using TFC's own cooking (so the food's
+  freshness/decay carries across), for any dish you've put on the **restaurant menu** — just stock the raw
+  ingredients. Serving meals to citizens is unchanged. Cheap fuels (logs, peat, …) are hot enough for cooking; the
+  hut's *fuel* list still applies. Like the Smelter, the cook runs all its furnaces in parallel and a cook in
+  progress survives a reload.
 - **TFC built-in palette presets** — read-only presets in the *Presets* picker (under a **Built-in** folder),
   each re-palettes a whole build onto one material because picks are shared across buildings (so a colony forced
   onto the local material is re-styled in one click). Groups:
