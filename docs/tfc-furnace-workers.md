@@ -228,9 +228,18 @@ food **inherits the raw food's decay/creation date**.
 ### Menu-gated (mirrors vanilla `isSmeltable`)
 The vanilla cook only cooks a raw food whose result is on the **restaurant menu**; we keep that, computing the result
 via TFC heating instead of a vanilla furnace recipe (TFC food has none — which is exactly why the vanilla cook never
-cooks it). Menu membership is matched by **item** (ignoring TFC food-data NBT). The menu's own raw-ingredient
-auto-request (`getFirstSmeltingRecipeByResult`, a *vanilla* furnace lookup) doesn't fire for TFC food, so for now the
-player stocks raw food — a low-water auto-request (the smelter's §8 stage 4) is the natural follow-up.
+cooks it). Menu membership is matched by **item** (ignoring TFC food-data NBT).
+
+### Auto-requesting raw ingredients  — **DONE**
+The vanilla restaurant menu requests the *cooked* dish (and, for vanilla food, sometimes the raw — via
+`getFirstSmeltingRecipeByResult`, a *vanilla* furnace lookup that's empty for TFC food), so for a TFC dish **nothing
+requests the raw** the cook actually needs. `CookBehavior.requestMissing()` fills that gap: for each menu dish it
+**reverse-looks-up** the raw food ([`CookRecipes.rawForDishes`](../compat/src/main/java/com/mctfc/cook/CookRecipes.java)
+scans the heating recipes, output→input) and, when colony stock of `cooked + raw` for that dish is below the dining
+hall's **demand-scaled target** (`RestaurantMenuModule.getExpectedStock`, already scaled by our
+`MixinRestaurantMenuModule`), orders the raw as one **debounced** `StackList` (capped per order). Tying it to the
+demand target — rather than a flat threshold like the smelter — is deliberate: **TFC food rots**, so over-ordering raw
+must be avoided. It's fired (throttled) from `startWorking` rather than `canGoIdle`, because the cook never goes idle.
 
 ### Serving is preserved
 The Cook does two jobs: **serve food** (`EntityAIWorkCook#checkForImportantJobs` → serve citizens/players / fetch food

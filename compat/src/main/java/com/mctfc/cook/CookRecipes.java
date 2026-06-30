@@ -1,9 +1,18 @@
 package com.mctfc.cook;
 
 import net.dries007.tfc.common.recipes.HeatingRecipe;
+import net.dries007.tfc.common.recipes.TFCRecipeTypes;
 import net.dries007.tfc.common.recipes.inventory.ItemStackInventory;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Data model for the TFC-flavoured MineColonies <b>Cook</b> (dining hall). MineColonies' vanilla cook turns a
@@ -86,5 +95,39 @@ public final class CookRecipes
     {
         final HeatingRecipe recipe = cookRecipe(raw);
         return recipe == null ? DEFAULT_COOK_TEMP : recipe.getTemperature();
+    }
+
+    /**
+     * The <b>reverse</b> of {@link #cookRecipe}: for each cooked dish in {@code dishes}, the raw foods that heat into
+     * it — scanned from the loaded heating recipes (item-output only). The cook's auto-request uses this to order the
+     * raw ingredient a menu dish needs, which the vanilla restaurant menu can't, because its raw lookup is a
+     * <i>vanilla furnace</i> recipe (absent for TFC food). Returns dish item → its raw input stacks.
+     */
+    public static Map<Item, List<ItemStack>> rawForDishes(final Level level, final Set<Item> dishes)
+    {
+        final Map<Item, List<ItemStack>> map = new HashMap<>();
+        if (dishes.isEmpty())
+        {
+            return map;
+        }
+        final RegistryAccess access = level.registryAccess();
+        for (final HeatingRecipe recipe : level.getRecipeManager().getAllRecipesFor(TFCRecipeTypes.HEATING.get()))
+        {
+            if (!recipe.getDisplayOutputFluid().isEmpty())
+            {
+                continue; // ore melts (fluid output) belong to the smelter, not the cook
+            }
+            final ItemStack out = recipe.getResultItem(access);
+            if (out.isEmpty() || !dishes.contains(out.getItem()))
+            {
+                continue;
+            }
+            final List<ItemStack> raws = map.computeIfAbsent(out.getItem(), k -> new ArrayList<>());
+            for (final Item item : recipe.getValidItems())
+            {
+                raws.add(new ItemStack(item));
+            }
+        }
+        return map;
     }
 }

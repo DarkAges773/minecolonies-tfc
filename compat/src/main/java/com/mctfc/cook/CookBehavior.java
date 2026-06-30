@@ -8,6 +8,9 @@ import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.furnace.FurnaceWorker;
 import com.mctfc.mixin.FurnaceBlockEntityAccessor;
 import com.minecolonies.api.colony.buildings.IBuilding;
+import com.minecolonies.api.colony.requestsystem.request.IRequest;
+import com.minecolonies.api.colony.requestsystem.requestable.StackList;
+import com.minecolonies.api.colony.requestsystem.token.IToken;
 import com.minecolonies.api.crafting.ItemStorage;
 import com.minecolonies.api.entity.ai.statemachine.AITarget;
 import com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState;
@@ -15,6 +18,7 @@ import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 import com.minecolonies.api.entity.citizen.Skill;
 import com.minecolonies.core.colony.buildings.modules.ItemListModule;
 import com.minecolonies.core.colony.buildings.modules.RestaurantMenuModule;
+import net.minecraft.world.item.Item;
 import net.dries007.tfc.common.capabilities.heat.HeatCapability;
 import net.dries007.tfc.common.capabilities.heat.IHeat;
 import net.minecraft.core.BlockPos;
@@ -31,10 +35,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.minecolonies.api.util.constant.BuildingConstants.FUEL_LIST;
+import static com.minecolonies.api.util.constant.translation.RequestSystemTranslationConstants.REQUESTS_TYPE_FOOD;
 
 /**
  * TFC-flavoured replacement for the MineColonies <b>Cook</b>'s vanilla-furnace cooking (see
@@ -79,6 +85,10 @@ public class CookBehavior implements FurnaceBehavior
     /** Raw food carried per idle furnace — a small buffer so the worker reloads each furnace several times from hand
      * before trekking back to re-stage (it still cooks one item per furnace cycle). */
     private static final int    STAGE_BUFFER     = 8;
+    /** Ticks between raw-ingredient restock checks (the auto-request is throttled to keep it cheap). */
+    private static final int    REQUEST_CHECK_INTERVAL = 100;
+    /** Cap on one raw-ingredient order, so the cook never orders a rotting pile of perishable food. */
+    private static final int    MAX_REQUEST      = 16;
 
     private enum State implements IAIState
     {
@@ -96,6 +106,10 @@ public class CookBehavior implements FurnaceBehavior
     private final Set<BlockPos> tended = new HashSet<>();
     /** The furnace currently being walked to / tended. */
     private BlockPos target;
+    /** Game-time gate so the restock check (reached every work cycle) only runs occasionally. */
+    private long nextRequestCheck;
+    /** Token of our outstanding raw-food order, so we don't queue a duplicate while one is in flight. */
+    private IToken<?> foodRequest;
 
     public CookBehavior(final FurnaceWorker ai)
     {
@@ -113,6 +127,9 @@ public class CookBehavior implements FurnaceBehavior
     @Override
     public IAIState startWorking()
     {
+        // Order raw ingredients for the menu (throttled + debounced). The cook never goes idle (so unlike the smelter
+        // we can't hook canGoIdle), but startWorking is re-entered every work cycle — a fine place to keep stock up.
+        requestMissing();
         // Preserve the dining hall's serving: run the Cook's own important-jobs check (serve citizens/players,
         // fetch food to serve) first; only run the TFC cooking loop when it has nothing more pressing to do.
         final IAIState serving = ai.checkImportantJobs();
@@ -406,6 +423,97 @@ public class CookBehavior implements FurnaceBehavior
     {
         final IBuilding building = ai.building();
         return building == null ? null : building.getFirstModuleOccurance(RestaurantMenuModule.class);
+    }
+
+    // --- Auto-requesting raw ingredients (the cook keeps itself fed) ---------------------------------------
+
+    /**
+     * Order the <b>raw</b> ingredients the menu needs. The vanilla restaurant menu requests the <i>cooked</i> dish and
+     * (for vanilla food) sometimes its raw input, but its raw lookup is a vanilla-furnace recipe — absent for TFC
+     * food — so for TFC dishes nothing requests the raw the cook actually cooks. We fill that gap: for each menu dish,
+     * reverse-look-up its raw food ({@link CookRecipes#rawForDishes}) and, if colony stock of (cooked + raw) is below
+     * the dining hall's demand-scaled target, request the raw — one <b>debounced</b> {@link StackList}, batch-capped so
+     * a perishable pile is never ordered. Demand-scaled (not a flat threshold) precisely because TFC food rots.
+     *
+     * <p>Called from {@link #startWorking()} every work cycle and throttled here, since the cook never goes idle.
+     */
+    private void requestMissing()
+    {
+        final Level world = ai.world();
+        if (world == null || ai.worker() == null || ai.worker().getCitizenData() == null)
+        {
+            return;
+        }
+        if (world.getGameTime() < nextRequestCheck)
+        {
+            return;
+        }
+        nextRequestCheck = world.getGameTime() + REQUEST_CHECK_INTERVAL;
+        if (isOpen(foodRequest))
+        {
+            return; // one raw-food order in flight at a time
+        }
+
+        final RestaurantMenuModule menu = menuModule();
+        if (menu == null)
+        {
+            return;
+        }
+        final Set<Item> dishes = new HashSet<>();
+        for (final ItemStorage entry : menu.getMenu())
+        {
+            dishes.add(entry.getItem());
+        }
+        final Map<Item, List<ItemStack>> rawByDish = CookRecipes.rawForDishes(world, dishes);
+        if (rawByDish.isEmpty())
+        {
+            return; // no TFC-cookable dishes on the menu — nothing for us to request
+        }
+
+        final int target = Math.max(1, menu.getExpectedStock());
+        final List<IItemHandler> stock = combined();
+        final List<ItemStack> request = new ArrayList<>();
+        int shortfall = 0;
+        for (final Map.Entry<Item, List<ItemStack>> entry : rawByDish.entrySet())
+        {
+            final Item dish = entry.getKey();
+            final List<ItemStack> raws = entry.getValue();
+            final Set<Item> rawItems = new HashSet<>();
+            for (final ItemStack raw : raws)
+            {
+                rawItems.add(raw.getItem());
+            }
+            // count both the cooked dish and its raw input toward the target (mirrors the menu module's own accounting)
+            final int have = countMatching(stock, s -> s.getItem() == dish || rawItems.contains(s.getItem()));
+            if (have < target)
+            {
+                shortfall += target - have;
+                request.addAll(raws);
+            }
+        }
+        if (request.isEmpty())
+        {
+            return;
+        }
+        final int batch = Math.min(shortfall, MAX_REQUEST);
+        foodRequest = ai.worker().getCitizenData().createRequestAsync(new StackList(request, REQUESTS_TYPE_FOOD, batch, 1));
+    }
+
+    /** Whether {@code token} is still one of the worker's outstanding requests — the debounce (matches the smelter). */
+    private boolean isOpen(final IToken<?> token)
+    {
+        if (token == null || ai.building() == null || ai.worker() == null || ai.worker().getCitizenData() == null)
+        {
+            return false;
+        }
+        for (final IRequest<?> req : ai.building().getOpenRequests(ai.worker().getCitizenData().getId()))
+        {
+            if (token.equals(req.getId()))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     // --- Hut fuel allow-list (the player-configured "fuel" list) -------------------------------------------
