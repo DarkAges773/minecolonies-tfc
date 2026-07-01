@@ -221,9 +221,11 @@ changing a feature so you don't re-derive (or undo) a hard-won fix:
   substitutions, farming, food (stacking/spoilage/nutrition), collapse-proofing, colony lights,
   decorative furnaces, optional per-mod datapacks.
 - [docs/tfc-furnace-workers.md](docs/tfc-furnace-workers.md) — design for the TFC furnace-worker rework
-  (Smelter and Cook both done): the behaviour-controller (dispatcher mixin + `FurnaceBehavior` strategy), the
+  (Smelter, Cook, and Chef all done): the behaviour-controller (dispatcher mixin + `FurnaceBehavior` strategy), the
   furnace-as-container + `litTime` model, the reusable temperature-gated/duration-pooled fuel system, and the
-  `kind`-keyed `FurnaceProcessings` completer registry (the cook reuses all of it, food-serving preserved).
+  `kind`-keyed `FurnaceProcessings` completer registry (the cook reuses all of it, food-serving preserved). §6b: the
+  **Chef** reuses the heating from a *different* AI base (`AbstractEntityAIRequestSmelter`, not the dispatcher) — a
+  shared `FurnaceHeating` helper + a Kitchen-gated ignite mixin drive its smelt tab with TFC heating recipes.
 - [docs/tfc-herder-workers.md](docs/tfc-herder-workers.md) — design (PLANNED) for the TFC herder-worker rework
   across all five herding huts (Cowhand/Shepherd/Swineherd/Chicken/Rabbit): a `HerdBridge` strategy keyed on
   TFC's common `TFCAnimalProperties` interface, tag-based species recognition, authentic familiarity-based

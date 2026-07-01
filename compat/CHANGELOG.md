@@ -8,6 +8,13 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **The Chef (Kitchen) now cooks raw TFC food in its furnaces** (the *smelting* recipe tab). TFC food isn't
+  vanilla-furnace-smeltable, so that tab used to be useless in a TFC world; now you teach it with TFC's own cooking
+  (raw food → cooked food) — put a raw food in the teach window and it shows the cooked result to teach — and the Chef
+  drives its furnaces with TFC heat, just like the dining-hall Cook. Unlike the Cook (which cooks proactively for the
+  restaurant menu), the Chef cooks **on demand** to fulfil requests — e.g. cooked ingredients for its own dishes, or an
+  order from another building. Food cooks one piece at a time (throughput via several furnaces at once), the food's
+  freshness carries across, and a cook in progress survives a reload. Uses TFC **firepit** fuels (logs / peat / sticks).
 - **The Chef (Kitchen) can now make TFC pot foods** (boiled egg, cooked rice, and any similar single-output,
   water-based pot recipe from TFC or its add-ons). These are added to the Chef's recipe list automatically — no
   teaching needed — so the colony can finally produce them; the food carries its ingredients' freshness. (Excluded: pot

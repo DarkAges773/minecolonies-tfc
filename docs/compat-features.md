@@ -521,6 +521,34 @@ TAIL).
   Chef fulfils requests for those foods; decay carries onto the output via the existing `MixinRecipeStorage` static-food
   path (`copy_oldest_food`), same as the dining-hall Cook's heated food.
 
+## Chef furnace-cooks via TFC heating (smelt tab) — DONE, in-world test pending
+
+The Chef's **smelting** recipe tab now teaches and drives **TFC `heating` recipes** (raw food → cooked food) instead of
+vanilla furnace recipes — the on-demand, request-driven counterpart to the dining-hall Cook's proactive menu cooking,
+sharing the same furnace mechanics. Full design: [tfc-furnace-workers.md §6b](tfc-furnace-workers.md).
+
+- **Why it needs its own path:** the Chef (`EntityAIWorkChef → AbstractEntityAIRequestSmelter → AbstractEntityAICrafting`)
+  is a **request crafter**, *not* an `AbstractEntityAIUsesFurnace` worker, so the `FurnaceBehavior` dispatcher that drives
+  the Cook/Smelter doesn't reach it. It keeps its own worker loop; only the heating underneath is swapped.
+- **Teach (TFC-only):** the furnace recipe-teach window fills its output slot via vanilla `getSmeltingResult` — empty for
+  TFC food, so you couldn't teach a TFC cook recipe at all. [`MixinContainerCraftingFurnace`](../compat/src/main/java/com/mctfc/mixin/MixinContainerCraftingFurnace.java)
+  redirects that lookup **for the Kitchen only** to TFC's item-output `heating` result (non-decaying template so the recipe
+  list never shows it spoiled). No TFC recipe → empty output slot (the vanilla fallback is intentionally dropped on the
+  Chef); other furnace crafters keep vanilla.
+- **Drive:** the Chef already loads input + fuel and hauls the result out; the only gap is ignition/production (a vanilla
+  furnace never lights for TFC food). [`MixinAbstractEntityAIRequestSmelter`](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIRequestSmelter.java)
+  lights any Kitchen furnace holding a cookable input (piggy-backing the per-second `accelerateFurnaces` event) via the
+  shared [`FurnaceHeating`](../compat/src/main/java/com/mctfc/furnace/FurnaceHeating.java); the furnace finishes each piece
+  itself (`MixinAbstractFurnaceBlockEntity` → `CookProcessing`) and the Chef's own retrieval delivers it. Gated to
+  `BuildingKitchen`.
+- **Shared with the Cook:** the "ignite a furnace to TFC-heat this input" step is factored into `FurnaceHeating` (used by
+  both `CookBehavior` and the Chef mixin), and `CookProcessing` now cooks **one piece per cycle** (re-igniting for the rest
+  of a loaded stack) — a no-op for the always-one-at-a-time Cook, but it gives the Chef authentic one-at-a-time throughput
+  with parallelism across the hut's furnaces.
+- **Fuel:** scoped to TFC **firepit** fuels for the Kitchen (`FurnaceFuelScope` `"kitchen" → COOK`, fuel-list GUI filtered);
+  because the Chef fetches fuel through its hut fuel list, an **empty-list fallback** to all firepit fuels lets it cook out
+  of the box (the player can still restrict it).
+
 ## Dining hall stocks food to demand (not by the stackful) — DONE, in-world test pending
 
 TFC food decays, but MineColonies' dining hall (Restaurant) was built for inert food: [RestaurantMenuModule](https://github.com/ldtteam/minecolonies)`#onColonyTick`

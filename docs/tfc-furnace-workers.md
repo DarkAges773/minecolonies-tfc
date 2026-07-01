@@ -20,8 +20,8 @@ the vanilla furnace **player-decorative** ([VanillaFurnaceHandler](../compat/src
 so the goal here is to give the *workers* TFC-correct processing while keeping the existing buildings/GUIs.
 
 Most furnace huts are tractable (they fulfil specific craftable recipes); the **Smelter** and **Cook** are the
-hard, novel ones. Both are now done (§5, §6); this doc covers the smelter in full and the shared framework the cook
-reuses.
+hard, novel ones. Both are now done (§5, §6), and the **Chef** (Kitchen) reuses the same heating mechanics from a
+different AI base (§6b); this doc covers the smelter in full and the shared framework the cook and chef reuse.
 
 ---
 
@@ -282,6 +282,63 @@ an empty/unknown kind (a pre-`kind` save) falls back to the first-registered com
 hut stays "a behavior + a completer + two registration lines, no new mixin."
 
 Optional later: `pot` soups (need TFC device work, not a furnace heating recipe).
+
+---
+
+## 6b. Chef (Kitchen) — second furnace-cooking reuse  — **DONE**
+
+The **Chef** (`BuildingKitchen`, `EntityAIWorkChef`) now cooks TFC food in furnaces too — but it reaches the shared
+heating mechanics from a **different direction** than the Cook, and that difference is the whole story.
+
+### Why it can't just register a `FurnaceBehavior`
+The Cook/Smelter extend `AbstractEntityAIUsesFurnace` (which our dispatcher mixin targets). The Chef does **not**:
+its hierarchy is `EntityAIWorkChef → AbstractEntityAIRequestSmelter → AbstractEntityAICrafting → AbstractEntityAIInteract`.
+It is a **request crafter** that *also* uses furnaces (to fulfil taught smelting recipes on demand), with its own
+furnace states living in `AbstractEntityAIRequestSmelter` — not the `FurnaceBehavior` framework. So the Chef keeps its
+own worker loop; we only swap the **heating** underneath it.
+
+### Two gaps, both TFC-shaped
+1. **Teach.** The furnace recipe-teach window fills its output slot via vanilla `FurnaceRecipes#getSmeltingResult` —
+   empty for TFC food — so the Done button's non-empty guard means *you can't even teach a TFC cook recipe*.
+   [`MixinContainerCraftingFurnace`](../compat/src/main/java/com/mctfc/mixin/MixinContainerCraftingFurnace.java) redirects
+   that lookup **for the Kitchen only** to TFC's item-output `heating` result ([`CookRecipes.cookedResult`](../compat/src/main/java/com/mctfc/cook/CookRecipes.java),
+   stamped [`FoodTemplates.nonDecaying`](../compat/src/main/java/com/mctfc/food/FoodTemplates.java) so the recipe list never shows it
+   spoiled). It's **TFC-only** (the vanilla fallback is dropped on the Chef — a non-cookable input yields an empty output
+   slot); other furnace crafters keep vanilla. The taught recipe is a normal gridSize-1 / intermediate-`FURNACE` store.
+2. **Drive.** The Chef's states already load input + fuel and haul the result out of the result slot; the only missing
+   piece is **ignition + production** (the vanilla furnace never lights for TFC food).
+   [`MixinAbstractEntityAIRequestSmelter`](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIRequestSmelter.java)
+   supplies it: piggy-backing on the per-second `accelerateFurnaces` background event, it lights any Kitchen furnace
+   holding a TFC-cookable input (idle + unlit) via the shared [`FurnaceHeating`](../compat/src/main/java/com/mctfc/furnace/FurnaceHeating.java)
+   (fuel pool + cook kind + `litTime`). That same event then accelerates it, the furnace finishes each piece itself
+   (`MixinAbstractFurnaceBlockEntity` → `CookProcessing`), and the Chef's own `retrieveProductFromFurnace` delivers it
+   to the request. All gated to `BuildingKitchen`, so the Baker/Stone-smeltery keep vanilla.
+
+### The shared abstraction (`FurnaceHeating`)
+The Cook's inline "load a furnace to TFC-heat this input" is extracted into
+[`FurnaceHeating`](../compat/src/main/java/com/mctfc/furnace/FurnaceHeating.java) — a stateless helper (`ignite` /
+`igniteInPlace` / `light` / `baseDuration` / the firepit-fuel predicate) that consumes fuel via `FurnaceFuel`, stamps
+the `CookProcessing` kind, and drives `litTime`. Both the Cook (`CookBehavior.load`) and the Chef mixin call it, so
+the heating lives in one place.
+
+### One-piece-at-a-time, unified
+`CookProcessing.complete` now cooks **exactly one** piece and leaves the rest of a loaded stack in place; the furnace
+**re-ignites** for the next piece (`MixinAbstractFurnaceBlockEntity`, `kind == cook`, in-place from its own fuel slot).
+The dining-hall Cook always loads one, so this is a no-op for it — but it gives the Chef (which may load a whole
+request's worth into a furnace) the Cook's authentic one-at-a-time throughput for free: a stack cooks one piece per
+`litTime` cycle, with parallelism across the hut's furnaces, not a whole stack in one item's time. The re-ignite path
+also recovers a batch that stalled `DONE` when its fuel ran out, once fuel returns.
+
+### Fuel
+Scoped to TFC **firepit** fuels for the Kitchen (`FurnaceFuelScope` `"kitchen" → COOK`; the fuel-list GUI is filtered
+by the existing `MixinItemListModuleView`). Because the Chef fetches fuel through its hut fuel list (unlike the Cook,
+which pulls from racks), the mixin adds an **empty-list fallback** to all firepit fuels so the Chef cooks out of the
+box — the player can still restrict it via the list. Cook temp (~200 °C) is well under any firepit fuel, so the temp
+gate never bites here.
+
+> **Cook vs. Chef, in one line:** the Cook cooks **proactively** for the dining-hall menu; the Chef cooks **reactively**
+> for taught recipes / requests (e.g. cooked meat that feeds its own sandwich crafting, or another building's order).
+> Same furnace mechanics, complementary triggers.
 
 ---
 

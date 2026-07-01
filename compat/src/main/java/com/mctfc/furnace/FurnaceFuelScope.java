@@ -12,8 +12,8 @@ import net.minecraft.world.item.Item;
  * <ul>
  *   <li><b>Smeltery</b> ≈ TFC charcoal forge → {@code tfc:forge_fuel} ({@code #minecraft:coals} = coal, charcoal,
  *       and TFC's bituminous coal / lignite).</li>
- *   <li><b>Cook</b> (dining hall) ≈ TFC firepit → {@code tfc:firepit_fuel} ({@code #minecraft:logs} incl. TFC logs,
- *       plus peat, stick bundles, driftwood, …).</li>
+ *   <li><b>Cook</b> (dining hall) and <b>Chef</b> (kitchen) ≈ TFC firepit → {@code tfc:firepit_fuel}
+ *       ({@code #minecraft:logs} incl. TFC logs, plus peat, stick bundles, driftwood, …).</li>
  * </ul>
  *
  * Used both to scope each hut's fuel-list GUI ({@code MixinItemListModuleView}) and to enforce the restriction in
@@ -36,7 +36,8 @@ public final class FurnaceFuelScope
         return switch (buildingId)
         {
             case "smeltery" -> SMELTER;
-            case "cook" -> COOK;
+            // Cook (dining hall) and Chef (kitchen) both cook TFC food over a firepit-style heat.
+            case "cook", "kitchen" -> COOK;
             default -> null;
         };
     }

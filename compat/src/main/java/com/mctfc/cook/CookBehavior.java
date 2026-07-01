@@ -3,11 +3,11 @@ package com.mctfc.cook;
 import com.mctfc.furnace.FurnaceBehavior;
 import com.mctfc.furnace.FurnaceFuel;
 import com.mctfc.furnace.FurnaceFuelScope;
+import com.mctfc.furnace.FurnaceHeating;
 import com.mctfc.furnace.FurnaceProcess;
 import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.furnace.FurnaceWorker;
 import com.mctfc.food.FoodTemplates;
-import com.mctfc.mixin.FurnaceBlockEntityAccessor;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.requestsystem.request.IRequest;
 import com.minecolonies.api.colony.requestsystem.requestable.StackList;
@@ -25,9 +25,7 @@ import net.dries007.tfc.common.capabilities.heat.IHeat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -301,10 +299,9 @@ public class CookBehavior implements FurnaceBehavior
             return;
         }
         be.setItem(FURNACE_INPUT, raw);
-        cap.setPool(FurnaceFuel.burn(cap.pool(), cookTemp, duration, level, this::fuelAllowed, be, FURNACE_FUEL, source));
-        cap.setKind(CookProcessing.KIND);
-        cap.setPhase(FurnaceProcess.Phase.MELTING);
-        light(be, duration);
+        // Ignite via the shared TFC furnace-heating driver (fuel pool + cook kind + litTime flame); the Kitchen Chef
+        // reuses the very same helper to drive its furnaces (see FurnaceHeating / MixinAbstractEntityAIRequestSmelter).
+        FurnaceHeating.ignite(be, cap, cookTemp, duration, level, this::fuelAllowed, source);
     }
 
     /**
@@ -739,32 +736,6 @@ public class CookBehavior implements FurnaceBehavior
     private FurnaceProcess capOf(final FurnaceBlockEntity be)
     {
         return FurnaceProcessCapability.get(be);
-    }
-
-    /**
-     * Light the furnace for {@code ticks}: set its {@code litTime}/{@code litDuration} (the vanilla BE counts it down
-     * and extinguishes when it expires — which is also our cook timer) and flip the LIT blockstate so the flame
-     * renders immediately.
-     */
-    private void light(final FurnaceBlockEntity be, final int ticks)
-    {
-        final FurnaceBlockEntityAccessor accessor = (FurnaceBlockEntityAccessor) be;
-        accessor.setLitTime(ticks);
-        accessor.setLitDuration(Math.max(1, ticks));
-        be.setChanged();
-
-        final Level world = ai.world();
-        if (world == null)
-        {
-            return;
-        }
-        final BlockState state = world.getBlockState(be.getBlockPos());
-        if (state.getBlock() instanceof AbstractFurnaceBlock
-              && state.hasProperty(AbstractFurnaceBlock.LIT)
-              && !state.getValue(AbstractFurnaceBlock.LIT))
-        {
-            world.setBlockAndUpdate(be.getBlockPos(), state.setValue(AbstractFurnaceBlock.LIT, true));
-        }
     }
 
     /**

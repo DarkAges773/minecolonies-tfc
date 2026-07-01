@@ -19,6 +19,8 @@
     "MixinTfcLightBlocks",
     "AbstractEntityAIBasicInvoker",
     "MixinAbstractEntityAIUsesFurnace",
+    "MixinAbstractEntityAIRequestSmelter",
+    "MixinContainerCraftingFurnace",
     "FurnaceBlockEntityAccessor",
     "MixinAbstractFurnaceBlockEntity",
     "MixinCompatibilityManager",

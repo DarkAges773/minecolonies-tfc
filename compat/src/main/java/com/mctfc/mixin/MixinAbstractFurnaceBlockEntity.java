@@ -1,5 +1,7 @@
 package com.mctfc.mixin;
 
+import com.mctfc.cook.CookProcessing;
+import com.mctfc.furnace.FurnaceHeating;
 import com.mctfc.furnace.FurnaceProcess;
 import com.mctfc.furnace.FurnaceProcessCapability;
 import com.mctfc.furnace.FurnaceProcessings;
@@ -22,6 +24,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  *
  * <p>Gated cheaply — it only touches a furnace that is unlit <i>and</i> has something in its input slot — so
  * idle furnaces pay almost nothing per tick.
+ *
+ * <p>A <b>cook</b> loaded with more than one raw piece (the Kitchen Chef fulfilling a request) keeps the flame
+ * going one piece at a time: after a completion, if raw food remains it re-ignites in place from the furnace's own
+ * fuel slot ({@link FurnaceHeating#igniteInPlace}) rather than going {@code DONE}, so throughput comes from
+ * parallel furnaces (like a TFC grill), not from cooking a whole stack in one item's time. The same path recovers
+ * a batch that stalled {@code DONE} when its fuel ran out, once fuel returns. The dining-hall Cook always loads
+ * exactly one, so its furnaces cook empty and this never fires for them.
  */
 @Mixin(AbstractFurnaceBlockEntity.class)
 public abstract class MixinAbstractFurnaceBlockEntity
@@ -35,11 +44,23 @@ public abstract class MixinAbstractFurnaceBlockEntity
             return;
         }
         final FurnaceProcess process = FurnaceProcessCapability.get(furnace);
-        if (process == null || process.phase() != FurnaceProcess.Phase.MELTING)
+        if (process == null)
         {
             return;
         }
-        FurnaceProcessings.complete(process.kind(), furnace);
-        process.setPhase(FurnaceProcess.Phase.DONE);
+        if (process.phase() == FurnaceProcess.Phase.MELTING)
+        {
+            FurnaceProcessings.complete(process.kind(), furnace);
+            process.setPhase(FurnaceProcess.Phase.DONE);
+        }
+        // (Re-)ignite a cook that still has raw food loaded: the next piece of a multi-item batch, or a batch that
+        // stalled DONE when its fuel ran out and now has fuel again. Only a cook with leftover input re-lights — a
+        // finished single-item cook (input empty) is left DONE for the worker to unload.
+        if (process.phase() == FurnaceProcess.Phase.DONE
+              && CookProcessing.KIND.equals(process.kind())
+              && !furnace.getItem(0).isEmpty())
+        {
+            FurnaceHeating.igniteInPlace(furnace, process, 0, FurnaceHeating.COOK_FUEL);
+        }
     }
 }
