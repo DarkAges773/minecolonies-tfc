@@ -8,6 +8,11 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **The Chef (Kitchen) can now make TFC pot foods** (boiled egg, cooked rice, and any similar single-output,
+  water-based pot recipe from TFC or its add-ons). These are added to the Chef's recipe list automatically — no
+  teaching needed — so the colony can finally produce them; the food carries its ingredients' freshness. (Excluded: pot
+  recipes that make a *fluid* like dyes, and recipes needing a non-water liquid — the colony can't stock fluids, so
+  those are left out rather than handed over for free.)
 - **The Chef (Kitchen) can now make TFC salads and pot soups.** These TFC dishes have no fixed recipe — their type and
   food value depend on the ingredients — so a new **Compose TFC Dish** button on the Chef's crafting-teaching tab opens
   a familiar crafting-style window (with your inventory) where you drop in 1–5 ingredients and a bowl, see the

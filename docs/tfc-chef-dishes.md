@@ -23,6 +23,11 @@ Both are **dynamic and combinatorial**: *any* set of category-appropriate foods 
 That rules out the obvious "inject discrete recipes" approach (the [AnvilRecipeBridge](../compat/src/main/java/com/mctfc/smithing/AnvilRecipeBridge.java)
 model) — there is no finite recipe set, and the output depends on the inputs.
 
+> The *static* pot foods (boiled egg, cooked rice, … — fixed `tfc:pot` recipes with an item output) are **not** dynamic,
+> so they *do* use the inject-discrete-recipes model: [`PotRecipeBridge`](../compat/src/main/java/com/mctfc/cook/PotRecipeBridge.java)
+> auto-adds them to the Chef (see [compat-features.md](compat-features.md) → "Chef makes TFC pot foods"). This doc is
+> only about the two dynamic dishes, which need the compose UI below.
+
 **The unlock:** the player **composing** the ingredients in a teach window *is* the act that fixes a discrete recipe.
 The player picks the ingredients once; we compute that specific output; it becomes a taught recipe the Chef repeats.
 So the dynamic problem is solved at teach-time, and everything downstream is a normal MineColonies recipe.

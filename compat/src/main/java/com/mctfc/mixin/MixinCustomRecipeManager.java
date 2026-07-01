@@ -1,5 +1,6 @@
 package com.mctfc.mixin;
 
+import com.mctfc.cook.PotRecipeBridge;
 import com.mctfc.crafting.LumberjackRecipes;
 import com.mctfc.smithing.AnvilRecipeBridge;
 import com.minecolonies.core.colony.crafting.CustomRecipeManager;
@@ -10,7 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Post-load tweaks to the worker recipe map: inject the TFC anvil/welding recipes for the blacksmith (see
- * {@link AnvilRecipeBridge}) and strip MineColonies' vanilla-log lumberjack recipes (see {@link LumberjackRecipes}).
+ * {@link AnvilRecipeBridge}), the static TFC pot food recipes for the chef (see {@link PotRecipeBridge}), and strip
+ * MineColonies' vanilla-log lumberjack recipes (see {@link LumberjackRecipes}).
  *
  * <p>{@code resolveTemplates()} is MineColonies' own post-load hook: {@code DataPackSyncEventHandler} calls it
  * once per datapack sync — after {@code CrafterRecipeListener} reset + reloaded the recipe map (an earlier
@@ -28,6 +30,7 @@ public class MixinCustomRecipeManager
     private void mctfc$postProcessRecipes(final CallbackInfo ci)
     {
         AnvilRecipeBridge.injectAll();
+        PotRecipeBridge.injectAll();
         LumberjackRecipes.removeVanillaDefaults();
     }
 }

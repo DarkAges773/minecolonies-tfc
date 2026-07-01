@@ -484,6 +484,31 @@ then taught to the Chef as an ordinary colony crafting recipe. Full design + the
   `null` recipeSource (not re-assemblable), so it keeps the baked food data and **re-stamps the creation date fresh**
   (`CraftedFoodDecay#refreshCreationDate`) — a dish taught long ago isn't served stale.
 
+## Chef makes TFC pot foods (boiled egg, cooked rice, …) — DONE, in-world test pending
+
+The *static* half of TFC's pot cooking (as opposed to the dynamic soups above). TFC's `tfc:pot` recipes turn fixed
+ingredients into a fixed output — some **food items** (boiled egg from an egg, cooked rice from rice grain; add-ons add
+more), some **fluids** (the 17 dyes, tallow). Nothing in a base colony can make the food ones. [`PotRecipeBridge`](../compat/src/main/java/com/mctfc/cook/PotRecipeBridge.java)
+infers them and feeds them to the **Chef** as colony crafter recipes — the pot equivalent of the Blacksmith's
+[`AnvilRecipeBridge`](../compat/src/main/java/com/mctfc/smithing/AnvilRecipeBridge.java), injected at the same seam
+([`MixinCustomRecipeManager`](../compat/src/main/java/com/mctfc/mixin/MixinCustomRecipeManager.java) → `resolveTemplates`
+TAIL).
+
+- **Enumerate + filter:** `getAllRecipesFor(TFCRecipeTypes.POT)`, keep `SimplePotRecipe`s whose `getDisplayFluid()` is
+  **empty** (drops every dye/fluid *output*) and whose first `getOutputProviders().get(0).getEmptyStack()` carries a TFC
+  **food** cap — boiled egg / cooked rice in, dyes out. Plus a **water-input filter**: the colony abstracts the pot's
+  fluid away (crafters consume items, not fluids), and abstracting free/renewable **water** is fair, but abstracting a
+  scarce fluid (milk, brine, an add-on's exotic liquid) would hand out the food for nothing — so a recipe whose
+  `getFluidIngredient()` doesn't accept `Fluids.WATER` is **dropped**, not made free. (Base TFC's food pot recipes are
+  all water; this only bites add-ons.)
+- **Inputs** verbatim from `getItemIngredients()` (first stack of each; TFC's own item for tag ingredients), duplicates
+  **merged** (e.g. `cooked_rice_3` = rice + rice + rice → 3× rice grain). Water + firepit heat are abstracted, like the
+  Blacksmith abstracts the anvil.
+- **Registered** as `CustomRecipe`s under the crafter key **`chef_crafting`** (`jobPath + "_" + moduleId`), no research
+  gate, AIR intermediate → the crafting module. They appear on **every Chef automatically** (no player teaching) and the
+  Chef fulfils requests for those foods; decay carries onto the output via the existing `MixinRecipeStorage` static-food
+  path (`copy_oldest_food`), same as the dining-hall Cook's heated food.
+
 ## Dining hall stocks food to demand (not by the stackful) — DONE, in-world test pending
 
 TFC food decays, but MineColonies' dining hall (Restaurant) was built for inert food: [RestaurantMenuModule](https://github.com/ldtteam/minecolonies)`#onColonyTick`
