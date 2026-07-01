@@ -21,7 +21,7 @@ def mod_id = 'structurizereplacements'
 def mod_name = 'Palette Swap for MineColonies'
 def mod_license = 'GPL-3.0'
 // MAJOR.MINOR — bump manually (MINOR = new back-compat feature, MAJOR = rule-schema/NBT break).
-def mod_version_base = '0.3'
+def mod_version_base = '0.4'
 // PATCH auto-rolls from the count of commits that touched this subproject (see rootProject.gitBuildNumber)
 // — the rolling "build number", advancing only when this mod changes.
 def mod_version = "${mod_version_base}.${rootProject.gitBuildNumber(projectDir.name)}".toString()

@@ -7,6 +7,8 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.4.67] - 2026-07-01
+
 ### Added
 - **Palette presets** — the *Replace* picker now has a **Presets** button opening a hub where you can **save**
   the current picks under a name, **load** a saved set into any build (it merges, keeping picks it doesn't
