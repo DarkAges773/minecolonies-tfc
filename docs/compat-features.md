@@ -483,6 +483,15 @@ then taught to the Chef as an ordinary colony crafting recipe. Full design + the
   abstracted like the Blacksmith's anvil). `MixinRecipeStorage` realizes the dynamic output: our taught recipe has a
   `null` recipeSource (not re-assemblable), so it keeps the baked food data and **re-stamps the creation date fresh**
   (`CraftedFoodDecay#refreshCreationDate`) — a dish taught long ago isn't served stale.
+- **Matched** ([`DynamicBowlFoodMatching`](../compat/src/main/java/com/mctfc/food/DynamicBowlFoodMatching.java)) — the
+  crucial glue so the Chef actually **fulfils requests** for the dish (a dining hall ordering it, say). TFC's
+  `DynamicBowlHandler#save()` writes the bowl into the item's vanilla `getTag()` (a sandwich's `FoodHandler.Dynamic`
+  keeps everything in the cap, so it doesn't hit this), and MineColonies matches food requests with `matchNBT = true`
+  → the freshly-made salad's per-bowl tag never equals the requested one, so the request is silently never taken. Fix:
+  register the `#tfc:dynamic_bowl_items` items (salads + soups) in `ItemStackUtils.CHECKED_NBT_KEYS` with an **empty**
+  key set (via `TagsUpdatedEvent`) so the match short-circuits on item id — exactly the mechanism
+  [`ToolNbtMatching`](../compat/src/main/java/com/mctfc/crafting/ToolNbtMatching.java) uses for worn knives. Bowl /
+  ingredients / freshness are colony-irrelevant for matching (a citizen eats whichever `fruit_salad` it gets).
 
 ## Chef makes TFC pot foods (boiled egg, cooked rice, …) — DONE, in-world test pending
 

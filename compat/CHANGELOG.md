@@ -59,6 +59,10 @@ All notable changes to this mod are documented here. The format is based on
   other rocks' plain cobble, and mossy offers only mossy — you can't swap a wall between plain and mossy.
 
 ### Fixed
+- **The Chef now actually fulfils requests for salads and pot soups** (e.g. from a dining hall's menu). TFC's
+  salad/soup items stash their bowl in the item's NBT, and MineColonies matches food requests by exact NBT, so a
+  freshly-made salad never counted as "the salad that was requested" and the Chef ignored the order. Salads and soups
+  are now matched by item, ignoring that per-bowl NBT (the same way worn TFC knives are matched damage-agnostically).
 - **TFC food shown in the restaurant menu, the dish picker and food requests no longer appears rotten.** Those are
   *templates* (a reference to a dish), but were stored as real food stacks whose TFC freshness aged over time, so they
   looked spoiled. They're now stamped TFC's persistent "never decay" date, so they stay fresh everywhere — in the menu,
