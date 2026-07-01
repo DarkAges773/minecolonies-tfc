@@ -226,6 +226,24 @@ changing a feature so you don't re-derive (or undo) a hard-won fix:
   `kind`-keyed `FurnaceProcessings` completer registry (the cook reuses all of it, food-serving preserved). §6b: the
   **Chef** reuses the heating from a *different* AI base (`AbstractEntityAIRequestSmelter`, not the dispatcher) — a
   shared `FurnaceHeating` helper + a Kitchen-gated ignite mixin drive its smelt tab with TFC heating recipes.
+- [docs/tfc-forge-multiblock.md](docs/tfc-forge-multiblock.md) — design (PLANNED) for a custom **growing forge block**
+  that replaces the huts' vanilla furnaces (Smeltery/Cook/Chef; Glassblower later): a **fully custom** block+BE+type
+  (not `FurnaceBlock`/`FurnaceBlockEntity` — that `instanceof` compat is worthless once we replace the AI) that
+  **self-processes** on its own tick, so the AI shrinks to a **tend** loop. It's a **player-usable TFC firepit×forge
+  hybrid** — each position is a firepit (1 heat slot + 2 output slots applying a `HeatingRecipe`'s item/fluid result), the
+  multiblock is a charcoal forge (N positions + one shared 5-slot fuel column); 1-item slots, heat slots take any heatable
+  item, output/overflow any fluid container, the worker feeds only its hut's subset.
+  Adjacent blocks merge into one **controller
+  multiblock** (cap 5) sharing one **fixed 5-slot fuel column** (1-to-1 TFC-forge copy — add-top/cascade/bottom-burns;
+  blocks scale input positions only) + one device temperature, tended as one via a `ForgeController` façade;
+  discovery via a grafted `ForgeUserModule`. The worker **lights** the forge before loading; `deviceTemp` **rises
+  gradually** (charcoal-forge style) so there's a warm-up (mitigated by a **keep-warm idle window** — the AI keeps it lit
+  after the last op, then **explicitly extinguishes**; the AI gates loads on the fuel's theoretical ceiling, not live
+  temp). Smelter output is **mold-based** (per-position output+overflow
+  mold pair, fill output→overflow, ≤1 partial/position, top-up by re-seating; metal beyond both molds **spills/lost**) so
+  a controller melts up to N metals at once (one per position) and partial metal survives a break as a real mold item.
+  Chef driven by a FURNACE-gated request mixin straight to `addDelivery`. **Iron/bloomery deferred** (mold model is
+  cast-metal-only).
 - [docs/tfc-herder-workers.md](docs/tfc-herder-workers.md) — design (PLANNED) for the TFC herder-worker rework
   across all five herding huts (Cowhand/Shepherd/Swineherd/Chicken/Rabbit): a `HerdBridge` strategy keyed on
   TFC's common `TFCAnimalProperties` interface, tag-based species recognition, authentic familiarity-based
