@@ -478,7 +478,10 @@ then taught to the Chef as an ordinary colony crafting recipe. Full design + the
   the player's open `ComposeDishMenu`, computes the dish from its authoritative cap-bearing slots, builds a crafting
   `RecipeStorage` (gridSize 3 → AIR intermediate → `chef_craft`) and `addRecipe`s it (mirroring
   `AddRemoveRecipeMessage.onExecute`). The Kitchen's `isRecipeCompatible` EDIBLE gate is satisfied because TFC food
-  carries a flat vanilla `FoodProperties` (see the nutrition bridge above).
+  carries a flat vanilla `FoodProperties` (see the nutrition bridge above). The recipe's food inputs + output are
+  stamped **non-decaying** (`FoodTemplates.nonDecaying`) so the recipe-list GUI never renders them spoiled — they're
+  templates, not real food; the crafter consumes real fresh ingredients and `MixinRecipeStorage` handles the crafted
+  output's freshness. (The auto-added pot foods in `PotRecipeBridge` do the same.)
 - **Made** — the Chef crafts it abstractly (`RecipeStorage#fullfillRecipeAndCopy` → `getPrimaryOutput`, the device
   abstracted like the Blacksmith's anvil). `MixinRecipeStorage` realizes the dynamic output: our taught recipe has a
   `null` recipeSource (not re-assemblable), so it keeps the baked food data and **re-stamps the creation date fresh**

@@ -2,6 +2,7 @@ package com.mctfc.cook;
 
 import com.minecolonies.api.crafting.ItemStorage;
 import com.minecolonies.api.equipment.ModEquipmentTypes;
+import com.mctfc.food.FoodTemplates;
 import com.minecolonies.core.colony.crafting.CustomRecipe;
 import com.minecolonies.core.colony.crafting.CustomRecipeManager;
 import net.dries007.tfc.common.capabilities.food.FoodCapability;
@@ -102,14 +103,16 @@ public final class PotRecipeBridge
                     ok = false;
                     break;
                 }
-                inputs.add(new ItemStorage(items[0].copyWithCount(1)));
+                // Non-decaying *template* stamp so the recipe-list GUI never shows the input spoiled; the crafter
+                // consumes real, fresh warehouse items and MixinRecipeStorage carries their decay onto the output.
+                inputs.add(new ItemStorage(FoodTemplates.nonDecaying(items[0].copyWithCount(1))));
             }
             if (!ok || inputs.isEmpty())
             {
                 continue;
             }
 
-            addRecipe(recipe.getId(), mergeDuplicates(inputs), result);
+            addRecipe(recipe.getId(), mergeDuplicates(inputs), FoodTemplates.nonDecaying(result));
             count++;
         }
         LOGGER.info("Registered {} TFC pot food recipes for the colony chef", count);

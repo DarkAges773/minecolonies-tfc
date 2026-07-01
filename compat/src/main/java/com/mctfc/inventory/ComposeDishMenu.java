@@ -2,6 +2,7 @@ package com.mctfc.inventory;
 
 import com.mctfc.cook.DishType;
 import com.mctfc.cook.TfcDishes;
+import com.mctfc.food.FoodTemplates;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.colony.buildings.IBuilding;
@@ -202,14 +203,17 @@ public class ComposeDishMenu extends AbstractContainerMenu
             return;
         }
 
+        // Stamp the food inputs/output as non-decaying *templates* so the recipe-list GUI never renders them spoiled
+        // (they're references to a dish, not real food). The actual crafted ingredients/output carry real freshness —
+        // MixinRecipeStorage re-stamps/decay-carries the crafted stack. See FoodTemplates.
         final List<ItemStorage> inputs = new ArrayList<>();
         for (final ItemStack s : currentIngredients())
         {
-            inputs.add(new ItemStorage(s.copyWithCount(1)));
+            inputs.add(new ItemStorage(FoodTemplates.nonDecaying(s.copyWithCount(1))));
         }
         if (!bowl.getItem(0).isEmpty())
         {
-            inputs.add(new ItemStorage(bowl.getItem(0).copyWithCount(1)));
+            inputs.add(new ItemStorage(FoodTemplates.nonDecaying(bowl.getItem(0).copyWithCount(1))));
         }
 
         final IColony colony = IColonyManager.getInstance().getColonyByPosFromWorld(world, pos);
@@ -226,7 +230,7 @@ public class ComposeDishMenu extends AbstractContainerMenu
         // gridSize 3 → AIR intermediate → the crafting module (chef_craft).
         final IRecipeStorage storage = RecipeStorage.builder()
             .withInputs(inputs)
-            .withPrimaryOutput(output)
+            .withPrimaryOutput(FoodTemplates.nonDecaying(output))
             .withGridSize(3)
             .withIntermediate(Blocks.AIR)
             .build();
