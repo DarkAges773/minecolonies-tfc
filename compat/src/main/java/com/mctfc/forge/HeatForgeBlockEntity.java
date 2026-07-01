@@ -440,6 +440,24 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
     }
 
     @Override
+    public boolean hasFinished()
+    {
+        if (level == null)
+        {
+            return false;
+        }
+        for (final BlockPos m : group().members())
+        {
+            final HeatForgeBlockEntity mbe = memberAt(level, m);
+            if (mbe != null && (!mbe.positions.getStackInSlot(OUTPUT).isEmpty() || !mbe.positions.getStackInSlot(OVERFLOW).isEmpty()))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public List<ItemStack> takeFinished()
     {
         final List<ItemStack> out = new ArrayList<>();

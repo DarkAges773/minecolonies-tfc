@@ -60,6 +60,9 @@ public interface ForgeController
     /** The lifecycle state of the position at {@code pos} (a member block). */
     ForgeState state(BlockPos pos);
 
+    /** Whether any member position currently holds finished output to drain (non-mutating — for work checks). */
+    boolean hasFinished();
+
     /** Drain <b>all</b> finished output (cooked food / cast-ready molds) from every position; returns what was removed. */
     List<ItemStack> takeFinished();
 

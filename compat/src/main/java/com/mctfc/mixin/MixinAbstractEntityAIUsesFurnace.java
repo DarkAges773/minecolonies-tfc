@@ -9,6 +9,7 @@ import com.minecolonies.core.colony.jobs.AbstractJob;
 import com.minecolonies.core.entity.ai.workers.AbstractAISkeleton;
 import com.minecolonies.core.entity.ai.workers.AbstractEntityAIBasic;
 import com.minecolonies.core.entity.ai.workers.AbstractEntityAIUsesFurnace;
+import com.mctfc.forge.ForgeUserModule;
 import com.mctfc.furnace.FurnaceBehavior;
 import com.mctfc.furnace.FurnaceBehaviors;
 import com.mctfc.furnace.FurnaceWorker;
@@ -140,6 +141,18 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
     {
         final IBuilding building = building();
         return building == null ? List.of() : building.getFirstModuleOccurance(FurnaceUserModule.class).getFurnaces();
+    }
+
+    @Override
+    public List<BlockPos> controllers()
+    {
+        final IBuilding building = building();
+        if (building == null || world() == null)
+        {
+            return List.of();
+        }
+        final ForgeUserModule module = building.getFirstModuleOccurance(ForgeUserModule.class);
+        return module == null ? List.of() : module.getControllers(world());
     }
 
     @Override

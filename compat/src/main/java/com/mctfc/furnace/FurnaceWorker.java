@@ -35,6 +35,13 @@ public interface FurnaceWorker
     /** Positions of the (vanilla) furnaces registered to the building — the heat stations. */
     List<BlockPos> furnaces();
 
+    /**
+     * Distinct heat-forge <b>controller</b> positions registered to the building (one per multiblock), from the grafted
+     * {@code ForgeUserModule}. The tend-AI drives these instead of vanilla furnaces once a worker is retargeted to the
+     * forge (see {@code docs/tfc-forge-multiblock.md} §13). Empty if the hut has no forge module / no forges.
+     */
+    List<BlockPos> controllers();
+
     /** Path toward the building's centre; {@code true} once arrived (mirrors the AI's own helper). */
     boolean gotoBuilding();
 
