@@ -2,6 +2,17 @@ package com.mctfc.forge;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -16,6 +27,8 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -57,6 +70,43 @@ public class HeatForgeBlock extends BaseEntityBlock
     public RenderShape getRenderShape(final BlockState state)
     {
         return RenderShape.MODEL;
+    }
+
+    /**
+     * Right-click: with flint-and-steel, <b>light</b> the whole multiblock (like a TFC forge); otherwise open the
+     * merged {@link ForgeMenu} on the <b>controller</b> (clicking any member opens the one big device). Item access is
+     * player-GUI + worker only — no hoppers (§4).
+     */
+    @Override
+    public InteractionResult use(final BlockState state, final Level level, final BlockPos pos, final Player player,
+            final InteractionHand hand, final BlockHitResult hit)
+    {
+        final BlockPos controllerPos = ForgeMultiblock.groupOf(level, pos).controller();
+        if (!(level.getBlockEntity(controllerPos) instanceof HeatForgeBlockEntity controller))
+        {
+            return InteractionResult.PASS;
+        }
+
+        final ItemStack held = player.getItemInHand(hand);
+        if (held.is(Items.FLINT_AND_STEEL))
+        {
+            if (!level.isClientSide)
+            {
+                controller.light();
+                level.playSound(null, pos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0f, level.getRandom().nextFloat() * 0.4f + 0.8f);
+                held.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(hand));
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer)
+        {
+            final MenuProvider provider = new SimpleMenuProvider(
+                    (windowId, inv, p) -> new ForgeMenu(windowId, inv, controller),
+                    Component.translatable("block.mctfc.heat_forge"));
+            NetworkHooks.openScreen(serverPlayer, provider, buf -> ForgeMenu.write(buf, controller));
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override

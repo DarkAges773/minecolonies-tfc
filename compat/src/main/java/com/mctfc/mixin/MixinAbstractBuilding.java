@@ -1,14 +1,19 @@
 package com.mctfc.mixin;
 
 import com.ldtteam.structurize.blueprints.v1.Blueprint;
+import com.mctfc.forge.ForgeUserModule;
 import com.mctfc.herding.TfcHerd;
 import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.interactionhandling.ChatPriority;
 import com.minecolonies.core.colony.buildings.AbstractBuilding;
+import com.minecolonies.core.colony.buildings.workerbuildings.BuildingCook;
+import com.minecolonies.core.colony.buildings.workerbuildings.BuildingKitchen;
+import com.minecolonies.core.colony.buildings.workerbuildings.BuildingSmeltery;
 import com.minecolonies.core.colony.interactionhandling.StandardInteraction;
 import com.mctfc.settings.BuildingStockSeeds;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,6 +33,26 @@ import org.jetbrains.annotations.Nullable;
 @Mixin(AbstractBuilding.class)
 public class MixinAbstractBuilding
 {
+    /**
+     * Graft a {@link ForgeUserModule} onto the furnace huts (Smeltery / Restaurant / Kitchen) at construction, so our
+     * heat-forge blocks are discovered exactly as {@code FurnaceUserModule} discovers vanilla furnaces — via
+     * {@code onBlockPlacedInBuilding} when the builder places them. Done here (not in each {@code BuildingEntry}) since
+     * those are MineColonies-owned. The module carries {@link ForgeUserModule#PRODUCER} (required for registration + NBT
+     * namespacing). At the ctor's TAIL the {@code modules}/{@code modulesMap} fields are initialised, so registration is
+     * safe; the building's own modules are added afterwards by {@code BuildingEntry#produceBuilding}. Server-side (the
+     * client uses the separate building-view hierarchy). {@code remap = false}: MineColonies' own ctor/method.
+     */
+    @Inject(method = "<init>", at = @At("TAIL"), remap = false)
+    private void mctfc$graftForgeModule(final IColony colony, final BlockPos pos, final CallbackInfo ci)
+    {
+        final Object self = this;
+        if (self instanceof BuildingSmeltery || self instanceof BuildingCook || self instanceof BuildingKitchen)
+        {
+            final IBuilding building = (IBuilding) this;
+            building.registerModule(new ForgeUserModule().setProducer(ForgeUserModule.PRODUCER).setBuilding(building));
+        }
+    }
+
     @Inject(method = "onUpgradeComplete", at = @At("TAIL"), remap = false)
     private void mctfc$seedDefaultStock(@Nullable final Blueprint blueprint, final int newLevel, final CallbackInfo ci)
     {

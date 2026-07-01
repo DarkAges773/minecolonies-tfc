@@ -2,6 +2,7 @@ package com.mctfc.client;
 
 import com.mctfc.MineColoniesTFC;
 import com.mctfc.client.gui.ComposeDishScreen;
+import com.mctfc.forge.ForgeScreen;
 import com.mctfc.inventory.ModMenus;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
@@ -21,6 +22,9 @@ public final class ClientSetup
     @SubscribeEvent
     public static void onClientSetup(final FMLClientSetupEvent event)
     {
-        event.enqueueWork(() -> MenuScreens.register(ModMenus.COMPOSE_DISH.get(), ComposeDishScreen::new));
+        event.enqueueWork(() -> {
+            MenuScreens.register(ModMenus.COMPOSE_DISH.get(), ComposeDishScreen::new);
+            MenuScreens.register(ModMenus.HEAT_FORGE.get(), ForgeScreen::new);
+        });
     }
 }

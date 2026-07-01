@@ -73,6 +73,18 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
         return positions;
     }
 
+    /** The controller's shared 5-slot fuel column (used by the GUI; dormant on a follower). */
+    public ItemStackHandler fuelHandler()
+    {
+        return fuel;
+    }
+
+    /** The forge BE at {@code pos} (a member of this group), or {@code null} if it isn't a loaded forge. */
+    public HeatForgeBlockEntity memberEntity(final BlockPos pos)
+    {
+        return level == null ? null : memberAt(level, pos);
+    }
+
     // === Self-tick (controller only) =======================================================================
 
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state, final HeatForgeBlockEntity be)
