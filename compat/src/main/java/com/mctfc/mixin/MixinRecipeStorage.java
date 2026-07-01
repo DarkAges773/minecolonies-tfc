@@ -97,7 +97,9 @@ public abstract class MixinRecipeStorage
             // Dynamic food: cached output is unrealized — re-assemble to compute its nutrition via `meal`.
             final ItemStack realized = CraftedFoodDecay.realizeFromRecipe(
                 mctfc$level.get(), self.getRecipeSource(), output, consumed);
-            return realized != null ? realized : output;
+            // No re-runnable recipe (our composed dishes bake their data at teach time): keep that baked food data
+            // but re-stamp the creation date fresh, so a long-ago-taught dish isn't crafted already-stale.
+            return realized != null ? realized : CraftedFoodDecay.refreshCreationDate(output);
         }
         // Static food: carry the oldest ingredient's decay onto the already-correct output.
         if (consumed.isEmpty())

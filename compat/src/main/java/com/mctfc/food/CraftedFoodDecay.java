@@ -1,6 +1,8 @@
 package com.mctfc.food;
 
 import net.dries007.tfc.common.capabilities.food.FoodCapability;
+import net.dries007.tfc.common.capabilities.food.FoodData;
+import net.dries007.tfc.common.capabilities.food.IFood;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
@@ -48,6 +50,29 @@ public final class CraftedFoodDecay
             return;
         }
         FoodCapability.updateFoodFromAllPrevious(inputs, output);
+    }
+
+    /**
+     * Re-stamp a dynamic food's creation date to "now". Used for our composed TFC <b>dishes</b> (salads/soups),
+     * whose food data is baked once at teach time and which have <i>no</i> re-runnable recipe (so
+     * {@link #realizeFromRecipe} returns {@code null}). Without this, a dish taught long before it's crafted would be
+     * served already-stale (decay runs from the frozen teach-time date). Returns a fresh-dated copy, preserving the
+     * baked nutrition/ingredients.
+     *
+     * <p>No-op (returns {@code output} unchanged) when it isn't a TFC food, or when its data is still
+     * {@link FoodData#EMPTY} — an unrealized dynamic food whose realization genuinely failed, which a date stamp
+     * can't fix and shouldn't mask.
+     */
+    public static ItemStack refreshCreationDate(final ItemStack output)
+    {
+        final IFood food = FoodCapability.get(output);
+        if (food == null || food.getData().equals(FoodData.EMPTY))
+        {
+            return output;
+        }
+        final ItemStack copy = output.copy();
+        FoodCapability.setCreationDate(copy, FoodCapability.getRoundedCreationDate());
+        return copy;
     }
 
     /**

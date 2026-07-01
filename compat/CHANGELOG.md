@@ -8,6 +8,11 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **The Chef (Kitchen) can now make TFC salads and pot soups.** These TFC dishes have no fixed recipe — their type and
+  food value depend on the ingredients — so a new **Compose TFC Dish** button on the Chef's crafting-teaching tab opens
+  a familiar crafting-style window (with your inventory) where you drop in 1–5 ingredients and a bowl, see the
+  resulting dish, and **teach** it. The Chef then makes that exact dish like any other taught recipe. A dish you teach
+  keeps the right nutrition and is always made fresh, no matter how long ago it was taught.
 - **The dining hall Cook now cooks raw TFC food** in its furnaces. TFC food isn't vanilla-furnace-smeltable, so the
   Cook never used to cook it; now it heats raw TFC food into its cooked form using TFC's own cooking (so the food's
   freshness/decay carries across), for any dish you've put on the **restaurant menu**. The colony now also **orders

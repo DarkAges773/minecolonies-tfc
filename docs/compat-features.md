@@ -412,16 +412,19 @@ MineColonies path reaches the same way, so this is split by who crafts:
     looks the recipe back up by `RecipeStorage#getRecipeSource()`, builds a throwaway 3×3 `TransientCraftingContainer`
     from the captured ingredients, and calls `CraftingRecipe#assemble` — running the `meal` modifier so the food
     comes out with its real, ingredient-derived nutrition (fresh, as TFC does for a hand-crafted meal). Any failure
-    (unresolvable recipe, non-crafting type, wrong result item) falls back to the cached output. Because
-    `AdvancedShaped/ShapelessRecipe#assemble` doesn't re-validate the grid and `meal` reads the input flat, a flat
-    container suffices — so this is general across **any** crafting-table dynamic food (TFC's or an add-on's), not
-    just sandwiches.
+    (unresolvable recipe, non-crafting type, wrong result item) falls back to `#refreshCreationDate`: keep the cached
+    output's already-baked food data but re-stamp its creation date fresh. That covers the **composed Chef dishes**
+    (salads/soups, below) — they bake their food data at teach time and have a `null` recipeSource, so they can't be
+    re-assembled, but they mustn't be served stale either. Because `AdvancedShaped/ShapelessRecipe#assemble` doesn't
+    re-validate the grid and `meal` reads the input flat, a flat container suffices — so realization is general across
+    **any** crafting-table dynamic food (TFC's or an add-on's), not just sandwiches.
   - Gated to no-op unless the output is a TFC food. Non-food crafting is untouched.
 - **Scope:** the `RecipeStorage` path is *all* colony crafters (Baker, cook-assistant, …) and covers crafting-table
   dynamic foods (sandwiches). The cook's *furnace* output is handled separately by the **Cook→TFC conversion** (now
   done — `docs/tfc-furnace-workers.md` §6): the cook heats raw TFC food into cooked food via TFC `heating` recipes,
-  preserving decay through `copy_food`. **Still not** covered: **dynamic foods made in TFC devices** — salads (TFC
-  salad GUI) and soups (`tfc:pot`) — which need TFC device work rather than a furnace heating recipe.
+  preserving decay through `copy_food`. **Dynamic foods made in TFC devices** — salads (TFC salad GUI) and soups
+  (`tfc:pot`) — are covered by the **Chef compose-a-dish** feature below (taught as abstract crafting recipes, not a
+  furnace heating recipe).
 
 **Knives match damage-agnostically (so the crafter doesn't stall on a worn knife).** The sandwich recipe wears a
 TFC knife each craft (`tfc:damage_inputs_shaped_crafting`), and tool durability lives in the item's `Damage` NBT.
@@ -436,6 +439,50 @@ datapack listener that owns the map has cleared+reloaded it, so it survives `/re
 MineColonies' own `compatibility` datapack format is item-id-only (no tags); `putIfAbsent` so a MineColonies-shipped
 entry would win. The bread/fillings need no such fix — their freshness is in caps, not `getTag()`, so they already
 match. Extend the same way for other damageable TFC tools used as colony-crafting ingredients.
+
+## Chef composes TFC salads & pot soups — DONE, in-world test pending
+
+Teaches the MineColonies **Chef** (Kitchen) to make TFC's two **dynamic device dishes** — **salads** (TFC's
+`SaladContainer` GUI, no recipe) and **pot soups** (`tfc:pot_soup`, needs a live firepit pot) — which are neither
+vanilla crafting nor furnace recipes and whose *category* + *food data* are **computed from the chosen ingredients**.
+The unlock: the player **composing** the ingredients once *fixes* a discrete recipe out of that dynamic space, which is
+then taught to the Chef as an ordinary colony crafting recipe. Full design + the byte-level algorithm transcription:
+[docs/tfc-chef-dishes.md](tfc-chef-dishes.md). The pieces:
+
+- **Compute** ([`TfcDishes`](../compat/src/main/java/com/mctfc/cook/TfcDishes.java)) — `salad(ingredients, bowl)` /
+  `soup(ingredients)` replicate TFC's output math **byte-for-byte** (transcribed from `SaladContainer#setAndUpdateSlots`
+  and `SoupPotRecipe#getOutput` bytecode): accumulate water/saturation/`nutrients[ordinal]` over the food-cap
+  ingredients, apply the blend penalty (salad ×0.75; soup ×(1−0.05·n) seeded water 20/sat 2), pick the dominant
+  nutrient → the `tfc:food/<nutrient>_salad|_soup` item (`TFCItems.SALADS`/`SOUPS`), and stamp the `DynamicBowlHandler`
+  output (food data `create(4,…,4.0f)` salad / `…,3.5f)` soup, ingredient list, bowl for salad). Empty on
+  rotten/invalid/no-dominant. **Both** 1–5 ingredients + a bowl (a TFC soup is extracted from the pot with a bowl, so
+  it consumes one too — and the soup output carries it, returned when eaten); soup's **water is abstracted** (the
+  colony doesn't model the 100 mB).
+- **Compose menu + screen** (a **native container**, mirroring MineColonies' own `ContainerCrafting`/`WindowCrafting`
+  teach UI — **not** BlockUI): [`ComposeDishMenu`](../compat/src/main/java/com/mctfc/inventory/ComposeDishMenu.java)
+  (`AbstractContainerMenu`, registered in [`ModMenus`](../compat/src/main/java/com/mctfc/inventory/ModMenus.java)) has
+  ghost ingredient slots (click stamps a count-1 copy, nothing consumed) at TFC's `SaladContainer` coordinates + a
+  bowl slot + result + the player's inventory; [`ComposeDishScreen`](../compat/src/main/java/com/mctfc/client/gui/ComposeDishScreen.java)
+  blits TFC's `salad.png` directly (referenced from the TFC jar — both dishes share the layout, nothing copied/shipped)
+  with **Teach** and a salad⇄soup **switch** button. Two modes/screens, opened via `NetworkHooks.openScreen`
+  ([`OpenComposeDishMessage`](../compat/src/main/java/com/mctfc/network/OpenComposeDishMessage.java)), bound in
+  [`ClientSetup`](../compat/src/main/java/com/mctfc/client/ClientSetup.java). Result preview computed by `TfcDishes`
+  **server-side** (caps don't sync over slot packets) and shown as the result-slot icon.
+- **Surfaced** ([`MixinWindowListRecipes`](../compat/src/main/java/com/mctfc/mixin/MixinWindowListRecipes.java)) — a
+  "Compose TFC Dish" button injected into the Chef's existing crafting recipe-list tab (no new building module). The
+  shared `WindowListRecipes` is gated on the module producer key `"chef_craft"` (unique to the Kitchen craft tab); the
+  `CraftingModuleView` is read straight off the injected `<init>` argument (no `@Shadow`). The button fires
+  `OpenComposeDishMessage` (salad mode).
+- **Taught** — **server-side** (capabilities live only there): the Teach button sends the payload-free
+  [`TeachComposedDishMessage`](../compat/src/main/java/com/mctfc/network/TeachComposedDishMessage.java); the server reads
+  the player's open `ComposeDishMenu`, computes the dish from its authoritative cap-bearing slots, builds a crafting
+  `RecipeStorage` (gridSize 3 → AIR intermediate → `chef_craft`) and `addRecipe`s it (mirroring
+  `AddRemoveRecipeMessage.onExecute`). The Kitchen's `isRecipeCompatible` EDIBLE gate is satisfied because TFC food
+  carries a flat vanilla `FoodProperties` (see the nutrition bridge above).
+- **Made** — the Chef crafts it abstractly (`RecipeStorage#fullfillRecipeAndCopy` → `getPrimaryOutput`, the device
+  abstracted like the Blacksmith's anvil). `MixinRecipeStorage` realizes the dynamic output: our taught recipe has a
+  `null` recipeSource (not re-assemblable), so it keeps the baked food data and **re-stamps the creation date fresh**
+  (`CraftedFoodDecay#refreshCreationDate`) — a dish taught long ago isn't served stale.
 
 ## Dining hall stocks food to demand (not by the stackful) — DONE, in-world test pending
 

@@ -26,6 +26,8 @@ import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.FirmaLifeDataPack;
 import com.mctfc.food.FoodPreservation;
 import com.mctfc.herding.TfcHerd;
+import com.mctfc.inventory.ModMenus;
+import com.mctfc.network.ComposeDishNetwork;
 import com.mctfc.network.McFarmingNetwork;
 import com.mctfc.placement.TfcSoilPlacementHandler;
 import com.mojang.logging.LogUtils;
@@ -99,6 +101,10 @@ public class MineColoniesTFC
         }
         // Network channel for the farming bridge (per-field harvest-mode toggle from the field GUI).
         McFarmingNetwork.register();
+        // The Chef dish-teaching menu (compose TFC salads/soups) + its open/teach network channel. The screen is
+        // bound to the menu type client-side in ClientSetup (FMLClientSetupEvent).
+        ModMenus.register(modBus);
+        ComposeDishNetwork.register();
         // Let the builder place substituted TFC grass / grass-path by requesting the matching TFC dirt
         // (suppliable) instead of the grass/path itself — mirroring vanilla's grass/path handling. Registered
         // before Structurize's BlockGrassPathPlacementHandler, which would otherwise place a vanilla path for

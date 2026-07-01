@@ -45,7 +45,8 @@
   "client": [
     "MixinWindowField",
     "MixinSettingsModuleView",
-    "MixinItemListModuleView"
+    "MixinItemListModuleView",
+    "MixinWindowListRecipes"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -76,5 +76,12 @@
   "mctfc.preset.wood.tualang": "Tualang",
   "mctfc.preset.wood.warped": "Warped",
   "mctfc.preset.wood.white_cedar": "White Cedar",
-  "mctfc.preset.wood.willow": "Willow"
+  "mctfc.preset.wood.willow": "Willow",
+  "mctfc.gui.compose.open": "Compose TFC Dish",
+  "mctfc.gui.compose.open.tooltip": "Compose a TFC salad or pot soup from chosen ingredients and teach it to the Chef.",
+  "mctfc.gui.compose.salad.title": "Compose Salad",
+  "mctfc.gui.compose.soup.title": "Compose Soup",
+  "mctfc.gui.compose.teach": "Teach",
+  "mctfc.gui.compose.switch.soup": "Soup →",
+  "mctfc.gui.compose.switch.salad": "← Salad"
 }

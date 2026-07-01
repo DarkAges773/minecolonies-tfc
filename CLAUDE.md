@@ -233,6 +233,14 @@ changing a feature so you don't re-derive (or undo) a hard-won fix:
   `firmalife:jar/honey`, knife-scraped beeswax, empty-frame refill), an `@Accessor` into TFC's
   `InventoryBlockEntity` for the GUI-only frame slots, and a custom single-row 4-toggle `BeeFrameSetting` for
   per-slot wax control — all gated on `ModList.isLoaded("firmalife")`.
+- [docs/tfc-chef-dishes.md](docs/tfc-chef-dishes.md) — teaching the **Chef** (Kitchen) TFC's dynamic **pot soups** and
+  **salads** (IMPLEMENTED; in-game verification pending): a **native container** compose UI (`ComposeDishMenu` +
+  `ComposeDishScreen`, mirroring MineColonies' `ContainerCrafting`/`WindowCrafting` — **not** BlockUI; the player drags
+  TFC foods into ghost slots with their inventory present) surfaced by a `chef_craft`-gated button injected into the
+  recipe-list tab (no module graft). Composing fixes the (otherwise combinatorial) ingredient set into a taught recipe;
+  `TfcDishes` replicates TFC's salad/soup food-data math byte-for-byte; the teach is **server-side** (TFC food caps
+  don't sync over slot packets); the Chef makes it abstractly (`RecipeStorage.fullfillRecipeAndCopy`) and
+  `MixinRecipeStorage` re-stamps the dynamic-bowl output's creation date fresh (it has no re-runnable recipe).
 - [docs/substitution-rule-examples.md](docs/substitution-rule-examples.md) — copy-paste rule JSON reference.
 - [docs/curseforge-description.md](docs/curseforge-description.md) — CurseForge store description.
 
