@@ -61,6 +61,22 @@ public class Config
             .comment("How much food the dining hall's Waiter pulls from storage into its own inventory per trip (vanilla grabs a full stack of 64). The Waiter's inventory is not colony storage, so it is NOT covered by the colony food-preservation trait — anything it over-carries decays in hand. Keep this modest.")
             .defineInRange("diningHallWorkerCarry", 16, 1, 64);
 
+    private static final ForgeConfigSpec.DoubleValue FORGE_TEMP_RISE_PER_TICK = BUILDER
+            .comment("How fast the TFC heat-forge multiblock's shared device temperature rises toward its fuel ceiling while lit (degrees C per tick). Higher = shorter warm-up. This is the charcoal-forge-style gradual climb; a freshly-lit forge pays this as added latency on the first craft.")
+            .defineInRange("forgeTempRisePerTick", 2.0, 0.0, 1000.0);
+
+    private static final ForgeConfigSpec.DoubleValue FORGE_TEMP_FALL_PER_TICK = BUILDER
+            .comment("How fast the heat-forge's device temperature falls toward 0 once it is unlit / out of fuel (degrees C per tick).")
+            .defineInRange("forgeTempFallPerTick", 1.0, 0.0, 1000.0);
+
+    private static final ForgeConfigSpec.DoubleValue FORGE_ITEM_HEAT_PER_TICK = BUILDER
+            .comment("How fast an item sitting in a heat-forge heat slot warms toward the device temperature (degrees C per tick) — the item's own rising heat is the crafting progress (no synthetic bar). It never exceeds the live device temperature, so a device below the recipe temperature stalls the item (COLD).")
+            .defineInRange("forgeItemHeatPerTick", 4.0, 0.1, 1000.0);
+
+    private static final ForgeConfigSpec.IntValue FORGE_KEEP_WARM_TICKS = BUILDER
+            .comment("How long (ticks) the colony worker keeps a heat-forge lit and fed after its last completed operation before explicitly extinguishing it. Long = jobs start hot with no warm-up but idle fuel burns; 0 = extinguished the moment work stops, paying warm-up on the next job. 1200 = 60s.")
+            .defineInRange("forgeKeepWarmTicks", 1200, 0, 720000);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     /** Fertilize once the crop's primary nutrient is below this (0..1). */
@@ -96,6 +112,18 @@ public class Config
     /** How much food the Waiter carries from storage per trip (vs vanilla's full stack). Read by {@code MixinEntityAIWorkCook}. */
     public static int diningHallWorkerCarry = 16;
 
+    /** Device-temperature rise per tick (°C) for a lit heat-forge climbing toward its fuel ceiling. Read by the forge BE. */
+    public static float forgeTempRisePerTick = 2.0f;
+
+    /** Device-temperature fall per tick (°C) for an unlit / out-of-fuel heat-forge. Read by the forge BE. */
+    public static float forgeTempFallPerTick = 1.0f;
+
+    /** Per-tick warming (°C) of an item in a heat-forge heat slot toward the device temperature. Read by the forge BE. */
+    public static float forgeItemHeatPerTick = 4.0f;
+
+    /** Ticks a worker keeps a heat-forge lit after its last op before extinguishing (fuel-vs-latency knob). Read by the forge tend-AI. */
+    public static int forgeKeepWarmTicks = 1200;
+
     /**
      * The effective-temperature bonus for a furnace worker's building level (1-based), from
      * {@link #furnaceFuelTempBonusByLevel}; a level beyond the list uses the last entry, an empty list 0.
@@ -124,5 +152,9 @@ public class Config
         diningHallStockMin = DINING_HALL_STOCK_MIN.get();
         diningHallStockMax = DINING_HALL_STOCK_MAX.get();
         diningHallWorkerCarry = DINING_HALL_WORKER_CARRY.get();
+        forgeTempRisePerTick = FORGE_TEMP_RISE_PER_TICK.get().floatValue();
+        forgeTempFallPerTick = FORGE_TEMP_FALL_PER_TICK.get().floatValue();
+        forgeItemHeatPerTick = FORGE_ITEM_HEAT_PER_TICK.get().floatValue();
+        forgeKeepWarmTicks = FORGE_KEEP_WARM_TICKS.get();
     }
 }

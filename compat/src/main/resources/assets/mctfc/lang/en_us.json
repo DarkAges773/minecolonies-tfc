@@ -83,5 +83,6 @@
   "mctfc.gui.compose.soup.title": "Compose Soup",
   "mctfc.gui.compose.teach": "Teach",
   "mctfc.gui.compose.switch.soup": "Soup →",
-  "mctfc.gui.compose.switch.salad": "← Salad"
+  "mctfc.gui.compose.switch.salad": "← Salad",
+  "block.mctfc.heat_forge": "Heat Forge"
 }

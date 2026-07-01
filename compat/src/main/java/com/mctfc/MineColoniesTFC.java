@@ -25,6 +25,7 @@ import com.mctfc.data.AfcDataPack;
 import com.mctfc.data.BeneathDataPack;
 import com.mctfc.data.FirmaLifeDataPack;
 import com.mctfc.food.FoodPreservation;
+import com.mctfc.forge.HeatForgeBlocks;
 import com.mctfc.herding.TfcHerd;
 import com.mctfc.inventory.ModMenus;
 import com.mctfc.network.ComposeDishNetwork;
@@ -56,6 +57,9 @@ public class MineColoniesTFC
     {
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         final IEventBus modBus = context.getModEventBus();
+        // The TFC heat-forge multiblock block + its block entity (the growing furnace replacement — see
+        // docs/tfc-forge-multiblock.md). Registered here; discovery/substitution/tending land in later slices.
+        HeatForgeBlocks.init(modBus);
         // Per-furnace process store: attach our FurnaceProcess capability to every vanilla furnace BE so an
         // in-progress TFC operation (ore + mold + finish tick + carried fuel) persists with the furnace.
         FurnaceProcessCapability.init(modBus);
