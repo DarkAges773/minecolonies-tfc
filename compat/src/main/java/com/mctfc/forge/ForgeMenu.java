@@ -3,6 +3,7 @@ package com.mctfc.forge;
 import com.mctfc.furnace.FurnaceFuel;
 import com.mctfc.inventory.ModMenus;
 import net.dries007.tfc.common.capabilities.heat.HeatCapability;
+import net.dries007.tfc.common.items.MoldItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -36,20 +37,20 @@ public class ForgeMenu extends AbstractContainerMenu
     // Slot layout (pixels).
     private static final int FUEL_X = 8;
     private static final int FUEL_BOTTOM_Y = 90; // slot 0 (the burning slot) sits at the bottom of the column
+    // TFC forge/firepit gauge dimensions (15 wide × 50 tall — matching TFC's gradient, which is 1px shorter than the
+    // scale's 0..51 range), bottom-anchored so the cold end is fixed and the marker's travel lines up with the painted
+    // gradient (bottom = cold). Bottom kept at y≈88 (as generated); GAUGE_Y = 88 − 50. Horizontal position unchanged.
     static final int GAUGE_X = 28;
-    static final int GAUGE_Y = 18;
-    static final int GAUGE_W = 12;
-    static final int GAUGE_H = 90;
-    private static final int HEAT_X = 48;
-    private static final int OUTPUT_X = 70;
-    private static final int OVERFLOW_X = 92;
-    private static final int ROW_Y = 18;
+    static final int GAUGE_Y = 38;
+    static final int GAUGE_W = 15;
+    static final int GAUGE_H = 50;
+    static final int HEAT_X = 48;
+    static final int OUTPUT_X = 76;   // output + overflow shifted 6px right of the heat slot (separates input from output)
+    static final int OVERFLOW_X = 98;
+    static final int ROW_Y = 18;
     private static final int INV_X = 8;
-    private static final int INV_Y = 118;
-    private static final int HOTBAR_Y = 176;
-
-    /** Nominal ceiling used to scale the temperature gauge on screen (°C). */
-    static final float DISPLAY_MAX_TEMP = 1600f;
+    private static final int INV_Y = 124; // player inventory dropped 6px (see ForgeScreen imageHeight) for label room
+    private static final int HOTBAR_Y = 182;
 
     private final BlockPos controllerPos;
     private final int memberCount;
@@ -121,8 +122,8 @@ public class ForgeMenu extends AbstractContainerMenu
             final IItemHandler h = positions.get(r);
             final int y = ROW_Y + r * 18;
             addSlot(new FilterSlot(h, HeatForgeBlockEntity.HEAT, HEAT_X, y, HeatCapability::has));
-            addSlot(new FilterSlot(h, HeatForgeBlockEntity.OUTPUT, OUTPUT_X, y, ForgeMenu::isFluidContainer));
-            addSlot(new FilterSlot(h, HeatForgeBlockEntity.OVERFLOW, OVERFLOW_X, y, ForgeMenu::isFluidContainer));
+            addSlot(new FilterSlot(h, HeatForgeBlockEntity.OUTPUT, OUTPUT_X, y, ForgeMenu::isMoldOrVessel));
+            addSlot(new FilterSlot(h, HeatForgeBlockEntity.OVERFLOW, OVERFLOW_X, y, ForgeMenu::isMoldOrVessel));
         }
         // Player inventory + hotbar.
         for (int row = 0; row < 3; row++)
@@ -139,9 +140,13 @@ public class ForgeMenu extends AbstractContainerMenu
         addDataSlots(data);
     }
 
-    private static boolean isFluidContainer(final ItemStack stack)
+    /** Output/overflow accept a mold (or any fluid vessel). Detected by item class first — TFC empty molds don't
+     * reliably expose {@code FLUID_HANDLER_ITEM} client-side, where {@code mayPlace} is first checked. */
+    private static boolean isMoldOrVessel(final ItemStack stack)
     {
-        return !stack.isEmpty() && stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent();
+        return !stack.isEmpty()
+                && (stack.getItem() instanceof MoldItem
+                        || stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent());
     }
 
     /** The controller BE this menu is bound to, or {@code null} if it's gone (server-side check). */

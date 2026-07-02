@@ -3,6 +3,7 @@ package com.mctfc.forge;
 import com.mctfc.Config;
 import com.mctfc.cook.CookRecipes;
 import com.mctfc.forge.ForgeMultiblock.Group;
+import com.mctfc.smelter.SmelterRecipes;
 import net.dries007.tfc.common.capabilities.heat.HeatCapability;
 import net.dries007.tfc.common.recipes.HeatingRecipe;
 import net.dries007.tfc.util.Fuel;
@@ -12,6 +13,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 
@@ -51,8 +57,15 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
         @Override public int getSlotLimit(final int slot) { return 1; }
     };
 
-    /** Controller-only: the shared 5-slot fuel column (dormant on a follower). */
-    private final ItemStackHandler fuel = new ItemStackHandler(FUEL_SLOTS);
+    /** Controller-only: the shared 5-slot fuel column (dormant on a follower). One fuel item per slot, TFC-forge style. */
+    private final ItemStackHandler fuel = new ItemStackHandler(FUEL_SLOTS)
+    {
+        @Override
+        public int getSlotLimit(final int slot)
+        {
+            return 1;
+        }
+    };
 
     // --- shared device state (controller-only) ---
     private float deviceTemp;
@@ -107,17 +120,22 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
             members.add(mbe);
         }
 
+        be.cascadeFuel(); // keep fuel packed at the bottom every tick, so player-/worker-placed fuel travels down (TFC forge)
         be.burnStep();
         be.climbTemp();
         for (final HeatForgeBlockEntity member : members)
         {
-            be.processCookPosition(level, member);
+            be.processPosition(level, member);
         }
         be.driveLitState(level, group.members());
         be.setChanged();
     }
 
-    /** Burn the bottom fuel: count down the current item, igniting the next from the bottom slot when it's spent. */
+    /**
+     * Burn the bottom fuel — TFC forge: when the timer expires, the bottom item is <b>consumed the moment it starts
+     * burning</b> (removed from slot 0; its duration/temperature drive the burn, tracked by {@link #burnTicks}), then
+     * the column cascades down. So the slot never holds the item currently on fire.
+     */
     private void burnStep()
     {
         if (!lit)
@@ -137,11 +155,8 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
             }
             burnTicks = f.getDuration();
             burnTemperature = f.getTemperature() + levelBonus;
-            fuel.extractItem(0, 1, false);
-            if (fuel.getStackInSlot(0).isEmpty())
-            {
-                cascadeFuel();
-            }
+            fuel.extractItem(0, 1, false); // consumed at ignition (TFC), then the column cascades down
+            cascadeFuel();
         }
         burnTicks--;
     }
@@ -182,36 +197,50 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
     }
 
     /**
-     * Advance one position along the cook path: warm the heat-slot item toward the device temperature and, once it
-     * reaches its recipe temperature, produce one cooked food into the output (then overflow) slot. Only item-output
-     * heating recipes cook here; fluid-output (ore) belongs to the Smelter melt path (a later slice).
+     * Advance one position: warm the heat-slot item toward the device temperature and, once it reaches its recipe
+     * temperature, transform it — an <b>item</b>-output heating recipe cooks (Cook/Chef), a <b>fluid</b>-output one
+     * melts into the seated molds (Smelter). No recipe → {@link ForgeState#INVALID} (the worker ejects it).
      */
-    private void processCookPosition(final Level level, final HeatForgeBlockEntity member)
+    private void processPosition(final Level level, final HeatForgeBlockEntity member)
     {
         final ItemStack heat = member.positions.getStackInSlot(HEAT);
         if (heat.isEmpty())
         {
             return;
         }
-        final HeatingRecipe recipe = CookRecipes.cookRecipe(heat);
+        final HeatingRecipe recipe = HeatingRecipe.getRecipe(heat);
         if (recipe == null)
         {
-            return; // EMPTY handled above; non-cookable is INVALID / (future) a melt job — nothing to advance
+            return; // INVALID — nothing to advance; the worker ejects it
         }
         final float required = recipe.getTemperature();
-        if (deviceTemp < required)
+        // The item heats toward the device temperature whenever the device is warmer — it glows during warm-up, even
+        // below its own transform temperature (TFC). Its rising heat IS the progress; it transforms only once it
+        // reaches the recipe temperature, so a device that can't get hot enough just leaves it COLD-stalled.
+        float temp = HeatCapability.getTemperature(heat);
+        if (deviceTemp > temp)
         {
-            return; // COLD — warming up, or genuinely too cool; no progress, no consumption
-        }
-        final float current = HeatCapability.getTemperature(heat);
-        final float next = Math.min(deviceTemp, current + Config.forgeItemHeatPerTick);
-        HeatCapability.setTemperature(heat, next);
-        if (next < required)
-        {
+            temp = Math.min(deviceTemp, temp + Config.forgeItemHeatPerTick);
+            HeatCapability.setTemperature(heat, temp);
             member.setChanged();
-            return;
         }
-        // Reached temperature — cook one piece (decay carried by CookRecipes.cook) into output/overflow.
+        if (temp < required)
+        {
+            return; // still heating (or COLD-stalled below its transform temperature)
+        }
+        if (recipe.getDisplayOutputFluid().isEmpty())
+        {
+            cook(level, member, heat);
+        }
+        else
+        {
+            melt(level, member, heat, recipe);
+        }
+    }
+
+    /** Cook one raw piece into cooked food (decay carried by {@code copy_food}) into output → overflow. */
+    private void cook(final Level level, final HeatForgeBlockEntity member, final ItemStack heat)
+    {
         final ItemStack cooked = CookRecipes.cook(heat.copyWithCount(1), level.registryAccess());
         if (cooked.isEmpty())
         {
@@ -222,6 +251,40 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
         {
             return; // BLOCKED — both output and overflow full; hold (item keeps its heat)
         }
+        consumeHeatPiece(level, member, heat);
+    }
+
+    /**
+     * Melt one ore piece into liquid metal and pour it into the position's molds — output to capacity first, then
+     * overflow; metal beyond both molds spills and is lost (TFC-authentic, §8/§10). The melt never stops for lack of
+     * room, so the tend-AI keeps molds seated/drained and sizes ore loads to the free capacity.
+     */
+    private void melt(final Level level, final HeatForgeBlockEntity member, final ItemStack heat, final HeatingRecipe recipe)
+    {
+        final Fluid fluid = recipe.getDisplayOutputFluid().getFluid();
+        int amount = SmelterRecipes.meltMb(heat);
+        if (amount <= 0)
+        {
+            amount = recipe.getDisplayOutputFluid().getAmount();
+        }
+        if (fluid == null || amount <= 0)
+        {
+            return;
+        }
+        final float castTemp = Math.max(1f, recipe.getTemperature() - 1f);
+        final FluidStack metal = new FluidStack(fluid, amount);
+        final int poured = member.pourInto(OUTPUT, metal, castTemp);
+        if (poured < metal.getAmount())
+        {
+            metal.setAmount(metal.getAmount() - poured);
+            member.pourInto(OVERFLOW, metal, castTemp); // remainder spills (lost) if the overflow can't take it either
+        }
+        consumeHeatPiece(level, member, heat);
+    }
+
+    /** Consume one item from the heat slot after a transform; a remaining piece resets cool for the next cycle. */
+    private void consumeHeatPiece(final Level level, final HeatForgeBlockEntity member, final ItemStack heat)
+    {
         heat.shrink(1);
         if (heat.isEmpty())
         {
@@ -229,10 +292,29 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
         }
         else
         {
-            HeatCapability.setTemperature(heat, 0f); // the next raw piece starts cool
+            HeatCapability.setTemperature(heat, 0f);
         }
         lastActiveTick = level.getGameTime();
         member.setChanged();
+    }
+
+    /** Pour metal into the mold seated in {@code slot}, heating the filled mold to {@code castTemp}; returns mB accepted. */
+    private int pourInto(final int slot, final FluidStack metal, final float castTemp)
+    {
+        final ItemStack mold = positions.getStackInSlot(slot);
+        final IFluidHandlerItem handler = mold.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).orElse(null);
+        if (handler == null)
+        {
+            return 0;
+        }
+        final int filled = handler.fill(metal, IFluidHandler.FluidAction.EXECUTE);
+        if (filled > 0)
+        {
+            final ItemStack container = handler.getContainer();
+            HeatCapability.setTemperature(container, castTemp);
+            positions.setStackInSlot(slot, container);
+        }
+        return filled;
     }
 
     /** Place a finished item into this position's output slot, else overflow; false if both are occupied (BLOCKED). */
@@ -411,6 +493,116 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
     }
 
     @Override
+    public boolean heatFree(final BlockPos pos)
+    {
+        final HeatForgeBlockEntity mbe = level == null ? null : memberAt(level, pos);
+        return mbe != null && mbe.positions.getStackInSlot(HEAT).isEmpty();
+    }
+
+    @Override
+    public boolean loadInputAt(final BlockPos pos, final ItemStack stack)
+    {
+        final HeatForgeBlockEntity mbe = level == null ? null : memberAt(level, pos);
+        if (mbe == null || stack.isEmpty() || !mbe.positions.getStackInSlot(HEAT).isEmpty())
+        {
+            return false;
+        }
+        mbe.positions.setStackInSlot(HEAT, stack.copyWithCount(1));
+        mbe.setChanged();
+        return true;
+    }
+
+    @Override
+    public boolean hasContainer(final BlockPos pos)
+    {
+        final HeatForgeBlockEntity mbe = level == null ? null : memberAt(level, pos);
+        return mbe != null && (fluidHandler(mbe, OUTPUT) != null || fluidHandler(mbe, OVERFLOW) != null);
+    }
+
+    @Override
+    public boolean outputHasMold(final BlockPos pos)
+    {
+        final HeatForgeBlockEntity mbe = level == null ? null : memberAt(level, pos);
+        return mbe != null && fluidHandler(mbe, OUTPUT) != null;
+    }
+
+    @Override
+    public boolean overflowHasMold(final BlockPos pos)
+    {
+        final HeatForgeBlockEntity mbe = level == null ? null : memberAt(level, pos);
+        return mbe != null && fluidHandler(mbe, OVERFLOW) != null;
+    }
+
+    @Override
+    public int containerFreeCapacity(final BlockPos pos)
+    {
+        final HeatForgeBlockEntity mbe = level == null ? null : memberAt(level, pos);
+        return mbe == null ? 0 : freeCap(mbe, OUTPUT) + freeCap(mbe, OVERFLOW);
+    }
+
+    @Override
+    public Fluid seatedMetal(final BlockPos pos)
+    {
+        final HeatForgeBlockEntity mbe = level == null ? null : memberAt(level, pos);
+        if (mbe == null)
+        {
+            return null;
+        }
+        for (final int slot : new int[] {OUTPUT, OVERFLOW})
+        {
+            final IFluidHandlerItem h = fluidHandler(mbe, slot);
+            if (h != null && !h.getFluidInTank(0).isEmpty())
+            {
+                return h.getFluidInTank(0).getFluid();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean seatContainers(final BlockPos pos, final ItemStack outputMold, final ItemStack overflowMold)
+    {
+        final HeatForgeBlockEntity mbe = level == null ? null : memberAt(level, pos);
+        if (mbe == null)
+        {
+            return false;
+        }
+        boolean seated = false;
+        if (!outputMold.isEmpty() && mbe.positions.getStackInSlot(OUTPUT).isEmpty())
+        {
+            mbe.positions.setStackInSlot(OUTPUT, outputMold.copyWithCount(1));
+            seated = true;
+        }
+        if (!overflowMold.isEmpty() && mbe.positions.getStackInSlot(OVERFLOW).isEmpty())
+        {
+            mbe.positions.setStackInSlot(OVERFLOW, overflowMold.copyWithCount(1));
+            seated = true;
+        }
+        if (seated)
+        {
+            mbe.setChanged();
+        }
+        return seated;
+    }
+
+    private static IFluidHandlerItem fluidHandler(final HeatForgeBlockEntity mbe, final int slot)
+    {
+        return mbe.positions.getStackInSlot(slot).getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).orElse(null);
+    }
+
+    private static int freeCap(final HeatForgeBlockEntity mbe, final int slot)
+    {
+        final IFluidHandlerItem h = fluidHandler(mbe, slot);
+        return h == null ? 0 : Math.max(0, h.getTankCapacity(0) - h.getFluidInTank(0).getAmount());
+    }
+
+    private static boolean moldFull(final HeatForgeBlockEntity mbe, final int slot)
+    {
+        final IFluidHandlerItem h = fluidHandler(mbe, slot);
+        return h != null && !h.getFluidInTank(0).isEmpty() && h.getFluidInTank(0).getAmount() >= h.getTankCapacity(0);
+    }
+
+    @Override
     public ForgeState state(final BlockPos pos)
     {
         if (level == null)
@@ -427,11 +619,29 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
         {
             return ForgeState.EMPTY;
         }
-        final HeatingRecipe recipe = CookRecipes.cookRecipe(heat);
+        final HeatingRecipe recipe = HeatingRecipe.getRecipe(heat);
         if (recipe == null)
         {
-            return ForgeState.INVALID; // slice 1: only item-output (cook) recipes are handled
+            return ForgeState.INVALID;
         }
+        if (!recipe.getDisplayOutputFluid().isEmpty())
+        {
+            // Melt (Smelter): needs a mold; then accumulate → cast; both molds full is a drain hold.
+            if (fluidHandler(mbe, OUTPUT) == null && fluidHandler(mbe, OVERFLOW) == null)
+            {
+                return ForgeState.READY_NO_MOLD;
+            }
+            if (deviceTemp < recipe.getTemperature())
+            {
+                return ForgeState.COLD;
+            }
+            if (containerFreeCapacity(pos) <= 0)
+            {
+                return ForgeState.BLOCKED;
+            }
+            return moldFull(mbe, OUTPUT) ? ForgeState.CASTING : ForgeState.ACCUMULATING;
+        }
+        // Cook: both output + overflow occupied is a drain hold.
         if (!mbe.positions.getStackInSlot(OUTPUT).isEmpty() && !mbe.positions.getStackInSlot(OVERFLOW).isEmpty())
         {
             return ForgeState.BLOCKED;
@@ -449,7 +659,7 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
         for (final BlockPos m : group().members())
         {
             final HeatForgeBlockEntity mbe = memberAt(level, m);
-            if (mbe != null && (!mbe.positions.getStackInSlot(OUTPUT).isEmpty() || !mbe.positions.getStackInSlot(OVERFLOW).isEmpty()))
+            if (mbe != null && (isDrainable(mbe.positions.getStackInSlot(OUTPUT)) || isDrainable(mbe.positions.getStackInSlot(OVERFLOW))))
             {
                 return true;
             }
@@ -475,15 +685,66 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
             for (final int slot : new int[] {OUTPUT, OVERFLOW})
             {
                 final ItemStack s = mbe.positions.getStackInSlot(slot);
-                if (!s.isEmpty())
+                if (isDrainable(s))
                 {
                     out.add(s);
                     mbe.positions.setStackInSlot(slot, ItemStack.EMPTY);
                     mbe.setChanged();
                 }
             }
+            mbe.normalizeMolds();
         }
         return out;
+    }
+
+    /**
+     * Whether an output/overflow item is finished and should be hauled out: a <b>full</b> mold (metal at capacity,
+     * ready to cool + cast) or any <b>non-fluid</b> output (cooked food). An empty or partial mold stays seated.
+     */
+    private static boolean isDrainable(final ItemStack stack)
+    {
+        if (stack.isEmpty())
+        {
+            return false;
+        }
+        final IFluidHandlerItem handler = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).orElse(null);
+        if (handler == null)
+        {
+            return true; // a cooked-food (non-fluid) output — always drainable
+        }
+        final FluidStack fluid = handler.getFluidInTank(0);
+        return !fluid.isEmpty() && fluid.getAmount() >= handler.getTankCapacity(0);
+    }
+
+    /** Keep the ≤1-partial invariant: if the output slot holds no metal but the overflow does, swap them so the
+     * partial lives in the output (§8). No-op for cook (no molds). */
+    private void normalizeMolds()
+    {
+        final ItemStack out = positions.getStackInSlot(OUTPUT);
+        final ItemStack over = positions.getStackInSlot(OVERFLOW);
+        if (moldNoFluid(out) && moldHasFluid(over))
+        {
+            positions.setStackInSlot(OUTPUT, over);
+            positions.setStackInSlot(OVERFLOW, out);
+            setChanged();
+        }
+    }
+
+    /** A slot with no molten metal: empty, or a fluid container holding nothing. */
+    private static boolean moldNoFluid(final ItemStack stack)
+    {
+        if (stack.isEmpty())
+        {
+            return true;
+        }
+        final IFluidHandlerItem handler = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).orElse(null);
+        return handler != null && handler.getFluidInTank(0).isEmpty();
+    }
+
+    private static boolean moldHasFluid(final ItemStack stack)
+    {
+        final IFluidHandlerItem handler = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).orElse(null);
+        return handler != null && !handler.getFluidInTank(0).isEmpty();
     }
 
     @Override

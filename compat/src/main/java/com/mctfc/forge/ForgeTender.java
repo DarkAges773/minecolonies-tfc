@@ -143,18 +143,28 @@ public class ForgeTender
         return finished;
     }
 
+    /** Extinguish an idle forge once its keep-warm window has elapsed — exposed for behaviors that compose their own tend. */
+    public void keepWarm(final ForgeController c)
+    {
+        manageFlame(c, c.members().size());
+    }
+
     /** Fill the empty fuel slots from the carried inventory (only the bottom slot burns; the column just holds reserve). */
-    private void refuel(final ForgeController c)
+    public void refuel(final ForgeController c)
     {
         int guard = HeatForgeBlockEntity.FUEL_SLOTS + 1;
         while (c.needsFuel() && guard-- > 0)
         {
-            final ItemStack fuel = extractMatching(ctx.inventory(), policy::fuelAllowed, 64);
+            final ItemStack fuel = extractOne(ctx.inventory(), policy::fuelAllowed);
             if (fuel.isEmpty())
             {
                 break;
             }
-            c.addFuel(fuel);
+            if (!c.addFuel(fuel))
+            {
+                insert(ctx.inventory(), fuel); // 1-item fuel slots: no room after all — hand it back, don't lose it
+                break;
+            }
         }
     }
 

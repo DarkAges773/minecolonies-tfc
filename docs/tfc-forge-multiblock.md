@@ -1,4 +1,4 @@
-# TFC forge multiblock — design (PLANNED)
+# TFC forge multiblock — design + status (slices 1–4 IMPLEMENTED)
 
 A custom **growing forge block** that replaces the vanilla furnaces MineColonies' furnace huts use (Smeltery, Cook,
 Chef — Glassblower later) with a self-processing, TFC-flavoured device. The block does the heating/melting on its own
@@ -6,10 +6,14 @@ tick; the worker AI is reduced to **tending** it (stock input + fuel, pull finis
 blocks merge into **one multiblock** that shares fuel and presents as **one big furnace** in the GUI, tended as a single
 aggregate.
 
-Status: **PLANNED** — this doc is the converged design; nothing here is built yet. It supersedes nothing currently
-working (the furnace-based [SmelterBehavior](../compat/src/main/java/com/mctfc/smelter/SmelterBehavior.java) /
-[CookBehavior](../compat/src/main/java/com/mctfc/cook/CookBehavior.java) / the [Chef furnace path](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIRequestSmelter.java)
-keep running until this replaces them).
+Status: **slices 1–4 implemented** (block + BE + multiblock + cook/melt self-tick + GUI + Smelter/Cook tend-AI); the
+block + GUI are **in-game-verified standalone** (place in creative, load, flint-and-steel to light, cook/melt). The
+old furnace-based [SmelterBehavior](../compat/src/main/java/com/mctfc/smelter/SmelterBehavior.java) /
+[CookBehavior](../compat/src/main/java/com/mctfc/cook/CookBehavior.java) are now **retargeted to forge controllers**
+(they no longer drive vanilla furnaces); the [Chef furnace path](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIRequestSmelter.java)
+still uses the vanilla furnace (slice 5). **Remaining: the Chef driver (§14) + the final switchover** — until the
+switchover flips the `furnace → heat_forge` substitution, blueprint huts still place vanilla furnaces, so the retargeted
+Smelter/Cook idle (nothing to tend). See §18 for the done/leftover breakdown and the hard-won fidelity fixes.
 
 ---
 
@@ -506,13 +510,56 @@ buffer (§4).
 
 ---
 
-## 18. Rough build order
+## 18. Build order & status
 
-1. `HeatForgeBlock` + `HeatForgeBlockEntity` (+ type) + multiblock formation/controller election; the shared lit state +
-   gradually-rising `deviceTemp` + fuel `Burn`; self-tick with the cook path only (reuse `CookRecipes`); `ForgeController`
-   façade (incl. `light`/`isLit`).
-2. `ForgeUserModule` graft + substitution placement; merged container/screen (read-only).
-3. `ForgeTender` + retarget the Smelter/Cook dispatcher behaviors to controllers (cook first).
-4. Smelter melt path: mold fill output→overflow, seating rule, top-up, `MOLD_UNLOAD` reuse (cast metals only).
-5. Chef driver (FURNACE-gated mixin, straight to `addDelivery`).
-6. Later: iron/bloom mode; Glassblower.
+**Done (slices 1–4) — compiled; block + GUI in-game-verified standalone; the worker flow goes live at the switchover:**
+
+1. ✅ `HeatForgeBlock` + `HeatForgeBlockEntity` (+ type) + `ForgeMultiblock` (deterministic ≤5 BFS partition +
+   controller election, stable across reload) + shared lit / gradually-rising `deviceTemp` / fixed 5-slot fuel column +
+   **cook self-tick** + `ForgeController` façade. Files: `com.mctfc.forge.{HeatForgeBlock, HeatForgeBlockEntity,
+   HeatForgeBlocks, ForgeController, ForgeState, ForgeMultiblock}`, `Config.forge*`, block assets.
+2. ✅ `ForgeUserModule` (+ static `PRODUCER`) grafted onto Smeltery/Restaurant/Kitchen via `MixinAbstractBuilding`
+   (ctor-TAIL `registerModule`); merged **interactive** GUI (`ForgeMenu`/`ForgeScreen`) — **not** read-only as first
+   planned — over a **hand-paintable texture asset** (`assets/mctfc/textures/gui/heat_forge.png`); flint-and-steel
+   player lighting. Substitution placement is **deferred to the switchover** (step 6).
+3. ✅ `ForgeTender` (shared stage/drain/refuel/light/load/keep-warm) + `FurnaceWorker.controllers()` bridge (resolves
+   the grafted `ForgeUserModule`); `CookBehavior` retargeted to forge controllers (serving + demand-scaled auto-request
+   preserved).
+4. ✅ Smelter **melt path** in the BE (ore → metal, pour output→overflow, spill past 200 mB, ≤1-partial `normalizeMolds`)
+   + mold façade (`seatContainers`/`containerFreeCapacity`/`seatedMetal`/`outputHasMold`/…); `SmelterBehavior` retargeted
+   (mold staging + seating, metal-matching capacity-sized ore loading, `MOLD_UNLOAD` casting). **Cast metals only** —
+   `accepts` excludes iron.
+
+**Leftover:**
+
+5. **Chef driver** — evolve `MixinAbstractEntityAIRequestSmelter` to tend a `ForgeController` (gated
+   `currentRecipeStorage.getIntermediate() == FURNACE`), reusing `ForgeTender`; output straight to `addDelivery` +
+   `craftCounter`/`finalizeCraftingTask` (per §14). Grid crafting (sandwiches/composed dishes) still falls through to
+   native `AbstractEntityAICrafting`.
+6. **Final switchover** (one coordinated change, §12): ship the blanket `minecraft:furnace → mctfc:heat_forge`
+   substitution (`data/mctfc/block_substitutions/`, copy `facing`) **and** retire the now-dead vanilla-furnace driving —
+   the `FurnaceBehavior` dispatcher's furnace path, the `litTime` `MixinAbstractFurnaceBlockEntity`, the Chef ignite
+   mixin, `FurnaceHeating`/`CookProcessing`/`SmelterProcessing`, and the decorative-furnace GUI block for blueprint
+   furnaces. After this the whole Smelter/Cook/Chef flow is **colony-testable end-to-end**; this is where the feature
+   becomes user-facing → add the `:compat` changelog `[Unreleased]` bullet + finalize docs.
+7. **Deferred (post-v1):** iron/bloom mode (charcoal-only reductant, bloom into the output slot, no overflow — the
+   Smelter policy already excludes iron ore so it can't jam a position); Glassblower (needs a glass-heating completer).
+
+### Hard-won fidelity fixes (record so they aren't accidentally "re-fixed")
+
+Found during in-game GUI/behaviour tuning against real TFC — verified against the TFC jar:
+- **GUI is a hand-paintable texture**, fixed at the 5-row max size. A smaller forge shows painted-but-inactive wells for
+  absent rows — the "flex to member count" idea (§4) is **not** implemented (would need section-blitting). The gauge
+  gradient **and** the marker sprite both live in the asset (marker at `u=176`).
+- **Gauge = TFC's own primitives:** static gradient (15 wide × 50 tall) in the asset; a sliding **marker sprite** blitted
+  at `Heat.scaleTemperatureForGui(temp)` (TFC's 0..51 scale), **hidden at scale 0** like TFC (so it vanishes at TFC's
+  visible-heat threshold, not at 0 °C), with **no bottom clamp** so it rides to the last pixel; hover tooltip =
+  `TFCConfig.CLIENT.heatTooltipStyle.get().formatColored(temp)` — **null-guarded**, it returns null below visible heat —
+  triggered by `RenderHelpers.isInside`. `GAUGE_Y/H` are bottom-anchored (`38`/`50`) to match a hand-raised gradient.
+- **Fuel = TFC forge:** 1-item fuel slots; cascade **every tick** (placed fuel packs to the bottom even when unlit); the
+  bottom item is **consumed at ignition** (`AbstractFirepitBlockEntity.consumeFuel` empties the slot), *not* kept visible
+  until burnout.
+- **Items heat continuously** toward `deviceTemp` (they glow during warm-up) and transform only once they reach their
+  own recipe temperature — they do **not** wait for the device to reach the transform temp first.
+- **Molds seat by item class** (`stack.getItem() instanceof MoldItem`) in the output/overflow filter, because TFC empty
+  molds don't reliably expose `FLUID_HANDLER_ITEM` **client-side**, where the slot's `mayPlace` is first checked.

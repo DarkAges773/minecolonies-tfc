@@ -57,8 +57,34 @@ public interface ForgeController
     /** Load one heatable item into the first free heat slot (1 per slot); returns whether it was placed. */
     boolean loadInput(ItemStack stack);
 
+    /** Whether the heat slot of the position at {@code pos} is empty (can accept a load). */
+    boolean heatFree(BlockPos pos);
+
+    /** Load one heatable item into the specific position {@code pos}'s heat slot; returns whether it was placed. */
+    boolean loadInputAt(BlockPos pos, ItemStack stack);
+
     /** The lifecycle state of the position at {@code pos} (a member block). */
     ForgeState state(BlockPos pos);
+
+    // --- Smelter mold operations (§8) ----------------------------------------------------------------------
+
+    /** Whether the position at {@code pos} has any fluid container (mold) seated in its output/overflow. */
+    boolean hasContainer(BlockPos pos);
+
+    /** Whether the position's <b>output</b> slot holds a fluid container (mold). */
+    boolean outputHasMold(BlockPos pos);
+
+    /** Whether the position's <b>overflow</b> slot holds a fluid container (mold). */
+    boolean overflowHasMold(BlockPos pos);
+
+    /** Free capacity (mB) across the position's seated molds — the AI holds off feeding ore before a spill (§10). */
+    int containerFreeCapacity(BlockPos pos);
+
+    /** The metal fluid currently in the position's molds (dictates the ore to feed), or {@code null} if none. */
+    net.minecraft.world.level.material.Fluid seatedMetal(BlockPos pos);
+
+    /** Seat molds into the position's <b>empty</b> output/overflow slots; returns whether any was placed. */
+    boolean seatContainers(BlockPos pos, ItemStack outputMold, ItemStack overflowMold);
 
     /** Whether any member position currently holds finished output to drain (non-mutating — for work checks). */
     boolean hasFinished();

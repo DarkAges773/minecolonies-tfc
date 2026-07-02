@@ -1,103 +1,95 @@
 package com.mctfc.forge;
 
+import net.dries007.tfc.client.RenderHelpers;
+import net.dries007.tfc.common.capabilities.heat.Heat;
+import net.dries007.tfc.config.TFCConfig;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.Slot;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The heat-forge's screen — a native {@link AbstractContainerScreen} over {@link ForgeMenu}, drawn procedurally (no
- * ship-a-PNG dependency): a light panel, dark slot wells for the fuel column + processing rows, and a vertical
- * temperature gauge whose fill tracks the live {@code deviceTemp} (and glows while lit). The heating item's own rising
- * heat is the crafting progress (no per-row progress bar), matching a real TFC forge.
+ * The heat-forge's screen. It blits a hand-paintable background texture ({@code textures/gui/heat_forge.png} — the
+ * panel, slot wells, and the static heat-gauge gradient) and draws only the dynamic bits on top: the <b>sliding
+ * temperature marker</b> over the gauge (positioned by TFC's own {@link Heat#scaleTemperatureForGui}) and, on hover,
+ * the <b>TFC heat descriptor</b>. The gauge gradient lives in the texture — exactly like TFC's own forge GUI — so it
+ * can be repainted freely without touching code.
+ *
+ * <p>The texture was machine-generated to match the code layout as a starting point; hand-edit the PNG to restyle.
  */
 public class ForgeScreen extends AbstractContainerScreen<ForgeMenu>
 {
-    private static final int PANEL = 0xFFC6C6C6;
-    private static final int PANEL_DARK = 0xFF555555;
-    private static final int PANEL_LIGHT = 0xFFFFFFFF;
-    private static final int SLOT_WELL = 0xFF373737;
-    private static final int GAUGE_BG = 0xFF202020;
-    private static final int GAUGE_COOL = 0xFF803010;
+    private static final ResourceLocation TEXTURE = new ResourceLocation("mctfc", "textures/gui/heat_forge.png");
 
     public ForgeScreen(final ForgeMenu menu, final Inventory inv, final Component title)
     {
         super(menu, inv, title);
         this.imageWidth = 176;
-        this.imageHeight = 200;
+        this.imageHeight = 206; // 6px taller: the player inventory + hotbar drop 6px, giving the "Inventory" label room
         this.inventoryLabelY = this.imageHeight - 94;
     }
 
     @Override
     protected void renderBg(@NotNull final GuiGraphics graphics, final float partialTicks, final int mouseX, final int mouseY)
     {
-        final int x = this.leftPos;
-        final int y = this.topPos;
+        graphics.blit(TEXTURE, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
+        drawUnavailableSlots(graphics);
+        drawMarker(graphics);
+    }
 
-        // Panel with a bevelled border.
-        graphics.fill(x, y, x + imageWidth, y + imageHeight, PANEL);
-        graphics.fill(x, y, x + imageWidth, y + 1, PANEL_LIGHT);
-        graphics.fill(x, y, x + 1, y + imageHeight, PANEL_LIGHT);
-        graphics.fill(x + imageWidth - 1, y, x + imageWidth, y + imageHeight, PANEL_DARK);
-        graphics.fill(x, y + imageHeight - 1, x + imageWidth, y + imageHeight, PANEL_DARK);
+    // The marker sprite lives in the texture's off-GUI region (like TFC's at u=176), so it's hand-paintable too.
+    private static final int MARKER_U = 176;
+    private static final int MARKER_V = 0;
+    private static final int MARKER_H = 5;
 
-        // Slot wells behind every machine slot (fuel column + processing rows).
-        for (final Slot slot : menu.slots)
+    // The "unavailable slot" overlay sprite — also in the off-GUI region so it's hand-paintable. An 18×18 tile that
+    // masks a full slot well (border included); it's blitted over the processing rows a forge doesn't (yet) have.
+    private static final int SLOT_OVERLAY_U = 176;
+    private static final int SLOT_OVERLAY_V = 8;
+    private static final int SLOT_OVERLAY_SIZE = 18;
+
+    /**
+     * Mask the wells of processing rows this forge doesn't currently have. The panel is painted with a fixed
+     * {@link ForgeMultiblock#CAP}-row layout (a controller can grow to that many members), but a smaller multiblock
+     * exposes only {@link ForgeMenu#memberRows()} rows of real slots; the rest are blitted with the "unavailable"
+     * overlay so the player sees they're inert (and where the forge can still grow). Blitted at well origin
+     * (slot − 1px) to cover the 1px border baked into the background.
+     */
+    private void drawUnavailableSlots(final GuiGraphics graphics)
+    {
+        final int[] columns = { ForgeMenu.HEAT_X, ForgeMenu.OUTPUT_X, ForgeMenu.OVERFLOW_X };
+        for (int r = menu.memberRows(); r < ForgeMultiblock.CAP; r++)
         {
-            if (slot.container instanceof net.minecraft.world.entity.player.Inventory)
+            final int y = this.topPos + ForgeMenu.ROW_Y + r * 18 - 1;
+            for (final int cx : columns)
             {
-                continue; // player inventory slots keep the flat panel
+                graphics.blit(TEXTURE, this.leftPos + cx - 1, y, SLOT_OVERLAY_U, SLOT_OVERLAY_V, SLOT_OVERLAY_SIZE, SLOT_OVERLAY_SIZE);
             }
-            graphics.fill(x + slot.x - 1, y + slot.y - 1, x + slot.x + 17, y + slot.y + 17, SLOT_WELL);
-        }
-
-        drawGauge(graphics, x, y);
-    }
-
-    /** A vertical temperature gauge: dark well filled bottom-up in proportion to the live device temperature. */
-    private void drawGauge(final GuiGraphics graphics, final int x, final int y)
-    {
-        final int gx = x + ForgeMenu.GAUGE_X;
-        final int gy = y + ForgeMenu.GAUGE_Y;
-        graphics.fill(gx - 1, gy - 1, gx + ForgeMenu.GAUGE_W + 1, gy + ForgeMenu.GAUGE_H + 1, SLOT_WELL);
-        graphics.fill(gx, gy, gx + ForgeMenu.GAUGE_W, gy + ForgeMenu.GAUGE_H, GAUGE_BG);
-
-        final float frac = Math.max(0f, Math.min(1f, menu.displayTemp() / ForgeMenu.DISPLAY_MAX_TEMP));
-        final int filled = Math.round(frac * ForgeMenu.GAUGE_H);
-        if (filled > 0)
-        {
-            graphics.fill(gx, gy + ForgeMenu.GAUGE_H - filled, gx + ForgeMenu.GAUGE_W, gy + ForgeMenu.GAUGE_H, heatColor(frac));
-        }
-        if (menu.displayLit())
-        {
-            // A warm outline while burning.
-            final int glow = 0xFFFFA020;
-            graphics.fill(gx - 1, gy - 1, gx + ForgeMenu.GAUGE_W + 1, gy, glow);
-            graphics.fill(gx - 1, gy + ForgeMenu.GAUGE_H, gx + ForgeMenu.GAUGE_W + 1, gy + ForgeMenu.GAUGE_H + 1, glow);
         }
     }
 
-    /** Cool-to-hot gradient (dull orange → bright yellow-white) for the gauge fill. */
-    private static int heatColor(final float frac)
+    /**
+     * Blit the sliding temperature marker sprite over the gauge (its gradient is baked into the texture) — positioned
+     * on TFC's 0..51 scale, centered on the temperature line, and hidden below visible heat like TFC's {@code pixel > 0}.
+     */
+    private void drawMarker(final GuiGraphics graphics)
     {
-        if (frac <= 0.5f)
+        // Exactly like TFC: hide the marker once the temperature drops below TFC's lowest visible heat (scale == 0),
+        // rather than parking it at the bottom. So it slides down and then vanishes at the threshold — TFC leaves a
+        // little sub-visible residual heat the gauge simply doesn't show.
+        final int pixel = Heat.scaleTemperatureForGui(menu.displayTemp());
+        if (pixel <= 0)
         {
-            return GAUGE_COOL;
+            return;
         }
-        final float t = (frac - 0.5f) / 0.5f;
-        final int r = 0xC0 + Math.round(t * 0x3F);
-        final int g = 0x40 + Math.round(t * 0xB0);
-        final int b = 0x10 + Math.round(t * 0x30);
-        return 0xFF000000 | (r << 16) | (g << 8) | b;
-    }
-
-    @Override
-    protected void renderLabels(@NotNull final GuiGraphics graphics, final int mouseX, final int mouseY)
-    {
-        super.renderLabels(graphics, mouseX, mouseY);
-        graphics.drawString(this.font, menu.displayTemp() + "°C", ForgeMenu.GAUGE_X - 2, ForgeMenu.GAUGE_Y + ForgeMenu.GAUGE_H + 3, 0x404040, false);
+        final int gx = this.leftPos + ForgeMenu.GAUGE_X;
+        final int gy = this.topPos + ForgeMenu.GAUGE_Y;
+        // No bottom clamp (unlike an earlier version): TFC lets the marker ride to the last pixel, its body extending
+        // slightly past the scale, so the cold end reaches the bottom instead of stopping ~2px short.
+        final int top = Math.max(gy, gy + (ForgeMenu.GAUGE_H - pixel) - MARKER_H / 2);
+        graphics.blit(TEXTURE, gx, top, MARKER_U, MARKER_V, ForgeMenu.GAUGE_W, MARKER_H);
     }
 
     @Override
@@ -106,5 +98,18 @@ public class ForgeScreen extends AbstractContainerScreen<ForgeMenu>
         this.renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTicks);
         this.renderTooltip(graphics, mouseX, mouseY);
+        // Hover the gauge → TFC's <b>own</b> config-aware temperature tooltip (the colored hotness word by default, or
+        // real degrees if the player set that in TFC's options) — the exact call TFC's forge/firepit screen makes.
+        // {@code formatColored} returns null below visible heat (a cold device), so show nothing then (as TFC does).
+        // Hover box shifted up 2px (and 2px taller) to cover the gradient (hand-raised 2px in the asset) plus the
+        // marker's full travel — the marker stays code-positioned, so this only widens the tooltip trigger area.
+        if (RenderHelpers.isInside(mouseX, mouseY, this.leftPos + ForgeMenu.GAUGE_X, this.topPos + ForgeMenu.GAUGE_Y - 2, ForgeMenu.GAUGE_W, ForgeMenu.GAUGE_H + 2))
+        {
+            final Component heat = TFCConfig.CLIENT.heatTooltipStyle.get().formatColored(menu.displayTemp());
+            if (heat != null)
+            {
+                graphics.renderTooltip(this.font, heat, mouseX, mouseY);
+            }
+        }
     }
 }

@@ -226,7 +226,8 @@ changing a feature so you don't re-derive (or undo) a hard-won fix:
   `kind`-keyed `FurnaceProcessings` completer registry (the cook reuses all of it, food-serving preserved). §6b: the
   **Chef** reuses the heating from a *different* AI base (`AbstractEntityAIRequestSmelter`, not the dispatcher) — a
   shared `FurnaceHeating` helper + a Kitchen-gated ignite mixin drive its smelt tab with TFC heating recipes.
-- [docs/tfc-forge-multiblock.md](docs/tfc-forge-multiblock.md) — design (PLANNED) for a custom **growing forge block**
+- [docs/tfc-forge-multiblock.md](docs/tfc-forge-multiblock.md) — design **+ status (slices 1–4 built; Chef driver + the
+  furnace→heat_forge substitution switchover are the leftover slices — see its §18)** for a custom **growing forge block**
   that replaces the huts' vanilla furnaces (Smeltery/Cook/Chef; Glassblower later): a **fully custom** block+BE+type
   (not `FurnaceBlock`/`FurnaceBlockEntity` — that `instanceof` compat is worthless once we replace the AI) that
   **self-processes** on its own tick, so the AI shrinks to a **tend** loop. It's a **player-usable TFC firepit×forge
