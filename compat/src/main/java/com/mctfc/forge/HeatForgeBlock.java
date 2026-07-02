@@ -2,7 +2,8 @@ package com.mctfc.forge;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.RandomSource;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -73,6 +74,34 @@ public class HeatForgeBlock extends BaseEntityBlock
     }
 
     /**
+     * Client-only ambience while lit — a faithful copy of vanilla {@code BlastFurnaceBlock#animateTick}: an occasional
+     * blast-furnace crackle plus a wisp of smoke drifting out the front. The forge borrows the blast furnace's look and
+     * sound, so it behaves identically to a lit blast furnace visually/audibly. (Server-side burn drives {@code LIT}.)
+     */
+    @Override
+    public void animateTick(final BlockState state, final Level level, final BlockPos pos, final RandomSource random)
+    {
+        if (!state.getValue(LIT))
+        {
+            return;
+        }
+        final double x = pos.getX() + 0.5;
+        final double y = pos.getY();
+        final double z = pos.getZ() + 0.5;
+        if (random.nextDouble() < 0.1)
+        {
+            level.playLocalSound(x, y, z, SoundEvents.BLASTFURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 1.0f, 1.0f, false);
+        }
+        final Direction facing = state.getValue(FACING);
+        final Direction.Axis axis = facing.getAxis();
+        final double jitter = random.nextDouble() * 0.6 - 0.3;
+        final double dx = axis == Direction.Axis.X ? facing.getStepX() * 0.52 : jitter;
+        final double dy = random.nextDouble() * 9.0 / 16.0;
+        final double dz = axis == Direction.Axis.Z ? facing.getStepZ() * 0.52 : jitter;
+        level.addParticle(ParticleTypes.SMOKE, x + dx, y + dy, z + dz, 0.0, 0.0, 0.0);
+    }
+
+    /**
      * Right-click: with flint-and-steel, <b>light</b> the whole multiblock (like a TFC forge); otherwise open the
      * merged {@link ForgeMenu} on the <b>controller</b> (clicking any member opens the one big device). Item access is
      * player-GUI + worker only — no hoppers (§4).
@@ -103,7 +132,7 @@ public class HeatForgeBlock extends BaseEntityBlock
         {
             final MenuProvider provider = new SimpleMenuProvider(
                     (windowId, inv, p) -> new ForgeMenu(windowId, inv, controller),
-                    Component.translatable("block.mctfc.heat_forge"));
+                    level.getBlockState(controllerPos).getBlock().getName());
             NetworkHooks.openScreen(serverPlayer, provider, buf -> ForgeMenu.write(buf, controller));
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

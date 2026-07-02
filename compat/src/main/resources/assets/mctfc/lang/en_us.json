@@ -84,5 +84,8 @@
   "mctfc.gui.compose.teach": "Teach",
   "mctfc.gui.compose.switch.soup": "Soup →",
   "mctfc.gui.compose.switch.salad": "← Salad",
-  "block.mctfc.heat_forge": "Heat Forge"
+  "block.mctfc.heat_forge_brick": "Brick Furnace",
+  "block.mctfc.heat_forge_rustic": "Rustic Furnace",
+  "block.mctfc.heat_forge_stone": "Stone Furnace",
+  "block.mctfc.heat_forge_tile": "Tile Furnace"
 }

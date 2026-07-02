@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,lit=false": { "model": "mctfc:block/heat_forge_rustic" },
+    "facing=east,lit=false":  { "model": "mctfc:block/heat_forge_rustic", "y": 90 },
+    "facing=south,lit=false": { "model": "mctfc:block/heat_forge_rustic", "y": 180 },
+    "facing=west,lit=false":  { "model": "mctfc:block/heat_forge_rustic", "y": 270 },
+    "facing=north,lit=true":  { "model": "mctfc:block/heat_forge_rustic_on" },
+    "facing=east,lit=true":   { "model": "mctfc:block/heat_forge_rustic_on", "y": 90 },
+    "facing=south,lit=true":  { "model": "mctfc:block/heat_forge_rustic_on", "y": 180 },
+    "facing=west,lit=true":   { "model": "mctfc:block/heat_forge_rustic_on", "y": 270 }
+  }
+}

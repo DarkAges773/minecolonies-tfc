@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,lit=false": { "model": "mctfc:block/heat_forge_tile" },
+    "facing=east,lit=false":  { "model": "mctfc:block/heat_forge_tile", "y": 90 },
+    "facing=south,lit=false": { "model": "mctfc:block/heat_forge_tile", "y": 180 },
+    "facing=west,lit=false":  { "model": "mctfc:block/heat_forge_tile", "y": 270 },
+    "facing=north,lit=true":  { "model": "mctfc:block/heat_forge_tile_on" },
+    "facing=east,lit=true":   { "model": "mctfc:block/heat_forge_tile_on", "y": 90 },
+    "facing=south,lit=true":  { "model": "mctfc:block/heat_forge_tile_on", "y": 180 },
+    "facing=west,lit=true":   { "model": "mctfc:block/heat_forge_tile_on", "y": 270 }
+  }
+}
