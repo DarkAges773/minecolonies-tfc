@@ -110,12 +110,24 @@ public class ForgeTender
     }
 
     /**
-     * Tend one controller in a single visit: drain finished output (returned for the caller to place), eject
-     * unprocessable items to the racks, top the shared fuel column, light before loading, load every free heat slot
-     * from the carried inventory (gated on the fuel <b>ceiling</b>, not the live temp), and keep-warm / extinguish when
-     * idle. Returns the finished stacks removed (the caller delivers them + counts the action).
+     * Tend one controller in a single visit (proactive workers — the Cook): {@link #drain} it, then
+     * {@link #stockAndLoad} every free heat slot. Returns the finished stacks removed (the caller delivers them + counts
+     * the action). Request-bounded workers (the Chef) must instead call {@link #drain} and {@link #stockAndLoad} directly
+     * so they can count deliveries and cap the load to the outstanding request <b>between</b> the two — otherwise they'd
+     * reload freed slots on the very cycle the request completes and abandon that batch (see docs/tfc-forge-multiblock.md §14).
      */
     public List<ItemStack> tend(final ForgeController c)
+    {
+        final List<ItemStack> finished = drain(c);
+        stockAndLoad(c, Integer.MAX_VALUE);
+        return finished;
+    }
+
+    /**
+     * Drain finished output (returned for the caller to place) + eject unprocessable items to the racks. Does <b>not</b>
+     * load or light — call {@link #stockAndLoad} after the caller has processed the drained output.
+     */
+    public List<ItemStack> drain(final ForgeController c)
     {
         c.setLevelBonus(Config.furnaceFuelTempBonus(ctx.buildingLevel()));
 
@@ -124,7 +136,17 @@ public class ForgeTender
         {
             insert(ctx.racks(), bad);
         }
+        return finished;
+    }
 
+    /**
+     * Top the fuel column, light before loading, load up to {@code budget} accepted inputs from the carried inventory
+     * (gated on the fuel <b>ceiling</b>, not the live temp), and keep-warm / extinguish when idle. Returns how many
+     * inputs were loaded (so a request-bounded caller can decrement its remaining budget across controllers). Pass
+     * {@link Integer#MAX_VALUE} to fill every free slot.
+     */
+    public int stockAndLoad(final ForgeController c, final int budget)
+    {
         if (c.needsFuel())
         {
             refuel(c);
@@ -132,15 +154,15 @@ public class ForgeTender
 
         final int members = c.members().size();
         final boolean occupied = c.freeHeatSlots() < members;
-        final boolean willLoad = c.freeHeatSlots() > 0 && hasLoadable(c);
+        final boolean willLoad = budget > 0 && c.freeHeatSlots() > 0 && hasLoadable(c);
         if ((occupied || willLoad) && !c.isLit())
         {
             c.light(); // the forge must be lit before loading; it warms up while it runs
         }
 
-        loadInputs(c);
+        final int loaded = loadInputs(c, budget);
         manageFlame(c, members);
-        return finished;
+        return loaded;
     }
 
     /** Extinguish an idle forge once its keep-warm window has elapsed — exposed for behaviors that compose their own tend. */
@@ -168,11 +190,15 @@ public class ForgeTender
         }
     }
 
-    /** Load each free heat slot with an accepted input the fuel can reach; stop when out of slots or inputs. */
-    private void loadInputs(final ForgeController c)
+    /**
+     * Load up to {@code budget} free heat slots with an accepted input the fuel can reach; stop when out of slots,
+     * inputs, or budget. Returns how many were loaded.
+     */
+    private int loadInputs(final ForgeController c, final int budget)
     {
+        int loaded = 0;
         int guard = c.members().size() + 1;
-        while (c.freeHeatSlots() > 0 && guard-- > 0)
+        while (loaded < budget && c.freeHeatSlots() > 0 && guard-- > 0)
         {
             final ItemStack type = findLoadable(c);
             if (type.isEmpty())
@@ -189,7 +215,9 @@ public class ForgeTender
                 insert(ctx.inventory(), one); // no free slot after all — hand it back
                 break;
             }
+            loaded++;
         }
+        return loaded;
     }
 
     /** Extinguish an idle forge once its keep-warm window has elapsed (the fuel-vs-latency knob). */

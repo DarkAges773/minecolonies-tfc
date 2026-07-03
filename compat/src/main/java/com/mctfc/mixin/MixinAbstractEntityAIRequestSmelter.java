@@ -143,18 +143,23 @@ public abstract class MixinAbstractEntityAIRequestSmelter
         // Stage the request's raw ingredient + firepit fuel from the hut racks into the worker inventory.
         tender.stage(controllers);
 
-        // Tend each forge (fuel / light / load / drain) and deliver the finished product to the request.
+        // Phase 1 — DRAIN + DELIVER, before loading anything. Pull finished product from every forge and deliver it to
+        // the request, counting each. Draining first (not the bundled ForgeTender.tend) is what lets us cap the reload to
+        // the outstanding count below: otherwise we'd refill the freed slots on the very cycle the request completes and
+        // abandon that batch cooking forever (§14).
         for (final ForgeController controller : controllers)
         {
-            for (final ItemStack finished : tender.tend(controller))
+            for (final ItemStack finished : tender.drain(controller))
             {
                 if (finished.isEmpty())
                 {
                     continue;
                 }
-                if (finished.getItem() != primary.getItem())
+                if (finished.getItem() != primary.getItem()
+                        || mctfc$job.getCraftCounter() >= mctfc$job.getMaxCraftingCount())
                 {
-                    ForgeTender.insert(chef.racks(), finished); // not this request's product — stow it
+                    // not this request's product, or the request is already met — stow it rather than lose it
+                    ForgeTender.insert(chef.racks(), finished);
                     continue;
                 }
                 final int produced = finished.getCount();
@@ -170,13 +175,27 @@ public abstract class MixinAbstractEntityAIRequestSmelter
                 }
                 mctfc$job.setCraftCounter(mctfc$job.getCraftCounter() + produced);
                 worker.getCitizenExperienceHandler().addExperience(MCTFC_XP_PER_DELIVERY);
-                if (mctfc$job.getMaxCraftingCount() > 0 && mctfc$job.getCraftCounter() >= mctfc$job.getMaxCraftingCount())
-                {
-                    // Conclude the craft via the accessor (finalizeCraftingTask is declared on AbstractEntityAICrafting).
-                    cir.setReturnValue(access.mctfc$finalizeCraft());
-                    return;
-                }
             }
+        }
+
+        // Conclude BEFORE loading anything, so we never leave a batch cooking after the request is met.
+        if (mctfc$job.getMaxCraftingCount() > 0 && mctfc$job.getCraftCounter() >= mctfc$job.getMaxCraftingCount())
+        {
+            cir.setReturnValue(access.mctfc$finalizeCraft());
+            return;
+        }
+
+        // Phase 2 — LOAD only the deficit: (still needed) − (already cooking), so we never over-produce a batch that
+        // would be abandoned when the request completes. stockAndLoad still refuels / lights / keep-warms every forge.
+        int inFlight = 0;
+        for (final ForgeController controller : controllers)
+        {
+            inFlight += controller.members().size() - controller.freeHeatSlots(); // occupied heat slots = items cooking
+        }
+        int budget = Math.max(0, mctfc$job.getMaxCraftingCount() - mctfc$job.getCraftCounter() - inFlight);
+        for (final ForgeController controller : controllers)
+        {
+            budget -= tender.stockAndLoad(controller, budget);
         }
         cir.setReturnValue(AIWorkerState.CRAFT); // keep tending until the batch is done
     }
