@@ -65,12 +65,8 @@ input/vanilla/quartz.png                     (the vanilla nether-quartz item ico
 input/vanilla/barrel_{side,top,bottom,top_open}.png   (the four vanilla barrel faces — the relief)
 input/{tfc,afc,beneath}/planks/<wood>.png             (each wood's planks — the CLUT palette; wood lists in barrels.cs)
 
-# coarse dirt (overlay = coarse_dirt − dirt, CLUT'd through a gravel palette, composited onto each TFC dirt):
-input/vanilla/coarse_dirt.png               (vanilla coarse_dirt — the coarse detail source)
-input/vanilla/dirt.png                       (vanilla plain dirt — the baseline subtracted off)
-input/tfc/gravel/gabbro.png                  (TFC gravel — CLUT palette so the pebbles read as gravel)
-input/tfc/dirt/{loam,sandy_loam,silt,silty_loam}.png   (each TFC soil's dirt — composite base)
-# (the derived ../coarse_dirt_overlay.png is a GENERATED tool-root artifact, tracked like grain_mask.png / patina_*.png)
+# coarse dirt: textures are HAND-PAINTED (checked in under textures/block/coarse_dirt/) — no inputs needed;
+# coarsedirt.cs generates only the block JSON + tags, not the textures.
 ```
 
 ## Extracting them from the dev dependency jars

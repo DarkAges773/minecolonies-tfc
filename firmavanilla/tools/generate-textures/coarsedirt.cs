@@ -1,13 +1,10 @@
-// Coarse dirt — vanilla's coarse-dirt "pebbles" detail carried onto each concrete TFC soil. First DERIVE an
-// overlay isolating where coarse_dirt differs from plain dirt (rgb = coarse colour, alpha = the difference,
-// amplified), saved to the tool root (tracked/tweakable); CLUT that overlay through a gravel palette so the
-// pebbles take a stone colour; then source-over it onto each TFC dirt. The blocks are plain (NOT TFC
-// DirtBlock / IDirtBlock), so they carry TFC dirt's tags yet never transform (no grass spread / shovel→path /
-// hoe→farmland). Crafted from the matching tfc:dirt/<soil> + #forge:gravel; landslide via a tfc:landslide
-// recipe. See CoarseDirtBlocks.java.
+// Coarse dirt — vanilla's coarse-dirt "pebbles" detail carried onto each concrete TFC soil. The textures are now
+// HAND-PAINTED (checked in under textures/block/coarse_dirt/), so this feature no longer generates them — the old
+// derive-overlay/CLUT/source-over texture pipeline was removed to avoid clobbering the hand art on a re-run. Only the
+// block JSON + tags are emitted here. The blocks are plain (NOT TFC DirtBlock / IDirtBlock), so they carry TFC dirt's
+// tags yet never transform (no grass spread / shovel→path / hoe→farmland). Crafted from the matching tfc:dirt/<soil> +
+// #forge:gravel; landslide via a tfc:landslide recipe. See CoarseDirtBlocks.java.
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using static Gen;
 
 static class CoarseDirt
@@ -16,48 +13,7 @@ static class CoarseDirt
 
     public static void Generate()
     {
-        const int COARSE_OVERLAY_GAIN = 5; // amplify the subtle coarse↔dirt difference into a visible pebble alpha
-        string cdTex = Path.Combine(resRoot, "assets", MODID, "textures", "block", "coarse_dirt");
-        Directory.CreateDirectory(cdTex);
-        using var coarse = Load("vanilla", "coarse_dirt.png");
-        using var dirt = Load("vanilla", "dirt.png");
-        using var gravel = Load("tfc/gravel", "gabbro.png");
-        int w = coarse.Width, h = coarse.Height;
-
-        // Derive the overlay (build a NEW image — ImageSharp here doesn't persist set-on-loaded through Save).
-        var overlay = new Image<Rgba32>(w, h);
-        for (int y = 0; y < h; y++)
-        for (int x = 0; x < w; x++)
-        {
-            Rgba32 c = coarse[x, y], d = dirt[x, y];
-            int diff = Math.Max(Math.Abs(c.R - d.R), Math.Max(Math.Abs(c.G - d.G), Math.Abs(c.B - d.B)));
-            byte a = (byte) Math.Clamp(diff * COARSE_OVERLAY_GAIN, 0, 255);
-            overlay[x, y] = new Rgba32(c.R, c.G, c.B, a);
-        }
-        overlay.Save(Path.Combine(scriptDir, "coarse_dirt_overlay.png"));
-
-        // Per soil: CLUT the overlay through that soil's dirt palette FIRST (so the pebbles take the soil's own colour
-        // instead of vanilla's brown — ClutSide keeps the overlay's alpha), then source-over the recoloured overlay.
-        using var clutOverlay = ClutSide(overlay, gravel, w, h);
-        foreach (var soil in SOILS)
-        {
-            using var tfcDirt = Load("tfc", Path.Combine("dirt", soil + ".png"));
-            var outImg = new Image<Rgba32>(w, h);
-            for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++)
-            {
-                Rgba32 o = clutOverlay[x, y], b = tfcDirt[x, y];
-                float oa = o.A / 255f;
-                outImg[x, y] = new Rgba32(
-                    (byte) Math.Round(o.R * oa + b.R * (1 - oa)),
-                    (byte) Math.Round(o.G * oa + b.G * (1 - oa)),
-                    (byte) Math.Round(o.B * oa + b.B * (1 - oa)),
-                    b.A);
-            }
-            outImg.Save(Path.Combine(cdTex, soil + ".png"));
-            outImg.Dispose();
-        }
-        overlay.Dispose();
+        // Textures are hand-painted and checked in — no texture generation here (see the header comment).
 
         // Blocks: per soil, a blockstate (cube_all) + block/item models + drop-self loot + crafting recipe (vanilla
         // coarse_dirt's 2x2 checkerboard, but with the matching CONCRETE tfc:dirt/<soil> and the #forge:gravel tag) +
@@ -97,6 +53,6 @@ static class CoarseDirt
         shovelMineable.AddRange(cdIds);
         canLandslide.AddRange(cdIds);
 
-        Console.WriteLine($"  coarse dirt: overlay → tool root + {SOILS.Length} blocks (textures + blockstate/models/loot/recipe + tags)");
+        Console.WriteLine($"  coarse dirt: {SOILS.Length} blocks (blockstate/models/loot/recipe + tags; textures hand-painted, not generated)");
     }
 }
