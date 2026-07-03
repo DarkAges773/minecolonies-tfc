@@ -67,6 +67,11 @@ input/{tfc,afc,beneath}/planks/<wood>.png             (each wood's planks — th
 
 # coarse dirt: textures are HAND-PAINTED (checked in under textures/block/coarse_dirt/) — no inputs needed;
 # coarsedirt.cs generates only the block JSON + tags, not the textures.
+
+# per-wood ladders (a hand-painted jungle-ladder relief CLUT'd — masked — through each wood's PLANKS palette):
+input/custom/jungle_ladder.png              (the hand-painted ladder relief)
+input/custom/jungle_ladder_mask.png          (white = recolour through planks, black = keep vanilla — the nail/bolt dots)
+input/{tfc,afc,beneath}/planks/<wood>.png    (each wood's planks — the CLUT palette; wood lists in ladders.cs)
 ```
 
 ## Extracting them from the dev dependency jars

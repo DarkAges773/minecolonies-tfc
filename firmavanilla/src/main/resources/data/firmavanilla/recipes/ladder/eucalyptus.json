@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "conditions": [ { "type": "forge:mod_loaded", "modid": "afc" } ],
+  "pattern": [ "X X", "XXX", "X X" ],
+  "key": { "X": { "item": "afc:wood/lumber/eucalyptus" } },
+  "result": { "item": "firmavanilla:ladder/eucalyptus", "count": 3 }
+}

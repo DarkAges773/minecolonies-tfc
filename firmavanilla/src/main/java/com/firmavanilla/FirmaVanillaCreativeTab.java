@@ -5,6 +5,7 @@ import com.firmavanilla.block.BarrelBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.CoarseDirtBlocks;
 import com.firmavanilla.block.CopperWeathering;
+import com.firmavanilla.block.LadderBlocks;
 import com.firmavanilla.block.MortaredCobbleBlock;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.PrismarineDeposits;
@@ -59,6 +60,10 @@ public final class FirmaVanillaCreativeTab
                         for (final RegistryObject<Block> barrel : BarrelBlocks.ALL)
                         {
                             output.accept(barrel.get());
+                        }
+                        for (final RegistryObject<Block> ladder : LadderBlocks.ALL)
+                        {
+                            output.accept(ladder.get());
                         }
                         // Per rock, group the plain tile with its shape family, then the cracked tile.
                         for (int i = 0; i < TileBlocks.ALL.size(); i++)

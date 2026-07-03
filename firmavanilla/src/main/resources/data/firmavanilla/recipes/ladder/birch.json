@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "X X", "XXX", "X X" ],
+  "key": { "X": { "item": "tfc:wood/lumber/birch" } },
+  "result": { "item": "firmavanilla:ladder/birch", "count": 3 }
+}

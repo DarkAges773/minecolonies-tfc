@@ -13,7 +13,7 @@
 //   common.cs            the shared engine (`Gen`): config, texture pipeline (CLUT/grain/mask), file/tag I/O,
 //                        and the JSON emitters used across features (stair/slab/wall shapes, generic recipes).
 //   chiseledsandstone.cs bookshelves.cs  rocktiles.cs  alabaster.cs  copper.cs
-//   prismarinedeposits.cs  soullamps.cs  quartz.cs  coarsedirt.cs
+//   prismarinedeposits.cs  soullamps.cs  quartz.cs  coarsedirt.cs  ladders.cs
 //                        one self-contained feature each (its generation logic + its own JSON emitters).
 //
 // This file is just the entry point: it runs each feature in turn, then writes the cross-cutting tags that more
@@ -36,6 +36,7 @@ Beeswax.Generate();    // block of beeswax — honeycomb_block motif CLUT'd thro
 SignalCampfire.Generate();  // signal campfires (normal + soul) — JSON only, reuse vanilla campfire art
 Moss.Generate();        // 4 tfc:plant/moss -> 2 minecraft:moss_block recipe (vanilla moss block, uncraftable in TFC)
 int barrels    = Barrels.Generate();
+int ladders    = Ladders.Generate();   // per-wood ladders — hand-painted jungle-ladder relief CLUT'd (masked) through each wood's planks
 
 // ---- cross-cutting tags written ONCE (a mod can ship only one file per tag path) ----
 // minecraft:mineable/pickaxe + the vanilla stairs/slabs/walls shape tags are pure functions of the config lists.
@@ -49,4 +50,4 @@ WriteTag("tfc", "blocks", "can_landslide", IdsTagBody(canLandslide));
 // minecraft:mineable/axe gets the decorative bookshelves AND the wood barrels (accumulated above).
 WriteTag("minecraft", "blocks", "mineable/axe", ValuesTag(axeMineable));
 
-Console.WriteLine($"Done: {sandstone} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants + {patina} patina palettes + {copperBars} copper-bar stages + {copperForms} copper-form blocks + {prismarine} prismarine deposits + {barrels} barrel wood-variants written to {resRoot}");
+Console.WriteLine($"Done: {sandstone} chiseled-sandstone + {books} bookshelf + {tiles} rock-tiles + {alab} alabaster variants + {patina} patina palettes + {copperBars} copper-bar stages + {copperForms} copper-form blocks + {prismarine} prismarine deposits + {barrels} barrel + {ladders} ladder wood-variants written to {resRoot}");

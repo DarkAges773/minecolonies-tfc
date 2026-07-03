@@ -5,6 +5,7 @@ import com.firmavanilla.block.BarrelBlocks;
 import com.firmavanilla.block.BookshelfBlocks;
 import com.firmavanilla.block.CoarseDirtBlocks;
 import com.firmavanilla.block.CopperWeathering;
+import com.firmavanilla.block.LadderBlocks;
 import com.firmavanilla.block.MortaredCobbleRegistry;
 import com.firmavanilla.block.PrismarineDeposits;
 import com.firmavanilla.block.QuartzBlocks;
@@ -72,6 +73,9 @@ public class FirmaVanilla
         // Coarse dirt per TFC soil — vanilla coarse-dirt look in TFC palettes; plain (non-transforming) dirt-like
         // blocks crafted from TFC dirt + gravel. Textures/assets machine-generated.
         CoarseDirtBlocks.init(modBus);
+        // Per-wood ladders — plain vanilla LadderBlock per TFC (and, when present, AFC/Beneath) wood. Faces are the
+        // hand-painted jungle-ladder relief CLUT-recoloured from each wood's planks; climbing is tag-driven.
+        LadderBlocks.init(modBus);
         // Block of beeswax — vanilla honeycomb-block motif recoloured to FirmaLife beeswax's palette (CLUT).
         // Standalone block (no FirmaLife dep); only its recipe (4 firmalife:beeswax) is mod_loaded-gated.
         WaxBlocks.init(modBus);

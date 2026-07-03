@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east":  { "model": "firmavanilla:block/ladder/mangrove", "y": 90 },
+    "facing=north": { "model": "firmavanilla:block/ladder/mangrove" },
+    "facing=south": { "model": "firmavanilla:block/ladder/mangrove", "y": 180 },
+    "facing=west":  { "model": "firmavanilla:block/ladder/mangrove", "y": 270 }
+  }
+}
