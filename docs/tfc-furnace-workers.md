@@ -1,5 +1,13 @@
 # TFC furnace workers — design
 
+> **⚠️ SUPERSEDED (kept as history).** This describes the original approach that drove **vanilla furnaces** via a
+> `litTime`/`FurnaceProcess`-capability container model + `kind`-keyed `FurnaceProcessings` completers + a
+> `FurnaceHeating` ignite helper. That self-processing machinery was **deleted** in the furnace→forge switchover — the
+> huts now run on the self-processing **heat-forge multiblock** ([tfc-forge-multiblock.md](tfc-forge-multiblock.md),
+> the current design). What **carried over**: the `FurnaceBehavior`/`FurnaceBehaviors`/`FurnaceWorker` dispatcher (Cook/
+> Smelter behaviors, now tending forge controllers), `CookRecipes`/`SmelterRecipes`, and `FurnaceFuel` (trimmed to the
+> `isFuel`/`hasFuelHotEnough` predicate). Read this only for the recipe/fuel/nutrition reasoning that still applies.
+
 How `:compat` (`mctfc`) replaces the vanilla-furnace behaviour of MineColonies' furnace-using workers with
 TFC-flavoured processes, starting with the **Smelter** and built so the **Cook** (and other furnace huts) can
 reuse the same machinery.

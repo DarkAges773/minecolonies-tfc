@@ -5,6 +5,7 @@ import com.minecolonies.api.colony.buildings.modules.IBuildingModuleView;
 import com.minecolonies.api.colony.buildings.modules.IModuleWithExternalBlocks;
 import com.minecolonies.api.colony.buildings.modules.IPersistentModule;
 import com.minecolonies.api.colony.buildings.registry.BuildingEntry;
+import com.minecolonies.core.colony.buildings.modules.FurnaceUserModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -48,7 +49,12 @@ public class ForgeUserModule extends AbstractBuildingModule implements IPersiste
     @Override
     public void onBlockPlacedInBuilding(@NotNull final BlockState blockState, @NotNull final BlockPos pos, @NotNull final Level world)
     {
-        if (blockState.getBlock() instanceof HeatForgeBlock && !forges.contains(pos))
+        // Check the ACTUAL placed block, not the passed {@code blockState}. MineColonies registers with the
+        // <b>blueprint's</b> block state (CreativeBuildingStructureHandler passes {@code blueprint.getBlockState(pos)}),
+        // which is still {@code minecraft:furnace} — the furnace→forge substitution swaps the WORLD block, not the
+        // blueprint data. So {@code blockState} is the un-substituted furnace here; the world block at {@code pos} is our
+        // forge (it's already placed by the time this fires). Checking the passed state would never see the forge.
+        if (world.getBlockState(pos).getBlock() instanceof HeatForgeBlock && !forges.contains(pos))
         {
             forges.add(pos.immutable());
             markDirty();
@@ -73,6 +79,7 @@ public class ForgeUserModule extends AbstractBuildingModule implements IPersiste
      */
     public List<BlockPos> getControllers(final Level level)
     {
+        reconcileFromFurnaces(level);
         final Set<BlockPos> controllers = new LinkedHashSet<>();
         final List<BlockPos> stale = new ArrayList<>();
         for (final BlockPos pos : forges)
@@ -90,6 +97,35 @@ public class ForgeUserModule extends AbstractBuildingModule implements IPersiste
             markDirty();
         }
         return new ArrayList<>(controllers);
+    }
+
+    /**
+     * Adopt any forge that the native {@link FurnaceUserModule} tracks but we don't. MineColonies registers a placed
+     * block under its <b>blueprint</b> state (still {@code minecraft:furnace}) — see {@link #onBlockPlacedInBuilding} —
+     * so a substituted furnace lands in the furnace module's list, and its {@code onBlockPlacedInBuilding} passed us the
+     * furnace (not our forge) so we skipped it. Those positions now hold our forge in the world; adopt them here. This is
+     * also the reconcile path for huts built before this discovery (no rebuild needed) and is idempotent + cheap (the
+     * furnace list is a handful of positions). Runs each {@link #getControllers} so a freshly-substituted hut self-heals.
+     */
+    private void reconcileFromFurnaces(final Level level)
+    {
+        if (building == null)
+        {
+            return;
+        }
+        final FurnaceUserModule furnaceModule = building.getFirstModuleOccurance(FurnaceUserModule.class);
+        if (furnaceModule == null)
+        {
+            return;
+        }
+        for (final BlockPos pos : furnaceModule.getFurnaces())
+        {
+            if (level.getBlockState(pos).getBlock() instanceof HeatForgeBlock && !forges.contains(pos))
+            {
+                forges.add(pos.immutable());
+                markDirty();
+            }
+        }
     }
 
     /** The controller BE at {@code pos}, or {@code null} if it isn't a loaded forge controller. */

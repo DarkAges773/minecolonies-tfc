@@ -140,12 +140,22 @@ SpongePowered MixinGradle (refmap generation). Notes that each cost a debugging 
   in the official-mapped dev env (`InvalidAccessorException`). MixinGradle auto-registers `:compat`'s own
   config; the `:replacements` configs are registered explicitly via `--mixin.config` args (see
   [compat/build.gradle](compat/build.gradle)).
-- **Don't `@Shadow` a deeply-inherited field of another mod's class.** `MixinEntityAIWorkFarmer` first
-  tried `@Shadow protected Level world;` — `world` is declared ~4 superclasses up in `AbstractAISkeleton`,
-  and at APPLY time Mixin threw `@Shadow field world was not located in the target class` (crash the moment
-  the first farmer AI loaded; the AP only warns at compile). Fix: don't shadow — use a `@Redirect` whose
-  redirected call hands you the object you need. We redirect the `Level#setBlockAndUpdate` call inside the
-  target method, so the handler receives the `Level` as its receiver. No shadow required.
+- **Don't `@Shadow` an *inherited* member of another mod's class — shadow the class that DECLARES it.** Mixin here
+  can't resolve a `@Shadow` of a field/method that lives in a **superclass** of the target (even a *direct* one): at
+  APPLY time it throws `@Shadow <field/method> … was not located in the target class … No refMap loaded` and crashes
+  the moment that class first loads (the AP only *warns* at compile — `Cannot find target for @Shadow`). Two cases, two
+  fixes:
+  - **Don't need the value, just to intercept a call** (`MixinEntityAIWorkFarmer` wanted `protected Level world`,
+    declared ~4 supers up in `AbstractAISkeleton`): use a `@Redirect` whose redirected call hands you the object — we
+    redirect the `Level#setBlockAndUpdate` call so the handler receives the `Level` as its receiver. No shadow.
+  - **Need to READ the inherited member** (the Chef forge driver needed `currentRecipeStorage`/`currentRequest`/
+    `finalizeCraftingTask`, all declared in `AbstractEntityAICrafting`, the *direct* superclass of its
+    `AbstractEntityAIRequestSmelter` target — and **even depth-1 failed**): put the `@Shadow`s on a **second mixin
+    targeting the declaring class** (there they're the target's *own* members → resolve, no AP warning), expose them
+    through a plain interface it `implements`, and read them from the subclass mixin via `((ThatInterface) (Object) this)`.
+    See [MixinAbstractEntityAICrafting](compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAICrafting.java) +
+    [CraftingAiAccess](compat/src/main/java/com/mctfc/cook/CraftingAiAccess.java). (A public inherited *method* can also
+    just be cast-and-called; only protected members strictly need the accessor.)
 - The runtime Mixin logs `Compatibility level JAVA_17 ... higher than max supported (JAVA_13)` as
   DEBUG — benign (config still selected).
 - **MixinExtras is available in `:compat`** (`compileOnly` + `annotationProcessor` `io.github.llamalad7:mixinextras-common`,
@@ -220,15 +230,18 @@ changing a feature so you don't re-derive (or undo) a hard-won fix:
 - [docs/compat-features.md](docs/compat-features.md) — every `:compat` (mctfc) bridge feature: TFC
   substitutions, farming, food (stacking/spoilage/nutrition), collapse-proofing, colony lights,
   decorative furnaces, optional per-mod datapacks.
-- [docs/tfc-furnace-workers.md](docs/tfc-furnace-workers.md) — design for the TFC furnace-worker rework
-  (Smelter, Cook, and Chef all done): the behaviour-controller (dispatcher mixin + `FurnaceBehavior` strategy), the
-  furnace-as-container + `litTime` model, the reusable temperature-gated/duration-pooled fuel system, and the
-  `kind`-keyed `FurnaceProcessings` completer registry (the cook reuses all of it, food-serving preserved). §6b: the
-  **Chef** reuses the heating from a *different* AI base (`AbstractEntityAIRequestSmelter`, not the dispatcher) — a
-  shared `FurnaceHeating` helper + a Kitchen-gated ignite mixin drive its smelt tab with TFC heating recipes.
-- [docs/tfc-forge-multiblock.md](docs/tfc-forge-multiblock.md) — design **+ status (slices 1–4 built; Chef driver + the
-  furnace→heat_forge substitution switchover are the leftover slices — see its §18)** for a custom **growing forge block**
-  that replaces the huts' vanilla furnaces (Smeltery/Cook/Chef; Glassblower later): a **fully custom** block+BE+type
+- [docs/tfc-furnace-workers.md](docs/tfc-furnace-workers.md) — **SUPERSEDED by the forge multiblock** (kept as history):
+  the original TFC furnace-worker rework drove **vanilla furnaces** via a `litTime`/`FurnaceProcess`-cap container model
+  + `kind`-keyed `FurnaceProcessings` completers + a `FurnaceHeating` ignite helper. That self-processing machinery was
+  **deleted** in the switchover (see tfc-forge-multiblock.md §18); the forge block self-processes instead. What
+  **carried over** and is still current: the `FurnaceBehavior`/`FurnaceBehaviors`/`FurnaceWorker` dispatcher (Smelter/Cook
+  retargeted to forge controllers), `CookRecipes`/`SmelterRecipes`, and `FurnaceFuel` (now just the
+  `isFuel`/`hasFuelHotEnough` predicate).
+- [docs/tfc-forge-multiblock.md](docs/tfc-forge-multiblock.md) — design **+ status (ALL slices built + compiled;
+  furnace→forge switchover live + vanilla-furnace driving retired; colony end-to-end in-game validation is the one
+  remaining checkpoint — see its §18)** for a custom **growing forge block** that replaces the huts' vanilla furnaces
+  (Smeltery/Cook/Chef; Glassblower later). Ships as **4 cosmetic variants** (`heat_forge_brick/rustic/stone/tile`, blast-
+  furnace look + oven shell + front overlay); the substitution defaults to **brick**. It's a **fully custom** block+BE+type
   (not `FurnaceBlock`/`FurnaceBlockEntity` — that `instanceof` compat is worthless once we replace the AI) that
   **self-processes** on its own tick, so the AI shrinks to a **tend** loop. It's a **player-usable TFC firepit×forge
   hybrid** — each position is a firepit (1 heat slot + 2 output slots applying a `HeatingRecipe`'s item/fluid result), the

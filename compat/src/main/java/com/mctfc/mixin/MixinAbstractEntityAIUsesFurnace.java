@@ -4,7 +4,6 @@ import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.entity.ai.statemachine.AITarget;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
-import com.minecolonies.core.colony.buildings.modules.FurnaceUserModule;
 import com.minecolonies.core.colony.jobs.AbstractJob;
 import com.minecolonies.core.entity.ai.workers.AbstractAISkeleton;
 import com.minecolonies.core.entity.ai.workers.AbstractEntityAIBasic;
@@ -134,13 +133,6 @@ public abstract class MixinAbstractEntityAIUsesFurnace implements FurnaceWorker
     {
         final AbstractEntityCitizen w = worker();
         return w == null ? null : w.level();
-    }
-
-    @Override
-    public List<BlockPos> furnaces()
-    {
-        final IBuilding building = building();
-        return building == null ? List.of() : building.getFirstModuleOccurance(FurnaceUserModule.class).getFurnaces();
     }
 
     @Override

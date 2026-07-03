@@ -4,16 +4,12 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.AddType;
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.BlockGrassPathPlacementHandler;
 import com.mctfc.cook.CookBehavior;
-import com.mctfc.cook.CookProcessing;
 import com.mctfc.furnace.FurnaceBehaviors;
-import com.mctfc.furnace.FurnaceProcessCapability;
-import com.mctfc.furnace.FurnaceProcessings;
 import com.mctfc.settings.BeeFrameSetting;
 import com.mctfc.settings.BeeFrameSettingFactory;
 import com.mctfc.settings.BuildingSettings;
 import com.mctfc.settings.BuildingStockSeeds;
 import com.mctfc.smelter.SmelterBehavior;
-import com.mctfc.smelter.SmelterProcessing;
 import com.mctfc.smelter.SmelterRecipes;
 import com.minecolonies.api.colony.requestsystem.StandardFactoryController;
 import com.minecolonies.core.colony.buildings.modules.settings.IntSetting;
@@ -60,20 +56,14 @@ public class MineColoniesTFC
         // The TFC heat-forge multiblock block + its block entity (the growing furnace replacement — see
         // docs/tfc-forge-multiblock.md). Registered here; discovery/substitution/tending land in later slices.
         HeatForgeBlocks.init(modBus);
-        // Per-furnace process store: attach our FurnaceProcess capability to every vanilla furnace BE so an
-        // in-progress TFC operation (ore + mold + finish tick + carried fuel) persists with the furnace.
-        FurnaceProcessCapability.init(modBus);
-        // Furnace completers, keyed by the kind a worker stamps onto a furnace it loads — the furnace runs the right
-        // one when its flame dies (smelter: casting; cook: food heating). Smelter is registered first, so it's also
-        // the back-compat default for furnaces saved before kinds existed.
-        FurnaceProcessings.register(SmelterProcessing.KIND, new SmelterProcessing());
-        FurnaceProcessings.register(CookProcessing.KIND, new CookProcessing());
-        // TFC smelter: replace the MineColonies Smelter's vanilla furnace loop with TFC ore-melting/casting
-        // (collapsed: ~100 mB of ore → one ingot, or an iron bloom). Installed per-AI by
-        // MixinAbstractEntityAIUsesFurnace; other furnace workers stay vanilla until they get a behavior.
+        // TFC furnace workers now run on the heat-forge multiblock (docs/tfc-forge-multiblock.md): the
+        // furnace→heat_forge substitution swaps blueprint furnaces to forges, which self-process; the behaviors
+        // below are pure tend loops installed per-AI by MixinAbstractEntityAIUsesFurnace. (The Chef, a request
+        // crafter the dispatcher can't reach, is driven directly by MixinAbstractEntityAIRequestSmelter.)
+        // TFC smelter: melt ore into molds (cast metals) on the hut's forges; other furnace workers stay vanilla.
         FurnaceBehaviors.register(EntityAIWorkSmelter.class, SmelterBehavior::new);
-        // TFC cook (dining hall): replace the Cook's vanilla furnace cooking with TFC food heating (raw → cooked
-        // food, decay preserved, gated to the restaurant menu). Its food-serving duties are left untouched.
+        // TFC cook (dining hall): cook raw TFC food → cooked (decay preserved, gated to the restaurant menu) on the
+        // hut's forges. Its food-serving duties are left untouched.
         FurnaceBehaviors.register(EntityAIWorkCook.class, CookBehavior::new);
         // Add our per-hut settings to the relevant buildings' Settings tab (MixinAbstractBuildingModule grafts
         // these onto each building's SettingsModule as it's built). Smeltery: the ore-restock low-water threshold.

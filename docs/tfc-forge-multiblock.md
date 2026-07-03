@@ -1,4 +1,4 @@
-# TFC forge multiblock — design + status (slices 1–4 IMPLEMENTED)
+# TFC forge multiblock — design + status (ALL slices IMPLEMENTED; in-game validation pending)
 
 A custom **growing forge block** that replaces the vanilla furnaces MineColonies' furnace huts use (Smeltery, Cook,
 Chef — Glassblower later) with a self-processing, TFC-flavoured device. The block does the heating/melting on its own
@@ -6,14 +6,15 @@ tick; the worker AI is reduced to **tending** it (stock input + fuel, pull finis
 blocks merge into **one multiblock** that shares fuel and presents as **one big furnace** in the GUI, tended as a single
 aggregate.
 
-Status: **slices 1–4 implemented** (block + BE + multiblock + cook/melt self-tick + GUI + Smelter/Cook tend-AI); the
-block + GUI are **in-game-verified standalone** (place in creative, load, flint-and-steel to light, cook/melt). The
-old furnace-based [SmelterBehavior](../compat/src/main/java/com/mctfc/smelter/SmelterBehavior.java) /
-[CookBehavior](../compat/src/main/java/com/mctfc/cook/CookBehavior.java) are now **retargeted to forge controllers**
-(they no longer drive vanilla furnaces); the [Chef furnace path](../compat/src/main/java/com/mctfc/mixin/MixinAbstractEntityAIRequestSmelter.java)
-still uses the vanilla furnace (slice 5). **Remaining: the Chef driver (§14) + the final switchover** — until the
-switchover flips the `furnace → heat_forge` substitution, blueprint huts still place vanilla furnaces, so the retargeted
-Smelter/Cook idle (nothing to tend). See §18 for the done/leftover breakdown and the hard-won fidelity fixes.
+Status: **all slices implemented + compiled** (block + BE + multiblock + cook/melt self-tick + GUI + Smelter/Cook
+tend-AI + Chef driver + the furnace→forge switchover). The block + GUI are **in-game-verified standalone**; the full
+**worker flow (Smelter/Cook/Chef on forges) is code-complete but not yet colony-tested** — that's the remaining step.
+The `minecraft:furnace → mctfc:heat_forge_brick` substitution is **live** (every blueprint furnace becomes a forge), and
+the vanilla-furnace driving has been **retired** (deleted). Two deviations from the original plan, noted below and in
+§18: the block ships as **4 cosmetic variants** (brick/rustic/stone/tile) with the substitution defaulting to **brick**
+(a global rule can't pick per-hut); and the **decorative-furnace interaction blocker** ([VanillaFurnaceHandler](../compat/src/main/java/com/mctfc/block/VanillaFurnaceHandler.java))
+was **kept** (config-gated, off by default) rather than deleted — it's an orthogonal TFC-bypass fix for *player-placed*
+vanilla furnaces, not part of the forge system. See §18 for the full done breakdown and the hard-won fidelity fixes.
 
 ---
 
@@ -530,18 +531,32 @@ buffer (§4).
    (mold staging + seating, metal-matching capacity-sized ore loading, `MOLD_UNLOAD` casting). **Cast metals only** —
    `accepts` excludes iron.
 
-**Leftover:**
+**Done (slices 5–6) — compiled; colony-flow in-game validation still pending:**
 
-5. **Chef driver** — evolve `MixinAbstractEntityAIRequestSmelter` to tend a `ForgeController` (gated
-   `currentRecipeStorage.getIntermediate() == FURNACE`), reusing `ForgeTender`; output straight to `addDelivery` +
-   `craftCounter`/`finalizeCraftingTask` (per §14). Grid crafting (sandwiches/composed dishes) still falls through to
-   native `AbstractEntityAICrafting`.
-6. **Final switchover** (one coordinated change, §12): ship the blanket `minecraft:furnace → mctfc:heat_forge`
-   substitution (`data/mctfc/block_substitutions/`, copy `facing`) **and** retire the now-dead vanilla-furnace driving —
-   the `FurnaceBehavior` dispatcher's furnace path, the `litTime` `MixinAbstractFurnaceBlockEntity`, the Chef ignite
-   mixin, `FurnaceHeating`/`CookProcessing`/`SmelterProcessing`, and the decorative-furnace GUI block for blueprint
-   furnaces. After this the whole Smelter/Cook/Chef flow is **colony-testable end-to-end**; this is where the feature
-   becomes user-facing → add the `:compat` changelog `[Unreleased]` bullet + finalize docs.
+5. ✅ **Chef driver** — `MixinAbstractEntityAIRequestSmelter` `@Inject`s `executeCraftingAction` (HEAD, cancellable),
+   gated `BuildingKitchen` + `getIntermediate() == FURNACE` + forges present; tends the `ForgeController`s via a
+   `ChefForgeTender` (`ForgeTender` Context+Policy keyed to the current recipe input) and delivers finished-matching-
+   primary straight to the request (`addDelivery` + `setCraftCounter` + `finalizeCraftingTask`, mirroring native
+   `retrieveProductFromFurnace`). Returns `CRAFT` to loop; non-FURNACE / non-Kitchen fall through to native.
+   **Deviations from §14:** (a) input is **staged from the hut racks** (`tender.stage`) rather than gathered via
+   `needsCurrently`/`GATHERING_REQUIRED_MATERIALS`; (b) the worker **tends remotely** (no walk-to-forge — `craft()`
+   already walked it to the work pos); (c) `currentRecipeStorage`/`currentRequest`/`finalizeCraftingTask` are read via a
+   **`CraftingAiAccess` interface** implemented by a second mixin on their declaring class `AbstractEntityAICrafting` —
+   a `@Shadow` of these *inherited* members (even from the direct superclass) crashes at apply time in this setup (see
+   the mixin note in CLAUDE.md; two crashes cost this). Files: `mixin.MixinAbstractEntityAIRequestSmelter`,
+   `mixin.MixinAbstractEntityAICrafting`, `cook.CraftingAiAccess`, `cook.ChefForgeTender`.
+6. ✅ **Final switchover** (§12): shipped the blanket `minecraft:furnace → mctfc:heat_forge_brick` substitution
+   (`data/mctfc/block_substitutions/tfc_furnace.json`; the engine auto-copies `facing`) **and** retired the vanilla-
+   furnace driving — **deleted** `FurnaceHeating`/`FurnaceProcess`/`FurnaceProcessing`/`FurnaceProcessings`/
+   `FurnaceProcessCapability`/`CookProcessing`/`SmelterProcessing` + the `MixinAbstractFurnaceBlockEntity` (litTime) /
+   `FurnaceBlockEntityAccessor` mixins (dropped from `mctfc.mixins.json`), removed the Chef ignite + the dead
+   `FurnaceWorker.furnaces()`, trimmed `FurnaceFuel` to its live `isFuel`/`hasFuelHotEnough` predicate, and dropped the
+   `FurnaceProcessCapability`/completer registrations from `MineColoniesTFC`. **Deviations:** (a) the substitution targets
+   a **single default variant, `heat_forge_brick`** — a global block→block rule can't pick per-hut (per-hut variants would
+   need the interactive `to_tag` picker or the per-building integration); (b) `VanillaFurnaceHandler` (the decorative
+   interaction blocker) was **kept** — it's config-gated (`decorativeVanillaFurnaces`, default **false**) and guards
+   *player-placed* vanilla furnaces (a TFC-progression bypass), orthogonal to the forge system, so deleting it would drop
+   an unrelated safeguard. **Not yet colony-tested end-to-end** — that's the one remaining checkpoint.
 7. **Deferred (post-v1):** iron/bloom mode (charcoal-only reductant, bloom into the output slot, no overflow — the
    Smelter policy already excludes iron ore so it can't jam a position); Glassblower (needs a glass-heating completer).
 
@@ -563,3 +578,12 @@ Found during in-game GUI/behaviour tuning against real TFC — verified against 
   own recipe temperature — they do **not** wait for the device to reach the transform temp first.
 - **Molds seat by item class** (`stack.getItem() instanceof MoldItem`) in the output/overflow filter, because TFC empty
   molds don't reliably expose `FLUID_HANDLER_ITEM` **client-side**, where the slot's `mayPlace` is first checked.
+- **Forge discovery keys on the WORLD block, not the passed blockstate** (§12 assumption was wrong). MineColonies
+  registers a built block under its **blueprint** state (`CreativeBuildingStructureHandler` calls
+  `registerBlockPosition(blueprint.getBlockState(pos), …)`), which is still `minecraft:furnace` — the substitution swaps
+  the *world* block, not the blueprint data. So `ForgeUserModule.onBlockPlacedInBuilding` is handed a *furnace* and its
+  `instanceof HeatForgeBlock` check never matched → forges were placed but never registered → the Cook idled. Fix:
+  `onBlockPlacedInBuilding` checks `world.getBlockState(pos)` (the block is already placed when it fires), **plus** a
+  `reconcileFromFurnaces()` in `getControllers` that adopts any position the native `FurnaceUserModule` tracks (it *did*
+  register them — the blueprint said furnace, so *its* `instanceof FurnaceBlock` passed) that now holds a forge in the
+  world — so a hut built before this fix self-heals with no rebuild.

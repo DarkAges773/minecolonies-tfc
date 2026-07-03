@@ -8,6 +8,13 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **New "heat forge" block — a TFC-flavoured furnace for the worker huts.** Four cosmetic variants (**Brick / Rustic /
+  Stone / Tile Furnace**) are craftable and show in the *Functional Blocks* creative tab; each looks like a blast
+  furnace with an oven-material shell, glows and crackles with a lit front + light + smoke while burning, and is lit
+  with **flint & steel**. Adjacent forges **merge into one multiblock** (up to 5) that shares a single 5-slot
+  charcoal-forge fuel column and one temperature gauge, opened as one interactive window. Every position is a little TFC
+  firepit×forge — a heat slot (any heatable item) plus output/overflow slots for molds/containers — and the block heats
+  and processes **on its own**. It's usable on its own as a heat device, and it's what the furnace workers now run on.
 - **The Chef (Kitchen) now cooks raw TFC food in its furnaces** (the *smelting* recipe tab). TFC food isn't
   vanilla-furnace-smeltable, so that tab used to be useless in a TFC world; now you teach it with TFC's own cooking
   (raw food → cooked food) — put a raw food in the teach window and it shows the cooked result to teach — and the Chef
@@ -51,6 +58,13 @@ All notable changes to this mod are documented here. The format is based on
   (Requires the Palette Presets feature in Palette Swap; the presets are read-only but can be cloned and tweaked.)
 
 ### Changed
+- **The Smeltery, dining hall and Kitchen now run on the heat-forge, not vanilla furnaces.** Every furnace placed by a
+  blueprint in a colony is automatically swapped to a heat-forge (it keeps its facing, and adjacent ones merge into one
+  multiblock), and the workers now tend those forges — the Smelter melts ore into molds, the Cook and Chef heat TFC
+  food. The forge self-heats and self-processes, so the worker just keeps it lit and fuelled, loads it, and hauls out
+  the results (it warms up gradually and is kept warm briefly between jobs). Vanilla furnaces are no longer driven by
+  the colony. *(Note: this swaps **every** blueprint furnace, including decorative ones in houses — they just become a
+  player-usable heat forge with no worker.)*
 - **The dining hall menu only offers TFC food now.** The dish picker previously listed every edible item (vanilla and
   modded foods that don't work in TFC's nutrition/spoilage system); it's now limited to **TFC-tracked food** (anything
   carrying TFC's food data — including modded foods a datapack has integrated). Any non-TFC dish already on a menu is

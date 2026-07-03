@@ -32,9 +32,6 @@ public interface FurnaceWorker
     /** The level the worker is in. */
     Level world();
 
-    /** Positions of the (vanilla) furnaces registered to the building — the heat stations. */
-    List<BlockPos> furnaces();
-
     /**
      * Distinct heat-forge <b>controller</b> positions registered to the building (one per multiblock), from the grafted
      * {@code ForgeUserModule}. The tend-AI drives these instead of vanilla furnaces once a worker is retargeted to the
