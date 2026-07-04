@@ -1,6 +1,8 @@
 package com.mctfc.mixin;
 
 import com.ldtteam.structurize.blueprints.v1.Blueprint;
+import com.mctfc.bloomery.BloomeryModules;
+import com.mctfc.bloomery.BloomeryUserModule;
 import com.mctfc.forge.ForgeUserModule;
 import com.mctfc.herding.TfcHerd;
 import com.minecolonies.api.colony.ICitizenData;
@@ -50,6 +52,14 @@ public class MixinAbstractBuilding
         {
             final IBuilding building = (IBuilding) this;
             building.registerModule(new ForgeUserModule().setProducer(ForgeUserModule.PRODUCER).setBuilding(building));
+        }
+        // The Smelter also tends player-marked TFC bloomeries for iron (docs/tfc-bloomery-smelter.md): graft its
+        // server-only position store, the parallel of ForgeUserModule (wand-assigned, not builder-placed). Server-only /
+        // not synced (its producer has no view), so no module-sync-id fragility.
+        if (self instanceof BuildingSmeltery)
+        {
+            final IBuilding building = (IBuilding) this;
+            building.registerModule(new BloomeryUserModule().setProducer(BloomeryModules.STORAGE).setBuilding(building));
         }
     }
 

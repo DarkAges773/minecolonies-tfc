@@ -47,7 +47,8 @@
     "MixinWindowField",
     "MixinSettingsModuleView",
     "MixinItemListModuleView",
-    "MixinWindowListRecipes"
+    "MixinWindowListRecipes",
+    "MixinBuildingEntry"
   ],
   "injectors": {
     "defaultRequire": 1

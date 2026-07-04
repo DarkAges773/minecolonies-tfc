@@ -87,5 +87,12 @@
   "block.mctfc.heat_forge_brick": "Brick Furnace",
   "block.mctfc.heat_forge_rustic": "Rustic Furnace",
   "block.mctfc.heat_forge_stone": "Stone Furnace",
-  "block.mctfc.heat_forge_tile": "Tile Furnace"
+  "block.mctfc.heat_forge_tile": "Tile Furnace",
+  "item.mctfc.bloomery_scepter": "Bloomery Wand",
+  "com.minecolonies.coremod.gui.tooldesc.bloomery_scepter": "Take this wand and right-click your TFC bloomeries to have the Smelter tend them for iron. Right-click a marked bloomery again to unmark it.",
+  "com.mctfc.bloomery.scepter.added": "Bloomery marked — the Smelter will tend it for iron.",
+  "com.mctfc.bloomery.scepter.removed": "Bloomery unmarked.",
+  "com.mctfc.bloomery.scepter.notformed": "This bloomery isn't built correctly — finish its insulation and chimney, then mark it.",
+  "com.mctfc.bloomery.scepter.level": "Upgrade the Smeltery further before it can tend bloomeries.",
+  "com.mctfc.bloomery.scepter.max": "This Smeltery is already tending as many bloomeries as its level allows."
 }

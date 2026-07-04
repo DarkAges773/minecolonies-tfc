@@ -77,6 +77,10 @@ public class Config
             .comment("How long (ticks) the colony worker keeps a heat-forge lit and fed after its last completed operation before explicitly extinguishing it. Long = jobs start hot with no warm-up but idle fuel burns; 0 = extinguished the moment work stops, paying warm-up on the next job. 1200 = 60s.")
             .defineInRange("forgeKeepWarmTicks", 1200, 0, 720000);
 
+    private static final ForgeConfigSpec.ConfigValue<List<? extends Integer>> BLOOMERY_CAP_BY_LEVEL = BUILDER
+            .comment("How many player-built TFC bloomeries a Smeltery can mark (with the bloomery wand taken from the hut GUI) and tend for iron, one entry per building level: index 0 = level 1, index 1 = level 2, and so on. Default [0, 1, 1, 2, 3]: the iron line unlocks at level 2 and caps at 3 (raw iron stays a boutique supplement to the forge's cast metals). A building level beyond the list uses the last entry; an EMPTY list disables bloomery marking entirely (a clean off switch).")
+            .defineList("bloomeryCapPerLevel", List.of(0, 1, 1, 2, 3), o -> o instanceof Integer i && i >= 0);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     /** Fertilize once the crop's primary nutrient is below this (0..1). */
@@ -124,6 +128,9 @@ public class Config
     /** Ticks a worker keeps a heat-forge lit after its last op before extinguishing (fuel-vs-latency knob). Read by the forge tend-AI. */
     public static int forgeKeepWarmTicks = 1200;
 
+    /** Max bloomeries a Smeltery may mark per building level, index 0 = level 1 (empty = feature disabled). Read via {@link #maxBloomeries}. */
+    public static List<Integer> bloomeryCapPerLevel = List.of(0, 1, 1, 2, 3);
+
     /**
      * The effective-temperature bonus for a furnace worker's building level (1-based), from
      * {@link #furnaceFuelTempBonusByLevel}; a level beyond the list uses the last entry, an empty list 0.
@@ -136,6 +143,21 @@ public class Config
         }
         final int index = Math.max(0, Math.min(buildingLevel - 1, furnaceFuelTempBonusByLevel.size() - 1));
         return furnaceFuelTempBonusByLevel.get(index);
+    }
+
+    /**
+     * How many bloomeries a Smeltery of this (1-based) building level may mark, from {@link #bloomeryCapPerLevel}; a level
+     * beyond the list uses the last entry, and an empty list disables the feature (returns 0). Mirrors
+     * {@link #furnaceFuelTempBonus}'s clamping.
+     */
+    public static int maxBloomeries(final int buildingLevel)
+    {
+        if (bloomeryCapPerLevel.isEmpty())
+        {
+            return 0;
+        }
+        final int index = Math.max(0, Math.min(buildingLevel - 1, bloomeryCapPerLevel.size() - 1));
+        return bloomeryCapPerLevel.get(index);
     }
 
     @SubscribeEvent
@@ -156,5 +178,6 @@ public class Config
         forgeTempFallPerTick = FORGE_TEMP_FALL_PER_TICK.get().floatValue();
         forgeItemHeatPerTick = FORGE_ITEM_HEAT_PER_TICK.get().floatValue();
         forgeKeepWarmTicks = FORGE_KEEP_WARM_TICKS.get();
+        bloomeryCapPerLevel = new ArrayList<>(BLOOMERY_CAP_BY_LEVEL.get());
     }
 }

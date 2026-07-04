@@ -56,6 +56,9 @@ public class MineColoniesTFC
         // The TFC heat-forge multiblock block + its block entity (the growing furnace replacement — see
         // docs/tfc-forge-multiblock.md). Registered here; discovery/substitution/tending land in later slices.
         HeatForgeBlocks.init(modBus);
+        // The bloomery wand (mctfc:bloomery_scepter) — taken from the Smeltery GUI to mark player-built TFC bloomeries
+        // for the Smelter to tend for iron (docs/tfc-bloomery-smelter.md). Marking/module/AI land in the same feature.
+        com.mctfc.item.ModItems.init(modBus);
         // TFC furnace workers now run on the heat-forge multiblock (docs/tfc-forge-multiblock.md): the
         // furnace→heat_forge substitution swaps blueprint furnaces to forges, which self-process; the behaviors
         // below are pure tend loops installed per-AI by MixinAbstractEntityAIUsesFurnace. (The Chef, a request

@@ -7,7 +7,8 @@ exactly like the (FirmaLife) Beekeeper marks hives — up to a per-hut-level cap
 
 Status legend: **DONE** (built & in-tree), **PLANNED** (designed here, not yet built).
 
-**Status: PLANNED** — this document is the design; nothing below is built yet.
+**Status: Slice 1 (marking infrastructure) BUILT** — compiles + `:compat:build` clean; in-game verification
+pending. Slices 2 (bridge + tending) and 3 (overlay sync + polish) are still **PLANNED**. See §7.
 
 > **This is base-TFC compat, always active.** Base TerraFirmaCraft ships the bloomery, so — unlike the
 > FirmaLife-gated Beekeeper — this feature needs no `ModList` guard (TFC is a mandatory `:compat`
@@ -159,23 +160,34 @@ MineColonies' "click blocks to assign them to a hut" is four decoupled pieces; t
   A malformed bloomery is a real target the player intended, so it's **rejected with feedback, not consumed** —
   let them finish the structure and re-click. `isFormed` is the correct gate because capacity is
   `isFormed ? chimneyLevels × 16 : 0`, so passing it guarantees the bloomery is actually loadable (≥16 cap). At
-  runtime the mark then survives transient unformed states (§3b) — strict on entry, lenient on retention. After
-  a change `useOn` pushes a `ColonyViewBuildingViewMessage` so the client overlay re-syncs instantly.
-  `getOverlayBoxes` renders a **red** box on the hut and **yellow** boxes on each marked bloomery (positions
-  from the client module view).
+  runtime the mark then survives transient unformed states (§3b) — strict on entry, lenient on retention.
+  `getOverlayBoxes` renders a **red** box on the bound hut (from the always-present client building view). The
+  **yellow** marked-bloomery boxes are deferred to the overlay slice (§7) because the marked positions are
+  server-only for now — see §3b.
 - **The "give scepter" tab** — a reused `ToolModuleView(BLOOMERY_SCEPTER)` grafted onto the **Smeltery view**.
   Its window's `giveTool` button sends the generic `GiveToolMessage`, which writes hut-pos + colony-id onto a
   fresh scepter and drops it in the player's hotbar. No new message, no new window.
 
 ### 3b. Storing the marked positions — a grafted module (mirrors `ForgeUserModule`)
 We can't add a field to `BuildingSmeltery`, so the positions live in a grafted **module** (like
-`ForgeUserModule`), which also carries the client sync for the overlay:
+`ForgeUserModule`).
+
+> **As-built deviation — two producers, no module sync.** The design originally combined storage + the give-tab
+> + overlay sync into one synced module (a `BloomeryModuleView extends ToolModuleView` fed by `serializeToView`).
+> Recon of `BuildingEntry.ModuleProducer` killed that: module runtime ids come from a **global `++counter`**, and
+> the client deserialize loop matches synced modules by that id — a mismatch doesn't just drop overlays, it
+> **corrupts the entire building-GUI deserialize** (wrong module reads the bytes, or a null lookup aborts the
+> whole sync). Too fragile to lean on. So the feature is split into **two never-synced producers** (in
+> `BloomeryModules`), exactly how `ForgeUserModule` and MineColonies' own tool tabs avoid the issue:
+> `STORAGE` (server-only, `viewProducer = null` → never serialized) and `TOOL` (client-only `ToolModuleView`,
+> `moduleProducer = null` → server never serializes it, the client having it extra is harmless). The overlay's
+> client positions come **later, via a dedicated packet** (§7), not the module system.
 
 - **`BloomeryUserModule`** (server, `IPersistentModule`) — a persisted `Set<BlockPos>` of marked bloomeries,
-  `add/remove/getBloomeries`, `getMaximumBloomeries(level)` = the gentle table `{0,1,1,2,3}` (§4 — unlocks at
-  L2, caps at 3), NBT round-trip, and `serializeToView`
-  (writes the positions). Grafted onto `BuildingSmeltery` in `MixinAbstractBuilding.<init>` (TAIL), exactly
-  like `ForgeUserModule`.
+  `add/remove/contains/getBloomeries`, `getMaximumBloomeries()` = `Config.maxBloomeries(buildingLevel)` (§4 — the
+  gentle `{0,1,1,2,3}` table, unlocks at L2, caps at 3), and NBT round-trip. **No `serializeToView`** — its
+  producer (`BloomeryModules.STORAGE`) has no view, so it's server-only, not synced. Grafted onto
+  `BuildingSmeltery` in `MixinAbstractBuilding.<init>` (TAIL), exactly like `ForgeUserModule`.
   **Pruning — self-healing but conservative** (the Beekeeper strips a hive the instant `world.getBlockState`
   isn't a beehive, with no chunk-load guard and on *any* non-beehive state; we drop both those edges):
   - **chunk-load guard first** — `if (!level.hasChunkAt(pos))` → **keep** (don't force-load a remote chunk just
@@ -187,14 +199,12 @@ We can't add a field to `BuildingSmeltery`, so the positions live in a grafted *
   - **strip only when genuinely gone** — chunk loaded **and** the block at `pos` is no longer a `BloomeryBlock`
     (player removed/replaced it) → prune, freeing a cap slot. This is the only auto-removal; otherwise only the
     wand unmarks.
-- **`BloomeryModuleView extends ToolModuleView`** (client) — inherits the give-scepter tab; adds
-  `deserialize(buf)` to read the synced positions and `getBloomeries()` for the scepter overlay. Grafted onto
-  the Smeltery **view** in a new `MixinBuildingEntry` (`produceBuildingView` TAIL, `instanceof
-  BuildingSmeltery.View`).
-- **One producer** `ModuleProducer("mctfc_bloomery", BloomeryUserModule::new, () -> () -> new
-  BloomeryModuleView(scepter))` ties the two together by runtime id, so the server module's `serializeToView`
-  reaches the view's `deserialize` (the module-sync protocol is server-driven + id-keyed; a grafted server
-  module **with** a matching client view module syncs, and an extra client-only view module is harmless).
+- **The give-tab** — a reused `ToolModuleView(BLOOMERY_SCEPTER)` (`BloomeryModules.TOOL`, client-only) grafted
+  onto the Smeltery **view** in `MixinBuildingEntry` (`produceBuildingView` TAIL, matched by the entry's
+  **registry name `"smeltery"`** — the Smeltery uses the shared `EmptyView`, so there's no `BuildingSmeltery.View`
+  to `instanceof`). Registered via `.setProducer(BloomeryModules.TOOL)`, mirroring MineColonies' own
+  `produceBuildingView`. Its producer's runtime id is globally unique, so registering the extra client view can't
+  collide with any MineColonies module.
 
 ### 3c. Tending the bloomery — the `TfcBloomery` bridge + AI
 - **`TfcBloomery`** — the **only** class naming TFC bloomery types (loaded eagerly; TFC is mandatory, no
@@ -284,21 +294,22 @@ add/remove/max chat lines. The scepter goes in the `TOOLS_AND_UTILITIES` creativ
 
 | New/edited file | Kind | Purpose |
 |---|---|---|
-| `com.mctfc.item.ModItems` | new | `DeferredRegister<Item>` for `bloomery_scepter` (+ creative tab) |
-| `com.mctfc.item.ItemBloomeryScepter` | new | the wand — `useOn` mark/unmark + cap; `IBlockOverlayItem` boxes |
-| `com.mctfc.bloomery.TfcBloomery` | new | the sole TFC-bloomery-naming bridge (load/light/extract helpers) |
-| `com.mctfc.bloomery.BloomeryUserModule` | new | server position store (NBT + `serializeToView` + cap) |
-| `com.mctfc.bloomery.BloomeryModuleView` | new | client view (`extends ToolModuleView` + position deserialize) |
-| `com.mctfc.Config` | edit | `bloomeryCapPerLevel` list config + `maxBloomeries(level)` getter (empty = disabled) |
-| `com.mctfc.smelter.SmelterBehavior` | edit | add the bloomery tend loop + iron-ore/charcoal requests |
-| `com.mctfc.mixin.MixinAbstractBuilding` | edit | graft `BloomeryUserModule` onto `BuildingSmeltery` (server) |
-| `com.mctfc.mixin.MixinBuildingEntry` | **new mixin** | graft `BloomeryModuleView` onto the Smeltery view (client) |
-| `mctfc.mixins.json` | edit | register `MixinBuildingEntry` |
-| assets/lang | new | scepter model/texture, item name, tool desc, add/remove/max chat |
+| `com.mctfc.item.ModItems` | new ✅ | `DeferredRegister<Item>` for `bloomery_scepter` (+ `TOOLS_AND_UTILITIES` tab) |
+| `com.mctfc.item.ItemBloomeryScepter` | new ✅ | the wand — `useOn` mark/unmark + `isFormed` gate + cap; `IBlockOverlayItem` (red hut box; yellow marks later) |
+| `com.mctfc.bloomery.TfcBloomery` | new ✅ | the sole TFC-bloomery-naming bridge (slice 1: `isBloomery`/`isFormed`/`bloomeryAt`; load/light/extract in slice 2) |
+| `com.mctfc.bloomery.BloomeryUserModule` | new ✅ | server position store (NBT + cap + conservative prune); **no `serializeToView`** (not synced) |
+| `com.mctfc.bloomery.BloomeryModules` | new ✅ | the two never-synced producers: `STORAGE` (server) + `TOOL` (client `ToolModuleView`) |
+| `com.mctfc.Config` | edit ✅ | `bloomeryCapPerLevel` list config + `maxBloomeries(level)` getter (empty = disabled) |
+| `com.mctfc.smelter.SmelterBehavior` | edit (slice 2) | add the bloomery tend loop + iron-ore/charcoal requests |
+| `com.mctfc.mixin.MixinAbstractBuilding` | edit ✅ | graft `BloomeryUserModule` onto `BuildingSmeltery` (server) |
+| `com.mctfc.mixin.MixinBuildingEntry` | new mixin ✅ | graft the `ToolModuleView` tab onto the Smeltery view (client, matched by registry name) |
+| `mctfc.mixins.json` | edit ✅ | register `MixinBuildingEntry` (client section) |
+| assets/lang | new ✅ | scepter model + placeholder texture (beekeeper's), item name, tool desc, mark/remove/notformed/level/max chat |
 
 Reused MineColonies plumbing (no new code): `ToolModuleView`, `ToolModuleWindow`, `GiveToolMessage`,
-`IBlockOverlayItem`, `ColonyViewBuildingViewMessage`, `InventoryUtils.getOrCreateItemAndPutToHotbarAndSelectOrDrop`,
-`BlockPosUtil.read/write`, `NBTUtils` list-of-BlockPos round-trip. NBT keys: `"id"` (colony), `"pos"` (hut).
+`IBlockOverlayItem`, `InventoryUtils.getOrCreateItemAndPutToHotbarAndSelectOrDrop`, `BlockPosUtil.read/write`,
+`NBTUtils` list-of-BlockPos round-trip. NBT keys: `"id"` (colony), `"pos"` (hut). (The overlay-sync slice will add
+a dedicated packet + `ColonyViewBuildingViewMessage`-style refresh for the yellow marked-bloomery boxes.)
 
 This is **MineColonies-only** bridging in `:compat` — no SlimColonies twin.
 
@@ -306,16 +317,21 @@ This is **MineColonies-only** bridging in `:compat` — no SlimColonies twin.
 
 ## 7. Build order (slices)
 
-1. **Marking infrastructure** — `ModItems` + `ItemBloomeryScepter` (useOn + overlay) + `BloomeryUserModule` +
-   `BloomeryModuleView` + the two grafts (`MixinAbstractBuilding` line, `MixinBuildingEntry`) + the reused tool
-   tab + assets/lang. **Verify**: take the scepter from the Smeltery GUI, mark/unmark a bloomery (chat +
-   yellow/red overlay), the cap bites at `buildingLevel`, and the marks persist across reload.
-2. **Bridge + tending** — `TfcBloomery` + the `SmelterBehavior` bloomery loop (drop ore+charcoal sized to
-   capacity → light → poll → extract blooms to racks) + iron-ore/charcoal requests. **Verify**: build a real
-   TFC bloomery, mark it, and watch the Smelter load it, light it, and bank `raw_iron_bloom` — with no littered
-   item-entities and no wasted ore/charcoal.
-3. **Polish** — the "bloomery not built right" worker warning, JEI/GUI display recipes, docs + changelog, and
-   any playtest cap tuning.
+1. ✅ **Marking infrastructure (built, compiles + builds clean; in-game verification pending)** — `ModItems` +
+   `ItemBloomeryScepter` (useOn + red-hut overlay) + `TfcBloomery` (`isBloomery`/`isFormed`) + `BloomeryUserModule`
+   + `BloomeryModules` (two never-synced producers) + the two grafts (`MixinAbstractBuilding` line,
+   `MixinBuildingEntry`) + reused tool tab + `Config` + assets/lang. **Verify in-game**: take the wand from the
+   Smeltery's tool tab, right-click a formed bloomery (chat "marked" + success sound), a malformed one ("not built
+   right", wand kept), re-click to unmark; the cap bites (`{0,1,1,2,3}` — L1 rejects with "upgrade", caps at 3);
+   marks persist across `/reload` + save-reload; the red hut box shows while holding the wand.
+2. **Bridge + tending** — extend `TfcBloomery` (load via `getInputStacks()`, `light`, extract) + the
+   `SmelterBehavior` bloomery loop (accumulate-to-100-multiple + bounded-waste flush → light → poll → extract
+   blooms to racks) + iron-ore/charcoal requests + the conservative `pruneStale` wired into the AI read.
+   **Verify**: build a real TFC bloomery, mark it, watch the Smelter load/light it and bank `raw_iron_bloom` — no
+   floor litter, no wasted ore/charcoal.
+3. **Overlay sync + polish** — the yellow marked-bloomery overlay boxes via a **dedicated packet** (client
+   positions, decoupled from the fragile module-id sync — see §3b), the "bloomery not built right" worker warning,
+   JEI/GUI display recipes, docs + changelog, and any playtest cap tuning.
 
 ---
 
