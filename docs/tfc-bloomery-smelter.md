@@ -7,8 +7,9 @@ exactly like the (FirmaLife) Beekeeper marks hives — up to a per-hut-level cap
 
 Status legend: **DONE** (built & in-tree), **PLANNED** (designed here, not yet built).
 
-**Status: Slice 1 (marking infrastructure) BUILT** — compiles + `:compat:build` clean; in-game verification
-pending. Slices 2 (bridge + tending) and 3 (overlay sync + polish) are still **PLANNED**. See §7.
+**Status: Slices 1 (marking) + 2 (bridge + tending) BUILT** — compiles + `:compat:build` clean; in-game
+verification pending. The Smelter can now mark, load, light, and harvest player-built bloomeries. Slice 3
+(overlay sync + polish) is still **PLANNED**. See §7.
 
 > **This is base-TFC compat, always active.** Base TerraFirmaCraft ships the bloomery, so — unlike the
 > FirmaLife-gated Beekeeper — this feature needs no `ModList` guard (TFC is a mandatory `:compat`
@@ -324,11 +325,21 @@ This is **MineColonies-only** bridging in `:compat` — no SlimColonies twin.
    Smeltery's tool tab, right-click a formed bloomery (chat "marked" + success sound), a malformed one ("not built
    right", wand kept), re-click to unmark; the cap bites (`{0,1,1,2,3}` — L1 rejects with "upgrade", caps at 3);
    marks persist across `/reload` + save-reload; the red hut box shows while holding the wand.
-2. **Bridge + tending** — extend `TfcBloomery` (load via `getInputStacks()`, `light`, extract) + the
-   `SmelterBehavior` bloomery loop (accumulate-to-100-multiple + bounded-waste flush → light → poll → extract
-   blooms to racks) + iron-ore/charcoal requests + the conservative `pruneStale` wired into the AI read.
-   **Verify**: build a real TFC bloomery, mark it, watch the Smelter load/light it and bank `raw_iron_bloom` — no
-   floor litter, no wasted ore/charcoal.
+2. ✅ **Bridge + tending (built, compiles + `:compat:build` clean; in-game verification pending)** — extended
+   `TfcBloomery` (`capacity`/`freeCapacity`/`isLit`/`light`/`loadInput` via the live `getInputStacks()` list/
+   `bloomAt`/`extractBlooms`/`isIronOre`/`oreMb`/`isCatalyst`); a `BLOOMERY_TEND` state added to `SmelterBehavior`
+   (threaded after `MOLD_UNLOAD`) — stages iron ore + charcoal, walks each actionable marked bloomery, and per visit
+   **extracts** a finished bloom straight into the racks (`extractBlooms` → `removeBlock`, no floor drops) **or**
+   loads + lights an unlit formed one; plus iron-ore/charcoal auto-requests and `pruneStale` on the tend read.
+   `hasWork()`/`bloomeryWork()` use the layered gate + `REQUEST_CHECK_INTERVAL` throttle (zero-cost when no marks).
+   **Deviation** — the loader ships the **always-flush-at-k≥1 with trim** interpretation of bounded-waste flush
+   (§2): it aligns the pooled cast-iron total to 100 mB from mixed grades, takes `k=⌊mb/100⌋` blooms (also capped
+   by carried charcoal), and **trims the smallest ores** while the total stays ≥100k to minimise the sub-100
+   remainder — lighting whenever ≥1 whole bloom is makeable rather than the design's stricter "accumulate unless
+   full/starved". Clean batches still fall out when the colony has enough of an aligning grade (staging pulls a
+   capacity batch); the simpler rule just never idles the worker and keeps waste <100 mB. Loads nothing when <1
+   bloom is makeable (ore keeps accumulating in storage). **Verify in-game**: build a real TFC bloomery, mark it,
+   watch the Smelter load/light it and bank `raw_iron_bloom` — no floor litter, bounded waste.
 3. **Overlay sync + polish** — the yellow marked-bloomery overlay boxes via a **dedicated packet** (client
    positions, decoupled from the fragile module-id sync — see §3b), the "bloomery not built right" worker warning,
    JEI/GUI display recipes, docs + changelog, and any playtest cap tuning.

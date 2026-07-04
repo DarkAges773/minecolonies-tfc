@@ -8,6 +8,14 @@ All notable changes to this mod are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **The Smelter now tends player-built TFC bloomeries for iron.** Take the new **Bloomery Wand** from the Smeltery's
+  *Tools* tab and right-click your own TFC bloomeries to mark them (right-click again to unmark); the Smelter then loads
+  them with iron ore + charcoal, lights them, and collects the finished **raw iron blooms** into the hut — which you
+  finish into wrought iron on a TFC anvil, as usual. This is the iron counterpart to the heat forge's cast metals. The
+  wand only marks **properly-built** bloomeries (it tells you if the structure is incomplete), and each Smeltery can tend
+  a limited number that grows with its level (none at level 1, up to 3 at level 5 — configurable, and an empty
+  `bloomeryCapPerLevel` turns the whole feature off). The Smelter batches ore to whole blooms to keep waste low and
+  auto-requests iron ore + charcoal while any bloomery is marked.
 - **New "heat forge" block — a TFC-flavoured furnace for the worker huts.** Four cosmetic variants (**Brick / Rustic /
   Stone / Tile Furnace**) are craftable and show in the *Functional Blocks* creative tab; each looks like a blast
   furnace with an oven-material shell, glows and crackles with a lit front + light + smoke while burning, and is lit

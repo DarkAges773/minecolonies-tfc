@@ -1,9 +1,13 @@
 package com.mctfc.smelter;
 
 import com.mctfc.Config;
+import com.mctfc.bloomery.BloomeryUserModule;
+import com.mctfc.bloomery.TfcBloomery;
 import com.mctfc.forge.ForgeController;
 import com.mctfc.forge.ForgeTender;
 import com.mctfc.forge.HeatForgeBlockEntity;
+import net.dries007.tfc.common.blockentities.BloomBlockEntity;
+import net.dries007.tfc.common.blockentities.BloomeryBlockEntity;
 import com.mctfc.furnace.FurnaceBehavior;
 import com.mctfc.furnace.FurnaceFuel;
 import com.mctfc.furnace.FurnaceFuelScope;
@@ -78,9 +82,16 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
     /** Default for {@link #ORE_THRESHOLD}: 10 = one ingot's worth of small native ore. */
     public static final int ORE_THRESHOLD_DEFAULT = 10;
 
+    /** Iron ore / charcoal staged into the worker's inventory per staging trip for bloomery loading (topUp caps by space). */
+    private static final int BLOOMERY_ORE_STAGE      = 32;
+    private static final int BLOOMERY_CHARCOAL_STAGE = 16;
+    /** Restock iron ore below this many mB of cast iron in colony stock; keep this much charcoal. */
+    private static final int BLOOMERY_ORE_LOW_MB     = 200;
+    private static final int BLOOMERY_CHARCOAL_LOW   = 8;
+
     private enum State implements IAIState
     {
-        BATCH_STAGING, TEND_CONTROLLERS, MOLD_UNLOAD;
+        BATCH_STAGING, TEND_CONTROLLERS, MOLD_UNLOAD, BLOOMERY_TEND;
 
         @Override
         public boolean isOkayToEat()
@@ -97,6 +108,14 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
     private IToken<?> oreRequest;
     private IToken<?> fuelRequest;
 
+    // Bloomery tending (iron path — docs/tfc-bloomery-smelter.md).
+    private final Set<BlockPos> bloomeriesTended = new HashSet<>();
+    private BlockPos bloomeryTarget;
+    private long     nextBloomeryCheck;
+    private boolean  bloomeryWorkPending;
+    private IToken<?> ironRequest;
+    private IToken<?> charcoalRequest;
+
     public SmelterBehavior(final FurnaceWorker ai)
     {
         this.ai = ai;
@@ -109,7 +128,8 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
         return List.of(
           new AITarget<IAIState>(State.BATCH_STAGING, this::stage, WORK_TICK_RATE),
           new AITarget<IAIState>(State.TEND_CONTROLLERS, this::tend, WORK_TICK_RATE),
-          new AITarget<IAIState>(State.MOLD_UNLOAD, this::moldUnload, WORK_TICK_RATE));
+          new AITarget<IAIState>(State.MOLD_UNLOAD, this::moldUnload, WORK_TICK_RATE),
+          new AITarget<IAIState>(State.BLOOMERY_TEND, this::bloomeryTend, WORK_TICK_RATE));
     }
 
     @Override
@@ -143,7 +163,7 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
                 return true;
             }
         }
-        return hasCooledMold(racks());
+        return hasCooledMold(racks()) || bloomeryWork();
     }
 
     // --- Stage 1: BATCH_STAGING ---------------------------------------------------------------------------
@@ -157,7 +177,25 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
         final List<ForgeController> controllers = tender.resolve(ai.controllers());
         tender.stage(controllers); // fuel + ore
         stageMolds(controllers);   // empty molds to seat
+        stageBloomeryMaterials();  // iron ore + charcoal for marked bloomeries
         return State.TEND_CONTROLLERS;
+    }
+
+    /** Stage iron ore + charcoal from the racks into the worker's inventory for the marked bloomeries (if any). */
+    private void stageBloomeryMaterials()
+    {
+        final BloomeryUserModule module = bloomeryModule();
+        if (module == null || module.getBloomeries().isEmpty())
+        {
+            return;
+        }
+        final List<IItemHandler> inv = inventory();
+        if (inv.isEmpty())
+        {
+            return;
+        }
+        ForgeTender.topUp(racks(), inv.get(0), TfcBloomery::isIronOre, BLOOMERY_ORE_STAGE);
+        ForgeTender.topUp(racks(), inv.get(0), TfcBloomery::isCatalyst, BLOOMERY_CHARCOAL_STAGE);
     }
 
     private void stageMolds(final List<ForgeController> controllers)
@@ -332,7 +370,7 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
             ai.delay(WORK_TICK_RATE);
             return State.MOLD_UNLOAD;
         }
-        return hasWork() ? State.BATCH_STAGING : AIWorkerState.IDLE;
+        return State.BLOOMERY_TEND;
     }
 
     /**
@@ -408,6 +446,297 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
             }
         }
         return false;
+    }
+
+    // --- Bloomery tending (iron path) ---------------------------------------------------------------------
+
+    /** The grafted {@link BloomeryUserModule} on this Smeltery (holds the wand-marked bloomery positions), or null. */
+    private BloomeryUserModule bloomeryModule()
+    {
+        final IBuilding building = ai.building();
+        return building == null ? null : building.getFirstModuleOccurance(BloomeryUserModule.class);
+    }
+
+    /**
+     * Whether any marked bloomery needs the worker (docs/tfc-bloomery-smelter.md §3c). Ordered cheapest-first and
+     * zero-cost when unused: bail immediately if no bloomeries are marked; a finished bloom to extract is checked live
+     * (cheap — {@code LIT}/bloom reads); the expensive {@code isFormed} loadability scan is throttled to
+     * {@code REQUEST_CHECK_INTERVAL} and gated behind having iron ore + charcoal on hand.
+     */
+    private boolean bloomeryWork()
+    {
+        final BloomeryUserModule module = bloomeryModule();
+        if (module == null)
+        {
+            return false;
+        }
+        final Set<BlockPos> marks = module.getBloomeries();
+        if (marks.isEmpty())
+        {
+            return false; // feature unused → no world access at all
+        }
+        final Level world = ai.world();
+        if (world == null)
+        {
+            return false;
+        }
+        // Live (cheap): a finished bloom anywhere is always work to extract.
+        for (final BlockPos pos : marks)
+        {
+            if (world.hasChunkAt(pos))
+            {
+                final BloomeryBlockEntity be = TfcBloomery.bloomeryAt(world, pos);
+                if (be != null && TfcBloomery.bloomAt(world, be) != null)
+                {
+                    return true;
+                }
+            }
+        }
+        // Throttled: loading is only worth a trip if we have materials and an unlit, formed, empty bloomery.
+        if (world.getGameTime() >= nextBloomeryCheck)
+        {
+            nextBloomeryCheck = world.getGameTime() + REQUEST_CHECK_INTERVAL;
+            bloomeryWorkPending = anyBloomeryLoadable(world, marks);
+        }
+        return bloomeryWorkPending;
+    }
+
+    /** True if the colony has enough iron ore + charcoal for ≥1 bloom and a marked bloomery is unlit, empty and formed. */
+    private boolean anyBloomeryLoadable(final Level world, final Set<BlockPos> marks)
+    {
+        final List<IItemHandler> stock = combined();
+        if (ironMb(stock) < SmelterRecipes.UNITS_PER_OUTPUT || ForgeTender.countMatching(stock, TfcBloomery::isCatalyst) < 2)
+        {
+            return false;
+        }
+        for (final BlockPos pos : marks)
+        {
+            if (!world.hasChunkAt(pos))
+            {
+                continue;
+            }
+            final BloomeryBlockEntity be = TfcBloomery.bloomeryAt(world, pos);
+            if (be == null || TfcBloomery.isLit(be) || TfcBloomery.bloomAt(world, be) != null)
+            {
+                continue;
+            }
+            if (TfcBloomery.isFormed(world, pos))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** One visit per actionable marked bloomery (walk → service), mirroring {@link #tend}; then back to the work loop. */
+    private IAIState bloomeryTend()
+    {
+        final BloomeryUserModule module = bloomeryModule();
+        final Level world = ai.world();
+        if (module == null || world == null)
+        {
+            bloomeriesTended.clear();
+            return afterBloomery();
+        }
+        module.pruneStale(world);
+        final Set<BlockPos> marks = module.getBloomeries();
+
+        if (bloomeryTarget != null)
+        {
+            if (!ai.gotoWorkPos(bloomeryTarget))
+            {
+                return State.BLOOMERY_TEND;
+            }
+            serviceBloomery(world, bloomeryTarget);
+            bloomeriesTended.add(bloomeryTarget);
+            bloomeryTarget = null;
+            return State.BLOOMERY_TEND;
+        }
+
+        for (final BlockPos pos : marks)
+        {
+            if (bloomeriesTended.contains(pos))
+            {
+                continue;
+            }
+            if (!world.hasChunkAt(pos))
+            {
+                bloomeriesTended.add(pos);
+                continue;
+            }
+            final BloomeryBlockEntity be = TfcBloomery.bloomeryAt(world, pos);
+            if (be != null && bloomeryActionable(world, be, pos))
+            {
+                bloomeryTarget = pos;
+                return State.BLOOMERY_TEND;
+            }
+            bloomeriesTended.add(pos);
+        }
+        bloomeriesTended.clear();
+        return afterBloomery();
+    }
+
+    private IAIState afterBloomery()
+    {
+        return hasWork() ? State.BATCH_STAGING : AIWorkerState.IDLE;
+    }
+
+    /** A finished bloom to extract, or an unlit + formed + loadable bloomery. A burning bloomery is skipped (self-runs). */
+    private boolean bloomeryActionable(final Level world, final BloomeryBlockEntity be, final BlockPos pos)
+    {
+        if (TfcBloomery.bloomAt(world, be) != null)
+        {
+            return true;
+        }
+        return !TfcBloomery.isLit(be) && TfcBloomery.isFormed(world, pos) && carryingBloomeryMaterials();
+    }
+
+    /** Do one action at the walked-to bloomery: extract a finished bloom, else (if unlit + formed) load and light it. */
+    private void serviceBloomery(final Level world, final BlockPos pos)
+    {
+        final BloomeryBlockEntity be = TfcBloomery.bloomeryAt(world, pos);
+        if (be == null)
+        {
+            return;
+        }
+        final BloomBlockEntity bloom = TfcBloomery.bloomAt(world, be);
+        if (bloom != null)
+        {
+            for (final ItemStack raw : TfcBloomery.extractBlooms(world, bloom))
+            {
+                insertRacks(raw); // hot raw_iron_bloom cools in the racks; the player hammers it on a TFC anvil
+                ai.worker().getCitizenExperienceHandler().addExperience(XP_PER_OUTPUT);
+            }
+            ai.countAction();
+            return;
+        }
+        if (!TfcBloomery.isLit(be) && TfcBloomery.isFormed(world, pos))
+        {
+            loadAndLight(world, be);
+        }
+    }
+
+    /**
+     * Load whole-bloom batches of iron ore + charcoal into the bloomery, then light it (docs/tfc-bloomery-smelter.md §2).
+     * All iron ore pools into one cast-iron total, so we align to 100&nbsp;mB: plan carried ore (rich-first, reserving
+     * charcoal room), take {@code k = ⌊totalMb/100⌋} blooms (also capped by carried charcoal), then <b>trim</b> the
+     * smallest ores while the total stays ≥&nbsp;100k to minimise the sub-100 remainder (bounded-waste flush — the worker
+     * never idles on an un-alignable pile; a clean batch falls out when the colony has enough of an aligning grade). If
+     * &lt;1 whole bloom is makeable, load nothing (the ore keeps accumulating in storage for a later, bigger batch).
+     */
+    private void loadAndLight(final Level world, final BloomeryBlockEntity be)
+    {
+        final List<IItemHandler> inv = inventory();
+        final int free = TfcBloomery.freeCapacity(world, be);
+        if (free < 3)
+        {
+            return; // no room for even a minimal bloom (1 ore + 2 charcoal)
+        }
+
+        // Every carried iron ore item as a size-1 unit (so mixed grades combine toward a 100 mB multiple).
+        final List<ItemStack> ores = new ArrayList<>();
+        for (final IItemHandler h : inv)
+        {
+            for (int slot = 0; slot < h.getSlots(); slot++)
+            {
+                final ItemStack st = h.getStackInSlot(slot);
+                if (TfcBloomery.isIronOre(st))
+                {
+                    for (int n = 0; n < st.getCount(); n++)
+                    {
+                        ores.add(oreUnit(st));
+                    }
+                }
+            }
+        }
+        final int charcoal = ForgeTender.countMatching(inv, TfcBloomery::isCatalyst);
+        if (ores.isEmpty() || charcoal < 2)
+        {
+            return;
+        }
+
+        // Plan ore rich-first, reserving 2 charcoal per (bloom-so-far + 1) so a charcoal pair always fits.
+        ores.sort((a, b) -> Integer.compare(TfcBloomery.oreMb(b), TfcBloomery.oreMb(a)));
+        final List<ItemStack> plan = new ArrayList<>();
+        int mb = 0;
+        for (final ItemStack ore : ores)
+        {
+            final int reserve = 2 * ((mb + TfcBloomery.oreMb(ore)) / SmelterRecipes.UNITS_PER_OUTPUT + 1);
+            if (plan.size() + 1 + reserve > free)
+            {
+                break;
+            }
+            plan.add(ore);
+            mb += TfcBloomery.oreMb(ore);
+        }
+
+        final int k = Math.min(mb / SmelterRecipes.UNITS_PER_OUTPUT, charcoal / 2);
+        if (k < 1)
+        {
+            return; // can't make a whole bloom from what's carried — leave it to accumulate in storage
+        }
+
+        // Trim the smallest ores while the total still yields k blooms, minimising the wasted remainder.
+        plan.sort((a, b) -> Integer.compare(TfcBloomery.oreMb(a), TfcBloomery.oreMb(b)));
+        while (!plan.isEmpty() && mb - TfcBloomery.oreMb(plan.get(0)) >= SmelterRecipes.UNITS_PER_OUTPUT * k)
+        {
+            mb -= TfcBloomery.oreMb(plan.remove(0));
+        }
+
+        // Load the planned ore + exactly 2k charcoal from the worker's inventory, then ignite.
+        for (final ItemStack ore : plan)
+        {
+            final ItemStack one = ForgeTender.extractOne(inv, s -> ItemHandlerHelper.canItemStacksStack(s, ore));
+            if (!one.isEmpty())
+            {
+                TfcBloomery.loadInput(be, one);
+            }
+        }
+        for (int i = 0; i < 2 * k; i++)
+        {
+            final ItemStack c = ForgeTender.extractOne(inv, TfcBloomery::isCatalyst);
+            if (!c.isEmpty())
+            {
+                TfcBloomery.loadInput(be, c);
+            }
+        }
+        if (TfcBloomery.light(be))
+        {
+            ai.countAction();
+        }
+    }
+
+    /** A size-1 copy of an ore stack (bloomery inputs are stored one item per entry). */
+    private static ItemStack oreUnit(final ItemStack ore)
+    {
+        final ItemStack one = ore.copy();
+        one.setCount(1);
+        return one;
+    }
+
+    /** Total cast-iron mB the iron ore in {@code storage} is worth (sum of per-item grade mB). */
+    private int ironMb(final List<IItemHandler> storage)
+    {
+        int mb = 0;
+        for (final IItemHandler h : storage)
+        {
+            for (int slot = 0; slot < h.getSlots(); slot++)
+            {
+                final ItemStack st = h.getStackInSlot(slot);
+                if (TfcBloomery.isIronOre(st))
+                {
+                    mb += TfcBloomery.oreMb(st) * st.getCount();
+                }
+            }
+        }
+        return mb;
+    }
+
+    /** Whether the worker carries enough iron ore + charcoal for at least one bloom. */
+    private boolean carryingBloomeryMaterials()
+    {
+        final List<IItemHandler> inv = inventory();
+        return ironMb(inv) >= SmelterRecipes.UNITS_PER_OUTPUT && ForgeTender.countMatching(inv, TfcBloomery::isCatalyst) >= 2;
     }
 
     // --- ForgeTender.Policy -------------------------------------------------------------------------------
@@ -715,6 +1044,41 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
                 fuelRequest = ai.worker().getCitizenData().createRequestAsync(new StackList(fuels, REQUESTS_TYPE_BURNABLE, RESTOCK_BATCH, 1, reserve));
             }
         }
+
+        // Bloomery iron path: keep iron ore + charcoal stocked whenever the hut has marked bloomeries.
+        final BloomeryUserModule bloomeries = bloomeryModule();
+        if (bloomeries != null && !bloomeries.getBloomeries().isEmpty())
+        {
+            if (ironMb(stock) <= BLOOMERY_ORE_LOW_MB && !isOpen(ironRequest))
+            {
+                final List<ItemStack> ironOres = ironOreStacks();
+                if (!ironOres.isEmpty())
+                {
+                    ironRequest = ai.worker().getCitizenData().createRequestAsync(new StackList(ironOres, REQUESTS_TYPE_SMELTABLE_ORE, RESTOCK_BATCH, 1, reserve));
+                }
+            }
+            if (ForgeTender.countMatching(stock, TfcBloomery::isCatalyst) <= BLOOMERY_CHARCOAL_LOW && !isOpen(charcoalRequest))
+            {
+                final ItemStack charcoal = new ItemStack(SmelterRecipes.item(SmelterRecipes.CHARCOAL));
+                if (!charcoal.isEmpty())
+                {
+                    charcoalRequest = ai.worker().getCitizenData().createRequestAsync(new StackList(List.of(charcoal), REQUESTS_TYPE_BURNABLE, RESTOCK_BATCH, 1, reserve));
+                }
+            }
+        }
+    }
+
+    private List<ItemStack> ironOreStacks()
+    {
+        final List<ItemStack> ores = new ArrayList<>();
+        for (final ItemStack ore : SmelterRecipes.oreStacks())
+        {
+            if (TfcBloomery.isIronOre(ore))
+            {
+                ores.add(ore);
+            }
+        }
+        return ores;
     }
 
     private int settingValue()
