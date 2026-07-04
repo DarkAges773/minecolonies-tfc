@@ -7,9 +7,9 @@ exactly like the (FirmaLife) Beekeeper marks hives — up to a per-hut-level cap
 
 Status legend: **DONE** (built & in-tree), **PLANNED** (designed here, not yet built).
 
-**Status: Slices 1 (marking) + 2 (bridge + tending) BUILT** — compiles + `:compat:build` clean; in-game
-verification pending. The Smelter can now mark, load, light, and harvest player-built bloomeries. Slice 3
-(overlay sync + polish) is still **PLANNED**. See §7.
+**Status: ALL slices (1 marking, 2 bridge + tending, 3 overlay + polish) BUILT** — compiles + `:compat:build`
+clean; in-game verification pending. The Smelter marks, loads, lights, and harvests player-built bloomeries, with
+the marked-bloomery overlay and a malformed-structure warning. Only JEI display recipes are deferred. See §7.
 
 > **This is base-TFC compat, always active.** Base TerraFirmaCraft ships the bloomery, so — unlike the
 > FirmaLife-gated Beekeeper — this feature needs no `ModList` guard (TFC is a mandatory `:compat`
@@ -162,9 +162,9 @@ MineColonies' "click blocks to assign them to a hut" is four decoupled pieces; t
   let them finish the structure and re-click. `isFormed` is the correct gate because capacity is
   `isFormed ? chimneyLevels × 16 : 0`, so passing it guarantees the bloomery is actually loadable (≥16 cap). At
   runtime the mark then survives transient unformed states (§3b) — strict on entry, lenient on retention.
-  `getOverlayBoxes` renders a **red** box on the bound hut (from the always-present client building view). The
-  **yellow** marked-bloomery boxes are deferred to the overlay slice (§7) because the marked positions are
-  server-only for now — see §3b.
+  `getOverlayBoxes` renders a **red** box on the bound hut (from the always-present client building view) plus a
+  **yellow** box on each marked bloomery, read from the wand's own synced stack NBT — refreshed server-side by
+  `inventoryTick` while the wand is held (packet-free; see §3b, slice 3).
 - **The "give scepter" tab** — a reused `ToolModuleView(BLOOMERY_SCEPTER)` grafted onto the **Smeltery view**.
   Its window's `giveTool` button sends the generic `GiveToolMessage`, which writes hut-pos + colony-id onto a
   fresh scepter and drops it in the player's hotbar. No new message, no new window.
@@ -182,7 +182,8 @@ We can't add a field to `BuildingSmeltery`, so the positions live in a grafted *
 > `BloomeryModules`), exactly how `ForgeUserModule` and MineColonies' own tool tabs avoid the issue:
 > `STORAGE` (server-only, `viewProducer = null` → never serialized) and `TOOL` (client-only `ToolModuleView`,
 > `moduleProducer = null` → server never serializes it, the client having it extra is harmless). The overlay's
-> client positions come **later, via a dedicated packet** (§7), not the module system.
+> client positions ride the **wand's own stack NBT** instead (slice 3: `inventoryTick` refreshes it server-side
+> while held → free inventory sync), not the module system — even simpler than the originally-planned packet.
 
 - **`BloomeryUserModule`** (server, `IPersistentModule`) — a persisted `Set<BlockPos>` of marked bloomeries,
   `add/remove/contains/getBloomeries`, `getMaximumBloomeries()` = `Config.maxBloomeries(buildingLevel)` (§4 — the
@@ -296,7 +297,7 @@ add/remove/max chat lines. The scepter goes in the `TOOLS_AND_UTILITIES` creativ
 | New/edited file | Kind | Purpose |
 |---|---|---|
 | `com.mctfc.item.ModItems` | new ✅ | `DeferredRegister<Item>` for `bloomery_scepter` (+ `TOOLS_AND_UTILITIES` tab) |
-| `com.mctfc.item.ItemBloomeryScepter` | new ✅ | the wand — `useOn` mark/unmark + `isFormed` gate + cap; `IBlockOverlayItem` (red hut box; yellow marks later) |
+| `com.mctfc.item.ItemBloomeryScepter` | new ✅ | the wand — `useOn` mark/unmark + `isFormed` gate + cap; `inventoryTick` marks→NBT; `IBlockOverlayItem` red hut + yellow marked-bloomery boxes |
 | `com.mctfc.bloomery.TfcBloomery` | new ✅ | the sole TFC-bloomery-naming bridge (slice 1: `isBloomery`/`isFormed`/`bloomeryAt`; load/light/extract in slice 2) |
 | `com.mctfc.bloomery.BloomeryUserModule` | new ✅ | server position store (NBT + cap + conservative prune); **no `serializeToView`** (not synced) |
 | `com.mctfc.bloomery.BloomeryModules` | new ✅ | the two never-synced producers: `STORAGE` (server) + `TOOL` (client `ToolModuleView`) |
@@ -340,9 +341,15 @@ This is **MineColonies-only** bridging in `:compat` — no SlimColonies twin.
    capacity batch); the simpler rule just never idles the worker and keeps waste <100 mB. Loads nothing when <1
    bloom is makeable (ore keeps accumulating in storage). **Verify in-game**: build a real TFC bloomery, mark it,
    watch the Smelter load/light it and bank `raw_iron_bloom` — no floor litter, bounded waste.
-3. **Overlay sync + polish** — the yellow marked-bloomery overlay boxes via a **dedicated packet** (client
-   positions, decoupled from the fragile module-id sync — see §3b), the "bloomery not built right" worker warning,
-   JEI/GUI display recipes, docs + changelog, and any playtest cap tuning.
+3. ✅ **Overlay + polish (built, compiles + `:compat:build` clean; in-game verification pending)** — the **yellow
+   marked-bloomery boxes** now render, fed **packet-free via the wand's own stack NBT**: `ItemBloomeryScepter`'s
+   server-side `inventoryTick` refreshes the marked positions onto the held stack (~1/s, only when changed), which
+   syncs to the client for free, and `getOverlayBoxes` reads them (decoupled from the fragile module-id sync — a
+   simpler win than the planned dedicated packet). Plus the **"bloomery not built right" worker warning** — a
+   `BloomeryUserModule.hasMalformed` check surfaced from the building's colony tick (`MixinAbstractBuilding`) with an
+   auto-clearing `InteractionValidatorRegistry` predicate (mirrors the herder's mixed-species warning), and its lang.
+   **Deferred:** JEI/GUI display recipes advertising the bloomery outputs (pure advertisement; the feature works
+   without it) and any playtest cap tuning.
 
 ---
 

@@ -94,5 +94,6 @@
   "com.mctfc.bloomery.scepter.removed": "Bloomery unmarked.",
   "com.mctfc.bloomery.scepter.notformed": "This bloomery isn't built correctly — finish its insulation and chimney, then mark it.",
   "com.mctfc.bloomery.scepter.level": "Upgrade the Smeltery further before it can tend bloomeries.",
-  "com.mctfc.bloomery.scepter.max": "This Smeltery is already tending as many bloomeries as its level allows."
+  "com.mctfc.bloomery.scepter.max": "This Smeltery is already tending as many bloomeries as its level allows.",
+  "com.mctfc.interaction.bloomery.malformed": "One of my marked bloomeries isn't built correctly — I can't use it until its structure is fixed."
 }

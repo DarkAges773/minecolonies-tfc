@@ -1,8 +1,10 @@
 package com.mctfc.bloomery;
 
 import com.mctfc.Config;
+import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.buildings.modules.AbstractBuildingModule;
 import com.minecolonies.api.colony.buildings.modules.IPersistentModule;
+import com.minecolonies.core.colony.buildings.workerbuildings.BuildingSmeltery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -35,6 +37,9 @@ public class BloomeryUserModule extends AbstractBuildingModule implements IPersi
 {
     private static final String TAG_BLOOMERIES = "mctfcBloomeries";
     private static final String TAG_POS        = "pos";
+
+    /** Interaction key: a marked bloomery whose structure is broken/incomplete (auto-clears once every mark is formed). */
+    public static final String MALFORMED_INTERACTION = "com.mctfc.interaction.bloomery.malformed";
 
     /** The marked bloomery positions (insertion-ordered so the AI services them deterministically). */
     private final Set<BlockPos> bloomeries = new LinkedHashSet<>();
@@ -100,6 +105,38 @@ public class BloomeryUserModule extends AbstractBuildingModule implements IPersi
             bloomeries.removeAll(stale);
             markDirty();
         }
+    }
+
+    /**
+     * Whether any marked bloomery is present in the world but <b>not a formed multiblock</b> (structure broken/incomplete
+     * after marking — the mark-time gate blocks marking a malformed one, so this only arises from later damage). Drives
+     * the {@link #MALFORMED_INTERACTION} worker warning; unloaded/removed marks don't count (they're pruned or unverifiable).
+     */
+    public boolean hasMalformed(final Level level)
+    {
+        if (level == null || bloomeries.isEmpty())
+        {
+            return false;
+        }
+        for (final BlockPos pos : bloomeries)
+        {
+            if (level.hasChunkAt(pos) && TfcBloomery.isBloomery(level.getBlockState(pos)) && !TfcBloomery.isFormed(level, pos))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** {@link #hasMalformed} for a building — resolves the module + world; false for a non-Smeltery or module-less hut. */
+    public static boolean hasMalformedMarked(final IBuilding building)
+    {
+        if (!(building instanceof BuildingSmeltery))
+        {
+            return false;
+        }
+        final BloomeryUserModule module = building.getFirstModuleOccurance(BloomeryUserModule.class);
+        return module != null && module.hasMalformed(building.getColony().getWorld());
     }
 
     @Override

@@ -113,5 +113,10 @@ public class MineColoniesTFC
     private static void onCommonSetup(final net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event)
     {
         StandardFactoryController.getInstance().registerNewFactory(new BeeFrameSettingFactory());
+        // The "marked bloomery is built wrong" Smelter warning — auto-clears once every marked bloomery is a formed
+        // multiblock again (mirrors the herder's mixed-species validator). Triggered from the building's colony tick.
+        event.enqueueWork(() -> com.minecolonies.api.colony.interactionhandling.InteractionValidatorRegistry.registerStandardPredicate(
+          net.minecraft.network.chat.Component.translatable(com.mctfc.bloomery.BloomeryUserModule.MALFORMED_INTERACTION),
+          citizen -> com.mctfc.bloomery.BloomeryUserModule.hasMalformedMarked(citizen.getWorkBuilding())));
     }
 }

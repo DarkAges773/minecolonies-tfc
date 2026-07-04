@@ -92,4 +92,23 @@ public class MixinAbstractBuilding
             }
         }
     }
+
+    /**
+     * Warn the Smelter when a wand-marked bloomery's structure is broken/incomplete (so it can't be loaded). Driven from
+     * the colony tick (like the herder warning) so it re-surfaces after dismissal and persists while true; the validator
+     * registered in {@code MineColoniesTFC#onCommonSetup} auto-clears it once every mark is a formed multiblock again.
+     * {@link BloomeryUserModule#hasMalformedMarked} is a no-op for non-Smeltery / unmarked huts, so this is cheap everywhere.
+     */
+    @Inject(method = "onColonyTick", at = @At("TAIL"), remap = false)
+    private void mctfc$bloomeryStructureWarning(final IColony colony, final CallbackInfo ci)
+    {
+        final IBuilding self = (IBuilding) this;
+        if (BloomeryUserModule.hasMalformedMarked(self))
+        {
+            for (final ICitizenData citizen : self.getAllAssignedCitizen())
+            {
+                citizen.triggerInteraction(new StandardInteraction(Component.translatable(BloomeryUserModule.MALFORMED_INTERACTION), ChatPriority.PENDING));
+            }
+        }
+    }
 }
