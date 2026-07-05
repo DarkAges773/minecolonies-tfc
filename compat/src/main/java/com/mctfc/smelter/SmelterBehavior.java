@@ -193,7 +193,7 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
         {
             return;
         }
-        ForgeTender.topUp(racks(), inv.get(0), TfcBloomery::isIronOre, BLOOMERY_ORE_STAGE);
+        ForgeTender.topUp(racks(), inv.get(0), this::usableIronOre, BLOOMERY_ORE_STAGE);
         ForgeTender.topUp(racks(), inv.get(0), TfcBloomery::isCatalyst, BLOOMERY_CHARCOAL_STAGE);
     }
 
@@ -641,7 +641,7 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final ItemStack st = h.getStackInSlot(slot);
-                if (TfcBloomery.isIronOre(st))
+                if (usableIronOre(st))
                 {
                     for (int n = 0; n < st.getCount(); n++)
                     {
@@ -724,7 +724,7 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final ItemStack st = h.getStackInSlot(slot);
-                if (TfcBloomery.isIronOre(st))
+                if (usableIronOre(st))
                 {
                     mb += TfcBloomery.oreMb(st) * st.getCount();
                 }
@@ -751,8 +751,26 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
         {
             return false;
         }
+        return oreEnabled(stack);
+    }
+
+    /**
+     * Whether the hut's ore list permits {@code stack}. The Smeltery's "smeltable ores" GUI is a <b>deny</b>-list
+     * (matching native {@code EntityAIWorkSmelter#isSmeltable}: an ore is processed unless it's in the list); we fill it
+     * with the TFC ores via {@code MixinCompatibilityManager}, so toggling an ore off adds it here. Applied to BOTH the
+     * forge cast-metal path ({@link #accepts}) and the bloomery iron path ({@link #usableIronOre}) so the one toggle is
+     * an honest control over everything the Smeltery melts.
+     */
+    private boolean oreEnabled(final ItemStack stack)
+    {
         final ItemListModule blocked = listModule(ORE_LIST);
         return blocked == null || !blocked.isItemInList(new ItemStorage(stack));
+    }
+
+    /** An iron-bearing ore the hut may feed its bloomeries: an iron ore that isn't toggled off in the ore list. */
+    private boolean usableIronOre(final ItemStack stack)
+    {
+        return TfcBloomery.isIronOre(stack) && oreEnabled(stack);
     }
 
     @Override
@@ -1093,7 +1111,7 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
         final List<ItemStack> ores = new ArrayList<>();
         for (final ItemStack ore : SmelterRecipes.oreStacks())
         {
-            if (TfcBloomery.isIronOre(ore))
+            if (usableIronOre(ore))
             {
                 ores.add(ore);
             }

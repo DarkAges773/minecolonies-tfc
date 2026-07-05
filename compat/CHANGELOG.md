@@ -17,7 +17,9 @@ All notable changes to this mod are documented here. The format is based on
   `bloomeryCapPerLevel` turns the whole feature off). While you hold the wand, its bound Smeltery is outlined in red
   and every marked bloomery in yellow; the Smelter also warns you if a marked bloomery's structure later gets broken.
   The Smelter batches ore to whole blooms to keep waste low and auto-requests iron ore + charcoal while any bloomery
-  is marked.
+  is marked. Which iron ores the bloomeries use follows the Smeltery's **smeltable ores** list (the same list that
+  controls forge smelting), so you can exclude iron grades — or all iron — there and the bloomeries stop requesting and
+  loading them.
 - **New "heat forge" block — a TFC-flavoured furnace for the worker huts.** Four cosmetic variants (**Brick / Rustic /
   Stone / Tile Furnace**) are craftable and show in the *Functional Blocks* creative tab; each looks like a blast
   furnace with an oven-material shell, glows and crackles with a lit front + light + smoke while burning, and is lit

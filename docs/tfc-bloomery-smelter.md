@@ -230,6 +230,13 @@ We can't add a field to `BuildingSmeltery`, so the positions live in a grafted *
   The Smeltery **requests iron ore + charcoal** (via `SmelterBehavior.requestMissing`) whenever ≥1 bloomery is
   marked, so couriers keep the worker stocked — reusing the existing low-water restock machinery.
 
+- **The ore list gates iron too.** Which iron ores the bloomery path may request/stage/load runs through
+  `SmelterBehavior.usableIronOre` = `isIronOre && oreEnabled` — the same `ORE_LIST` deny-list the forge cast-metal
+  path checks (`accepts` → `oreEnabled`). `MixinCompatibilityManager` populates the Smeltery's *smeltable ores* GUI
+  with **all** TFC ores (cast + iron) via `SmelterRecipes.oreStacks()`, so toggling an iron grade off there now
+  actually stops the bloomeries requesting/consuming it (previously the bloomery path keyed on bare `isIronOre` and
+  ignored the list, making its iron entries inert). One honest control over everything the Smeltery melts.
+
 - **Zero-overhead when unused.** The bloomery work-check's first step is an in-memory guard —
   `getFirstModuleOccurance(BloomeryUserModule.class)` + `getBloomeries().isEmpty()` — *before any world access*.
   A Smeltery with no bloomeries marked (the common case, since marking is opt-in) pays only a module lookup +
