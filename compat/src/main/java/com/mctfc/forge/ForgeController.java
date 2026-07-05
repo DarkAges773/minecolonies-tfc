@@ -33,6 +33,10 @@ public interface ForgeController
     /** Whether the shared 5-slot fuel column has room for more fuel at its top. */
     boolean needsFuel();
 
+    /** How many of the shared 5-slot fuel column's slots are currently empty — the amount of fuel to stage/refuel.
+     *  Fuel demand tracks the column's emptiness, <b>not</b> free heat slots (a busy-but-lit forge still burns down). */
+    int freeFuelSlots();
+
     /** Add fuel to the <b>top</b> of the fixed 5-slot column (only the bottom slot burns); returns whether all fit. */
     boolean addFuel(ItemStack stack);
 
@@ -46,6 +50,15 @@ public interface ForgeController
      */
     boolean canReach(float requiredTemp);
 
+    /**
+     * Whether any occupied heat slot holds an item the fuel <b>ceiling</b> can still advance — one with a heating recipe
+     * whose temperature {@link #canReach} reports reachable. An occupant it can never reach (e.g. a player-dropped
+     * high-melt ore in a firepit-fuelled forge) is <b>not</b> advanceable; the tend-AI uses this so it neither (re)lights
+     * nor keeps a forge lit for a stalled item it can never finish (review SHARED-2). A warming-up item stays advanceable
+     * ({@link #canReach} tests the ceiling, not the live temperature), so this never trips mid-op.
+     */
+    boolean hasAdvanceableOccupant();
+
     /** The per-building heat bonus (°C) the worker's hut level grants; applied to the burning fuel's temperature. */
     void setLevelBonus(int bonusCelsius);
 
@@ -53,6 +66,9 @@ public interface ForgeController
 
     /** How many member heat slots are currently empty (accept a load). */
     int freeHeatSlots();
+
+    /** The items currently in occupied heat slots (for work-gating / in-flight counting; empty ones omitted). */
+    List<ItemStack> heatItems();
 
     /** Load one heatable item into the first free heat slot (1 per slot); returns whether it was placed. */
     boolean loadInput(ItemStack stack);

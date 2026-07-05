@@ -408,6 +408,20 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
     }
 
     @Override
+    public int freeFuelSlots()
+    {
+        int free = 0;
+        for (int i = 0; i < FUEL_SLOTS; i++)
+        {
+            if (fuel.getStackInSlot(i).isEmpty())
+            {
+                free++;
+            }
+        }
+        return free;
+    }
+
+    @Override
     public boolean addFuel(final ItemStack stack)
     {
         if (stack.isEmpty())
@@ -444,6 +458,34 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
     }
 
     @Override
+    public boolean hasAdvanceableOccupant()
+    {
+        if (level == null)
+        {
+            return false;
+        }
+        for (final BlockPos m : group().members())
+        {
+            final HeatForgeBlockEntity mbe = memberAt(level, m);
+            if (mbe == null)
+            {
+                continue;
+            }
+            final ItemStack heat = mbe.positions.getStackInSlot(HEAT);
+            if (heat.isEmpty())
+            {
+                continue;
+            }
+            final HeatingRecipe recipe = HeatingRecipe.getRecipe(heat);
+            if (recipe != null && canReach(recipe.getTemperature()))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public void setLevelBonus(final int bonusCelsius)
     {
         if (levelBonus != bonusCelsius)
@@ -470,6 +512,30 @@ public class HeatForgeBlockEntity extends BlockEntity implements ForgeController
             }
         }
         return free;
+    }
+
+    @Override
+    public List<ItemStack> heatItems()
+    {
+        final List<ItemStack> out = new ArrayList<>();
+        if (level == null)
+        {
+            return out;
+        }
+        for (final BlockPos m : group().members())
+        {
+            final HeatForgeBlockEntity mbe = memberAt(level, m);
+            if (mbe == null)
+            {
+                continue;
+            }
+            final ItemStack heat = mbe.positions.getStackInSlot(HEAT);
+            if (!heat.isEmpty())
+            {
+                out.add(heat);
+            }
+        }
+        return out;
     }
 
     @Override

@@ -49,9 +49,6 @@ public class ForgeTender
         /** Whether {@code stack} is a fuel this hut may burn (its scope + the player's fuel allow-list). */
         boolean fuelAllowed(ItemStack stack);
 
-        /** Fuel items to stage per free heat slot. */
-        int fuelPerSlot();
-
         /** Input items to stage per free heat slot (a small carry buffer so the worker reloads several times). */
         int inputPerSlot();
     }
@@ -95,18 +92,34 @@ public class ForgeTender
         return free;
     }
 
-    /** Top the carried inventory up with fuel + inputs from the racks, sized to the total free heat slots. */
+    /** Top the carried inventory up with fuel (sized to the empty fuel column) + inputs (sized to free heat slots). */
     public void stage(final List<ForgeController> controllers)
     {
-        final int free = totalFreeHeatSlots(controllers);
         final List<IItemHandler> inv = ctx.inventory();
-        if (free <= 0 || inv.isEmpty())
+        if (inv.isEmpty())
         {
             return;
         }
         final IItemHandler to = inv.get(0);
-        topUp(ctx.racks(), to, policy::fuelAllowed, free * policy.fuelPerSlot());
-        topUp(ctx.racks(), to, policy::accepts, free * policy.inputPerSlot());
+        // Fuel demand tracks the shared column's emptiness, NOT free heat slots: a lit forge with every heat slot busy
+        // still burns its column down and must be refuelled, else it self-extinguishes mid-op and strands its load
+        // (review SHARED-1 / CHEF-2b / COOK-1's fuel-death precondition). Size the fuel pull to the total empty column
+        // slots across the hut's controllers, independent of input staging.
+        int emptyFuelSlots = 0;
+        for (final ForgeController c : controllers)
+        {
+            emptyFuelSlots += c.freeFuelSlots();
+        }
+        if (emptyFuelSlots > 0)
+        {
+            topUp(ctx.racks(), to, policy::fuelAllowed, emptyFuelSlots);
+        }
+        // Inputs: nothing to load into a forge with no free heat slot, so this half stays free-slot-sized.
+        final int free = totalFreeHeatSlots(controllers);
+        if (free > 0)
+        {
+            topUp(ctx.racks(), to, policy::accepts, free * policy.inputPerSlot());
+        }
     }
 
     /**
@@ -152,23 +165,25 @@ public class ForgeTender
             refuel(c);
         }
 
-        final int members = c.members().size();
-        final boolean occupied = c.freeHeatSlots() < members;
         final boolean willLoad = budget > 0 && c.freeHeatSlots() > 0 && hasLoadable(c);
-        if ((occupied || willLoad) && !c.isLit())
+        // Light only for work the fuel can actually finish: an advanceable occupant (an item whose recipe temp the fuel
+        // ceiling reaches) or a load we're about to make. A stalled occupant the fuel can't reach (e.g. a player-dropped
+        // high-melt ore) is NOT a reason to (re)light — else the forge burns fuel forever for zero output (review
+        // SHARED-2). refuel above runs first, so a just-refuelled column makes its stranded occupant advanceable again.
+        if ((c.hasAdvanceableOccupant() || willLoad) && !c.isLit())
         {
             c.light(); // the forge must be lit before loading; it warms up while it runs
         }
 
         final int loaded = loadInputs(c, budget);
-        manageFlame(c, members);
+        manageFlame(c);
         return loaded;
     }
 
     /** Extinguish an idle forge once its keep-warm window has elapsed — exposed for behaviors that compose their own tend. */
     public void keepWarm(final ForgeController c)
     {
-        manageFlame(c, c.members().size());
+        manageFlame(c);
     }
 
     /** Fill the empty fuel slots from the carried inventory (only the bottom slot burns; the column just holds reserve). */
@@ -220,10 +235,15 @@ public class ForgeTender
         return loaded;
     }
 
-    /** Extinguish an idle forge once its keep-warm window has elapsed (the fuel-vs-latency knob). */
-    private void manageFlame(final ForgeController c, final int members)
+    /**
+     * Extinguish an idle forge once its keep-warm window has elapsed (the fuel-vs-latency knob). Keys on "nothing the
+     * forge can still advance" rather than "all heat slots empty", so a stalled occupant the fuel can never finish (a
+     * high-melt ore a player dropped in) no longer pins the flame on forever (review SHARED-2). A warming-up item stays
+     * advanceable ({@code canReach} tests the fuel ceiling, not the live temp), so this never extinguishes mid-op.
+     */
+    private void manageFlame(final ForgeController c)
     {
-        if (c.isLit() && c.freeHeatSlots() == members)
+        if (c.isLit() && !c.hasAdvanceableOccupant())
         {
             final long now = ctx.world().getGameTime();
             if (now - c.lastActiveTick() > Config.forgeKeepWarmTicks)

@@ -23,8 +23,6 @@ import static com.minecolonies.api.util.constant.BuildingConstants.FUEL_LIST;
  */
 public class ChefForgeTender implements ForgeTender.Context, ForgeTender.Policy
 {
-    /** Fuel staged per free heat slot. */
-    private static final int FUEL_PER_SLOT = 2;
     /** Raw input staged per free heat slot (a small carry buffer so the worker reloads several times). */
     private static final int INPUT_PER_SLOT = 8;
 
@@ -117,12 +115,6 @@ public class ChefForgeTender implements ForgeTender.Context, ForgeTender.Policy
             }
         }
         return !constrains || list.contains(new ItemStorage(stack));
-    }
-
-    @Override
-    public int fuelPerSlot()
-    {
-        return FUEL_PER_SLOT;
     }
 
     @Override

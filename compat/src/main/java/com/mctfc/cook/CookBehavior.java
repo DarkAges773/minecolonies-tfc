@@ -56,8 +56,6 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
     /** Raw food staged per free heat slot — a small buffer so the worker reloads from hand several times before
      * re-staging (each forge cooks one item per position at a time, throughput from parallel positions). */
     private static final int    INPUT_PER_SLOT = 8;
-    /** Fuel staged per free heat slot. */
-    private static final int    FUEL_PER_SLOT  = 2;
     private static final int    REQUEST_CHECK_INTERVAL = 100;
     private static final int    MAX_REQUEST    = 16;
 
@@ -106,7 +104,10 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
         return hasWork() ? State.BATCH_STAGING : AIWorkerState.IDLE;
     }
 
-    /** Whether any controller has cooked food to drain, or a free heat slot with a menu-cookable dish makeable. */
+    /**
+     * Whether any controller has cooked food to drain, a cold forge with cookable raw stranded in it that we can
+     * relight, or a free heat slot with a menu-cookable dish makeable now.
+     */
     private boolean hasWork()
     {
         final List<ForgeController> controllers = tender.resolve(ai.controllers());
@@ -116,12 +117,16 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
         }
         for (final ForgeController c : controllers)
         {
-            if (c.hasFinished())
+            if (c.hasFinished() || needsRelight(c))
+            {
+                return true;
+            }
+            if (canLoadNow(c, combined()))
             {
                 return true;
             }
         }
-        return tender.totalFreeHeatSlots(controllers) > 0 && !findReadyJob(combined()).isEmpty();
+        return false;
     }
 
     // --- Stage 1: BATCH_STAGING ---------------------------------------------------------------------------
@@ -182,8 +187,7 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
                 tended.add(pos);
                 continue;
             }
-            final boolean loadable = c.freeHeatSlots() > 0 && !findReadyJob(inventory()).isEmpty();
-            if (c.hasFinished() || loadable || c.isLit())
+            if (c.hasFinished() || canLoadNow(c, inventory()) || needsRelight(c) || c.isLit())
             {
                 target = pos; // visit lit forges too, so keep-warm / extinguish + refuel run
                 return State.TEND_CONTROLLERS;
@@ -202,26 +206,58 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
         return world != null && world.getBlockEntity(pos) instanceof HeatForgeBlockEntity be ? be : null;
     }
 
-    /** A menu-cookable raw food in {@code storage} with fuel hot enough for its cook temp available; empty if none. */
-    private ItemStack findReadyJob(final List<IItemHandler> storage)
+    /**
+     * Whether {@code c} has a free heat slot and a menu-cookable raw in {@code storage} it can cook <b>now</b> — fuel
+     * already in its column <b>or</b> obtainable from {@code storage}. Consulting the column (not just storage) stops the
+     * Cook idling next to a forge whose 5-slot column is stocked while the racks are momentarily empty (review COOK-2).
+     */
+    private boolean canLoadNow(final ForgeController c, final List<IItemHandler> storage)
     {
-        if (ai.world() == null)
+        if (ai.world() == null || c.freeHeatSlots() <= 0)
         {
-            return ItemStack.EMPTY;
+            return false;
         }
         for (final IItemHandler h : storage)
         {
             for (int slot = 0; slot < h.getSlots(); slot++)
             {
                 final ItemStack stack = h.getStackInSlot(slot);
-                if (accepts(stack)
-                      && FurnaceFuel.hasFuelHotEnough(CookRecipes.cookTemp(stack), ai.buildingLevel(), this::fuelAllowed, storage))
+                if (accepts(stack) && fuelReady(c, CookRecipes.cookTemp(stack), storage))
                 {
-                    return stack;
+                    return true;
                 }
             }
         }
-        return ItemStack.EMPTY;
+        return false;
+    }
+
+    /** Whether {@code c} can reach {@code temp} on fuel already in its column, or on hot-enough fuel in {@code storage}. */
+    private boolean fuelReady(final ForgeController c, final float temp, final List<IItemHandler> storage)
+    {
+        return c.canReach(temp) || FurnaceFuel.hasFuelHotEnough(temp, ai.buildingLevel(), this::fuelAllowed, storage);
+    }
+
+    /**
+     * Whether {@code c} is a forge that went cold with a still-cookable raw stranded in its heat slots (its fuel ran out
+     * mid-cook) and we have fuel to relight it. Such a forge won't restart itself — the worker must revisit to relight,
+     * so it counts as work; without this the Cook goes IDLE and the raw is stranded forever, no matter how much
+     * fuel/food later reaches the racks (review COOK-1).
+     */
+    private boolean needsRelight(final ForgeController c)
+    {
+        if (c.isLit())
+        {
+            return false;
+        }
+        final List<IItemHandler> stock = combined();
+        for (final ItemStack heat : c.heatItems())
+        {
+            if (accepts(heat) && fuelReady(c, CookRecipes.cookTemp(heat), stock))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     // --- ForgeTender.Policy -------------------------------------------------------------------------------
@@ -272,12 +308,6 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
             }
         }
         return !constrains || list.contains(new ItemStorage(stack));
-    }
-
-    @Override
-    public int fuelPerSlot()
-    {
-        return FUEL_PER_SLOT;
     }
 
     @Override

@@ -90,6 +90,13 @@ All notable changes to this mod are documented here. The format is based on
   other rocks' plain cobble, and mossy offers only mossy — you can't swap a wall between plain and mossy.
 
 ### Fixed
+- **Furnace-worker forges no longer strand food/ore or burn fuel for nothing.** Three heat-forge tending bugs are
+  fixed: (1) a forge whose fuel ran out mid-cook with items still inside is now relit on the worker's next visit
+  instead of leaving the food/ore stuck cold forever; (2) the worker now restocks the forge's fuel column even when
+  every heat slot is busy (previously a fully-loaded forge could starve its own fire and stall); and (3) a forge only
+  stays lit while it has something it can actually finish — an item too hot to melt with the hut's fuel (e.g. iron ore
+  dropped into a Kitchen furnace) no longer keeps the fire burning pointlessly. The Chef also no longer gets stuck on a
+  request when such an unmeltable item is sitting in one of its furnaces.
 - **The Chef now actually fulfils requests for salads and pot soups** (e.g. from a dining hall's menu). TFC's
   salad/soup items stash their bowl in the item's NBT, and MineColonies matches food requests by exact NBT, so a
   freshly-made salad never counted as "the salad that was requested" and the Chef ignored the order. Salads and soups

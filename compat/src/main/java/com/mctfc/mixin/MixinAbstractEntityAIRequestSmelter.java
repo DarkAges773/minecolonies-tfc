@@ -187,10 +187,19 @@ public abstract class MixinAbstractEntityAIRequestSmelter
 
         // Phase 2 — LOAD only the deficit: (still needed) − (already cooking), so we never over-produce a batch that
         // would be abandoned when the request completes. stockAndLoad still refuels / lights / keep-warms every forge.
+        // Count only THIS request's raw actually cooking — not every occupied heat slot. A foreign occupant (a player-
+        // dropped high-melt ore the fuel can't finish) must NOT inflate inFlight, or it drives the budget to 0 and pins
+        // the Chef at CRAFT forever with nothing loading (review CHEF-2a).
         int inFlight = 0;
         for (final ForgeController controller : controllers)
         {
-            inFlight += controller.members().size() - controller.freeHeatSlots(); // occupied heat slots = items cooking
+            for (final ItemStack heat : controller.heatItems())
+            {
+                if (chef.accepts(heat))
+                {
+                    inFlight++;
+                }
+            }
         }
         int budget = Math.max(0, mctfc$job.getMaxCraftingCount() - mctfc$job.getCraftCounter() - inFlight);
         for (final ForgeController controller : controllers)

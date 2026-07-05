@@ -70,7 +70,6 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
     private static final double XP_PER_OUTPUT  = 5.0;
     /** Ore staged per free heat slot — a few single ores (each ~10–35 mB) so a mold fills over successive melts. */
     private static final int    INPUT_PER_SLOT = 4;
-    private static final int    FUEL_PER_SLOT  = 2;
     /** Empty molds staged per free heat slot (an output + an overflow per position). */
     private static final int    MOLDS_PER_SLOT = 2;
 
@@ -153,7 +152,7 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
         {
             for (final ForgeController c : controllers)
             {
-                if (c.hasFinished())
+                if (c.hasFinished() || needsRelight(c))
                 {
                     return true;
                 }
@@ -249,7 +248,7 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
                 continue;
             }
             final boolean loadable = c.freeHeatSlots() > 0 && carryingCastOre();
-            if (c.hasFinished() || loadable || c.isLit())
+            if (c.hasFinished() || loadable || needsRelight(c) || c.isLit())
             {
                 target = pos;
                 return State.TEND_CONTROLLERS;
@@ -281,9 +280,11 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
             tender.refuel(c);
         }
 
-        final boolean occupied = c.freeHeatSlots() < c.members().size();
         final boolean willLoad = c.freeHeatSlots() > 0 && carryingCastOre();
-        if ((occupied || willLoad) && !c.isLit())
+        // Light only for work the fuel can finish — an advanceable occupant or an imminent load — not for a stalled ore
+        // the fuel can't reach. Refuel above runs first, so a just-refuelled column makes a stranded ore advanceable
+        // again; keying on that (not raw occupancy) stops the relight↔extinguish churn on an unfinishable item (SHARED-2).
+        if ((c.hasAdvanceableOccupant() || willLoad) && !c.isLit())
         {
             c.light();
         }
@@ -791,12 +792,6 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
     }
 
     @Override
-    public int fuelPerSlot()
-    {
-        return FUEL_PER_SLOT;
-    }
-
-    @Override
     public int inputPerSlot()
     {
         return INPUT_PER_SLOT;
@@ -898,6 +893,31 @@ public class SmelterBehavior implements FurnaceBehavior, ForgeTender.Context, Fo
     private boolean carryingCastOre()
     {
         return ForgeTender.countMatching(inventory(), this::accepts) > 0;
+    }
+
+    /**
+     * Whether {@code c} is a forge that went cold with a still-meltable ore stranded in its heat slots (its fuel ran out
+     * mid-melt) and we have fuel to relight it — from its own column or the racks. Such a forge won't restart itself, so
+     * the worker must revisit to relight it; without this the Smelter goes IDLE and the ore is stranded (review COOK-1's
+     * Smelter analog).
+     */
+    private boolean needsRelight(final ForgeController c)
+    {
+        if (c.isLit())
+        {
+            return false;
+        }
+        final List<IItemHandler> stock = combined();
+        for (final ItemStack heat : c.heatItems())
+        {
+            if (accepts(heat)
+                  && (c.canReach(meltTempOf(heat))
+                        || FurnaceFuel.hasFuelHotEnough(meltTempOf(heat), ai.buildingLevel(), this::fuelAllowed, stock)))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static float meltTempOf(final ItemStack ore)
