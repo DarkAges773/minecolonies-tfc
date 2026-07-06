@@ -220,11 +220,28 @@ public abstract class MixinAbstractEntityAIRequestSmelter
         {
             return;
         }
+        // Keep only TFC firepit fuel. Native seeds the fuel list with [coal, charcoal] (out of firepit scope), so
+        // without this the Chef's checkFurnaceFuel requests — and the forge can never burn — vanilla coal. Drop any
+        // out-of-scope fuel; if the player HAS listed firepit fuels, respect exactly those.
         final List<ItemStack> current = cir.getReturnValue();
-        if (current != null && !current.isEmpty())
+        if (current != null)
         {
-            return; // player configured fuels — respect them
+            final List<ItemStack> listed = new ArrayList<>();
+            for (final ItemStack stack : current)
+            {
+                if (stack.is(FurnaceFuelScope.COOK))
+                {
+                    listed.add(stack);
+                }
+            }
+            if (!listed.isEmpty())
+            {
+                cir.setReturnValue(listed);
+                return;
+            }
         }
+        // Nothing in scope (e.g. the default [coal, charcoal] seed) → offer every TFC firepit fuel so the Chef cooks
+        // out of the box; the courier fulfils the StackList with whatever firepit fuel the colony has.
         final ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
         if (tags == null)
         {

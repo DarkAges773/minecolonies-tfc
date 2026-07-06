@@ -105,10 +105,13 @@ public class ChefForgeTender implements ForgeTender.Context, ForgeTender.Policy
             return true;
         }
         final List<ItemStorage> list = allowed.getList();
+        // Only an IN-SCOPE fuel entry constrains us. The native list is seeded with out-of-scope [coal, charcoal],
+        // which must NOT flip this on — otherwise it would reject the firepit fuels the Chef actually burns (which
+        // aren't in that seed). Once the player lists a real firepit fuel, restrict to the listed ones.
         boolean constrains = false;
         for (final ItemStorage entry : list)
         {
-            if (FurnaceFuel.isFuel(entry.getItemStack()))
+            if (FurnaceFuel.isFuel(entry.getItemStack()) && entry.getItemStack().is(FurnaceFuelScope.COOK))
             {
                 constrains = true;
                 break;

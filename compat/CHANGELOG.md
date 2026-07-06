@@ -92,6 +92,12 @@ All notable changes to this mod are documented here. The format is based on
   other rocks' plain cobble, and mossy offers only mossy — you can't swap a wall between plain and mossy.
 
 ### Fixed
+- **The Chef (Kitchen) and dining-hall Cook now use firepit fuel correctly.** MineColonies seeds a furnace hut's fuel
+  list with vanilla coal + charcoal, which a TFC firepit can't burn — so the Chef was requesting stacks of coal it
+  could never use, and both workers' fuel list ended up rejecting the actual firepit fuels (logs / peat / sticks) they
+  need. The Chef now requests firepit fuel instead of coal, and both workers burn firepit fuel out of the box; adding a
+  specific firepit fuel to the hut's fuel list still restricts them to your choice. (The Smeltery, which really does
+  burn coal/charcoal, is unaffected.)
 - **Furnace-worker forges no longer strand food/ore or burn fuel for nothing.** Three heat-forge tending bugs are
   fixed: (1) a forge whose fuel ran out mid-cook with items still inside is now relit on the worker's next visit
   instead of leaving the food/ore stuck cold forever; (2) the worker now restocks the forge's fuel column even when
