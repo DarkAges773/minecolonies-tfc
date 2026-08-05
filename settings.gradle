@@ -17,9 +17,9 @@ rootProject.name = 'minecolonies-tfc'
 // :replacements  - standalone Structurize block-substitution mod (no MineColonies/TFC dependency).
 include 'replacements'
 
-// PORT IN PROGRESS (1.21.1-NeoForge branch): :firmavanilla and :compat are still 1.20.1-Forge sources,
-// so they're held out of the project tree until ported — otherwise every Gradle invocation fails on
-// them. Re-include each as it lands; order is :replacements -> :firmavanilla -> :compat (see
-// docs/porting-1.21.1-neoforge.md).
+// :firmavanilla and :compat DELIBERATELY STAY on 1.20.1-Forge for now (decided 2026-08-05) — only
+// :replacements moves to 1.21.1 at this stage. Their sources are still Forge/1.20.1 and would fail every
+// Gradle invocation on this branch, so they're held out of the project tree; develop them on `main`.
+// Re-include each here if and when it's ported (see docs/porting-1.21.1-neoforge.md).
 // include 'firmavanilla'
 // include 'compat'

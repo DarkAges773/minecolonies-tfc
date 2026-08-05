@@ -156,7 +156,19 @@ so the per-building picker **and the new Current/Upgrade palette toggle** (which
 
 **Pinned stack** ([gradle.properties](../gradle.properties)): NeoForge `21.1.248`, ModDevGradle `2.0.143`,
 Java 21, structurize `1.0.830-1.21.1`, blockui `1.0.209-1.21.1`, minecolonies `1.1.1368-1.21.1`,
-domum-ornamentum `1.21.1-1.0.200-BETA`.
+domum-ornamentum `1.0.231`. These are **floors** — MineColonies pulls structurize up to
+`1.0.832-1.21.1-snapshot`. Check what actually loads with
+`gradlew :replacements:dependencies --configuration runtimeClasspath`.
+
+> ⚠️ **The two LDTTeam version schemes sort against each other, and the OLD one always wins.** Gradle
+> compares version parts left to right, so `1.21.1-1.0.200-BETA` > `1.0.223-snapshot` (21 > 0 at part two).
+> A leftover old-scheme pin therefore **silently downgrades** the module below what MineColonies needs and
+> beats its transitive requirement with no conflict warning. This bit us: domum-ornamentum stayed on the
+> 2024-08 `1.0.200-BETA` jar, which predates `DynamicTimberFrameBlock` — a class MineColonies 1.21.1 calls
+> from `DoBlockPlacementHandler`. The result was a `NoClassDefFoundError` **crash** the first time a hut's
+> material list was computed (placing a town hall → Build Options), far from the version pin that caused it.
+> Keep every LDTTeam pin on the new scheme, and note domum-ornamentum publishes its mod jar under a `main`
+> classifier (no plain `.jar`) — it resolves only because it also publishes Gradle module metadata.
 
 **Build plumbing.** ForgeGradle + MixinGradle → **ModDevGradle**. Three consequences worth remembering:
 - **No refmap, no reobf, no MixinGradle.** NeoForge runs Mojang mappings in dev *and* production, so mixins
@@ -195,6 +207,19 @@ NeoForge infers the bus from whether the event implements `IModBusEvent`), and t
   [ButtonImageWithIcon](../replacements/src/main/java/com/structurizereplacements/client/gui/ButtonImageWithIcon.java)
   reads the protected `Pane` `x/y/width/height` fields instead and blits via `UiRenderMacros.blit`.
   Also `ButtonImage#setImage(ResourceLocation, boolean)` lost its boolean overload.
+- **BlockUI removed the `<buttonimage>` GUI-XML element** — `<button>` now constructs a `ButtonImage`
+  (which absorbed the vanilla look via `setVanillaButton()`/`VANILLA_BUTTON`). Attributes are unchanged
+  (`source`, `label`, `textcolor`, `texthovercolor`), so it's a pure element rename — but see the warning
+  below, because it is the one break in this port that **nothing catches at compile time**. The registered
+  element names live in `com.ldtteam.blockui.Loader`'s ctor (`javap -c` it); the authoritative example is
+  Structurize's own `assets/structurize/gui/windowbuildtool.xml`.
+
+> ⚠️ **GUI XML is resolved at runtime and fails SILENTLY.** BlockUI skips unknown elements without an error,
+> so all 15 of our `<buttonimage>` panes simply did not exist: the window opened fine (title/list/input are
+> other elements) and the first unguarded `findPaneOfTypeByID(...).hide()` NPE'd and **crashed the client**
+> the moment the *Replace* button was clicked. Nothing in the build, the mixin log, or the boot log hinted at
+> it. After any BlockUI version jump, **click through every window** (`windowreplacements`, `windowpresetlist`,
+> `windowconfirm`) rather than trusting a clean compile and a green boot.
 - **Blueprint loading takes a `HolderLookup.Provider`**: `StructurePacks.getBlueprintFuture(pack, path,
   registries)`. Both call sites are client GUI paths, so they pass `Minecraft.getInstance().level.registryAccess()`
   and bail when there is no level.

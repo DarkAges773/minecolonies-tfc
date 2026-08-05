@@ -126,6 +126,9 @@ dependencies {
     // compileOnly too: DomumMaterialRewriter substitutes the material(s) stored in DO "materialized" blocks'
     // textureData NBT (panel/brick/framed/...). DO is always present at runtime, so no load guard is needed.
     // Artifact id is HYPHENATED on 1.21.1 (was domum_ornamentum with an underscore on 1.20.1).
+    // The version MUST stay >= what MineColonies requires: it calls into DO classes directly (e.g.
+    // DynamicTimberFrameBlock from DoBlockPlacementHandler), so an older DO crashes with
+    // NoClassDefFoundError the moment a hut's material list is computed. See gradle.properties.
     compileOnly "com.ldtteam:domum-ornamentum:${domum_ornamentum_version}"
     runtimeOnly "com.ldtteam:domum-ornamentum:${domum_ornamentum_version}"
 
