@@ -7,6 +7,7 @@ import com.mctfc.forge.ForgeController;
 import com.mctfc.forge.ForgeTender;
 import com.mctfc.forge.ForgeUserModule;
 import com.mctfc.forge.HeatForgeBlockEntity;
+import com.mctfc.furnace.FurnaceFuel;
 import com.mctfc.furnace.FurnaceFuelScope;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.requestsystem.request.IRequest;
@@ -20,15 +21,12 @@ import com.minecolonies.core.colony.buildings.workerbuildings.BuildingKitchen;
 import com.minecolonies.core.colony.jobs.AbstractJobCrafter;
 import com.minecolonies.core.entity.ai.workers.crafting.AbstractEntityAIRequestSmelter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.tags.ITagManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -242,18 +240,7 @@ public abstract class MixinAbstractEntityAIRequestSmelter
         }
         // Nothing in scope (e.g. the default [coal, charcoal] seed) → offer every TFC firepit fuel so the Chef cooks
         // out of the box; the courier fulfils the StackList with whatever firepit fuel the colony has.
-        final ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
-        if (tags == null)
-        {
-            return;
-        }
-        final List<ItemStack> firepit = new ArrayList<>();
-        for (final Item item : tags.getTag(FurnaceFuelScope.COOK))
-        {
-            final ItemStack stack = new ItemStack(item);
-            stack.setCount(stack.getMaxStackSize());
-            firepit.add(stack);
-        }
+        final List<ItemStack> firepit = FurnaceFuel.allFuelStacks(FurnaceFuelScope.COOK);
         if (!firepit.isEmpty())
         {
             cir.setReturnValue(firepit);

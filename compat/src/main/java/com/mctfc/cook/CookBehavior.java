@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.minecolonies.api.util.constant.BuildingConstants.FUEL_LIST;
+import static com.minecolonies.api.util.constant.translation.RequestSystemTranslationConstants.REQUESTS_TYPE_BURNABLE;
 import static com.minecolonies.api.util.constant.translation.RequestSystemTranslationConstants.REQUESTS_TYPE_FOOD;
 
 /**
@@ -58,6 +59,9 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
     private static final int    INPUT_PER_SLOT = 8;
     private static final int    REQUEST_CHECK_INTERVAL = 100;
     private static final int    MAX_REQUEST    = 16;
+    /** Order firepit fuel when the colony's stock of it drops below this, up to {@link #FUEL_BATCH} per request. */
+    private static final int    FUEL_THRESHOLD = 8;
+    private static final int    FUEL_BATCH     = 16;
 
     private enum State implements IAIState
     {
@@ -77,6 +81,7 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
     private BlockPos target;
     private long     nextRequestCheck;
     private IToken<?> foodRequest;
+    private IToken<?> fuelRequest;
 
     public CookBehavior(final FurnaceWorker ai)
     {
@@ -438,11 +443,9 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
     // --- Auto-requesting raw ingredients (the cook keeps itself fed) ---------------------------------------
 
     /**
-     * Order the <b>raw</b> ingredients the menu needs. The vanilla restaurant menu's raw lookup is a vanilla-furnace
-     * recipe — absent for TFC food — so nothing requests the raw the cook actually cooks. We fill that gap: for each
-     * menu dish, reverse-look-up its raw food ({@link CookRecipes#rawForDishes}) and, if colony stock of (cooked + raw)
-     * is below the demand-scaled target, request the raw — one debounced {@link StackList}, batch-capped so a perishable
-     * pile is never ordered. Called from {@link #startWorking()} every work cycle and throttled here.
+     * Keep the Cook fed and fired: order the menu's raw ingredients ({@link #requestRawFood}) and the firepit fuel the
+     * heat-forge burns ({@link #requestFuel}). Called from {@link #startWorking()} every work cycle; both are throttled
+     * by the shared {@link #nextRequestCheck} and debounced by their own request tokens.
      */
     private void requestMissing()
     {
@@ -456,11 +459,23 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
             return;
         }
         nextRequestCheck = world.getGameTime() + REQUEST_CHECK_INTERVAL;
+        requestRawFood(world);
+        requestFuel();
+    }
+
+    /**
+     * Order the <b>raw</b> ingredients the menu needs. The vanilla restaurant menu's raw lookup is a vanilla-furnace
+     * recipe — absent for TFC food — so nothing requests the raw the cook actually cooks. We fill that gap: for each
+     * menu dish, reverse-look-up its raw food ({@link CookRecipes#rawForDishes}) and, if colony stock of (cooked + raw)
+     * is below the demand-scaled target, request the raw — one debounced {@link StackList}, batch-capped so a perishable
+     * pile is never ordered.
+     */
+    private void requestRawFood(final Level world)
+    {
         if (isOpen(foodRequest))
         {
             return;
         }
-
         final RestaurantMenuModule menu = menuModule();
         if (menu == null)
         {
@@ -506,6 +521,46 @@ public class CookBehavior implements FurnaceBehavior, ForgeTender.Context, Forge
         }
         final int batch = Math.min(shortfall, MAX_REQUEST);
         foodRequest = ai.worker().getCitizenData().createRequestAsync(new StackList(request, REQUESTS_TYPE_FOOD, batch, 1));
+    }
+
+    /**
+     * Order firepit fuel when the colony runs low. Native furnace users request fuel inside
+     * {@code AbstractEntityAIUsesFurnace#startWorking}, which our dispatcher replaces wholesale — so without this nobody
+     * stocks the Restaurant with the firepit fuel the heat-forge burns. The Cook only burns TFC firepit fuel, so we
+     * order exactly that ({@link #firepitFuelStacks}), debounced by its own request token.
+     */
+    private void requestFuel()
+    {
+        if (isOpen(fuelRequest) || ForgeTender.countMatching(combined(), this::fuelAllowed) >= FUEL_THRESHOLD)
+        {
+            return;
+        }
+        final List<ItemStack> fuels = firepitFuelStacks();
+        if (!fuels.isEmpty())
+        {
+            fuelRequest = ai.worker().getCitizenData().createRequestAsync(new StackList(fuels, REQUESTS_TYPE_BURNABLE, FUEL_BATCH, 1));
+        }
+    }
+
+    /** The firepit fuels to request: the player's listed firepit fuels if any, else every TFC firepit fuel. */
+    private List<ItemStack> firepitFuelStacks()
+    {
+        final List<ItemStack> listed = new ArrayList<>();
+        final ItemListModule fuelList = listModule(FUEL_LIST);
+        if (fuelList != null)
+        {
+            for (final ItemStorage entry : fuelList.getList())
+            {
+                final ItemStack stack = entry.getItemStack();
+                if (FurnaceFuel.isFuel(stack) && stack.is(FurnaceFuelScope.COOK))
+                {
+                    final ItemStack req = stack.copy();
+                    req.setCount(req.getMaxStackSize());
+                    listed.add(req);
+                }
+            }
+        }
+        return listed.isEmpty() ? FurnaceFuel.allFuelStacks(FurnaceFuelScope.COOK) : listed;
     }
 
     /** Whether {@code token} is still one of the worker's outstanding requests — the debounce. */

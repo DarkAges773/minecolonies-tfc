@@ -2,9 +2,14 @@ package com.mctfc.furnace;
 
 import com.mctfc.Config;
 import net.dries007.tfc.util.Fuel;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.tags.ITagManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -32,6 +37,27 @@ public final class FurnaceFuel
     public static boolean isFuel(final ItemStack stack)
     {
         return !stack.isEmpty() && Fuel.get(stack) != null;
+    }
+
+    /**
+     * Every item in {@code tag} as a max-count stack — the candidate fuels to request / offer for a hut scoped to that
+     * TFC device fuel tag (e.g. {@link FurnaceFuelScope#COOK}). Empty if the tag manager isn't ready yet.
+     */
+    public static List<ItemStack> allFuelStacks(final TagKey<Item> tag)
+    {
+        final List<ItemStack> out = new ArrayList<>();
+        final ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
+        if (tags == null)
+        {
+            return out;
+        }
+        for (final Item item : tags.getTag(tag))
+        {
+            final ItemStack stack = new ItemStack(item);
+            stack.setCount(stack.getMaxStackSize());
+            out.add(stack);
+        }
+        return out;
     }
 
     private static float fuelTemp(final ItemStack stack)

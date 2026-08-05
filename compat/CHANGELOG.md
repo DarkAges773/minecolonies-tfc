@@ -98,6 +98,9 @@ All notable changes to this mod are documented here. The format is based on
   need. The Chef now requests firepit fuel instead of coal, and both workers burn firepit fuel out of the box; adding a
   specific firepit fuel to the hut's fuel list still restricts them to your choice. (The Smeltery, which really does
   burn coal/charcoal, is unaffected.)
+- **The dining-hall Cook now requests firepit fuel when it runs low.** Its fuel-requesting was lost when the Cook was
+  switched to the TFC heat-forge, so it would quietly idle in a colony that never hand-stocked it with fuel. It now
+  orders firepit fuel (your listed fuels, or any firepit fuel by default) the same way it orders raw ingredients.
 - **Furnace-worker forges no longer strand food/ore or burn fuel for nothing.** Three heat-forge tending bugs are
   fixed: (1) a forge whose fuel ran out mid-cook with items still inside is now relit on the worker's next visit
   instead of leaving the food/ore stuck cold forever; (2) the worker now restocks the forge's fuel column even when
