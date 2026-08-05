@@ -8,6 +8,8 @@ All notable changes to this mod are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.5.70] - 2026-08-05
+
 ### Changed
 - **Now runs on Minecraft 1.21.1 with NeoForge** (the 1.20.1 Forge build continues on its own branch). Requires
   NeoForge 21.1+, Structurize and — optionally, as before — MineColonies. Everything the mod does is unchanged;
