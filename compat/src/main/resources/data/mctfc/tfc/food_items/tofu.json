@@ -1,0 +1,9 @@
+{
+  "ingredient": { "item": "minecolonies:tofu" },
+  "hunger": 4,
+  "saturation": 0.25,
+  "water": 0,
+  "decay_modifier": 1.0,
+  "vegetables": 0.5,
+  "protein": 1.5
+}

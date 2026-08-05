@@ -1,0 +1,31 @@
+{
+  "branch": "minecolonies:technology",
+  "costs": [
+    {
+      "type": "minecolonies:item_list",
+      "items": [
+        "tfc:metal/anvil/red_steel",
+        "tfc:metal/anvil/blue_steel"
+      ],
+      "quantity": 1
+    }
+  ],
+  "effects": [
+    {
+      "id": "mctfc:effects/smithing_red_blue_steel",
+      "level": 1
+    }
+  ],
+  "icon": "tfc:metal/anvil/red_steel",
+  "parentResearch": "mctfc:smithing/black_steel",
+  "requirements": [
+    {
+      "type": "minecolonies:single-building",
+      "building": "minecolonies:blacksmith",
+      "level": 5
+    }
+  ],
+  "researchLevel": 6,
+  "sortOrder": 1,
+  "subtitle": "com.mctfc.research.smithing.red_blue_steel.subtitle"
+}

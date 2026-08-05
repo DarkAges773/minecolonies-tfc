@@ -1,0 +1,1258 @@
+{
+  "name": "mctfc.preset.wood.chestnut",
+  "icon": "tfc:wood/planks/chestnut",
+  "picks": [
+    {
+      "from": "tfc:wood/planks/acacia",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/baobab",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "beneath:wood/planks/crimson",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/cypress",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/fig",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/hickory",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/kapok",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/oak",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/palm",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/pine",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/spruce",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/teak",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "beneath:wood/planks/warped",
+      "to": "tfc:wood/planks/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "afc:wood/planks/baobab_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "afc:wood/planks/cypress_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "afc:wood/planks/fig_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/oak_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/palm_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/pine_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "afc:wood/planks/teak_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "beneath:wood/planks/warped_stairs",
+      "to": "tfc:wood/planks/chestnut_stairs"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "afc:wood/planks/baobab_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "afc:wood/planks/cypress_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "afc:wood/planks/fig_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "tfc:wood/planks/oak_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "tfc:wood/planks/palm_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "tfc:wood/planks/pine_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "afc:wood/planks/teak_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "beneath:wood/planks/warped_slab",
+      "to": "tfc:wood/planks/chestnut_slab"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "afc:wood/planks/baobab_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "afc:wood/planks/cypress_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "afc:wood/planks/fig_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "tfc:wood/planks/oak_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "tfc:wood/planks/palm_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "tfc:wood/planks/pine_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "afc:wood/planks/teak_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "beneath:wood/planks/warped_fence",
+      "to": "tfc:wood/planks/chestnut_fence"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/baobab_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/cypress_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/fig_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/oak_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/palm_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/pine_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "afc:wood/planks/teak_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "beneath:wood/planks/warped_fence_gate",
+      "to": "tfc:wood/planks/chestnut_fence_gate"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "afc:wood/planks/baobab_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "afc:wood/planks/cypress_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "afc:wood/planks/fig_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "tfc:wood/planks/oak_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "tfc:wood/planks/palm_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "tfc:wood/planks/pine_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "afc:wood/planks/teak_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "beneath:wood/planks/warped_door",
+      "to": "tfc:wood/planks/chestnut_door"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/baobab_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/cypress_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/fig_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/oak_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/palm_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/pine_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "afc:wood/planks/teak_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "beneath:wood/planks/warped_trapdoor",
+      "to": "tfc:wood/planks/chestnut_trapdoor"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "afc:wood/planks/baobab_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "afc:wood/planks/cypress_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "afc:wood/planks/fig_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "tfc:wood/planks/oak_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "tfc:wood/planks/palm_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "tfc:wood/planks/pine_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "afc:wood/planks/teak_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "beneath:wood/planks/warped_button",
+      "to": "tfc:wood/planks/chestnut_button"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/baobab_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/cypress_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/fig_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/oak_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/palm_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/pine_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "afc:wood/planks/teak_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "beneath:wood/planks/warped_pressure_plate",
+      "to": "tfc:wood/planks/chestnut_pressure_plate"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "afc:wood/planks/baobab_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "afc:wood/planks/cypress_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "afc:wood/planks/fig_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "tfc:wood/planks/oak_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "tfc:wood/planks/palm_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "tfc:wood/planks/pine_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "afc:wood/planks/teak_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "beneath:wood/planks/warped_sign",
+      "to": "tfc:wood/planks/chestnut_sign"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/baobab_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/cypress_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/fig_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/oak_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/palm_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/pine_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "afc:wood/planks/teak_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "beneath:wood/planks/warped_wall_sign",
+      "to": "tfc:wood/planks/chestnut_wall_sign"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/acacia",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/baobab",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "beneath:wood/planks/hanging_sign/copper/crimson",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/cypress",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/douglas_fir",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/eucalyptus",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/fig",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/hickory",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/kapok",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/mangrove",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/oak",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/palm",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/pine",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/hanging_sign/copper/spruce",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/hanging_sign/copper/teak",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "beneath:wood/planks/hanging_sign/copper/warped",
+      "to": "tfc:wood/planks/hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/acacia",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/baobab",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "beneath:wood/planks/wall_hanging_sign/copper/crimson",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/cypress",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/douglas_fir",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/eucalyptus",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/fig",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/hickory",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/kapok",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/mangrove",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/oak",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/palm",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/pine",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/wall_hanging_sign/copper/spruce",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "afc:wood/planks/wall_hanging_sign/copper/teak",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "beneath:wood/planks/wall_hanging_sign/copper/warped",
+      "to": "tfc:wood/planks/wall_hanging_sign/copper/chestnut"
+    },
+    {
+      "from": "tfc:wood/chest/acacia",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "afc:wood/chest/baobab",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "beneath:wood/chest/crimson",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "afc:wood/chest/cypress",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/chest/douglas_fir",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "afc:wood/chest/eucalyptus",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "afc:wood/chest/fig",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/chest/hickory",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/chest/kapok",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/chest/mangrove",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/chest/oak",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/chest/palm",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/chest/pine",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/chest/spruce",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "afc:wood/chest/teak",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "beneath:wood/chest/warped",
+      "to": "tfc:wood/chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/acacia",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "afc:wood/trapped_chest/baobab",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "beneath:wood/trapped_chest/crimson",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "afc:wood/trapped_chest/cypress",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/douglas_fir",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "afc:wood/trapped_chest/eucalyptus",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "afc:wood/trapped_chest/fig",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/hickory",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/kapok",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/mangrove",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/oak",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/palm",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/pine",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/trapped_chest/spruce",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "afc:wood/trapped_chest/teak",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "beneath:wood/trapped_chest/warped",
+      "to": "tfc:wood/trapped_chest/chestnut"
+    },
+    {
+      "from": "tfc:wood/lectern/acacia",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "afc:wood/lectern/baobab",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "beneath:wood/lectern/crimson",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "afc:wood/lectern/cypress",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "tfc:wood/lectern/douglas_fir",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "afc:wood/lectern/eucalyptus",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "afc:wood/lectern/fig",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "tfc:wood/lectern/hickory",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "tfc:wood/lectern/kapok",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "tfc:wood/lectern/mangrove",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "tfc:wood/lectern/oak",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "tfc:wood/lectern/palm",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "tfc:wood/lectern/pine",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "tfc:wood/lectern/spruce",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "afc:wood/lectern/teak",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "beneath:wood/lectern/warped",
+      "to": "tfc:wood/lectern/chestnut"
+    },
+    {
+      "from": "tfc:wood/scribing_table/acacia",
+      "to": "tfc:wood/scribing_table/chestnut"
+    },
+    {
+      "from": "tfc:wood/scribing_table/douglas_fir",
+      "to": "tfc:wood/scribing_table/chestnut"
+    },
+    {
+      "from": "tfc:wood/scribing_table/hickory",
+      "to": "tfc:wood/scribing_table/chestnut"
+    },
+    {
+      "from": "tfc:wood/scribing_table/kapok",
+      "to": "tfc:wood/scribing_table/chestnut"
+    },
+    {
+      "from": "tfc:wood/scribing_table/mangrove",
+      "to": "tfc:wood/scribing_table/chestnut"
+    },
+    {
+      "from": "tfc:wood/scribing_table/oak",
+      "to": "tfc:wood/scribing_table/chestnut"
+    },
+    {
+      "from": "tfc:wood/scribing_table/palm",
+      "to": "tfc:wood/scribing_table/chestnut"
+    },
+    {
+      "from": "tfc:wood/scribing_table/pine",
+      "to": "tfc:wood/scribing_table/chestnut"
+    },
+    {
+      "from": "tfc:wood/scribing_table/spruce",
+      "to": "tfc:wood/scribing_table/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/acacia",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/baobab",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/crimson",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/cypress",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/douglas_fir",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/eucalyptus",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/fig",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/hickory",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/kapok",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/mangrove",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/oak",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/palm",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/pine",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/spruce",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/teak",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:bookshelf/warped",
+      "to": "firmavanilla:bookshelf/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/acacia",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/baobab",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/crimson",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/cypress",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/douglas_fir",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/eucalyptus",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/fig",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/hickory",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/kapok",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/mangrove",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/oak",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/palm",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/pine",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/spruce",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/teak",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "firmavanilla:barrel/warped",
+      "to": "firmavanilla:barrel/chestnut"
+    },
+    {
+      "from": "tfc:wood/planks/acacia_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "afc:wood/planks/baobab_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "beneath:wood/planks/crimson_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "afc:wood/planks/cypress_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/douglas_fir_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "afc:wood/planks/eucalyptus_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "afc:wood/planks/fig_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/hickory_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/kapok_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/mangrove_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/oak_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/palm_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/pine_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "tfc:wood/planks/spruce_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "afc:wood/planks/teak_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    },
+    {
+      "from": "beneath:wood/planks/warped_workbench",
+      "to": "tfc:wood/planks/chestnut_workbench"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "tfc:block/wood/planks/mangrove",
+    "side": "firmavanilla:block/bookshelf/mangrove"
+  }
+}

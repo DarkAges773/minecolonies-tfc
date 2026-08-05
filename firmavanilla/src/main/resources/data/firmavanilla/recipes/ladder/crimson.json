@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "conditions": [ { "type": "forge:mod_loaded", "modid": "beneath" } ],
+  "pattern": [ "X X", "XXX", "X X" ],
+  "key": { "X": { "item": "beneath:wood/lumber/crimson" } },
+  "result": { "item": "firmavanilla:ladder/crimson", "count": 3 }
+}

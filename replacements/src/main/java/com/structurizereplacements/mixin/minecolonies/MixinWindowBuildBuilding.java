@@ -8,7 +8,8 @@ import com.minecolonies.api.colony.buildings.views.IBuildingView;
 import com.minecolonies.core.client.gui.WindowBuildBuilding;
 import com.structurizereplacements.client.gui.ButtonImageWithIcon;
 import com.structurizereplacements.client.gui.WindowReplacements;
-import com.structurizereplacements.integration.minecolonies.BuildingChoiceContext;
+import com.structurizereplacements.integration.colony.BuildingChoiceContext;
+import com.structurizereplacements.integration.colony.LevelPaths;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
@@ -53,7 +54,10 @@ public abstract class MixinWindowBuildBuilding
     @Shadow(remap = false)
     public abstract boolean canBeUpgraded();
 
-    @Inject(method = "<init>", at = @At("TAIL"), remap = false)
+    // require = 0: this is a cosmetic, optional add-on button (parity with MixinSettingsModuleWindow). If a
+    // MineColonies update changes the ctor so the injector no longer applies, degrade to a missing button —
+    // never fail the whole required:false config and take the other MineColonies-integration mixins down.
+    @Inject(method = "<init>", at = @At("TAIL"), remap = false, require = 0)
     private void structurizereplacements$addReplaceButton(final CallbackInfo ci)
     {
         final View window = (View) (Object) this;
@@ -94,21 +98,12 @@ public abstract class MixinWindowBuildBuilding
     /**
      * The blueprint path of the <i>target</i> level (current + 1 when upgradable, else current) — the same
      * next-level path {@code WindowBuildBuilding#updateResources} loads for its material list, so the picker
-     * lists the blocks about to be built rather than the current tier's.
+     * lists the blocks about to be built rather than the current tier's. The defensive path surgery is
+     * shared ({@link LevelPaths#targetLevelPath}).
      */
     private String targetStructurePath()
     {
-        final String current = this.building.getStructurePath();
-        if (current == null || current.isEmpty())
-        {
-            return current;
-        }
-        int nextLevel = this.building.getBuildingLevel();
-        if (canBeUpgraded())
-        {
-            nextLevel = this.building.getBuildingLevel() + 1;
-        }
-        final String base = current.replace(".blueprint", "");
-        return base.substring(0, base.length() - 1) + nextLevel + ".blueprint";
+        return LevelPaths.targetLevelPath(
+                this.building.getStructurePath(), this.building.getBuildingLevel(), canBeUpgraded());
     }
 }

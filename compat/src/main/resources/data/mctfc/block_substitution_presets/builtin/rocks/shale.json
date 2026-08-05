@@ -1,0 +1,746 @@
+{
+  "name": "mctfc.preset.shale",
+  "icon": "tfc:rock/raw/shale",
+  "picks": [
+    {
+      "from": "tfc:rock/bricks/dacite",
+      "to": "tfc:rock/bricks/shale"
+    },
+    {
+      "from": "tfc:rock/bricks/granite",
+      "to": "tfc:rock/bricks/shale"
+    },
+    {
+      "from": "tfc:rock/bricks/diorite",
+      "to": "tfc:rock/bricks/shale"
+    },
+    {
+      "from": "tfc:rock/bricks/andesite",
+      "to": "tfc:rock/bricks/shale"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt",
+      "to": "tfc:rock/bricks/shale"
+    },
+    {
+      "from": "tfc:rock/bricks/dacite_slab",
+      "to": "tfc:rock/bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/bricks/granite_slab",
+      "to": "tfc:rock/bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/bricks/diorite_slab",
+      "to": "tfc:rock/bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/bricks/andesite_slab",
+      "to": "tfc:rock/bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt_slab",
+      "to": "tfc:rock/bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/bricks/dacite_stairs",
+      "to": "tfc:rock/bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/bricks/granite_stairs",
+      "to": "tfc:rock/bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/bricks/diorite_stairs",
+      "to": "tfc:rock/bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/bricks/andesite_stairs",
+      "to": "tfc:rock/bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt_stairs",
+      "to": "tfc:rock/bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/bricks/dacite_wall",
+      "to": "tfc:rock/bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/bricks/granite_wall",
+      "to": "tfc:rock/bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/bricks/diorite_wall",
+      "to": "tfc:rock/bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/bricks/andesite_wall",
+      "to": "tfc:rock/bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/bricks/basalt_wall",
+      "to": "tfc:rock/bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/button/dacite",
+      "to": "tfc:rock/button/shale"
+    },
+    {
+      "from": "tfc:rock/button/granite",
+      "to": "tfc:rock/button/shale"
+    },
+    {
+      "from": "tfc:rock/button/diorite",
+      "to": "tfc:rock/button/shale"
+    },
+    {
+      "from": "tfc:rock/button/andesite",
+      "to": "tfc:rock/button/shale"
+    },
+    {
+      "from": "tfc:rock/button/basalt",
+      "to": "tfc:rock/button/shale"
+    },
+    {
+      "from": "tfc:rock/chiseled/dacite",
+      "to": "tfc:rock/chiseled/shale"
+    },
+    {
+      "from": "tfc:rock/chiseled/granite",
+      "to": "tfc:rock/chiseled/shale"
+    },
+    {
+      "from": "tfc:rock/chiseled/diorite",
+      "to": "tfc:rock/chiseled/shale"
+    },
+    {
+      "from": "tfc:rock/chiseled/andesite",
+      "to": "tfc:rock/chiseled/shale"
+    },
+    {
+      "from": "tfc:rock/chiseled/basalt",
+      "to": "tfc:rock/chiseled/shale"
+    },
+    {
+      "from": "tfc:rock/cobble/dacite_slab",
+      "to": "tfc:rock/cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cobble/granite_slab",
+      "to": "tfc:rock/cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cobble/diorite_slab",
+      "to": "tfc:rock/cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cobble/andesite_slab",
+      "to": "tfc:rock/cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cobble/basalt_slab",
+      "to": "tfc:rock/cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cobble/dacite_stairs",
+      "to": "tfc:rock/cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cobble/granite_stairs",
+      "to": "tfc:rock/cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cobble/diorite_stairs",
+      "to": "tfc:rock/cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cobble/andesite_stairs",
+      "to": "tfc:rock/cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cobble/basalt_stairs",
+      "to": "tfc:rock/cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cobble/dacite_wall",
+      "to": "tfc:rock/cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/cobble/granite_wall",
+      "to": "tfc:rock/cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/cobble/diorite_wall",
+      "to": "tfc:rock/cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/cobble/andesite_wall",
+      "to": "tfc:rock/cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/cobble/basalt_wall",
+      "to": "tfc:rock/cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/dacite",
+      "to": "tfc:rock/cracked_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/granite",
+      "to": "tfc:rock/cracked_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/diorite",
+      "to": "tfc:rock/cracked_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/andesite",
+      "to": "tfc:rock/cracked_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt",
+      "to": "tfc:rock/cracked_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/dacite_slab",
+      "to": "tfc:rock/cracked_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/granite_slab",
+      "to": "tfc:rock/cracked_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/diorite_slab",
+      "to": "tfc:rock/cracked_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/andesite_slab",
+      "to": "tfc:rock/cracked_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt_slab",
+      "to": "tfc:rock/cracked_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/dacite_stairs",
+      "to": "tfc:rock/cracked_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/granite_stairs",
+      "to": "tfc:rock/cracked_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/diorite_stairs",
+      "to": "tfc:rock/cracked_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/andesite_stairs",
+      "to": "tfc:rock/cracked_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt_stairs",
+      "to": "tfc:rock/cracked_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/dacite_wall",
+      "to": "tfc:rock/cracked_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/granite_wall",
+      "to": "tfc:rock/cracked_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/diorite_wall",
+      "to": "tfc:rock/cracked_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/andesite_wall",
+      "to": "tfc:rock/cracked_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/cracked_bricks/basalt_wall",
+      "to": "tfc:rock/cracked_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/gravel/dacite",
+      "to": "tfc:rock/gravel/shale"
+    },
+    {
+      "from": "tfc:rock/gravel/granite",
+      "to": "tfc:rock/gravel/shale"
+    },
+    {
+      "from": "tfc:rock/gravel/diorite",
+      "to": "tfc:rock/gravel/shale"
+    },
+    {
+      "from": "tfc:rock/gravel/andesite",
+      "to": "tfc:rock/gravel/shale"
+    },
+    {
+      "from": "tfc:rock/gravel/basalt",
+      "to": "tfc:rock/gravel/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/cobble/dacite",
+      "to": "firmavanilla:mortared/tfc/rock/cobble/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/cobble/granite",
+      "to": "firmavanilla:mortared/tfc/rock/cobble/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/cobble/diorite",
+      "to": "firmavanilla:mortared/tfc/rock/cobble/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/cobble/andesite",
+      "to": "firmavanilla:mortared/tfc/rock/cobble/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/cobble/basalt",
+      "to": "firmavanilla:mortared/tfc/rock/cobble/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/dacite",
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/granite",
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/diorite",
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/andesite",
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/shale"
+    },
+    {
+      "from": "firmavanilla:mortared/tfc/rock/mossy_cobble/basalt",
+      "to": "firmavanilla:mortared/tfc/rock/mossy_cobble/shale"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/dacite",
+      "to": "tfc:rock/mossy_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/granite",
+      "to": "tfc:rock/mossy_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/diorite",
+      "to": "tfc:rock/mossy_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/andesite",
+      "to": "tfc:rock/mossy_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt",
+      "to": "tfc:rock/mossy_bricks/shale"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/dacite_slab",
+      "to": "tfc:rock/mossy_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/granite_slab",
+      "to": "tfc:rock/mossy_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/diorite_slab",
+      "to": "tfc:rock/mossy_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/andesite_slab",
+      "to": "tfc:rock/mossy_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt_slab",
+      "to": "tfc:rock/mossy_bricks/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/dacite_stairs",
+      "to": "tfc:rock/mossy_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/granite_stairs",
+      "to": "tfc:rock/mossy_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/diorite_stairs",
+      "to": "tfc:rock/mossy_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/andesite_stairs",
+      "to": "tfc:rock/mossy_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt_stairs",
+      "to": "tfc:rock/mossy_bricks/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/dacite_wall",
+      "to": "tfc:rock/mossy_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/granite_wall",
+      "to": "tfc:rock/mossy_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/diorite_wall",
+      "to": "tfc:rock/mossy_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/andesite_wall",
+      "to": "tfc:rock/mossy_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_bricks/basalt_wall",
+      "to": "tfc:rock/mossy_bricks/shale_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/dacite_slab",
+      "to": "tfc:rock/mossy_cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/granite_slab",
+      "to": "tfc:rock/mossy_cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/diorite_slab",
+      "to": "tfc:rock/mossy_cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/andesite_slab",
+      "to": "tfc:rock/mossy_cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/basalt_slab",
+      "to": "tfc:rock/mossy_cobble/shale_slab"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/dacite_stairs",
+      "to": "tfc:rock/mossy_cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/granite_stairs",
+      "to": "tfc:rock/mossy_cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/diorite_stairs",
+      "to": "tfc:rock/mossy_cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/andesite_stairs",
+      "to": "tfc:rock/mossy_cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/basalt_stairs",
+      "to": "tfc:rock/mossy_cobble/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/dacite_wall",
+      "to": "tfc:rock/mossy_cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/granite_wall",
+      "to": "tfc:rock/mossy_cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/diorite_wall",
+      "to": "tfc:rock/mossy_cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/andesite_wall",
+      "to": "tfc:rock/mossy_cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/mossy_cobble/basalt_wall",
+      "to": "tfc:rock/mossy_cobble/shale_wall"
+    },
+    {
+      "from": "tfc:rock/pressure_plate/dacite",
+      "to": "tfc:rock/pressure_plate/shale"
+    },
+    {
+      "from": "tfc:rock/pressure_plate/granite",
+      "to": "tfc:rock/pressure_plate/shale"
+    },
+    {
+      "from": "tfc:rock/pressure_plate/diorite",
+      "to": "tfc:rock/pressure_plate/shale"
+    },
+    {
+      "from": "tfc:rock/pressure_plate/andesite",
+      "to": "tfc:rock/pressure_plate/shale"
+    },
+    {
+      "from": "tfc:rock/pressure_plate/basalt",
+      "to": "tfc:rock/pressure_plate/shale"
+    },
+    {
+      "from": "tfc:rock/raw/dacite",
+      "to": "tfc:rock/raw/shale"
+    },
+    {
+      "from": "tfc:rock/raw/granite",
+      "to": "tfc:rock/raw/shale"
+    },
+    {
+      "from": "tfc:rock/raw/diorite",
+      "to": "tfc:rock/raw/shale"
+    },
+    {
+      "from": "tfc:rock/raw/andesite",
+      "to": "tfc:rock/raw/shale"
+    },
+    {
+      "from": "tfc:rock/raw/basalt",
+      "to": "tfc:rock/raw/shale"
+    },
+    {
+      "from": "tfc:rock/raw/dacite_slab",
+      "to": "tfc:rock/raw/shale_slab"
+    },
+    {
+      "from": "tfc:rock/raw/granite_slab",
+      "to": "tfc:rock/raw/shale_slab"
+    },
+    {
+      "from": "tfc:rock/raw/diorite_slab",
+      "to": "tfc:rock/raw/shale_slab"
+    },
+    {
+      "from": "tfc:rock/raw/andesite_slab",
+      "to": "tfc:rock/raw/shale_slab"
+    },
+    {
+      "from": "tfc:rock/raw/basalt_slab",
+      "to": "tfc:rock/raw/shale_slab"
+    },
+    {
+      "from": "tfc:rock/raw/dacite_stairs",
+      "to": "tfc:rock/raw/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/raw/granite_stairs",
+      "to": "tfc:rock/raw/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/raw/diorite_stairs",
+      "to": "tfc:rock/raw/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/raw/andesite_stairs",
+      "to": "tfc:rock/raw/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/raw/basalt_stairs",
+      "to": "tfc:rock/raw/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/raw/dacite_wall",
+      "to": "tfc:rock/raw/shale_wall"
+    },
+    {
+      "from": "tfc:rock/raw/granite_wall",
+      "to": "tfc:rock/raw/shale_wall"
+    },
+    {
+      "from": "tfc:rock/raw/diorite_wall",
+      "to": "tfc:rock/raw/shale_wall"
+    },
+    {
+      "from": "tfc:rock/raw/andesite_wall",
+      "to": "tfc:rock/raw/shale_wall"
+    },
+    {
+      "from": "tfc:rock/raw/basalt_wall",
+      "to": "tfc:rock/raw/shale_wall"
+    },
+    {
+      "from": "tfc:rock/smooth/dacite",
+      "to": "tfc:rock/smooth/shale"
+    },
+    {
+      "from": "tfc:rock/smooth/granite",
+      "to": "tfc:rock/smooth/shale"
+    },
+    {
+      "from": "tfc:rock/smooth/diorite",
+      "to": "tfc:rock/smooth/shale"
+    },
+    {
+      "from": "tfc:rock/smooth/andesite",
+      "to": "tfc:rock/smooth/shale"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt",
+      "to": "tfc:rock/smooth/shale"
+    },
+    {
+      "from": "tfc:rock/smooth/dacite_slab",
+      "to": "tfc:rock/smooth/shale_slab"
+    },
+    {
+      "from": "tfc:rock/smooth/granite_slab",
+      "to": "tfc:rock/smooth/shale_slab"
+    },
+    {
+      "from": "tfc:rock/smooth/diorite_slab",
+      "to": "tfc:rock/smooth/shale_slab"
+    },
+    {
+      "from": "tfc:rock/smooth/andesite_slab",
+      "to": "tfc:rock/smooth/shale_slab"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt_slab",
+      "to": "tfc:rock/smooth/shale_slab"
+    },
+    {
+      "from": "tfc:rock/smooth/dacite_stairs",
+      "to": "tfc:rock/smooth/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/smooth/granite_stairs",
+      "to": "tfc:rock/smooth/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/smooth/diorite_stairs",
+      "to": "tfc:rock/smooth/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/smooth/andesite_stairs",
+      "to": "tfc:rock/smooth/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt_stairs",
+      "to": "tfc:rock/smooth/shale_stairs"
+    },
+    {
+      "from": "tfc:rock/smooth/dacite_wall",
+      "to": "tfc:rock/smooth/shale_wall"
+    },
+    {
+      "from": "tfc:rock/smooth/granite_wall",
+      "to": "tfc:rock/smooth/shale_wall"
+    },
+    {
+      "from": "tfc:rock/smooth/diorite_wall",
+      "to": "tfc:rock/smooth/shale_wall"
+    },
+    {
+      "from": "tfc:rock/smooth/andesite_wall",
+      "to": "tfc:rock/smooth/shale_wall"
+    },
+    {
+      "from": "tfc:rock/smooth/basalt_wall",
+      "to": "tfc:rock/smooth/shale_wall"
+    },
+    {
+      "from": "firmavanilla:tiles/dacite",
+      "to": "firmavanilla:tiles/shale"
+    },
+    {
+      "from": "firmavanilla:tiles/granite",
+      "to": "firmavanilla:tiles/shale"
+    },
+    {
+      "from": "firmavanilla:tiles/diorite",
+      "to": "firmavanilla:tiles/shale"
+    },
+    {
+      "from": "firmavanilla:tiles/andesite",
+      "to": "firmavanilla:tiles/shale"
+    },
+    {
+      "from": "firmavanilla:tiles/basalt",
+      "to": "firmavanilla:tiles/shale"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/dacite",
+      "to": "firmavanilla:cracked_tiles/shale"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/granite",
+      "to": "firmavanilla:cracked_tiles/shale"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/diorite",
+      "to": "firmavanilla:cracked_tiles/shale"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/andesite",
+      "to": "firmavanilla:cracked_tiles/shale"
+    },
+    {
+      "from": "firmavanilla:cracked_tiles/basalt",
+      "to": "firmavanilla:cracked_tiles/shale"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/dacite",
+      "to": "firmavanilla:tile_stairs/shale"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/granite",
+      "to": "firmavanilla:tile_stairs/shale"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/diorite",
+      "to": "firmavanilla:tile_stairs/shale"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/andesite",
+      "to": "firmavanilla:tile_stairs/shale"
+    },
+    {
+      "from": "firmavanilla:tile_stairs/basalt",
+      "to": "firmavanilla:tile_stairs/shale"
+    },
+    {
+      "from": "firmavanilla:tile_slab/dacite",
+      "to": "firmavanilla:tile_slab/shale"
+    },
+    {
+      "from": "firmavanilla:tile_slab/granite",
+      "to": "firmavanilla:tile_slab/shale"
+    },
+    {
+      "from": "firmavanilla:tile_slab/diorite",
+      "to": "firmavanilla:tile_slab/shale"
+    },
+    {
+      "from": "firmavanilla:tile_slab/andesite",
+      "to": "firmavanilla:tile_slab/shale"
+    },
+    {
+      "from": "firmavanilla:tile_slab/basalt",
+      "to": "firmavanilla:tile_slab/shale"
+    },
+    {
+      "from": "firmavanilla:tile_wall/dacite",
+      "to": "firmavanilla:tile_wall/shale"
+    },
+    {
+      "from": "firmavanilla:tile_wall/granite",
+      "to": "firmavanilla:tile_wall/shale"
+    },
+    {
+      "from": "firmavanilla:tile_wall/diorite",
+      "to": "firmavanilla:tile_wall/shale"
+    },
+    {
+      "from": "firmavanilla:tile_wall/andesite",
+      "to": "firmavanilla:tile_wall/shale"
+    },
+    {
+      "from": "firmavanilla:tile_wall/basalt",
+      "to": "firmavanilla:tile_wall/shale"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+<window xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/ldtteam/BlockUI/version/1.20.1/src/main/resources/assets/blockui/gui/block_ui.xsd"
+        pause="false" lightbox="true">
+
+    <!-- No explicit window size: rely on BlockUI's default (420x240), matching WindowReplacements. -->
+
+    <text id="title" size="100% 12" pos="0 6" textalign="MIDDLE" color="white"
+          label="$(structurizereplacements.gui.preset.title)"/>
+
+    <!-- Save current picks as a new library preset: name field + button. The gray hint shows over the empty
+         field (toggled off in onUpdate once the player types). -->
+    <input id="presetName" size="220 18" pos="6 24" maxlength="40"/>
+    <text id="nameHint" size="206 12" pos="11 28" color="gray" label="$(structurizereplacements.gui.preset.name_hint)"/>
+    <buttonimage id="save" label="$(structurizereplacements.gui.preset.save)" size="184 18" pos="230 24"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+
+    <list id="presets" size="404 150" pos="6 48" childspacing="-1">
+        <box size="100% 20" linewidth="1">
+            <!-- Folder/Up rows show the icon + name + a single wide "Open" button (overlapping the per-preset
+                 buttons, which are hidden for folders); preset rows show load/primary(edit|clone)/delete. -->
+            <itemicon id="icon" size="16 16" pos="6 2"/>
+            <text id="name" size="158 16" pos="26 2" color="white" wrap="false"/>
+            <buttonimage id="open" label="$(structurizereplacements.gui.preset.open)" size="190 17" pos="188 1"
+                         source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+            <buttonimage id="load" label="$(structurizereplacements.gui.preset.load)" size="62 17" pos="188 1"
+                         source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+            <buttonimage id="primary" size="62 17" pos="252 1"
+                         source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+            <buttonimage id="delete" label="$(structurizereplacements.gui.preset.delete)" size="62 17" pos="316 1"
+                         source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+        </box>
+    </list>
+
+    <buttonimage id="done" label="$(gui.done)" size="80 17" pos="170 218"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+</window>

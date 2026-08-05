@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "firmavanilla:block/barrel/warped_bottom",
+    "side": "firmavanilla:block/barrel/warped_side",
+    "top": "firmavanilla:block/barrel/warped_top"
+  }
+}

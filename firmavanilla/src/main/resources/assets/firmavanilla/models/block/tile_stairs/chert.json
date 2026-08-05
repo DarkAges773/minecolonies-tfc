@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/stairs",       "textures": { "bottom": "firmavanilla:block/tiles/chert", "top": "firmavanilla:block/tiles/chert", "side": "firmavanilla:block/tiles/chert" } }

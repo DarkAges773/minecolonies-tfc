@@ -21,7 +21,7 @@ def mod_id = 'structurizereplacements'
 def mod_name = 'Palette Swap for MineColonies'
 def mod_license = 'GPL-3.0'
 // MAJOR.MINOR — bump manually (MINOR = new back-compat feature, MAJOR = rule-schema/NBT break).
-def mod_version_base = '0.1'
+def mod_version_base = '0.4'
 // PATCH auto-rolls from the count of commits that touched this subproject (see rootProject.gitBuildNumber)
 // — the rolling "build number", advancing only when this mod changes.
 def mod_version = "${mod_version_base}.${rootProject.gitBuildNumber(projectDir.name)}".toString()
@@ -59,6 +59,10 @@ minecraft {
             property 'forge.enabledGameTestNamespaces', mod_id
         }
         server {
+            // Own working dir so client + server can run simultaneously (shared run/ collides on the
+            // logs/latest.log file lock on Windows). run-server/eula.txt + server.properties
+            // (online-mode=false for the offline Dev account) are pre-created, not generated.
+            workingDirectory project.file('run-server')
             property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
         }
@@ -92,14 +96,22 @@ dependencies {
     implementation fg.deobf("com.ldtteam:structurize:${structurize_version}")
     implementation fg.deobf("com.ldtteam:blockui:${blockui_version}")
 
-    // MineColonies is an OPTIONAL dependency (mods.toml: mandatory=false). The optional integration
-    // (com.structurizereplacements.integration.minecolonies.* + the .minecolonies.mixins.json config)
-    // compiles against it, but those classes/mixins only load when MineColonies is actually present.
-    // compileOnly so it isn't bundled; runtimeOnly so the dev runClient loads it and exercises the
-    // integration (Domum Ornamentum is MineColonies' mandatory dep). Remove the runtimeOnly lines to
-    // dev-test the MineColonies-absent (pure standalone) path.
+    // The colony mods are OPTIONAL dependencies (mods.toml: mandatory=false). The optional integration
+    // (shared logic in integration.colony + a per-fork bridge and mixin config) compiles against BOTH
+    // forks (compileOnly — never bundled); those classes/mixins only load when the matching mod is present.
     compileOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
-    runtimeOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
+    // SlimColonies: a MineColonies fork, repackaged to no.monopixel.slimcolonies.*.
+    compileOnly fg.deobf("curse.maven:slimcolonies-1353551:${slimcolonies_file_id}")
+    // The dev runClient loads exactly ONE colony mod (they can't coexist at runtime), selected via
+    //   gradlew :replacements:runClient -PcolonyMod=minecolonies|slim|none
+    // default = minecolonies; 'none' dev-tests the colony-mod-absent (pure standalone) path.
+    // (Domum Ornamentum below stays in all cases — it's a mandatory dep of Structurize itself.)
+    def colonyMod = providers.gradleProperty('colonyMod').getOrElse('minecolonies')
+    if (colonyMod == 'slim' || colonyMod == 'slimcolonies') {
+        runtimeOnly fg.deobf("curse.maven:slimcolonies-1353551:${slimcolonies_file_id}")
+    } else if (colonyMod != 'none') {
+        runtimeOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
+    }
     // NOTE: Domum Ornamentum is a MANDATORY dependency of Structurize itself (not just MineColonies), so it
     // must stay even in a MineColonies-absent run — removing it crashes Structurize at load. (To dev-test
     // the MineColonies-absent path, comment out only the runtimeOnly minecolonies line above.)
@@ -117,6 +129,8 @@ mixin {
     // Optional MineColonies-integration mixins (config is required:false; Mixin skips them when the
     // MineColonies target classes are absent).
     config "${mod_id}.minecolonies.mixins.json"
+    // Same pattern for the SlimColonies fork (no.monopixel.slimcolonies.* targets).
+    config "${mod_id}.slimcolonies.mixins.json"
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -142,7 +156,7 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Title'  : project.name,
                 'Implementation-Version': project.jar.archiveVersion,
                 'Implementation-Vendor' : mod_authors,
-                'MixinConfigs'          : "${mod_id}.mixins.json,${mod_id}.minecolonies.mixins.json"
+                'MixinConfigs'          : "${mod_id}.mixins.json,${mod_id}.minecolonies.mixins.json,${mod_id}.slimcolonies.mixins.json"
         ])
     }
     finalizedBy 'reobfJar'

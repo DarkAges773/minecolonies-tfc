@@ -43,8 +43,6 @@ import java.util.Map;
 @Mixin(value = AbstractWorkOrder.class, remap = false)
 public class MixinAbstractWorkOrder implements PlacementChoiceHolder
 {
-    @Unique private static final String SREP_KEY = "structurizereplacements_choices";
-
     @Unique private Map<Block, Block> structurizereplacements$choices;
 
     @Shadow public BlockPos getLocation() { return null; }
@@ -68,7 +66,7 @@ public class MixinAbstractWorkOrder implements PlacementChoiceHolder
         {
             return;
         }
-        final Map<Block, Block> staged = StagedChoices.take(getLocation());
+        final Map<Block, Block> staged = StagedChoices.take(colony.getDimension(), getLocation());
         if (staged != null && !staged.isEmpty())
         {
             this.structurizereplacements$choices = staged;
@@ -78,12 +76,12 @@ public class MixinAbstractWorkOrder implements PlacementChoiceHolder
     @Inject(method = "write", at = @At("TAIL"))
     private void structurizereplacements$writeChoices(final CompoundTag compound, final CallbackInfo ci)
     {
-        ChoiceCodec.writeNbt(compound, SREP_KEY, structurizereplacements$choices);
+        ChoiceCodec.writeNbt(compound, ChoiceCodec.CHOICES_KEY, structurizereplacements$choices);
     }
 
     @Inject(method = "read(Lnet/minecraft/nbt/CompoundTag;Lcom/minecolonies/api/colony/workorders/IWorkManager;)V", at = @At("TAIL"))
     private void structurizereplacements$readChoices(final CompoundTag compound, final IWorkManager manager, final CallbackInfo ci)
     {
-        this.structurizereplacements$choices = ChoiceCodec.readNbt(compound, SREP_KEY);
+        this.structurizereplacements$choices = ChoiceCodec.readNbt(compound, ChoiceCodec.CHOICES_KEY);
     }
 }

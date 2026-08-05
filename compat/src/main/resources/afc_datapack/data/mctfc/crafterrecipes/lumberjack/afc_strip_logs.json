@@ -1,0 +1,22 @@
+{
+  "__comment": "ArborFirmaCraft variant of tfc_strip_logs (this whole datapack loads only when the 'afc' mod is present, see AfcDataPack). AFC woods share TFC's naming (afc:wood/log/<wood>, all four forms) and join #minecraft:logs, so the same template works with the afc:wood/log/ path filter: each AFC log -> its stripped log / wood / stripped wood. Non-existent forms are pruned by MineColonies. Excludes: 'ancient_' = AFC's inaccessible worldgen-only ancient_<wood> logs; and the six resin/special woods that have NO stripped_log/stripped_wood forms (only log + wood) so they can't strip properly (black_oak, gum_arabic, poplar, rainbow_eucalyptus, redcedar, rubber_fig). The remaining ten full-set woods (baobab, cypress, eucalyptus, fig, hevea, ipe, ironwood, mahogany, teak, tualang) all strip to their own stripped log / wood / stripped wood.",
+  "type": "recipe-template",
+  "tag": "minecraft:logs",
+  "filter": {
+    "include": [ "afc:wood/log/" ],
+    "exclude": [ "stripped", "ancient_", "black_oak", "gum_arabic", "poplar", "rainbow_eucalyptus", "redcedar", "rubber_fig" ]
+  },
+  "recipe": {
+    "crafter": "lumberjack_custom",
+    "inputs": [
+      { "item": "[NS]:[PATH]" }
+    ],
+    "alternate-output": [
+      { "item": "[NS]:[PATH:wood/log/=wood/stripped_log/]" },
+      { "item": "[NS]:[PATH:wood/log/=wood/wood/]" },
+      { "item": "[NS]:[PATH:wood/log/=wood/stripped_wood/]" }
+    ],
+    "intermediate": "minecraft:air",
+    "tool": "minecolonies:axe"
+  }
+}

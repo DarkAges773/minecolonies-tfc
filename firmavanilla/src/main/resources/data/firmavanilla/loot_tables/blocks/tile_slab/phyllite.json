@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "firmavanilla:tile_slab/phyllite",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "conditions": [
+                { "condition": "minecraft:block_state_property", "block": "firmavanilla:tile_slab/phyllite", "properties": { "type": "double" } }
+              ],
+              "count": 2,
+              "add": false
+            }
+          ]
+        }
+      ],
+      "conditions": [ { "condition": "minecraft:survives_explosion" } ]
+    }
+  ]
+}

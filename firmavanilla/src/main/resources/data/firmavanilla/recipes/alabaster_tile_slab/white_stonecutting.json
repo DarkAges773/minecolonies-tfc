@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:alabaster_tile/white" },
+  "result": "firmavanilla:alabaster_tile_slab/white",
+  "count": 2
+}

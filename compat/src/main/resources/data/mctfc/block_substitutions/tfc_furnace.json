@@ -1,0 +1,6 @@
+{
+  "__comment": "Furnace-worker switchover (docs/tfc-forge-multiblock.md §12): every blueprint-placed vanilla furnace becomes a heat-forge, so the Smeltery/Cook/Kitchen huts run on the custom forge multiblock instead of vanilla furnaces. Blanket single-variant (brick) for now; the engine auto-copies the shared 'facing' property. Adjacent forges auto-merge and ForgeUserModule registers them.",
+  "replacements": [
+    { "from": "minecraft:furnace", "to": "mctfc:heat_forge_brick" }
+  ]
+}

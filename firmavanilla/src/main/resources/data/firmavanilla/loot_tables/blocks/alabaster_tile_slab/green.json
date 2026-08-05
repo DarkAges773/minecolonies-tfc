@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "firmavanilla:alabaster_tile_slab/green",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "conditions": [
+                { "condition": "minecraft:block_state_property", "block": "firmavanilla:alabaster_tile_slab/green", "properties": { "type": "double" } }
+              ],
+              "count": 2,
+              "add": false
+            }
+          ]
+        }
+      ],
+      "conditions": [ { "condition": "minecraft:survives_explosion" } ]
+    }
+  ]
+}

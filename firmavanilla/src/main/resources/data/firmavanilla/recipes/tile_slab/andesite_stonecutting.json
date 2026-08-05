@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/andesite" },
+  "result": "firmavanilla:tile_slab/andesite",
+  "count": 2
+}

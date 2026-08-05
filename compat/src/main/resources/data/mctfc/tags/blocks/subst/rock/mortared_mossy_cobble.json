@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/andesite",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/basalt",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/chalk",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/chert",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/claystone",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/conglomerate",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/dacite",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/diorite",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/dolomite",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/gabbro",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/gneiss",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/granite",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/limestone",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/marble",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/phyllite",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/quartzite",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/rhyolite",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/schist",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/shale",
+    "firmavanilla:mortared/tfc/rock/mossy_cobble/slate"
+  ]
+}

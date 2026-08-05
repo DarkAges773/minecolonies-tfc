@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/outer_stairs", "textures": { "bottom": "firmavanilla:block/alabaster_tile/blue", "top": "firmavanilla:block/alabaster_tile/blue", "side": "firmavanilla:block/alabaster_tile/blue" } }

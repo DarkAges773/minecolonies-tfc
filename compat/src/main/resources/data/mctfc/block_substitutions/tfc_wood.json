@@ -167,6 +167,9 @@
     { "from": "minecraft:trapped_chest", "to": "tfc:wood/trapped_chest/oak" },
     { "from": "minecraft:crafting_table", "to": "tfc:wood/planks/oak_workbench" },
     { "from": "minecraft:lectern", "to": "tfc:wood/lectern/oak" },
+    { "from": "minecraft:enchanting_table", "to": "tfc:wood/scribing_table/oak" },
+    { "from": "minecraft:bookshelf", "to": "firmavanilla:bookshelf/oak" },
+    { "from": "minecraft:barrel", "to": "firmavanilla:barrel/oak" },
     { "from": "minecraft:oak_sapling", "to": "tfc:wood/sapling/oak" },
     { "from": "minecraft:potted_oak_sapling", "to": "tfc:wood/potted_sapling/oak" },
     { "from": "minecraft:spruce_sapling", "to": "tfc:wood/sapling/pine" },
@@ -204,6 +207,9 @@
     { "from_tag": "mctfc:subst/wood/wall_sign", "to_tag": "mctfc:subst/wood/wall_sign" },
     { "from_tag": "mctfc:subst/wood/hanging_sign", "to_tag": "mctfc:subst/wood/hanging_sign" },
     { "from_tag": "mctfc:subst/wood/wall_hanging_sign", "to_tag": "mctfc:subst/wood/wall_hanging_sign" },
-    { "from_tag": "mctfc:subst/wood/lectern", "to_tag": "mctfc:subst/wood/lectern" }
+    { "from_tag": "mctfc:subst/wood/lectern", "to_tag": "mctfc:subst/wood/lectern" },
+    { "from_tag": "mctfc:subst/wood/scribing_table", "to_tag": "mctfc:subst/wood/scribing_table" },
+    { "from_tag": "mctfc:subst/wood/decorative_bookshelf", "to_tag": "mctfc:subst/wood/decorative_bookshelf" },
+    { "from_tag": "mctfc:subst/wood/barrel", "to_tag": "mctfc:subst/wood/barrel" }
   ]
 }

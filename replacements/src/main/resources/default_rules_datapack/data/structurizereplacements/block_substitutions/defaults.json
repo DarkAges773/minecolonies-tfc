@@ -1,5 +1,5 @@
 {
-  "__comment": "Opt-in default substitution rules for the standalone structurizereplacements mod (datapack 'structurizereplacements_defaults', OFF by default). All entries are interactive candidate pools (from_tag == to_tag): they auto-rewrite nothing; each adds a row to the build-tool 'Replace' picker so the player can swap any block within the family. Wood/wool/small-flower pools reuse vanilla tags; the dye-color families and tall flowers use structurizereplacements:subst/* tags shipped in this same pack.",
+  "__comment": "Opt-in default substitution rules for the standalone structurizereplacements mod (datapack 'structurizereplacements_defaults', OFF by default). All entries are interactive candidate pools (from_tag == to_tag): they auto-rewrite nothing; each adds a row to the build-tool 'Replace' picker so the player can swap any block within the family. Pools reuse a vanilla block tag whenever one is an exact fit (wood set, wool, leaves, small flowers, saplings, terracotta, beds, tall flowers); families vanilla doesn't tag — or tags too broadly (e.g. minecraft:sand bundles in suspicious_sand) — ship a structurizereplacements:subst/* tag in this same pack.",
   "replacements": [
     { "from_tag": "minecraft:planks",                "to_tag": "minecraft:planks" },
     { "from_tag": "minecraft:logs",                  "to_tag": "minecraft:logs" },
@@ -17,6 +17,8 @@
     { "from_tag": "minecraft:wall_hanging_signs",    "to_tag": "minecraft:wall_hanging_signs" },
 
     { "from_tag": "minecraft:wool",                  "to_tag": "minecraft:wool" },
+    { "from_tag": "minecraft:wool_carpets",          "to_tag": "minecraft:wool_carpets" },
+    { "from_tag": "structurizereplacements:subst/floating_carpets", "to_tag": "structurizereplacements:subst/floating_carpets" },
 
     { "from_tag": "structurizereplacements:subst/sand",                  "to_tag": "structurizereplacements:subst/sand" },
     { "from_tag": "structurizereplacements:subst/sandstone",             "to_tag": "structurizereplacements:subst/sandstone" },
@@ -30,17 +32,27 @@
     { "from_tag": "structurizereplacements:subst/smooth_sandstone_slab", "to_tag": "structurizereplacements:subst/smooth_sandstone_slab" },
     { "from_tag": "structurizereplacements:subst/sandstone_wall",        "to_tag": "structurizereplacements:subst/sandstone_wall" },
 
-    { "from_tag": "structurizereplacements:subst/terracotta",         "to_tag": "structurizereplacements:subst/terracotta" },
+    { "from_tag": "structurizereplacements:subst/brick_extras",       "to_tag": "structurizereplacements:subst/brick_extras" },
+    { "from_tag": "structurizereplacements:subst/cobblestone_extras", "to_tag": "structurizereplacements:subst/cobblestone_extras" },
+    { "from_tag": "structurizereplacements:subst/do_bricks",          "to_tag": "structurizereplacements:subst/do_bricks" },
+    { "from_tag": "structurizereplacements:subst/do_stone_bricks",    "to_tag": "structurizereplacements:subst/do_stone_bricks" },
+
+    { "from_tag": "minecraft:terracotta",                             "to_tag": "minecraft:terracotta" },
     { "from_tag": "structurizereplacements:subst/glazed_terracotta",  "to_tag": "structurizereplacements:subst/glazed_terracotta" },
     { "from_tag": "structurizereplacements:subst/stained_glass",      "to_tag": "structurizereplacements:subst/stained_glass" },
+    { "from_tag": "structurizereplacements:subst/stained_glass_panes","to_tag": "structurizereplacements:subst/stained_glass_panes" },
     { "from_tag": "structurizereplacements:subst/concrete",           "to_tag": "structurizereplacements:subst/concrete" },
     { "from_tag": "structurizereplacements:subst/concrete_powder",    "to_tag": "structurizereplacements:subst/concrete_powder" },
-    { "from_tag": "structurizereplacements:subst/beds",               "to_tag": "structurizereplacements:subst/beds" },
+    { "from_tag": "minecraft:beds",                                   "to_tag": "minecraft:beds" },
+    { "from_tag": "minecraft:candles",                                "to_tag": "minecraft:candles" },
+    { "from_tag": "structurizereplacements:subst/froglights",         "to_tag": "structurizereplacements:subst/froglights" },
+    { "from_tag": "structurizereplacements:subst/standing_banners",   "to_tag": "structurizereplacements:subst/standing_banners" },
+    { "from_tag": "structurizereplacements:subst/wall_banners",       "to_tag": "structurizereplacements:subst/wall_banners" },
 
     { "from_tag": "minecraft:leaves",                        "to_tag": "minecraft:leaves" },
 
     { "from_tag": "minecraft:small_flowers",                 "to_tag": "minecraft:small_flowers" },
-    { "from_tag": "structurizereplacements:subst/tall_flowers",  "to_tag": "structurizereplacements:subst/tall_flowers" },
+    { "from_tag": "minecraft:tall_flowers",                  "to_tag": "minecraft:tall_flowers" },
     { "from_tag": "minecraft:saplings",                      "to_tag": "minecraft:saplings" },
     { "from_tag": "structurizereplacements:subst/mushrooms",     "to_tag": "structurizereplacements:subst/mushrooms" },
     { "from_tag": "structurizereplacements:subst/potted_plants", "to_tag": "structurizereplacements:subst/potted_plants" }

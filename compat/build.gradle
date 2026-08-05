@@ -22,8 +22,9 @@ plugins {
 // SRG-named mixins (e.g. Patchouli's AccessorScreen) fail to apply in the official-mapped dev env.
 apply plugin: 'org.spongepowered.mixin'
 
-// Needed so the run config below can reference project(':replacements').sourceSets.main.
+// Needed so the run config below can reference project(':replacements')/.../firmavanilla).sourceSets.main.
 evaluationDependsOn(':replacements')
+evaluationDependsOn(':firmavanilla')
 
 def mod_id = 'mctfc'
 def mod_name = 'MineColonies x TerraFirmaCraft'
@@ -48,6 +49,10 @@ base { archivesName = mod_id }
 // lower bound of the structurizereplacements dependency in mods.toml. Must carry the MC prefix to be a real
 // bound, since with the <mcversion>-<semver> scheme a bare "[0.1,)" is satisfied by any 1.20.1-* version.
 def replacements_min = "${minecraft_version}-0.1.0".toString()
+// Minimum :firmavanilla (TFC Vanilla Building Blocks) release this build requires — the lower bound of the
+// firmavanilla dependency in mods.toml. Bump MANUALLY when mctfc starts relying on newer firmavanilla blocks.
+// Must carry the MC prefix (a bare "[0.1,)" is satisfied by any 1.20.1-* under the <mcversion>-<semver> scheme).
+def firmavanilla_min = "${minecraft_version}-0.1.0".toString()
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
@@ -65,6 +70,9 @@ minecraft {
             // MineColonies-integration config (per-building choices, Build Options button).
             args '--mixin.config', 'structurizereplacements.mixins.json'
             args '--mixin.config', 'structurizereplacements.minecolonies.mixins.json'
+            // SlimColonies isn't in this run (it can't coexist with MineColonies), so this config just
+            // skips its absent targets — registered for parity with the jar manifest.
+            args '--mixin.config', 'structurizereplacements.slimcolonies.mixins.json'
             // Load BOTH our mods from their source sets. All third-party mods come from the
             // deobf dependencies on the runtime classpath.
             mods {
@@ -73,6 +81,9 @@ minecraft {
                 }
                 structurizereplacements {
                     source project(':replacements').sourceSets.main
+                }
+                firmavanilla {
+                    source project(':firmavanilla').sourceSets.main
                 }
             }
         }
@@ -93,6 +104,8 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
+    // MixinExtras (io.github.llamalad7) is published to Maven Central.
+    mavenCentral()
     maven {
         name = 'LDTTeam - Modding'
         url = 'https://ldtteam.jfrog.io/ldtteam/modding/'
@@ -108,8 +121,18 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
+    // MixinExtras — extended/composable Mixin injectors (@WrapOperation, @ModifyExpressionValue, @Local, …).
+    // Forge 47.x bundles MixinExtras at runtime (jar-in-jar), so we only need it at COMPILE time: compileOnly
+    // for the annotation types + annotationProcessor so its AP runs alongside Mixin's (validates expressions/
+    // locals and contributes to the refmap). Never bundled by us — do NOT make it a real runtime dependency.
+    compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+    annotationProcessor "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+
     // The substitution engine (our standalone mod).
     implementation project(':replacements')
+    // The decorative TFC building blocks (cemented cobble + chiseled sandstone …) that our substitution
+    // rules target. Hard dependency: mctfc points blueprints at firmavanilla:* blocks.
+    implementation project(':firmavanilla')
 
     // Full mod stack for the dev runtime. Declared explicitly so FML reliably finds every mod jar.
     // Structurize is compile-scope: the builder mixins reference Structurize types (Blueprint, etc.).
@@ -127,6 +150,9 @@ dependencies {
     // Dev-run-only: TFC Support Indicator (visualises TFC collapse-support coverage) — handy for testing the
     // build-area collapse-proofing.
     runtimeOnly fg.deobf("curse.maven:tfc-support-indicator-1195624:7700000")
+    // Dev-run-only: Too Many Recipe Viewers (bundles JEI 15.x) — lets JEI run alongside EMI for cross-checking
+    // recipe/usage and item discovery in-game.
+    runtimeOnly fg.deobf("curse.maven:tmrv-1194921:8145843")
     // Beneath — added to test in-game whether its blocks are accessible (e.g. as substitution targets).
     implementation fg.deobf("curse.maven:beneath-1113980:7400831")
     // ArborFirmaCraft (TFC tree/wood addon) — optional; future substitutions + compat patches, gated on
@@ -151,7 +177,7 @@ tasks.named('processResources', ProcessResources).configure {
             loader_version_range: loader_version_range,
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: full_version,
             mod_authors: mod_authors, mod_description: mod_description,
-            replacements_min: replacements_min,
+            replacements_min: replacements_min, firmavanilla_min: firmavanilla_min,
     ]
     inputs.properties replaceProperties
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {

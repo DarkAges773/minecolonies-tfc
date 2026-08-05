@@ -1,0 +1,166 @@
+package com.structurizereplacements.integration.colony;
+
+import com.ldtteam.structurize.blueprints.v1.Blueprint;
+import com.ldtteam.structurize.client.BlueprintHandler;
+import com.ldtteam.structurize.storage.ClientFutureProcessor;
+import com.ldtteam.structurize.storage.StructurePacks;
+import com.ldtteam.structurize.util.BlockInfo;
+import com.structurizereplacements.client.gui.ReplacementChoiceContext;
+import com.structurizereplacements.placement.MineshaftChoiceHolder;
+import com.structurizereplacements.substitution.BlockSubstitutions;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+/**
+ * {@link ReplacementChoiceContext} for the miner hut's mineshaft palette (opened from the miner's settings
+ * window). Unlike {@link BuildingChoiceContext} — which edits one blueprint of one building — this edits the
+ * miner's <b>separate</b> mineshaft palette ({@link MineshaftChoiceHolder}) and aggregates the candidate
+ * blocks of <i>all</i> the mineshaft schematics the miner ever places
+ * ({@link ColonyBridge#mineshaftSchematics}: the main shaft plus the tunnel/crossroad/bend node types),
+ * loaded from the hut's own structure pack.
+ *
+ * <ul>
+ *   <li>{@link #sources()} — the union of distinct candidate blocks across all mineshaft blueprints, loaded
+ *       asynchronously (each blueprint future folds its blocks in as it resolves);</li>
+ *   <li>{@link #current()} — the building view's synced mineshaft choices;</li>
+ *   <li>{@link #choose}/{@link #reset} — optimistically update the view's mineshaft map and persist via
+ *       {@link ColonyNetwork#sendMineshaftChoices}. No tier toggle: mineshaft schematics are level-independent.</li>
+ * </ul>
+ *
+ * <p>Applied server-side by {@code ColonyChoiceResolver}: when the miner AI builds a mineshaft node, the
+ * node's miner work order resolves to this map via the claiming hut.
+ */
+public class MineshaftChoiceContext implements ReplacementChoiceContext
+{
+    private final Object view;
+
+    private Runnable reloader = () -> {};
+    /**
+     * Accumulated across the per-blueprint futures (all resolve on the client thread, so no syncing needed):
+     * each candidate source mapped to the distinct mineshaft blocks it would affect (a bare block is its own
+     * host; a Domum Ornamentum block hosts each material it carries) — drives the GUI's per-row tooltip.
+     */
+    private final Map<Block, List<ItemStack>> accumulatedHosts = new LinkedHashMap<>();
+    private List<Block> sources = List.of();
+    private Map<Block, List<ItemStack>> affected = Map.of();
+
+    public MineshaftChoiceContext(final Object view)
+    {
+        this.view = view;
+        loadMineshaftSources();
+    }
+
+    @Override
+    public void setReloader(final Runnable reloader)
+    {
+        this.reloader = reloader;
+    }
+
+    @Override
+    public List<Block> sources()
+    {
+        return sources;
+    }
+
+    @Override
+    public Map<Block, List<ItemStack>> affectedBlocks()
+    {
+        return affected;
+    }
+
+    @Override
+    public Map<Block, Block> current()
+    {
+        final Map<Block, Block> choices = (view instanceof MineshaftChoiceHolder holder) ? holder.getMineshaftChoices() : null;
+        return choices == null ? Map.of() : choices;
+    }
+
+    @Override
+    public void choose(final Block source, final Block target)
+    {
+        final Map<Block, Block> map = new HashMap<>(current());
+        if (target == null)
+        {
+            map.remove(source);
+        }
+        else
+        {
+            map.put(source, target);
+        }
+        if (view instanceof MineshaftChoiceHolder holder)
+        {
+            holder.setMineshaftChoices(map.isEmpty() ? null : map);
+        }
+        ColonyNetwork.sendMineshaftChoices(ColonyIntegration.bridge().viewPosition(view), map);
+        BlueprintHandler.getInstance().clearCache();
+    }
+
+    @Override
+    public void reset()
+    {
+        if (view instanceof MineshaftChoiceHolder holder)
+        {
+            holder.setMineshaftChoices(null);
+        }
+        ColonyNetwork.sendMineshaftChoices(ColonyIntegration.bridge().viewPosition(view), Map.of());
+        BlueprintHandler.getInstance().clearCache();
+    }
+
+    @Override
+    public String titleKey()
+    {
+        return "structurizereplacements.gui.replace.mineshaft.title";
+    }
+
+    private void loadMineshaftSources()
+    {
+        final ColonyBridge bridge = ColonyIntegration.bridge();
+        final String pack = bridge.viewStructurePack(view);
+        for (final String name : bridge.mineshaftSchematics())
+        {
+            final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(pack, name + ".blueprint");
+            ClientFutureProcessor.queueBlueprint(new ClientFutureProcessor.BlueprintProcessingData(future, this::foldBlueprint));
+        }
+    }
+
+    private void foldBlueprint(final Blueprint blueprint)
+    {
+        if (blueprint == null)
+        {
+            return;
+        }
+        final int beforeKeys = accumulatedHosts.size();
+        final int beforeHosts = hostCount();
+        for (final BlockInfo info : blueprint.getBlockInfoAsList())
+        {
+            BlockSubstitutions.collectCandidateSourcesWithHosts(info, accumulatedHosts);
+        }
+        // Redraw only when this blueprint actually added a new source row or a new affected host.
+        if (accumulatedHosts.size() != beforeKeys || hostCount() != beforeHosts)
+        {
+            this.sources = new ArrayList<>(accumulatedHosts.keySet());
+            final Map<Block, List<ItemStack>> snapshot = new LinkedHashMap<>();
+            accumulatedHosts.forEach((source, hosts) -> snapshot.put(source, new ArrayList<>(hosts)));
+            this.affected = snapshot;
+            this.reloader.run();
+        }
+    }
+
+    /** Total number of (source, host) pairs accumulated — for change detection across blueprint folds. */
+    private int hostCount()
+    {
+        int total = 0;
+        for (final List<ItemStack> hosts : accumulatedHosts.values())
+        {
+            total += hosts.size();
+        }
+        return total;
+    }
+}

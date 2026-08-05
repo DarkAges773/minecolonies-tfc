@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/dolomite" },
+  "result": "firmavanilla:tile_slab/dolomite",
+  "count": 2
+}

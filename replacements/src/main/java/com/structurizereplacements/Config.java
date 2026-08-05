@@ -19,7 +19,8 @@ public class Config
 
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
-    public static boolean enableSubstitution;
+    // volatile: written on the config-load thread, read from server/render/netty threads.
+    public static volatile boolean enableSubstitution;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event)

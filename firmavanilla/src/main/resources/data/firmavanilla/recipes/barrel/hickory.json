@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "XTX", "X X", "XXX" ],
+  "key": {
+    "X": { "item": "tfc:wood/lumber/hickory" },
+    "T": { "item": "tfc:wood/planks/hickory_trapdoor" }
+  },
+  "result": { "item": "firmavanilla:barrel/hickory" }
+}

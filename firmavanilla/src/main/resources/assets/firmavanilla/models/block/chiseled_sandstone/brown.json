@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "tfc:block/sandstone/top/brown",
+    "side": "firmavanilla:block/chiseled_sandstone/brown"
+  }
+}

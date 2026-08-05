@@ -1,0 +1,28 @@
+{
+  "branch": "minecolonies:technology",
+  "costs": [
+    {
+      "type": "minecolonies:item_tag",
+      "tag": "tfc:bronze_anvils",
+      "quantity": 1
+    }
+  ],
+  "effects": [
+    {
+      "id": "mctfc:effects/smithing_bronze",
+      "level": 1
+    }
+  ],
+  "icon": "tfc:metal/anvil/bronze",
+  "parentResearch": "minecolonies:technology/hittingiron",
+  "requirements": [
+    {
+      "type": "minecolonies:single-building",
+      "building": "minecolonies:blacksmith",
+      "level": 1
+    }
+  ],
+  "researchLevel": 2,
+  "sortOrder": 1,
+  "subtitle": "com.mctfc.research.smithing.bronze.subtitle"
+}

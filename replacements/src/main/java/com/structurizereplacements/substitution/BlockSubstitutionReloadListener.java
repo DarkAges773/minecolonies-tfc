@@ -34,10 +34,12 @@ import java.util.Map;
  * result after the swap — e.g. {@code {"no_gravity":"true"}} so a substituted TFC cobble is placed
  * non-falling. Properties the target block doesn't define are skipped.
  * <p>An optional {@code "priority"} int (default {@code 0}) resolves conflicts when several rules match the
- * same block: the highest priority wins (ties broken by load order — last loaded wins). This lets an
- * optional add-on datapack override a base rule when its mod is present (give the override a higher
- * priority); rules load from <i>all</i> packs into one set, so without this the winner among same-source
- * rules would be load-order-arbitrary.
+ * same block: the highest priority wins. Equal-priority ties break deterministically by load order, last
+ * loaded wins — within one file that is document order; across files it is sorted file-id order (note:
+ * NOT datapack priority — vanilla merges the files into one unordered map before we see them, so a
+ * higher-priority pack does not implicitly win). To override a rule from another file/pack, declare a
+ * higher {@code "priority"}; that is the supported mechanism. Rules load from <i>all</i> packs into one
+ * set, so without this the winner among same-source rules would be arbitrary.
  * <pre>{@code
  * {
  *   "replacements": [
@@ -67,19 +69,29 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
         final List<SubstitutionRule> rules = new ArrayList<>();
         final List<CandidateRule> candidates = new ArrayList<>();
 
-        for (final Map.Entry<ResourceLocation, JsonElement> entry : files.entrySet())
+        // Sorted file ids: vanilla hands us a HashMap, so iteration order — and with it the equal-priority
+        // tie-break — would otherwise be hash-arbitrary across files.
+        final List<ResourceLocation> orderedFiles = new ArrayList<>(files.keySet());
+        orderedFiles.sort(null);
+        for (final ResourceLocation file : orderedFiles)
         {
+            // Per-file staging, committed only when the whole file parses — a throwing entry mid-file must
+            // not half-apply the file while the log claims it was skipped.
+            final List<SubstitutionRule> fileRules = new ArrayList<>();
+            final List<CandidateRule> fileCandidates = new ArrayList<>();
             try
             {
-                final JsonObject root = GsonHelper.convertToJsonObject(entry.getValue(), "top element");
+                final JsonObject root = GsonHelper.convertToJsonObject(files.get(file), "top element");
                 for (final JsonElement element : GsonHelper.getAsJsonArray(root, "replacements"))
                 {
-                    parseInto(element.getAsJsonObject(), entry.getKey(), rules, candidates);
+                    parseInto(element.getAsJsonObject(), file, fileRules, fileCandidates);
                 }
+                rules.addAll(fileRules);
+                candidates.addAll(fileCandidates);
             }
             catch (final Exception ex)
             {
-                StructurizeReplacements.LOGGER.error("Skipping malformed substitution file {}: {}", entry.getKey(), ex.getMessage());
+                StructurizeReplacements.LOGGER.error("Skipping malformed substitution file {}: {}", file, ex.getMessage());
             }
         }
 

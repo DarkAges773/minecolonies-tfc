@@ -1,0 +1,8 @@
+{
+  "ingredient": { "item": "minecolonies:eggdrop_soup" },
+  "hunger": 4,
+  "saturation": 0.75,
+  "water": 15,
+  "decay_modifier": 1.0,
+  "protein": 2
+}

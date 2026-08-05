@@ -20,11 +20,15 @@ build
 # run directories
 run
 run-data
+run-server
 mcmodsrepo
 src/generated/resources/.cache
 
 # logs
 *.log
+
+# local-only docs
+docs-local/
 
 # Claude Code (local agent state/settings). CLAUDE.md is intentionally NOT ignored - it is
 # tracked project documentation.
@@ -34,3 +38,16 @@ CLAUDE.local.md
 
 # Files from Forge MDK
 forge*changelog.txt
+
+# firmavanilla texture-generator inputs: third-party source textures used only to (re)generate, not
+# redistributed — all git-ignored (incl. bookshelf_overlay.png, which is derived from vanilla's bookshelf.png).
+# The README documents what each one is and how to obtain it; the generated derivatives under
+# src/main/resources are what ship.
+firmavanilla/tools/generate-textures/input/vanilla/
+firmavanilla/tools/generate-textures/input/tfc/
+firmavanilla/tools/generate-textures/input/afc/
+firmavanilla/tools/generate-textures/input/beneath/
+firmavanilla/tools/generate-textures/input/firmalife/
+# Generator preview scratch — upscaled comparison renders, never shipped. Global pattern so it's ignored
+# wherever it lands (firmavanilla/tools/... and firmavanilla/src/tools/...).
+**/_preview/

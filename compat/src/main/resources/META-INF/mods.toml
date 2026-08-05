@@ -29,6 +29,14 @@ description='''${mod_description}'''
     versionRange="[${replacements_min},)"
     ordering="AFTER"
     side="BOTH"
+# The decorative TFC building blocks our substitution rules target (cemented cobble, chiseled sandstone, …).
+# Load AFTER it so its blocks/twins exist when our datapack rules resolve them.
+[[dependencies.${mod_id}]]
+    modId="firmavanilla"
+    mandatory=true
+    versionRange="[${firmavanilla_min},)"
+    ordering="AFTER"
+    side="BOTH"
 [[dependencies.${mod_id}]]
     modId="minecolonies"
     mandatory=true

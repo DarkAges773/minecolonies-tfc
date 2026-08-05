@@ -1,29 +1,56 @@
 <window xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/ldtteam/BlockUI/version/1.20.1/src/main/resources/assets/blockui/gui/block_ui.xsd"
-        size="300 210" pause="false" lightbox="true">
+        pause="false" lightbox="true">
 
-    <text id="title" size="300 12" pos="0 6" textalign="MIDDLE" color="white"
+    <!-- No explicit window size: rely on BlockUI's default (BOWindow.DEFAULT_WIDTH/HEIGHT = 420x240), the same
+         default MineColonies' Build Options window uses, so the two match (and stay matched if BlockUI changes
+         it). The absolute child positions below are laid out for that 420x240 default. -->
+
+    <text id="title" size="100% 12" pos="0 6" textalign="MIDDLE" color="white"
           label="$(structurizereplacements.gui.replace.title)"/>
+
+    <!-- Editable preset name: shown only in the preset editor (replaces the static title there); the window
+         pre-fills it with the current name and commits renames as you type. -->
+    <input id="presetNameEdit" size="200 16" pos="110 4" maxlength="40"/>
 
     <!-- Palette-tier toggle: only shown (and only meaningful) in the per-building Build Options picker;
          hidden for the build wand. Top-left corner, clear of the centered title. -->
     <buttonimage id="paletteMode" label="$(structurizereplacements.gui.replace.palette.update)" size="56 16" pos="2 3"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 
-    <list id="rows" size="296 158" pos="2 22" childspacing="-1">
+    <list id="rows" size="416 190" pos="2 22" childspacing="-1">
         <box size="100% 20" linewidth="1">
+            <!-- Name cells are kept fully inside the 20px row (pos y=2, height 16, like the icons): a taller cell
+                 spilling below the row made its hover tooltip bleed into the row beneath it. The narrow "delete"
+                 button at the right is shown only in preset-edit mode (the window hides it otherwise). -->
             <itemicon id="srcIcon" size="16 16" pos="2 2"/>
-            <text id="srcName" size="95 20" pos="22 5" color="white"/>
-            <text id="arrow" size="14 20" pos="118 5" color="white" label="->"/>
-            <itemicon id="dstIcon" size="16 16" pos="134 2"/>
-            <text id="dstName" size="60 20" pos="154 5" color="white"/>
-            <buttonimage id="change" label="$(com.ldtteam.structurize.gui.scantool.select)" size="60 17" pos="232 1"
+            <text id="srcName" size="146 16" pos="20 2" color="white" wrap="false"/>
+            <text id="arrow" size="12 16" pos="168 2" color="white" label="->"/>
+            <itemicon id="dstIcon" size="16 16" pos="182 2"/>
+            <text id="dstName" size="116 16" pos="200 2" color="white" wrap="false"/>
+            <buttonimage id="change" label="$(com.ldtteam.structurize.gui.scantool.select)" size="68 17" pos="320 1"
                          source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+            <!-- Per-row red cancel cross: resets this row's pick (back to the datapack default) in the normal
+                 picker, or deletes the row in preset-edit mode. The window shows/hides + wires it per context. -->
+            <buttonimage id="rowReset" size="16 16" pos="392 2"
+                         source="structurize:textures/gui/buildtool/cancel.png"/>
         </box>
     </list>
 
-    <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="60 17" pos="80 188"
+    <!-- Centered hint shown when the row list is empty. The window picks the message: "no rules loaded — enable
+         the default pack" (when the engine has no rules at all) takes priority over "select a schematic". -->
+    <text id="emptyHint" size="372 60" pos="24 88" textalign="MIDDLE" color="gray"/>
+
+    <!-- "Presets" opens the save/load/edit hub; hidden inside the preset editor itself. Done is centered (so it
+         stays centered on its own in the editor, where Presets/Reset are hidden), with Reset to its right. -->
+    <buttonimage id="presets" label="$(structurizereplacements.gui.replace.presets)" size="80 17" pos="76 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
-    <buttonimage id="done" label="$(gui.done)" size="60 17" pos="160 188"
+    <buttonimage id="done" label="$(gui.done)" size="80 17" pos="168 218"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+    <buttonimage id="reset" label="$(structurizereplacements.gui.replace.reset)" size="80 17" pos="260 218"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+    <!-- Preset editor only (takes the Reset slot, which is hidden there): merge the current build's picks into the
+         preset. A hover tooltip explains the merge since the label is abbreviated to fit. -->
+    <buttonimage id="updateFromCurrent" label="$(structurizereplacements.gui.preset.update_from_current)" size="80 17" pos="260 218"
                  source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
 </window>

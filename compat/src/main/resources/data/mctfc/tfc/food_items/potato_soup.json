@@ -1,0 +1,8 @@
+{
+  "ingredient": { "item": "minecolonies:potato_soup" },
+  "hunger": 4,
+  "saturation": 0.25,
+  "water": 15,
+  "decay_modifier": 1.0,
+  "vegetables": 2
+}

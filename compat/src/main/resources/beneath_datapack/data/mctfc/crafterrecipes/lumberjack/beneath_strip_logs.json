@@ -1,0 +1,22 @@
+{
+  "__comment": "Beneath variant of tfc_strip_logs (this whole datapack loads only when the 'beneath' mod is present, see BeneathDataPack). Beneath's nether woods use TFC's naming (beneath:wood/log/<crimson|warped>, all four forms) and join #minecraft:logs (via #tfc:crimson_logs/#tfc:warped_logs), so the same template works with the beneath:wood/log/ path filter: each Beneath log -> its stripped log / wood / stripped wood. Non-existent forms are pruned by MineColonies.",
+  "type": "recipe-template",
+  "tag": "minecraft:logs",
+  "filter": {
+    "include": [ "beneath:wood/log/" ],
+    "exclude": [ "stripped" ]
+  },
+  "recipe": {
+    "crafter": "lumberjack_custom",
+    "inputs": [
+      { "item": "[NS]:[PATH]" }
+    ],
+    "alternate-output": [
+      { "item": "[NS]:[PATH:wood/log/=wood/stripped_log/]" },
+      { "item": "[NS]:[PATH:wood/log/=wood/wood/]" },
+      { "item": "[NS]:[PATH:wood/log/=wood/stripped_wood/]" }
+    ],
+    "intermediate": "minecraft:air",
+    "tool": "minecolonies:axe"
+  }
+}

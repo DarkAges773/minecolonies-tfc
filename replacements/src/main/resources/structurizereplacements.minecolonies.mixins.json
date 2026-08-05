@@ -11,6 +11,7 @@
   ],
   "client": [
     "MixinAbstractBuildingView",
+    "MixinSettingsModuleWindow",
     "MixinWindowBuildBuilding"
   ],
   "injectors": {

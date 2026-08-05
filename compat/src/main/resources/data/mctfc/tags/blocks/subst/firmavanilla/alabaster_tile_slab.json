@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:alabaster_tile_slab/white",
+    "firmavanilla:alabaster_tile_slab/light_gray",
+    "firmavanilla:alabaster_tile_slab/gray",
+    "firmavanilla:alabaster_tile_slab/black",
+    "firmavanilla:alabaster_tile_slab/brown",
+    "firmavanilla:alabaster_tile_slab/red",
+    "firmavanilla:alabaster_tile_slab/orange",
+    "firmavanilla:alabaster_tile_slab/yellow",
+    "firmavanilla:alabaster_tile_slab/lime",
+    "firmavanilla:alabaster_tile_slab/green",
+    "firmavanilla:alabaster_tile_slab/cyan",
+    "firmavanilla:alabaster_tile_slab/light_blue",
+    "firmavanilla:alabaster_tile_slab/blue",
+    "firmavanilla:alabaster_tile_slab/purple",
+    "firmavanilla:alabaster_tile_slab/magenta",
+    "firmavanilla:alabaster_tile_slab/pink"
+  ]
+}

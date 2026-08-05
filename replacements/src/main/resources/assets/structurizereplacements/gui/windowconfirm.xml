@@ -1,0 +1,14 @@
+<window xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/ldtteam/BlockUI/version/1.20.1/src/main/resources/assets/blockui/gui/block_ui.xsd"
+        size="200 104" pause="false" lightbox="true">
+
+    <text id="title" size="190 12" pos="5 8" textalign="MIDDLE" color="white"/>
+
+    <!-- Message wraps (default) so a long preset name fits. -->
+    <text id="message" size="184 44" pos="8 26" color="white"/>
+
+    <buttonimage id="cancel" label="$(structurizereplacements.gui.confirm.cancel)" size="80 17" pos="14 78"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+    <buttonimage id="confirm" size="80 17" pos="106 78"
+                 source="structurize:textures/gui/buildtool/button_medium.png" textcolor="black" texthovercolor="gray"/>
+</window>

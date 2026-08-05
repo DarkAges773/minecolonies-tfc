@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "X  ", "XX ", "XXX" ],
+  "key": { "X": { "item": "firmavanilla:alabaster_tile/purple" } },
+  "result": { "item": "firmavanilla:alabaster_tile_stairs/purple", "count": 8 }
+}

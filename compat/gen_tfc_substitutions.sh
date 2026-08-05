@@ -30,7 +30,7 @@ emit_tag() { # $1=file  (ids on stdin)
 }
 
 # --- WOOD candidate-pool tags ----------------------------------------------
-for form in planks log wood stripped_log stripped_wood leaves chest trapped_chest lectern; do
+for form in planks log wood stripped_log stripped_wood leaves chest trapped_chest lectern scribing_table; do
   for w in $WOODS; do echo "tfc:wood/$form/$w"; done | emit_tag "$TAGS/wood/$form.json"
 done
 for suf in stairs slab fence fence_gate door trapdoor button pressure_plate workbench sign wall_sign; do
@@ -40,6 +40,12 @@ done
 for form in hanging_sign wall_hanging_sign; do
   for w in $WOODS; do echo "tfc:wood/planks/$form/copper/$w"; done | emit_tag "$TAGS/wood/$form.json"
 done
+# decorative bookshelves are firmavanilla's (full-block enchanting bookshelf per wood; TFC only ships the
+# chiseled 6-slot bookshelf) -> pool of all TFC-wood variants for the GUI re-pick.
+for w in $WOODS; do echo "firmavanilla:bookshelf/$w"; done | emit_tag "$TAGS/wood/decorative_bookshelf.json"
+# wood barrels are firmavanilla's (functional vanilla-style storage barrel per wood; TFC's own barrel is a
+# fluid-sealing device, not an item container) -> pool of all TFC-wood variants for the GUI re-pick.
+for w in $WOODS; do echo "firmavanilla:barrel/$w"; done | emit_tag "$TAGS/wood/barrel.json"
 
 # --- ROCK candidate-pool tags ----------------------------------------------
 # full-block forms with stairs/slab/wall
@@ -49,7 +55,12 @@ for form in raw bricks smooth mossy_bricks cracked_bricks; do
     for r in $ROCKS; do echo "tfc:rock/$form/${r}_${suf}"; done | emit_tag "$TAGS/rock/${form}_${suf}.json"
   done
 done
-# cobble + mossy_cobble: full block is the non-falling mortared twin (reuse mctfc:mortared_cobblestone);
+# cobble + mossy_cobble: full block is the non-falling mortared twin (firmavanilla mod). Two SEPARATE full-block
+# pools (plain twins / mossy twins) so plain cemented cobble re-picks only among plain rocks and mossy only among
+# mossy — they must NOT be interchangeable. (The firmavanilla:mortared_cobblestone tag mixes both and is kept for
+# the mortar recipe / DO skins, but the substitution pool uses these split tags instead.)
+for r in $ROCKS; do echo "firmavanilla:mortared/tfc/rock/cobble/$r"; done       | emit_tag "$TAGS/rock/mortared_cobble.json"
+for r in $ROCKS; do echo "firmavanilla:mortared/tfc/rock/mossy_cobble/$r"; done | emit_tag "$TAGS/rock/mortared_mossy_cobble.json"
 # only the stairs/slab/wall sub-forms (which don't landslide) get plain-TFC pools here.
 for form in cobble mossy_cobble; do
   for suf in stairs slab wall; do
@@ -61,6 +72,8 @@ for r in $ROCKS; do echo "tfc:rock/gravel/$r"; done | emit_tag "$TAGS/rock/grave
 for r in $ROCKS; do echo "tfc:rock/chiseled/$r"; done | emit_tag "$TAGS/rock/chiseled.json"
 for r in $ROCKS; do echo "tfc:rock/button/$r"; done | emit_tag "$TAGS/rock/button.json"
 for r in $ROCKS; do echo "tfc:rock/pressure_plate/$r"; done | emit_tag "$TAGS/rock/pressure_plate.json"
+# magma exists only for TFC's 7 igneous rocks (not the sedimentary/metamorphic ones)
+for r in andesite basalt dacite diorite gabbro granite rhyolite; do echo "tfc:rock/magma/$r"; done | emit_tag "$TAGS/rock/magma.json"
 
 # --- SANDSTONE candidate-pool tags (TFC colored sandstones; vanilla stays the default) ----------
 SAND_COLORS="black brown green pink red white yellow"
@@ -72,6 +85,8 @@ for form in raw_sandstone smooth_sandstone cut_sandstone; do
     for c in $SAND_COLORS; do echo "tfc:$form/${c}_${suf}"; done | emit_tag "$TAGS/sandstone/${short}_${suf}.json"
   done
 done
+# chiseled sandstone is firmavanilla's (TFC ships none) — a pool of all 7 generated colours.
+for c in $SAND_COLORS; do echo "firmavanilla:chiseled_sandstone/$c"; done | emit_tag "$TAGS/sandstone/chiseled.json"
 # sand candidate-pool tag (all TFC colored sands)
 for c in $SAND_COLORS; do echo "tfc:sand/$c"; done | emit_tag "$TAGS/sand.json"
 
@@ -161,6 +176,15 @@ fixed "minecraft:chest"          "tfc:wood/chest/oak"
 fixed "minecraft:trapped_chest"  "tfc:wood/trapped_chest/oak"
 fixed "minecraft:crafting_table" "tfc:wood/planks/oak_workbench"
 fixed "minecraft:lectern"        "tfc:wood/lectern/oak"
+# vanilla enchanting table -> TFC scribing table (oak default + any-wood pool). TFC has no enchanting table; the
+# scribing table is its nearest wooden workstation twin.
+fixed "minecraft:enchanting_table" "tfc:wood/scribing_table/oak"
+# vanilla decorative bookshelf -> firmavanilla's full-block enchanting bookshelf (oak default + any-wood pool).
+# TFC/AFC/Beneath only add the chiseled 6-slot bookshelf; firmavanilla adds the vanilla-style one per wood.
+fixed "minecraft:bookshelf"      "firmavanilla:bookshelf/oak"
+# vanilla barrel -> firmavanilla's per-wood functional barrel (oak default + any-wood pool). TFC's own barrel is a
+# fluid-sealing device, so there's no TFC item-storage equivalent; firmavanilla adds the vanilla-style one per wood.
+fixed "minecraft:barrel"         "firmavanilla:barrel/oak"
 
 # saplings (potted + standing) -> TFC saplings (per wood map); implicit, AFC overrides them at priority 1.
 for v in oak spruce birch jungle acacia dark_oak cherry; do
@@ -171,7 +195,7 @@ fixed "minecraft:mangrove_propagule"        "tfc:wood/sapling/mangrove"
 fixed "minecraft:potted_mangrove_propagule" "tfc:wood/potted_sapling/mangrove"
 
 # candidate pools (player re-picks the wood per form, keyed on the converted TFC block)
-for form in planks log wood stripped_log stripped_wood leaves stairs slab fence fence_gate door trapdoor button pressure_plate chest trapped_chest workbench sign wall_sign hanging_sign wall_hanging_sign lectern; do
+for form in planks log wood stripped_log stripped_wood leaves stairs slab fence fence_gate door trapdoor button pressure_plate chest trapped_chest workbench sign wall_sign hanging_sign wall_hanging_sign lectern scribing_table decorative_bookshelf barrel; do
   pool "mctfc:subst/wood/$form"
 done
 write_file "$SUB/tfc_wood.json" "TFC wood substitutions: vanilla -> look-alike TFC wood (spruce->pine, birch->douglas_fir, jungle->spruce, dark_oak->hickory, cherry->kapok, bamboo->palm; oak/acacia/mangrove keep their name), across all forms incl. leaves, chest/workbench, signs/wall-signs, and hanging/wall-hanging signs (copper metal default). Bamboo also maps its mosaic family to TFC palm mosaic. Plus per-form candidate pools so the player can pick any TFC wood. The nether woods (crimson/warped) are handled by the optional Beneath datapack instead. Generated by gen_tfc_substitutions.sh."
@@ -218,13 +242,24 @@ done
 for form in hanging_sign wall_hanging_sign; do
   { echo "beneath:wood/planks/$form/copper/crimson"; echo "beneath:wood/planks/$form/copper/warped"; } | emit_tag "$BENEATH_TAGS/$form.json"
 done
+# Beneath decorative bookshelves (firmavanilla blocks for crimson/warped) join the decorative-bookshelf pool.
+{ echo "firmavanilla:bookshelf/crimson"; echo "firmavanilla:bookshelf/warped"; } | emit_tag "$BENEATH_TAGS/decorative_bookshelf.json"
+# Beneath wood barrels (firmavanilla blocks for crimson/warped) join the barrel pool.
+{ echo "firmavanilla:barrel/crimson"; echo "firmavanilla:barrel/warped"; } | emit_tag "$BENEATH_TAGS/barrel.json"
 # Beneath full-block woods as legal Domum Ornamentum skins (only when Beneath is loaded). Same DO material tags.
 BENEATH_DOTAGS="$RESROOT/beneath_datapack/data/domum_ornamentum/tags/blocks"
 mkdir -p "$BENEATH_DOTAGS"
 beneath_do_materials() { for w in crimson warped; do for f in planks log wood stripped_log stripped_wood; do echo "beneath:wood/$f/$w"; done; done; }
 for t in default slab_materials stairs_materials wall_materials; do
-  beneath_do_materials | emit_tag "$BENEATH_DOTAGS/$t.json"
+  { beneath_do_materials
+    if [ "$t" = "slab_materials" ]; then echo "firmavanilla:bookshelf/crimson"; echo "firmavanilla:bookshelf/warped"; fi
+  } | emit_tag "$BENEATH_DOTAGS/$t.json"
 done
+# Beneath decorative bookshelves join the MineColonies integration tags (only when Beneath is loaded).
+BENEATH_MCTAGS="$RESROOT/beneath_datapack/data/minecolonies/tags"
+mkdir -p "$BENEATH_MCTAGS/items" "$BENEATH_MCTAGS/blocks"
+{ echo "firmavanilla:bookshelf/crimson"; echo "firmavanilla:bookshelf/warped"; } | emit_tag "$BENEATH_MCTAGS/items/reduceable_product_excluded.json"
+{ echo "firmavanilla:bookshelf/crimson"; echo "firmavanilla:bookshelf/warped"; } | emit_tag "$BENEATH_MCTAGS/blocks/tier2blocks.json"
 
 # --- ARBORFIRMACRAFT (AFC) optional datapack: vanilla wood -> AFC wood, overriding the base TFC mapping ------
 # Written to afc_datapack/, which AfcDataPack registers only when the 'afc' mod is present. The overrides use
@@ -279,7 +314,10 @@ fixedp "minecraft:potted_spruce_sapling" "afc:wood/potted_sapling/cypress"    1
 fixedp "minecraft:potted_cherry_sapling" "afc:wood/potted_sapling/fig"        1
 fixedp "minecraft:potted_acacia_sapling" "afc:wood/potted_sapling/baobab"     1
 fixedp "minecraft:potted_jungle_sapling" "afc:wood/potted_sapling/teak"       1
-write_file "$AFC_SUB/afc.json" "AFC-only substitutions (this whole datapack loads only when the 'afc'/ArborFirmaCraft mod is present, see AfcDataPack). Vanilla wood -> AFC wood (birch->eucalyptus, spruce->cypress, cherry->fig, acacia->baobab, jungle->teak) at priority 1, overriding the base TFC wood mapping (tfc_wood.json, priority 0) when AFC is present. Covers all forms incl. leaves and hanging/wall-hanging signs (copper metal default). Generated by gen_tfc_substitutions.sh."
+# AFC also overrides the vanilla barrel default (base firmavanilla:barrel/oak) to its cypress barrel, priority 1
+# (matching the spruce->cypress wood mapping above); absent AFC, the base oak default applies.
+fixedp "minecraft:barrel"                "firmavanilla:barrel/cypress"        1
+write_file "$AFC_SUB/afc.json" "AFC-only substitutions (this whole datapack loads only when the 'afc'/ArborFirmaCraft mod is present, see AfcDataPack). Vanilla wood -> AFC wood (birch->eucalyptus, spruce->cypress, cherry->fig, acacia->baobab, jungle->teak) at priority 1, overriding the base TFC wood mapping (tfc_wood.json, priority 0) when AFC is present. Covers all forms incl. leaves and hanging/wall-hanging signs (copper metal default). Also overrides the vanilla barrel default to firmavanilla's cypress barrel. Generated by gen_tfc_substitutions.sh."
 
 # AFC woods JOIN the per-form candidate pools (additive replace:false, only loaded with AFC), so any wood can be
 # re-picked to an AFC wood and vice-versa. The base candidate rules already cover the merged tags.
@@ -292,14 +330,25 @@ done
 for form in hanging_sign wall_hanging_sign; do
   for w in $AFC_WOODS; do echo "afc:wood/planks/$form/copper/$w"; done | emit_tag "$AFC_TAGS/$form.json"
 done
+# AFC decorative bookshelves (firmavanilla blocks for AFC woods) join the decorative-bookshelf pool.
+for w in $AFC_WOODS; do echo "firmavanilla:bookshelf/$w"; done | emit_tag "$AFC_TAGS/decorative_bookshelf.json"
+# AFC wood barrels (firmavanilla blocks for AFC woods) join the barrel pool.
+for w in $AFC_WOODS; do echo "firmavanilla:barrel/$w"; done | emit_tag "$AFC_TAGS/barrel.json"
 # AFC full-block woods must also be legal Domum Ornamentum skins (only when AFC is loaded), so a DO block
 # skinned with vanilla wood that AFC overrides resolves to a valid skin. Same DO material tags as the base.
 AFC_DOTAGS="$RESROOT/afc_datapack/data/domum_ornamentum/tags/blocks"
 mkdir -p "$AFC_DOTAGS"
 afc_do_materials() { for w in $AFC_WOODS; do for f in planks log wood stripped_log stripped_wood leaves; do echo "afc:wood/$f/$w"; done; done; }
 for t in default slab_materials stairs_materials wall_materials; do
-  afc_do_materials | emit_tag "$AFC_DOTAGS/$t.json"
+  { afc_do_materials
+    if [ "$t" = "slab_materials" ]; then for w in $AFC_WOODS; do echo "firmavanilla:bookshelf/$w"; done; fi
+  } | emit_tag "$AFC_DOTAGS/$t.json"
 done
+# AFC decorative bookshelves join the MineColonies integration tags (only when AFC is loaded).
+AFC_MCTAGS="$RESROOT/afc_datapack/data/minecolonies/tags"
+mkdir -p "$AFC_MCTAGS/items" "$AFC_MCTAGS/blocks"
+for w in $AFC_WOODS; do echo "firmavanilla:bookshelf/$w"; done | emit_tag "$AFC_MCTAGS/items/reduceable_product_excluded.json"
+for w in $AFC_WOODS; do echo "firmavanilla:bookshelf/$w"; done | emit_tag "$AFC_MCTAGS/blocks/tier2blocks.json"
 
 # --- FIRMALIFE optional datapack: vanilla carved pumpkin / jack o'lantern -> FirmaLife's faced variants -----
 # Written to firmalife_datapack/, registered only when 'firmalife' is present (see FirmaLifeDataPack). priority 1
@@ -309,7 +358,13 @@ FL_SUB="$RESROOT/firmalife_datapack/data/mctfc/block_substitutions"
 mkdir -p "$FL_SUB"
 fixedp "minecraft:carved_pumpkin" "firmalife:carved_pumpkin/none" 1
 fixedp "minecraft:jack_o_lantern" "firmalife:lit_pumpkin/none"    1
-write_file "$FL_SUB/firmalife.json" "FirmaLife-only substitutions (this datapack loads only when the 'firmalife' mod is present, see FirmaLifeDataPack). Vanilla carved pumpkin -> FirmaLife faced carved pumpkin (no-face variant); jack o'lantern -> FirmaLife lit pumpkin (no-face), at priority 1 so it overrides the base tfc:jack_o_lantern. Generated by gen_tfc_substitutions.sh."
+fixed  "minecraft:beehive"        "firmalife:beehive"
+fixed  "minecraft:bee_nest"       "firmalife:beehive"
+# honeycomb_block -> firmavanilla's block of beeswax. firmavanilla always ships the block, but it's only craftable
+# from firmalife:beeswax, so the swap lives in the FirmaLife-gated pack (no point mapping to an uncraftable block
+# in a FirmaLife-less world). Target is firmavanilla (a hard dep of :compat), present whenever this pack loads.
+fixed  "minecraft:honeycomb_block" "firmavanilla:beeswax_block"
+write_file "$FL_SUB/firmalife.json" "FirmaLife-only substitutions (this datapack loads only when the 'firmalife' mod is present, see FirmaLifeDataPack). Vanilla carved pumpkin -> FirmaLife faced carved pumpkin (no-face variant); jack o'lantern -> FirmaLife lit pumpkin (no-face), at priority 1 so it overrides the base tfc:jack_o_lantern; beehive and bee_nest -> FirmaLife beehive (the apiary's hive blocks; the colony Beekeeper services them, see docs/tfc-beekeeper-worker.md); honeycomb_block -> firmavanilla:beeswax_block (the beeswax-toned honeycomb block, craftable from firmalife:beeswax). Generated by gen_tfc_substitutions.sh."
 
 # --- STONE rules ------------------------------------------------------------
 D=dacite
@@ -317,13 +372,13 @@ D=dacite
 fixed "minecraft:stone"                    "tfc:rock/raw/$D"
 fixed "minecraft:stone_stairs"             "tfc:rock/raw/${D}_stairs"
 fixed "minecraft:stone_slab"               "tfc:rock/raw/${D}_slab"
-# cobblestone -> non-falling mortared dacite cobble
-fixed "minecraft:cobblestone"              "mctfc:mortared/tfc/rock/cobble/$D"
+# cobblestone -> non-falling mortared dacite cobble (firmavanilla mod's runtime twin)
+fixed "minecraft:cobblestone"              "firmavanilla:mortared/tfc/rock/cobble/$D"
 fixed "minecraft:cobblestone_stairs"       "tfc:rock/cobble/${D}_stairs"
 fixed "minecraft:cobblestone_slab"         "tfc:rock/cobble/${D}_slab"
 fixed "minecraft:cobblestone_wall"         "tfc:rock/cobble/${D}_wall"
-# mossy cobblestone -> non-falling mortared dacite mossy cobble
-fixed "minecraft:mossy_cobblestone"        "mctfc:mortared/tfc/rock/mossy_cobble/$D"
+# mossy cobblestone -> non-falling mortared dacite mossy cobble (firmavanilla mod's runtime twin)
+fixed "minecraft:mossy_cobblestone"        "firmavanilla:mortared/tfc/rock/mossy_cobble/$D"
 fixed "minecraft:mossy_cobblestone_stairs" "tfc:rock/mossy_cobble/${D}_stairs"
 fixed "minecraft:mossy_cobblestone_slab"   "tfc:rock/mossy_cobble/${D}_slab"
 fixed "minecraft:mossy_cobblestone_wall"   "tfc:rock/mossy_cobble/${D}_wall"
@@ -361,9 +416,13 @@ for rk in granite diorite andesite; do
   fixed "minecraft:polished_${rk}_slab"    "tfc:rock/smooth/${rk}_slab"
 done
 
+# vanilla magma block -> TFC dacite magma (default); the magma pool re-picks any of the 7 igneous magmas.
+fixed "minecraft:magma_block" "tfc:rock/magma/dacite"
+
 # candidate pools (player re-picks the rock per form, keyed on the converted TFC block)
-# cobble + mossy_cobble full blocks resolve to a mortared twin -> the mortared pool offers the rock choice
-pool "mctfc:mortared_cobblestone"
+# cobble + mossy_cobble full blocks resolve to a mortared twin -> SEPARATE plain/mossy pools (not interchangeable)
+pool "mctfc:subst/rock/mortared_cobble"
+pool "mctfc:subst/rock/mortared_mossy_cobble"
 for form in raw raw_stairs raw_slab raw_wall \
             cobble_stairs cobble_slab cobble_wall \
             mossy_cobble_stairs mossy_cobble_slab mossy_cobble_wall \
@@ -371,22 +430,23 @@ for form in raw raw_stairs raw_slab raw_wall \
             mossy_bricks mossy_bricks_stairs mossy_bricks_slab mossy_bricks_wall \
             cracked_bricks cracked_bricks_stairs cracked_bricks_slab cracked_bricks_wall \
             smooth smooth_stairs smooth_slab smooth_wall \
-            chiseled button pressure_plate gravel; do
+            chiseled button pressure_plate gravel magma; do
   pool "mctfc:subst/rock/$form"
 done
-write_file "$SUB/tfc_stone.json" "TFC stone substitutions: vanilla stone family -> dacite forms (closest look), cobble/mossy_cobble -> non-falling mortared twin, vanilla granite/diorite/andesite -> the same TFC rock (raw/smooth), gravel -> dacite gravel, plus per-form candidate pools so the player can pick any TFC rock. Generated by gen_tfc_substitutions.sh."
+write_file "$SUB/tfc_stone.json" "TFC stone substitutions: vanilla stone family -> dacite forms (closest look), cobble/mossy_cobble -> non-falling mortared twin, vanilla granite/diorite/andesite -> the same TFC rock (raw/smooth), gravel -> dacite gravel, magma block -> dacite magma (the 7 igneous magmas re-pickable), plus per-form candidate pools so the player can pick any TFC rock. Generated by gen_tfc_substitutions.sh."
 
 # --- SANDSTONE + SAND rules -------------------------------------------------
 # Vanilla sandstone is INACCESSIBLE in TFC (TFC ships its own colored sandstones), so implicitly convert it to
 # the matching TFC color (normal -> yellow, red -> red) and offer the colored pool to re-pick. TFC has no
-# chiseled sandstone, so chiseled -> cut.
+# chiseled sandstone, so chiseled -> firmavanilla:chiseled_sandstone/<color> (generated per color from the
+# vanilla creeper/wither relief recoloured onto TFC's cut sandstone; see the firmavanilla mod).
 sandstone_rules() { # $1 = vanilla prefix ("" or "red_"), $2 = TFC color
   local v=$1 c=$2
   fixed "minecraft:${v}sandstone"                "tfc:raw_sandstone/$c"
   fixed "minecraft:${v}sandstone_stairs"         "tfc:raw_sandstone/${c}_stairs"
   fixed "minecraft:${v}sandstone_slab"           "tfc:raw_sandstone/${c}_slab"
   fixed "minecraft:${v}sandstone_wall"           "tfc:raw_sandstone/${c}_wall"
-  fixed "minecraft:chiseled_${v}sandstone"       "tfc:cut_sandstone/$c"          # no TFC chiseled -> cut
+  fixed "minecraft:chiseled_${v}sandstone"       "firmavanilla:chiseled_sandstone/$c"  # TFC has none -> firmavanilla's
   fixed "minecraft:cut_${v}sandstone"            "tfc:cut_sandstone/$c"
   fixed "minecraft:cut_${v}sandstone_slab"       "tfc:cut_sandstone/${c}_slab"
   fixed "minecraft:smooth_${v}sandstone"         "tfc:smooth_sandstone/$c"
@@ -396,14 +456,14 @@ sandstone_rules() { # $1 = vanilla prefix ("" or "red_"), $2 = TFC color
 sandstone_rules ""   yellow
 sandstone_rules red_ red
 # pools keyed on the converted TFC block, so the player can re-pick any color/form
-for form in raw raw_stairs raw_slab raw_wall cut cut_slab smooth smooth_stairs smooth_slab; do
+for form in raw raw_stairs raw_slab raw_wall cut cut_slab smooth smooth_stairs smooth_slab chiseled; do
   pool "mctfc:subst/sandstone/$form"
 done
 # sand -> matching TFC colored sand (normal -> yellow, red -> red) + pool of all colors
 fixed "minecraft:sand"     "tfc:sand/yellow"
 fixed "minecraft:red_sand" "tfc:sand/red"
 pool  "mctfc:subst/sand"
-write_file "$SUB/tfc_sandstone.json" "TFC sandstone + sand substitutions: vanilla sandstone is inaccessible in TFC, so it implicitly converts to the matching TFC colored sandstone (normal->yellow, red->red) across raw/cut/smooth forms (chiseled->cut, TFC has none) + a colored re-pick pool; vanilla sand/red_sand -> TFC yellow/red sand + an all-color pool. Generated by gen_tfc_substitutions.sh."
+write_file "$SUB/tfc_sandstone.json" "TFC sandstone + sand substitutions: vanilla sandstone is inaccessible in TFC, so it implicitly converts to the matching TFC colored sandstone (normal->yellow, red->red) across raw/cut/smooth forms + a colored re-pick pool. Chiseled sandstone -> firmavanilla:chiseled_sandstone/<color> (TFC ships no chiseled; firmavanilla generates it per color) + its own re-pick pool. Vanilla sand/red_sand -> TFC yellow/red sand + an all-color pool. Generated by gen_tfc_substitutions.sh."
 
 # --- METAL rules (bars / anvils / bells) ------------------------------------
 METALS="bismuth_bronze black_bronze black_steel blue_steel bronze copper red_steel steel wrought_iron"
@@ -444,14 +504,123 @@ pool  "mctfc:subst/mud/bricks_wall"
 fixed "minecraft:packed_mud"        "tfc:smooth_mud_bricks"
 write_file "$SUB/tfc_mud.json" "TFC mud substitutions: vanilla mud bricks (+stairs/slab/wall) -> loam mud bricks (default) + any-variant candidate pool; packed mud -> tfc:smooth_mud_bricks (implicit, single block). Generated by gen_tfc_substitutions.sh."
 
+# --- FIRMAVANILLA wirings: deepslate -> basalt (+ rock tiles), vanilla copper -> firmavanilla weathering ------
+# copper, purpur/end-stone -> alabaster. firmavanilla is a hard dep of :compat, so these always load.
+ALAB_COLORS="white light_gray gray black brown red orange yellow lime green cyan light_blue blue purple magenta pink"
+mkdir -p "$TAGS/firmavanilla" "$TAGS/alabaster"
+
+# firmavanilla rock-tile candidate pools — the deepslate TILE forms map into these. (The non-tile deepslate forms
+# reuse the existing tfc:rock/* pools from tfc_stone.json: the GUI keys off the resolved basalt block.)
+for form in tiles cracked_tiles tile_stairs tile_slab tile_wall; do
+  for r in $ROCKS; do echo "firmavanilla:$form/$r"; done | emit_tag "$TAGS/firmavanilla/$form.json"
+done
+
+# DEEPSLATE -> basalt (default) + any-rock pools. Non-tile forms -> TFC basalt rock forms (mirroring tfc_stone's
+# dacite choices: raw, non-falling mortared cobble twin, smooth=polished, bricks, cracked_bricks, chiseled); the
+# tile forms -> firmavanilla's basalt rock tiles.
+fixed "minecraft:deepslate"                  "tfc:rock/raw/basalt"
+fixed "minecraft:cobbled_deepslate"          "firmavanilla:mortared/tfc/rock/cobble/basalt"
+fixed "minecraft:cobbled_deepslate_stairs"   "tfc:rock/cobble/basalt_stairs"
+fixed "minecraft:cobbled_deepslate_slab"     "tfc:rock/cobble/basalt_slab"
+fixed "minecraft:cobbled_deepslate_wall"     "tfc:rock/cobble/basalt_wall"
+fixed "minecraft:polished_deepslate"         "tfc:rock/smooth/basalt"
+fixed "minecraft:polished_deepslate_stairs"  "tfc:rock/smooth/basalt_stairs"
+fixed "minecraft:polished_deepslate_slab"    "tfc:rock/smooth/basalt_slab"
+fixed "minecraft:polished_deepslate_wall"    "tfc:rock/smooth/basalt_wall"
+fixed "minecraft:deepslate_bricks"           "tfc:rock/bricks/basalt"
+fixed "minecraft:deepslate_brick_stairs"     "tfc:rock/bricks/basalt_stairs"
+fixed "minecraft:deepslate_brick_slab"       "tfc:rock/bricks/basalt_slab"
+fixed "minecraft:deepslate_brick_wall"       "tfc:rock/bricks/basalt_wall"
+fixed "minecraft:cracked_deepslate_bricks"   "tfc:rock/cracked_bricks/basalt"
+fixed "minecraft:chiseled_deepslate"         "tfc:rock/chiseled/basalt"
+fixed "minecraft:deepslate_tiles"            "firmavanilla:tiles/basalt"
+fixed "minecraft:deepslate_tile_stairs"      "firmavanilla:tile_stairs/basalt"
+fixed "minecraft:deepslate_tile_slab"        "firmavanilla:tile_slab/basalt"
+fixed "minecraft:deepslate_tile_wall"        "firmavanilla:tile_wall/basalt"
+fixed "minecraft:cracked_deepslate_tiles"    "firmavanilla:cracked_tiles/basalt"
+for form in tiles cracked_tiles tile_stairs tile_slab tile_wall; do pool "mctfc:subst/firmavanilla/$form"; done
+write_file "$SUB/firmavanilla_deepslate.json" "Deepslate family -> TFC basalt (default) + any-rock candidate pools. Non-tile forms -> TFC basalt rock forms (raw / non-falling mortared cobble twin / smooth=polished / bricks / cracked_bricks / chiseled), reusing tfc_stone.json's existing tfc:rock/* pools (the GUI keys off the resolved block). The tile forms -> firmavanilla's rock tiles (tiles/cracked_tiles/tile_stairs/slab/wall, basalt default) with new firmavanilla pools. Generated by gen_tfc_substitutions.sh."
+
+# VANILLA COPPER -> firmavanilla weathering copper, form+stage matched (deterministic 1:1, no pool): vanilla
+# plated full block <-> copper_block, cut copper/stairs/slab <-> copper_cut*, waxed -> waxed_*; weather stage 1:1.
+copper_rules() { # $1 = vanilla wax prefix ("" | "waxed_"), $2 = firmavanilla wax prefix (same)
+  local wax=$1 fwax=$2 s vblk vcut vst vsl
+  for s in unaffected exposed weathered oxidized; do
+    if [ "$s" = unaffected ]; then
+      vblk="${wax}copper_block";          vcut="${wax}cut_copper"
+      vst="${wax}cut_copper_stairs";      vsl="${wax}cut_copper_slab"
+    else
+      vblk="${wax}${s}_copper";           vcut="${wax}${s}_cut_copper"
+      vst="${wax}${s}_cut_copper_stairs"; vsl="${wax}${s}_cut_copper_slab"
+    fi
+    fixed "minecraft:$vblk" "firmavanilla:${fwax}copper_block/$s"
+    fixed "minecraft:$vcut" "firmavanilla:${fwax}copper_cut/$s"
+    fixed "minecraft:$vst"  "firmavanilla:${fwax}copper_cut_stairs/$s"
+    fixed "minecraft:$vsl"  "firmavanilla:${fwax}copper_cut_slab/$s"
+  done
+}
+copper_rules "" ""
+copper_rules "waxed_" "waxed_"
+write_file "$SUB/firmavanilla_copper.json" "Vanilla copper -> firmavanilla's TFC-integrated weathering copper, form- and stage-matched (deterministic 1:1, no GUI pool): plated full block <-> copper_block, cut copper/stairs/slab <-> copper_cut*, waxed -> waxed_*; vanilla weather stage maps 1:1 (unaffected/exposed/weathered/oxidized). Orientation (stairs facing/half/shape, slab type) carries via shared-property copy. Generated by gen_tfc_substitutions.sh."
+
+# ALABASTER. Purpur -> firmavanilla alabaster tiles/pillars (default purple, pick any colour). End stone family ->
+# TFC alabaster in light_gray (TFC alabaster is colour-only — there is NO uncolored block — so a default must name a
+# colour; light_gray reads closest to vanilla end stone, and the whole end-stone family shares it for consistency).
+for form in alabaster_tile alabaster_pillar alabaster_tile_stairs alabaster_tile_slab; do
+  for c in $ALAB_COLORS; do echo "firmavanilla:$form/$c"; done | emit_tag "$TAGS/firmavanilla/$form.json"
+done
+# TFC raw/bricks colour pools (every colour; no uncolored base — it isn't a real block).
+for form in raw bricks; do
+  for c in $ALAB_COLORS; do echo "tfc:alabaster/$form/$c"; done | emit_tag "$TAGS/alabaster/$form.json"
+done
+# Brick stairs/slab/wall colour pools (the suffix sits on the colour: alabaster/bricks/<colour>_stairs).
+for suffix in stairs slab wall; do
+  for c in $ALAB_COLORS; do echo "tfc:alabaster/bricks/${c}_$suffix"; done | emit_tag "$TAGS/alabaster/bricks_$suffix.json"
+done
+fixed "minecraft:purpur_block"   "firmavanilla:alabaster_tile/purple"
+fixed "minecraft:purpur_pillar"  "firmavanilla:alabaster_pillar/purple"
+fixed "minecraft:purpur_stairs"  "firmavanilla:alabaster_tile_stairs/purple"
+fixed "minecraft:purpur_slab"    "firmavanilla:alabaster_tile_slab/purple"
+pool "mctfc:subst/firmavanilla/alabaster_tile"
+pool "mctfc:subst/firmavanilla/alabaster_pillar"
+pool "mctfc:subst/firmavanilla/alabaster_tile_stairs"
+pool "mctfc:subst/firmavanilla/alabaster_tile_slab"
+fixed "minecraft:end_stone"              "tfc:alabaster/raw/light_gray"
+pool  "mctfc:subst/alabaster/raw"
+fixed "minecraft:end_stone_bricks"       "tfc:alabaster/bricks/light_gray"
+pool  "mctfc:subst/alabaster/bricks"
+fixed "minecraft:end_stone_brick_stairs" "tfc:alabaster/bricks/light_gray_stairs"
+pool  "mctfc:subst/alabaster/bricks_stairs"
+fixed "minecraft:end_stone_brick_slab"   "tfc:alabaster/bricks/light_gray_slab"
+pool  "mctfc:subst/alabaster/bricks_slab"
+fixed "minecraft:end_stone_brick_wall"   "tfc:alabaster/bricks/light_gray_wall"
+pool  "mctfc:subst/alabaster/bricks_wall"
+write_file "$SUB/firmavanilla_alabaster.json" "Purpur -> firmavanilla alabaster tiles/pillars (default purple, pick any colour). End stone family -> TFC alabaster in light_gray (raw / bricks / brick stairs+slab+wall), each with a pick-any-colour pool. TFC alabaster is colour-only, so light_gray is the shared default. Generated by gen_tfc_substitutions.sh."
+
+# CANDLES. Every vanilla candle -> the matching-colour TFC candle (plain -> tfc:candle), each + a pick-any-colour
+# pool. TFC's plain CANDLE is its own block; the 16 dyed are tfc:candle/<colour> (DyeColor map). Candle count and
+# lit state carry over via shared-property copy. The pool keys off the resolved TFC candle, so one pool rule serves
+# all colours.
+{ echo "tfc:candle"; for c in $ALAB_COLORS; do echo "tfc:candle/$c"; done; } | emit_tag "$TAGS/candle.json"
+fixed "minecraft:candle" "tfc:candle"
+for c in $ALAB_COLORS; do fixed "minecraft:${c}_candle" "tfc:candle/$c"; done
+pool "mctfc:subst/candle"
+write_file "$SUB/tfc_candle.json" "Every vanilla candle -> the matching-colour TFC candle (plain minecraft:candle -> tfc:candle, each dyed -> tfc:candle/<colour>), with a pick-any-colour pool so the colour can be re-picked in the GUI. Candle count + lit carry over via shared-property copy. Generated by gen_tfc_substitutions.sh."
+
+# firmavanilla soul-lamp candidate-pool tag (the soul_lantern rule itself needs apply_properties lit=true, so it
+# is hand-written in defaults.json alongside the regular lantern; this only emits the pool tag).
+for m in copper bronze bismuth_bronze black_bronze wrought_iron steel black_steel blue_steel red_steel; do
+  echo "firmavanilla:soul_lamp/$m"
+done | emit_tag "$TAGS/firmavanilla/soul_lamp.json"
+
 # --- DOMUM ORNAMENTUM material tags: make our TFC full-block targets legal DO skins ------------------
 # DomumMaterialRewriter only substitutes a DO material (the full block in a DO block's textureData NBT) to a
 # block in the component's valid-skins tag. DO's tags are curated and TFC ships none, so add our full-block
 # building materials here (additive, replace:false). 'default' is referenced by most components (panels,
 # bricks, framed, fences, fence_gates, posts, pillars, doors, trapdoors, timber-frames); slab/stairs/wall
 # _materials are independent lists, so extend those too. Only FULL-cube materials (DO skins are full blocks);
-# falling cobble is excluded — cobblestone substitutes to the runtime mortared twins, which MortaredCobbleData
-# adds to these same DO tags.
+# falling cobble is excluded — cobblestone substitutes to the runtime mortared twins (firmavanilla mod), which
+# its MortaredCobbleData adds to these same DO tags.
 DOTAGS="$RESROOT/data/domum_ornamentum/tags/blocks"
 mkdir -p "$DOTAGS"
 do_materials() { # every TFC full-block building material we substitute to
@@ -462,8 +631,20 @@ do_materials() { # every TFC full-block building material we substitute to
   for c in $SAND_COLORS; do for f in raw_sandstone smooth_sandstone cut_sandstone; do echo "tfc:$f/$c"; done; done
 }
 for t in default slab_materials stairs_materials wall_materials; do
-  do_materials | emit_tag "$DOTAGS/$t.json"
+  { do_materials
+    # firmavanilla decorative bookshelves are a valid DO SLAB skin material (full cube) — slab tag only.
+    if [ "$t" = "slab_materials" ]; then for w in $WOODS; do echo "firmavanilla:bookshelf/$w"; done; fi
+  } | emit_tag "$DOTAGS/$t.json"
 done
+
+# --- MineColonies integration tags for the firmavanilla decorative bookshelves ------------------------------
+# Exclude them from the builder's "reduceable products" (so a placed bookshelf is requested as itself, not
+# reduced to its crafting ingredients) and mark them tier-2 building blocks (matching vanilla bookshelf). TFC
+# woods here; AFC/Beneath join via their datapacks above. MineColonies-namespaced, hence in :compat.
+MCTAGS="$RESROOT/data/minecolonies/tags"
+mkdir -p "$MCTAGS/items" "$MCTAGS/blocks"
+for w in $WOODS; do echo "firmavanilla:bookshelf/$w"; done | emit_tag "$MCTAGS/items/reduceable_product_excluded.json"
+for w in $WOODS; do echo "firmavanilla:bookshelf/$w"; done | emit_tag "$MCTAGS/blocks/tier2blocks.json"
 
 echo "Generated:"
 echo "  rules: $(ls "$SUB"/tfc_*.json)"

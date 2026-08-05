@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "conditions": [ { "type": "forge:mod_loaded", "modid": "beneath" } ],
+  "pattern": [ "XTX", "X X", "XXX" ],
+  "key": {
+    "X": { "item": "beneath:wood/lumber/crimson" },
+    "T": { "item": "beneath:wood/planks/crimson_trapdoor" }
+  },
+  "result": { "item": "firmavanilla:barrel/crimson" }
+}

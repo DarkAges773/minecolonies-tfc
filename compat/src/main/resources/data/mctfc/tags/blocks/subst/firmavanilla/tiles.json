@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:tiles/andesite",
+    "firmavanilla:tiles/basalt",
+    "firmavanilla:tiles/chalk",
+    "firmavanilla:tiles/chert",
+    "firmavanilla:tiles/claystone",
+    "firmavanilla:tiles/conglomerate",
+    "firmavanilla:tiles/dacite",
+    "firmavanilla:tiles/diorite",
+    "firmavanilla:tiles/dolomite",
+    "firmavanilla:tiles/gabbro",
+    "firmavanilla:tiles/gneiss",
+    "firmavanilla:tiles/granite",
+    "firmavanilla:tiles/limestone",
+    "firmavanilla:tiles/marble",
+    "firmavanilla:tiles/phyllite",
+    "firmavanilla:tiles/quartzite",
+    "firmavanilla:tiles/rhyolite",
+    "firmavanilla:tiles/schist",
+    "firmavanilla:tiles/shale",
+    "firmavanilla:tiles/slate"
+  ]
+}

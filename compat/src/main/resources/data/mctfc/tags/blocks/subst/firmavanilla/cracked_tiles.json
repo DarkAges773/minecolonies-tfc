@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:cracked_tiles/andesite",
+    "firmavanilla:cracked_tiles/basalt",
+    "firmavanilla:cracked_tiles/chalk",
+    "firmavanilla:cracked_tiles/chert",
+    "firmavanilla:cracked_tiles/claystone",
+    "firmavanilla:cracked_tiles/conglomerate",
+    "firmavanilla:cracked_tiles/dacite",
+    "firmavanilla:cracked_tiles/diorite",
+    "firmavanilla:cracked_tiles/dolomite",
+    "firmavanilla:cracked_tiles/gabbro",
+    "firmavanilla:cracked_tiles/gneiss",
+    "firmavanilla:cracked_tiles/granite",
+    "firmavanilla:cracked_tiles/limestone",
+    "firmavanilla:cracked_tiles/marble",
+    "firmavanilla:cracked_tiles/phyllite",
+    "firmavanilla:cracked_tiles/quartzite",
+    "firmavanilla:cracked_tiles/rhyolite",
+    "firmavanilla:cracked_tiles/schist",
+    "firmavanilla:cracked_tiles/shale",
+    "firmavanilla:cracked_tiles/slate"
+  ]
+}

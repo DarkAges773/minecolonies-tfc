@@ -3,12 +3,14 @@ package com.structurizereplacements.substitution;
 import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.Config;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +48,29 @@ public final class BlockSubstitutions
     }
 
     /**
+     * Drop the memoized per-block resolutions (the rules stay). Needed on {@code TagsUpdatedEvent}:
+     * {@code setRules} runs in the reload-listener phase, but registry tags rebind in a LATER async step —
+     * a placement in that window memoizes a {@code from_tag} match against the OLD tag contents, and
+     * without this it would persist until the next reload.
+     */
+    public static void clearCache()
+    {
+        cache.clear();
+    }
+
+    /** The active fixed rules — snapshot for the server→client rule sync. */
+    public static List<SubstitutionRule> rules()
+    {
+        return rules;
+    }
+
+    /** The active interactive candidate rules — snapshot for the server→client rule sync. */
+    public static List<CandidateRule> candidates()
+    {
+        return candidateRules;
+    }
+
+    /**
      * The interactive candidate rule (if any) whose source matches this block — for the GUI. When several
      * match, the highest {@code priority} wins (ties broken by load order, last wins), so an optional pack
      * can override a base pool.
@@ -62,6 +87,24 @@ public final class BlockSubstitutions
             }
         }
         return Optional.ofNullable(best);
+    }
+
+    /**
+     * Server-authoritative validity check for a player-submitted pick ({@code from} → chosen {@code to}): the
+     * source must have a candidate pool and the target must be a legal member of it — exactly what the GUI
+     * offers ({@link #candidateFor} for the pool, then the same air / Domum-Ornamentum-materialized filtering
+     * the picker applies). The inbound choice packets filter through this, so a modified client can't bypass the
+     * candidate pools to substitute an arbitrary block (the rules load server-side, so this check is
+     * authoritative even when the client claims otherwise).
+     */
+    public static boolean isAllowedChoice(final Block from, final Block to)
+    {
+        if (from == null || to == null || to.defaultBlockState().isAir() || isMaterializedSource(to))
+        {
+            return false;
+        }
+        final Optional<CandidateRule> rule = candidateFor(from);
+        return rule.isPresent() && to.defaultBlockState().is(rule.get().toTag());
     }
 
     /**
@@ -140,20 +183,50 @@ public final class BlockSubstitutions
     }
 
     /**
-     * Collect the candidate-eligible source blocks of one blueprint entry, <i>as the GUI shows them</i>:
-     * each raw block (the placed block plus any Domum Ornamentum materials) is first mapped through
-     * datapack fixed rules ({@link #datapackTarget}), and kept only if a candidate pool matches the
-     * <b>resolved</b> block. So a {@code minecraft:oak_planks -> tfc:oak_planks} conversion surfaces as a
-     * {@code tfc:oak_planks} row, and the player's pick (stored against the resolved block) applies on top
-     * of the conversion.
+     * Collect the candidate-eligible source blocks of one blueprint entry, <i>as the GUI shows them</i>,
+     * recording for each the blueprint <b>host</b> block that contributed it. Each raw block (the placed
+     * block plus any Domum Ornamentum materials) is first mapped through datapack fixed rules
+     * ({@link #datapackTarget}) and kept only if a candidate pool matches the <b>resolved</b> block — so a
+     * {@code minecraft:oak_planks -> tfc:oak_planks} conversion surfaces as a {@code tfc:oak_planks} row, and
+     * the player's pick (stored against the resolved block) applies on top of the conversion.
+     *
+     * <p>The host is the blueprint block the source came from: a bare candidate block is its own host; a
+     * Domum Ornamentum materialized block is the host of every material it carries (so a framed block whose
+     * frame is oak planks registers the framed block as a host of the {@code oak_planks} row). Accumulating
+     * this across a blueprint tells the GUI, per row, which distinct blueprint blocks a swap would affect —
+     * the "affects N blocks" tooltip. Each source's host set preserves first-seen order.
      */
-    public static void collectCandidateSources(final BlockInfo info, final Collection<Block> out)
+    public static void collectCandidateSourcesWithHosts(final BlockInfo info, final Map<Block, List<ItemStack>> out)
     {
+        if (info == null)
+        {
+            return;
+        }
+        final BlockState state = info.getState();
+        final Block hostBlock = state == null ? null : state.getBlock();
+        if (hostBlock == null)
+        {
+            return;
+        }
+        // Display the host as it will actually be built: apply the implicit datapack conversions (fixed rules,
+        // no player pick) first. MineColonies blueprints are vanilla, so e.g. an oak-planks host is implicitly
+        // converted to its TFC equivalent and a Domum Ornamentum frame's material is converted too — the host
+        // must show that, matching the (already-resolved) row, or the tooltip misleads by naming/showing the
+        // un-converted blueprint block that never gets placed.
+        final BlockInfo built = apply(info, null);
+        final BlockState builtState = built.getState();
+        final Block builtHost = builtState == null ? hostBlock : builtState.getBlock();
+        // A material-aware display stack for that built host: a plain block (with the item-less fallback so e.g.
+        // a potted plant shows its plant, not "Air"), or — for a Domum Ornamentum block — its (converted)
+        // material map copied on, so the host reports its real name (e.g. "Oak Panel") and textured icon rather
+        // than the bare block's unlocalized dynamic descriptionId. Built once per entry, shared across its sources.
+        final ItemStack hostStack =
+                DomumMaterialRewriter.withMaterialNbt(iconStack(builtHost), builtHost, built.getTileEntityData());
         for (final Block raw : sourceBlocksOf(info))
         {
-            // A Domum Ornamentum host block (its material lives in NBT, handled via the contained-block rows
-            // collected alongside it) is not a meaningful plain-substitution source — skip it so it doesn't
-            // show as a cycling, unpickable row.
+            // A Domum Ornamentum host block (its material lives in NBT, surfaced via the contained-block rows
+            // collected alongside it) is not a meaningful plain-substitution source — skip it as a row key. It
+            // still appears as a host of its materials' rows below.
             if (DomumMaterialRewriter.isMaterializedBlock(raw))
             {
                 continue;
@@ -161,9 +234,66 @@ public final class BlockSubstitutions
             final Block resolved = datapackTarget(raw);
             if (!DomumMaterialRewriter.isMaterializedBlock(resolved) && candidateFor(resolved).isPresent())
             {
-                out.add(resolved);
+                addDistinctStack(out.computeIfAbsent(resolved, k -> new ArrayList<>()), hostStack);
             }
         }
+    }
+
+    /**
+     * A best-effort display {@link ItemStack} for a block: normally {@code new ItemStack(block)}, but for an
+     * item-less block ({@code asItem() == AIR}) we fall back where we can — a {@link FlowerPotBlock} (e.g. TFC
+     * potted plants, registered with no {@code BlockItem}) shows its contained plant's item, which exists and
+     * is distinct per pot. Returns {@link ItemStack#EMPTY} when nothing can represent it. Shared by the GUI's
+     * row icons and the affected-host display so both name/icon item-less blocks the same way (a bare
+     * {@code new ItemStack} would otherwise read as "Air").
+     */
+    public static ItemStack iconStack(final Block block)
+    {
+        final ItemStack direct = new ItemStack(block);
+        if (!direct.isEmpty())
+        {
+            return direct;
+        }
+        if (block instanceof FlowerPotBlock pot)
+        {
+            final ItemStack content = new ItemStack(pot.getContent());
+            if (!content.isEmpty())
+            {
+                return content;
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /** Append {@code stack} unless an item-and-NBT-equal one is already present (DO material combos differ by NBT). */
+    private static void addDistinctStack(final List<ItemStack> hosts, final ItemStack stack)
+    {
+        for (final ItemStack existing : hosts)
+        {
+            if (ItemStack.isSameItemSameTags(existing, stack))
+            {
+                return;
+            }
+        }
+        hosts.add(stack);
+    }
+
+    /**
+     * The ordered {@code source -> affected-host-stacks} map for a whole blueprint (or any block-entry
+     * iterable): every key is a candidate source the GUI shows as a row, mapped to the distinct blueprint
+     * blocks that a swap would affect, each as a material-aware display {@link ItemStack} (see
+     * {@link #collectCandidateSourcesWithHosts}). Hosts are deduped at material granularity, so the same
+     * Domum Ornamentum block with two material combos counts as two affected blocks. Key order is
+     * first-seen; the key set is exactly the rows the picker would show.
+     */
+    public static Map<Block, List<ItemStack>> candidateSourceHosts(final Iterable<BlockInfo> entries)
+    {
+        final Map<Block, List<ItemStack>> hosts = new LinkedHashMap<>();
+        for (final BlockInfo info : entries)
+        {
+            collectCandidateSourcesWithHosts(info, hosts);
+        }
+        return hosts;
     }
 
     /**

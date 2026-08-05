@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/alabaster_tile_slab/cyan" },
+    "type=top":    { "model": "firmavanilla:block/alabaster_tile_slab/cyan_top" },
+    "type=double": { "model": "firmavanilla:block/alabaster_tile/cyan" }
+  }
+}

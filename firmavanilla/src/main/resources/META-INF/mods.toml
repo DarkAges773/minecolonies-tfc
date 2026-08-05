@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="${mod_authors}"
+description='''${mod_description}'''
+
+[[dependencies.${mod_id}]]
+    modId="forge"
+    mandatory=true
+    versionRange="${forge_version_range}"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+# TerraFirmaCraft is mandatory: this mod supplies TFC-palette variants and registers cemented twins for
+# TFC's rock set, and the in-world conversion consumes tfc:mortar. Load AFTER it so its blocks exist when
+# we scan the registry for cobble to twin.
+[[dependencies.${mod_id}]]
+    modId="tfc"
+    mandatory=true
+    versionRange="[3.0,)"
+    ordering="AFTER"
+    side="BOTH"

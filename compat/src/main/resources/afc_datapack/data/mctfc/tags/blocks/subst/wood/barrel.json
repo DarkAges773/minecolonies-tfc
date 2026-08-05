@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:barrel/baobab",
+    "firmavanilla:barrel/cypress",
+    "firmavanilla:barrel/eucalyptus",
+    "firmavanilla:barrel/fig",
+    "firmavanilla:barrel/hevea",
+    "firmavanilla:barrel/ipe",
+    "firmavanilla:barrel/ironwood",
+    "firmavanilla:barrel/mahogany",
+    "firmavanilla:barrel/teak",
+    "firmavanilla:barrel/tualang"
+  ]
+}

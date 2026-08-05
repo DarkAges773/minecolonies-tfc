@@ -35,7 +35,7 @@ public class MixinRegisteredStructureManager
         {
             return;
         }
-        final Map<Block, Block> staged = StagedChoices.take(building.getPosition());
+        final Map<Block, Block> staged = StagedChoices.take(level.dimension(), building.getPosition());
         if (staged != null && !staged.isEmpty())
         {
             holder.setReplacementChoices(staged);

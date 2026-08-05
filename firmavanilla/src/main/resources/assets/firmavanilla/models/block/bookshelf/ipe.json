@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "afc:block/wood/planks/ipe",
+    "side": "firmavanilla:block/bookshelf/ipe"
+  }
+}

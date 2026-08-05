@@ -6,6 +6,13 @@
     { "from": "minecraft:dirt", "to": "tfc:dirt/loam" },
     { "from_tag": "mctfc:subst/soil/dirt", "to_tag": "mctfc:subst/soil/dirt" },
 
+    { "from": "minecraft:coarse_dirt", "to": "firmavanilla:coarse_dirt/loam" },
+    { "from_tag": "mctfc:subst/soil/coarse_dirt", "to_tag": "mctfc:subst/soil/coarse_dirt" },
+
+    { "from": "minecraft:podzol", "to": "tfc:rooted_dirt/loam" },
+    { "from": "minecraft:mycelium", "to": "tfc:rooted_dirt/loam" },
+    { "from_tag": "mctfc:subst/soil/rooted_dirt", "to_tag": "mctfc:subst/soil/rooted_dirt" },
+
     { "from": "minecraft:grass_block", "to": "tfc:grass/loam" },
     { "from_tag": "mctfc:subst/soil/grass", "to_tag": "mctfc:subst/soil/grass" },
 
@@ -15,17 +22,27 @@
     { "from": "minecraft:dead_bush", "to": "tfc:plant/dead_bush" },
     { "from": "minecraft:potted_dead_bush", "to": "tfc:plant/potted/dead_bush" },
 
+    { "from": "minecraft:sea_pickle", "to": "tfc:sea_pickle" },
+
     { "from": "minecraft:pumpkin", "to": "tfc:pumpkin" },
     { "from": "minecraft:melon", "to": "tfc:melon" },
     { "from": "minecraft:jack_o_lantern", "to": "tfc:jack_o_lantern" },
 
     { "from": "minecraft:torch", "to": "tfc:torch" },
     { "from": "minecraft:wall_torch", "to": "tfc:wall_torch" },
+    { "from": "minecraft:soul_torch", "to": "firmavanilla:soul_torch" },
+    { "from": "minecraft:soul_wall_torch", "to": "firmavanilla:soul_wall_torch" },
+
+    { "from": "minecraft:campfire", "to": "firmavanilla:signal_campfire", "apply_properties": { "lit": "true" } },
+    { "from": "minecraft:soul_campfire", "to": "firmavanilla:soul_signal_campfire", "apply_properties": { "lit": "true" } },
 
     { "from": "minecraft:chain", "to": "tfc:metal/chain/wrought_iron" },
     { "from_tag": "mctfc:subst/metal/chain", "to_tag": "mctfc:subst/metal/chain" },
 
     { "from": "minecraft:lantern", "to": "tfc:metal/lamp/wrought_iron", "apply_properties": { "lit": "true" } },
-    { "from_tag": "mctfc:subst/metal/lamp", "to_tag": "mctfc:subst/metal/lamp", "apply_properties": { "lit": "true" } }
+    { "from_tag": "mctfc:subst/metal/lamp", "to_tag": "mctfc:subst/metal/lamp", "apply_properties": { "lit": "true" } },
+
+    { "from": "minecraft:soul_lantern", "to": "firmavanilla:soul_lamp/wrought_iron", "apply_properties": { "lit": "true" } },
+    { "from_tag": "mctfc:subst/firmavanilla/soul_lamp", "to_tag": "mctfc:subst/firmavanilla/soul_lamp", "apply_properties": { "lit": "true" } }
   ]
 }

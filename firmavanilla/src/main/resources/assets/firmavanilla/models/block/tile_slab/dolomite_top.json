@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/slab_top", "textures": { "bottom": "firmavanilla:block/tiles/dolomite", "top": "firmavanilla:block/tiles/dolomite", "side": "firmavanilla:block/tiles/dolomite" } }

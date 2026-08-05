@@ -1,0 +1,9 @@
+{
+  "ingredient": { "item": "minecolonies:plain_cheesecake" },
+  "hunger": 4,
+  "saturation": 0.75,
+  "water": 0,
+  "decay_modifier": 1.0,
+  "grain": 1,
+  "dairy": 2
+}

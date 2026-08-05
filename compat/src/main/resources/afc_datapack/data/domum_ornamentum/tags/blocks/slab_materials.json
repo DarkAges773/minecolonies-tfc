@@ -60,6 +60,16 @@
     "afc:wood/wood/tualang",
     "afc:wood/stripped_log/tualang",
     "afc:wood/stripped_wood/tualang",
-    "afc:wood/leaves/tualang"
+    "afc:wood/leaves/tualang",
+    "firmavanilla:bookshelf/baobab",
+    "firmavanilla:bookshelf/cypress",
+    "firmavanilla:bookshelf/eucalyptus",
+    "firmavanilla:bookshelf/fig",
+    "firmavanilla:bookshelf/hevea",
+    "firmavanilla:bookshelf/ipe",
+    "firmavanilla:bookshelf/ironwood",
+    "firmavanilla:bookshelf/mahogany",
+    "firmavanilla:bookshelf/teak",
+    "firmavanilla:bookshelf/tualang"
   ]
 }

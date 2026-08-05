@@ -1,0 +1,9 @@
+{
+  "ingredient": { "item": "minecolonies:corn_chowder" },
+  "hunger": 4,
+  "saturation": 0.25,
+  "water": 10,
+  "decay_modifier": 1.0,
+  "grain": 1.5,
+  "vegetables": 1
+}

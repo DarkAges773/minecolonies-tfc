@@ -1,0 +1,5 @@
+{
+  "__comment": "Blocks in this tag are never stripped by the MineColonies builder's CLEAR phase: when a blueprint has air where one of these blocks already exists in the world, the builder leaves it in place instead of tearing it out. CLEAR (air-strip) path only — the builder still places real blueprint blocks normally, and deliberate building demolition (REMOVE) is unaffected. Empty by default (opt-in); add block ids or #tag references in a datapack and /reload.",
+  "replace": false,
+  "values": ["tfc:nest_box"]
+}

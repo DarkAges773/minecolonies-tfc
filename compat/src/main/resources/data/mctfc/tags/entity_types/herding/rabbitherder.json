@@ -1,0 +1,7 @@
+{
+  "__comment": "TFC animals the MineColonies Rabbit Hutch (job minecolonies:rabbitherder) tends. TFC's rabbit already extends vanilla Rabbit, so it's matched by the vanilla predicate too; listed here for uniformity and so add-on rabbits can join.",
+  "replace": false,
+  "values": [
+    "tfc:rabbit"
+  ]
+}

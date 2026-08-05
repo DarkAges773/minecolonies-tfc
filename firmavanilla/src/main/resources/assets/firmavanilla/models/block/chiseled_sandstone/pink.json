@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "tfc:block/sandstone/top/pink",
+    "side": "firmavanilla:block/chiseled_sandstone/pink"
+  }
+}

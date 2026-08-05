@@ -10,9 +10,9 @@ authors="${mod_authors}"
 logoFile="logo.png"
 description='''${mod_description}'''
 
-# We mixin into Structurize, so we must load AFTER it. MineColonies is an OPTIONAL dependency: when
-# present, the builder/Build-Options integration activates; when absent, the mod is a pure Structurize
-# substitution add-on.
+# We mixin into Structurize, so we must load AFTER it. MineColonies — or its SlimColonies fork — is an
+# OPTIONAL dependency: when present, the builder/Build-Options integration activates; when absent, the
+# mod is a pure Structurize substitution add-on.
 [[dependencies.${mod_id}]]
     modId="forge"
     mandatory=true
@@ -35,5 +35,13 @@ description='''${mod_description}'''
     modId="minecolonies"
     mandatory=false
     versionRange="[1.0,)"
+    ordering="AFTER"
+    side="BOTH"
+# Integration developed against 1.20.1-17.4.1; the bound carries the MC prefix (a bare "[17,)" would be
+# satisfied by any 1.20.1-* version under the <mcversion>-<semver> scheme).
+[[dependencies.${mod_id}]]
+    modId="slimcolonies"
+    mandatory=false
+    versionRange="[1.20.1-17.4,)"
     ordering="AFTER"
     side="BOTH"

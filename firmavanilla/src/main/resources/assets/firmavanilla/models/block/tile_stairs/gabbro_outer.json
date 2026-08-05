@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/outer_stairs", "textures": { "bottom": "firmavanilla:block/tiles/gabbro", "top": "firmavanilla:block/tiles/gabbro", "side": "firmavanilla:block/tiles/gabbro" } }

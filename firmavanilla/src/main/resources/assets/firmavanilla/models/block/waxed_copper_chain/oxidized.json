@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/chain", "render_type": "minecraft:cutout_mipped", "textures": { "all": "firmavanilla:block/copper_chain/oxidized", "particle": "firmavanilla:block/copper_chain/oxidized" } }

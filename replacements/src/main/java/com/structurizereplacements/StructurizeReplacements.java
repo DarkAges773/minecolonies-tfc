@@ -5,7 +5,8 @@ import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.Ad
 import com.ldtteam.structurize.placement.handlers.placement.PlacementHandlers.GeneralBlockPlacementHandler;
 import com.mojang.logging.LogUtils;
 import com.structurizereplacements.data.DefaultRulesDataPack;
-import com.structurizereplacements.integration.minecolonies.MineColoniesIntegration;
+import com.structurizereplacements.integration.minecolonies.MineColoniesBridge;
+import com.structurizereplacements.integration.slimcolonies.SlimColoniesBridge;
 import com.structurizereplacements.network.Network;
 import com.structurizereplacements.placement.TwoTallPlantPlacementHandler;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -41,12 +42,19 @@ public class StructurizeReplacements
         // DoublePlantPlacementHandler — so the builder's per-tick placement doesn't leave a self-destructing
         // lone half. Inserted before the catch-all GeneralBlockPlacementHandler. (Structurize is always present.)
         PlacementHandlers.add(new TwoTallPlantPlacementHandler(), GeneralBlockPlacementHandler.class, AddType.BEFORE);
-        // Optional MineColonies integration — touched only when MineColonies is loaded, so its
-        // MineColonies-referencing classes are never classloaded in the standalone case.
+        // Optional colony-mod integration: the shared logic lives in integration.colony; each fork
+        // contributes only a ColonyBridge (the sole non-mixin class touching that fork's types), so nothing
+        // fork-referencing is classloaded in the standalone case. else-if: the integration is single-slot,
+        // and the two forks can't coexist at runtime anyway — if both are somehow present, MineColonies wins.
         if (ModList.get().isLoaded("minecolonies"))
         {
-            MineColoniesIntegration.init();
+            MineColoniesBridge.init();
             LOGGER.info("Structurize Replacements: MineColonies integration enabled.");
+        }
+        else if (ModList.get().isLoaded("slimcolonies"))
+        {
+            SlimColoniesBridge.init();
+            LOGGER.info("Structurize Replacements: SlimColonies integration enabled.");
         }
         LOGGER.info("Structurize Replacements loaded.");
     }

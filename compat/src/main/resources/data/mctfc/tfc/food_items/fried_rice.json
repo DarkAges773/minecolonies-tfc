@@ -1,0 +1,10 @@
+{
+  "ingredient": { "item": "minecolonies:fried_rice" },
+  "hunger": 4,
+  "saturation": 1.25,
+  "water": 0,
+  "decay_modifier": 1.0,
+  "grain": 2.5,
+  "vegetables": 1,
+  "protein": 1
+}

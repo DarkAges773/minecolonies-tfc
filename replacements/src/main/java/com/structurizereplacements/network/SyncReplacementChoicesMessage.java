@@ -1,6 +1,8 @@
 package com.structurizereplacements.network;
 
 import com.structurizereplacements.placement.ServerPlacementChoices;
+import com.structurizereplacements.substitution.BlockSubstitutions;
+import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,6 +20,9 @@ import java.util.function.Supplier;
  */
 public class SyncReplacementChoicesMessage
 {
+    /** Decode cap — a blueprint holds at most a few hundred distinct blocks; reject anything absurd. */
+    private static final int MAX_CHOICES = 4096;
+
     private final Map<ResourceLocation, ResourceLocation> choices;
 
     public SyncReplacementChoicesMessage(final Map<Block, Block> blockChoices)
@@ -36,6 +41,10 @@ public class SyncReplacementChoicesMessage
     public SyncReplacementChoicesMessage(final FriendlyByteBuf buf)
     {
         final int size = buf.readVarInt();
+        if (size < 0 || size > MAX_CHOICES)
+        {
+            throw new DecoderException("Replacement-choices count " + size + " out of range (max " + MAX_CHOICES + ")");
+        }
         this.choices = new HashMap<>(size);
         for (int i = 0; i < size; i++)
         {
@@ -64,7 +73,9 @@ public class SyncReplacementChoicesMessage
             choices.forEach((fromId, toId) -> {
                 final Block from = block(fromId);
                 final Block to = block(toId);
-                if (from != null && to != null)
+                // Validate against the server's candidate pools — drop any pick a modified client forged outside
+                // what the GUI could offer, so it can't substitute an arbitrary block.
+                if (from != null && to != null && BlockSubstitutions.isAllowedChoice(from, to))
                 {
                     resolved.put(from, to);
                 }

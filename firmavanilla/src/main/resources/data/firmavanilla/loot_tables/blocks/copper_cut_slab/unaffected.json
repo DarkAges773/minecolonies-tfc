@@ -1,0 +1,1 @@
+{"type":"minecraft:block","pools":[{"name":"loot_pool","rolls":1,"entries":[{"type":"minecraft:item","name":"firmavanilla:copper_cut_slab/unaffected"}],"conditions":[{"condition":"minecraft:survives_explosion"}]}]}

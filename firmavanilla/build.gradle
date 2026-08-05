@@ -1,0 +1,171 @@
+// TFC Vanilla Building Blocks — a STANDALONE TerraFirmaCraft companion that ships decorative building-block
+// variants (vanilla shapes recoloured to TFC's rock/sand palettes) plus the non-falling "cemented" cobble
+// twins. Depends ONLY on TerraFirmaCraft — no MineColonies, no :replacements. The MC×TFC bridge (:compat)
+// hard-depends on THIS project and points its substitution rules at these blocks.
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7.+'
+    }
+}
+
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle'
+}
+
+// :firmavanilla has NO mixins of its own. We apply MixinGradle anyway because the dev run configurations
+// live in this project, and applying it here is what makes ForgeGradle inject the runtime refmap remapping
+// (mixin.env.remapRefMap) into those runs. Without it, OTHER mods' SRG-named mixins (e.g. Patchouli's
+// AccessorScreen, pulled in transitively by TFC) fail to apply in the official-mapped dev env. (Same
+// rationale as :compat.)
+apply plugin: 'org.spongepowered.mixin'
+
+def mod_id = 'firmavanilla'
+def mod_name = 'TFC Vanilla Building Blocks'
+def mod_license = 'GPL-3.0'
+// MAJOR.MINOR — bump manually (MINOR = new back-compat feature/blocks, MAJOR = block-id/NBT break).
+def mod_version_base = '0.1'
+// PATCH auto-rolls from the count of commits that touched this subproject (see rootProject.gitBuildNumber)
+// — the rolling "build number", advancing only when this mod changes.
+def mod_version = "${mod_version_base}.${rootProject.gitBuildNumber(projectDir.name)}".toString()
+def mod_group_id = 'com.firmavanilla'
+def mod_authors = 'DarkAges'
+def mod_description = 'TerraFirmaCraft-palette variants of vanilla building blocks (chiseled sandstone, …) plus non-falling cemented cobblestone. Standalone; only requires TerraFirmaCraft.'
+
+// Released as <mcversion>-<semver> (e.g. 1.20.1-0.1.0), matching the ecosystem (see :replacements/:compat).
+def full_version = "${minecraft_version}-${mod_version}".toString()
+version = full_version
+group = mod_group_id
+base { archivesName = mod_id }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+    // Standalone runs: load ONLY this mod (+ TFC and its mandatory dep Patchouli from the deobf deps below).
+    // No MineColonies/Structurize here — this proves the mod works as a plain TFC decorative add-on and is
+    // faster to launch. The full stack (all three of our mods + MC) is run from :compat instead.
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+        server {
+            workingDirectory project.file('run-server')
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        name = 'LDTTeam - Modding'
+        url = 'https://ldtteam.jfrog.io/ldtteam/modding/'
+    }
+    maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    // TerraFirmaCraft is the only mandatory mod dependency, and now a COMPILE dependency: the copper-bars
+    // weathering feature references TFC types/blocks (e.g. copying tfc:metal/bars/copper's properties and
+    // dropping/placing its item), so we need it at compile time, not just on the dev classpath. Patchouli is
+    // TFC's own mandatory dep; without it FML refuses to load TFC.
+    implementation fg.deobf("curse.maven:terrafirmacraft-302973:${tfc_file_id}")
+    runtimeOnly fg.deobf("curse.maven:patchouli-306770:${patchouli_file_id}")
+    // Dev-run-only: recipe/item viewer + block info HUD for testing (not real dependencies).
+    runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")
+    runtimeOnly fg.deobf("curse.maven:jade-324717:6855440")
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+            forge_version: forge_version, forge_version_range: forge_version_range,
+            loader_version_range: loader_version_range,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: full_version,
+            mod_authors: mod_authors, mod_description: mod_description,
+    ]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_id,
+                'Specification-Vendor'  : mod_authors,
+                'Specification-Version' : '1',
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor' : mod_authors,
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Cut a release in CHANGELOG.md: rename the curated '## [Unreleased]' section to a dated section for the
+// current version and leave a fresh empty '## [Unreleased]' on top. Run at release time
+// (`./gradlew :firmavanilla:cutRelease`), then commit the changelog. Refuses when [Unreleased] is empty.
+tasks.register('cutRelease') {
+    group = 'release'
+    description = "Move CHANGELOG [Unreleased] into a dated section for version ${mod_version}."
+    doLast {
+        def changelog = file('CHANGELOG.md')
+        if (!changelog.exists()) {
+            throw new GradleException("No CHANGELOG.md in ${projectDir}")
+        }
+        def text = changelog.text
+        def marker = '## [Unreleased]'
+        def idx = text.indexOf(marker)
+        if (idx < 0) {
+            throw new GradleException("No '${marker}' section in CHANGELOG.md")
+        }
+        def afterMarker = idx + marker.length()
+        def nextHeader = text.indexOf('\n## [', afterMarker)
+        def body = (nextHeader < 0 ? text.substring(afterMarker) : text.substring(afterMarker, nextHeader)).trim()
+        if (body.isEmpty()) {
+            throw new GradleException("CHANGELOG [Unreleased] is empty - nothing to release.")
+        }
+        def date = new Date().format('yyyy-MM-dd')
+        changelog.text = text.substring(0, idx) + "${marker}\n\n## [${mod_version}] - ${date}" + text.substring(afterMarker)
+        println "Cut ${mod_id} release ${mod_version} (${date}) in CHANGELOG.md"
+    }
+}

@@ -1,0 +1,1 @@
+{"feature":"firmavanilla:prismarine_deposit","placement":[{"type":"minecraft:rarity_filter","chance":48},{"type":"minecraft:in_square"},{"type":"minecraft:heightmap","heightmap":"OCEAN_FLOOR_WG"},{"type":"tfc:biome"}]}

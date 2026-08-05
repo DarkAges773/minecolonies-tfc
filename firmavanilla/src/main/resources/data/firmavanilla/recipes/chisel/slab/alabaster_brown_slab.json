@@ -1,0 +1,1 @@
+{ "type": "tfc:chisel", "ingredient": "firmavanilla:alabaster_tile/brown", "result": "firmavanilla:alabaster_tile_slab/brown", "mode": "slab", "extra_drop": { "item": "firmavanilla:alabaster_tile_slab/brown" } }

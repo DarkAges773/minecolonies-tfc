@@ -1,0 +1,1 @@
+{ "variants": { "axis=x": { "model": "firmavanilla:block/copper_chain/exposed", "x": 90, "y": 90 }, "axis=y": { "model": "firmavanilla:block/copper_chain/exposed" }, "axis=z": { "model": "firmavanilla:block/copper_chain/exposed", "x": 90 } } }

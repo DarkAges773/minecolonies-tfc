@@ -1,0 +1,1 @@
+{ "type": "tfc:chisel", "ingredient": "firmavanilla:tiles/quartzite", "result": "firmavanilla:tile_slab/quartzite", "mode": "slab", "extra_drop": { "item": "firmavanilla:tile_slab/quartzite" } }

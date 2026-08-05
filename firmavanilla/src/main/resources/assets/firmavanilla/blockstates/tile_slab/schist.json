@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/tile_slab/schist" },
+    "type=top":    { "model": "firmavanilla:block/tile_slab/schist_top" },
+    "type=double": { "model": "firmavanilla:block/tiles/schist" }
+  }
+}

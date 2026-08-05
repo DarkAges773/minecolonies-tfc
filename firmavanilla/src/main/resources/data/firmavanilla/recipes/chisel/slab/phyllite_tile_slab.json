@@ -1,0 +1,1 @@
+{ "type": "tfc:chisel", "ingredient": "firmavanilla:tiles/phyllite", "result": "firmavanilla:tile_slab/phyllite", "mode": "slab", "extra_drop": { "item": "firmavanilla:tile_slab/phyllite" } }

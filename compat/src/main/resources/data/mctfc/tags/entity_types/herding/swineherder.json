@@ -1,0 +1,7 @@
+{
+  "__comment": "TFC animals the MineColonies Swineherd (job minecolonies:swineherder) tends. Matched in addition to its vanilla Pig predicate.",
+  "replace": false,
+  "values": [
+    "tfc:pig"
+  ]
+}

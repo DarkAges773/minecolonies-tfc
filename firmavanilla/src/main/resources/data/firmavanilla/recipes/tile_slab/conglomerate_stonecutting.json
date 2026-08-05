@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/conglomerate" },
+  "result": "firmavanilla:tile_slab/conglomerate",
+  "count": 2
+}

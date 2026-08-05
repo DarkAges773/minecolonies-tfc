@@ -1,0 +1,1 @@
+{ "type": "tfc:chisel", "ingredient": "firmavanilla:tiles/conglomerate", "result": "firmavanilla:tile_slab/conglomerate", "mode": "slab", "extra_drop": { "item": "firmavanilla:tile_slab/conglomerate" } }

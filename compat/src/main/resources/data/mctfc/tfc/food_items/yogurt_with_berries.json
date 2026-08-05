@@ -1,0 +1,9 @@
+{
+  "ingredient": { "item": "minecolonies:yogurt_with_berries" },
+  "hunger": 4,
+  "saturation": 0.75,
+  "water": 0,
+  "decay_modifier": 1.0,
+  "fruit": 1.5,
+  "dairy": 1.5
+}

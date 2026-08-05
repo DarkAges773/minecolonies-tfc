@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "XTX", "X X", "XXX" ],
+  "key": {
+    "X": { "item": "tfc:wood/lumber/white_cedar" },
+    "T": { "item": "tfc:wood/planks/white_cedar_trapdoor" }
+  },
+  "result": { "item": "firmavanilla:barrel/white_cedar" }
+}

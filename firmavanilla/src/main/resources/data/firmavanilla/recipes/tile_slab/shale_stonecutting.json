@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "firmavanilla:tiles/shale" },
+  "result": "firmavanilla:tile_slab/shale",
+  "count": 2
+}

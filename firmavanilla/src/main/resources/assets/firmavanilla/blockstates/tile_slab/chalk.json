@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "type=bottom": { "model": "firmavanilla:block/tile_slab/chalk" },
+    "type=top":    { "model": "firmavanilla:block/tile_slab/chalk_top" },
+    "type=double": { "model": "firmavanilla:block/tiles/chalk" }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "firmavanilla:coarse_dirt/loam",
+    "firmavanilla:coarse_dirt/sandy_loam",
+    "firmavanilla:coarse_dirt/silt",
+    "firmavanilla:coarse_dirt/silty_loam"
+  ]
+}
