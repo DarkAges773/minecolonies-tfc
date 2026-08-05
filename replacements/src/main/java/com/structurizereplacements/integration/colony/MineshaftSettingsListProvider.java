@@ -131,10 +131,10 @@ public class MineshaftSettingsListProvider implements ScrollingList.DataProvider
         // Action control — our replace icon over the colony mod's mini-button frame, the same icon-button
         // style as the "Replace" button on the Build Options window (2px frame visible, icon fills the rest).
         final ButtonImageWithIcon button = new ButtonImageWithIcon(
-                new ResourceLocation("structurizereplacements", "textures/gui/replace_button.png"), 2);
+                ResourceLocation.fromNamespaceAndPath("structurizereplacements", "textures/gui/replace_button.png"), 2);
         button.setID("structurizereplacements:mineshaftPalette");
-        button.setImage(new ResourceLocation(ColonyIntegration.bridge().assetNamespace(),
-                "textures/gui/builderhut/builder_button_mini.png"), false);
+        button.setImage(ResourceLocation.fromNamespaceAndPath(ColonyIntegration.bridge().assetNamespace(),
+                "textures/gui/builderhut/builder_button_mini.png"));
         button.setSize(16, 16);
         button.setPosition(5, 24);
         button.setHandler(b -> new WindowReplacements(new MineshaftChoiceContext(buildingView), parent).open());

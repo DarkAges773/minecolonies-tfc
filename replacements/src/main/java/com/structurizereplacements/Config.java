@@ -1,23 +1,23 @@
 package com.structurizereplacements;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.config.ModConfigEvent;
 
 /**
  * Common config. Master switch for the substitution feature.
  */
-@Mod.EventBusSubscriber(modid = StructurizeReplacements.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = StructurizeReplacements.MODID)
 public class Config
 {
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
-    private static final ForgeConfigSpec.BooleanValue ENABLE_SUBSTITUTION = BUILDER
+    private static final ModConfigSpec.BooleanValue ENABLE_SUBSTITUTION = BUILDER
             .comment("Enable block substitution when placing Structurize blueprints.")
             .define("enableSubstitution", true);
 
-    static final ForgeConfigSpec SPEC = BUILDER.build();
+    static final ModConfigSpec SPEC = BUILDER.build();
 
     // volatile: written on the config-load thread, read from server/render/netty threads.
     public static volatile boolean enableSubstitution;

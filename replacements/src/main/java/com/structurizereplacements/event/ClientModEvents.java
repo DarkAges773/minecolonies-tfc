@@ -5,10 +5,10 @@ import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.placement.PlacementChoices;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import com.structurizereplacements.substitution.DomumMaterialRewriter;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
 /**
  * Client mod-bus setup. Wires the substitution preview for Domum Ornamentum "materialized" blocks.
@@ -22,7 +22,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
  * preview-only (its sole caller is {@code BlueprintRenderer#init}), so this never double-applies with
  * server placement.
  */
-@Mod.EventBusSubscriber(modid = StructurizeReplacements.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = StructurizeReplacements.MODID, value = Dist.CLIENT)
 public final class ClientModEvents
 {
     private ClientModEvents() {}

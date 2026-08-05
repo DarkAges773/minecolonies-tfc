@@ -5,10 +5,10 @@ import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.placement.ClientPlacementChoices;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.network.Connection;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ import java.util.List;
  *       the server clears its per-player copy itself on logout).</li>
  * </ul>
  */
-@Mod.EventBusSubscriber(modid = StructurizeReplacements.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = StructurizeReplacements.MODID, value = Dist.CLIENT)
 public final class ClientForgeEvents
 {
     private ClientForgeEvents() {}

@@ -7,20 +7,20 @@ import com.structurizereplacements.placement.StagedChoices;
 import com.structurizereplacements.preset.BuiltinPresetReloadListener;
 import com.structurizereplacements.substitution.BlockSubstitutionReloadListener;
 import com.structurizereplacements.substitution.BlockSubstitutions;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.OnDatapackSyncEvent;
-import net.minecraftforge.event.TagsUpdatedEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.neoforge.event.TagsUpdatedEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 /**
  * Forge-bus event handlers. Registers the datapack-driven substitution loader so its rules reload
  * with the rest of the server's datapacks (including on {@code /reload}), and pushes the loaded
  * ruleset to clients so remote preview/GUI work on dedicated servers.
  */
-@Mod.EventBusSubscriber(modid = StructurizeReplacements.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = StructurizeReplacements.MODID)
 public final class ModEvents
 {
     private ModEvents() {}

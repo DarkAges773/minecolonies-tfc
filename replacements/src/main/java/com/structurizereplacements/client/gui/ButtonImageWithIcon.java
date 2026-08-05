@@ -1,10 +1,11 @@
 package com.structurizereplacements.client.gui;
 
+import com.ldtteam.blockui.BOGuiGraphics;
+import com.ldtteam.blockui.UiRenderMacros;
 import com.ldtteam.blockui.controls.ButtonImage;
 import com.ldtteam.blockui.controls.Image;
 import com.ldtteam.blockui.util.records.SizeI;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -41,25 +42,21 @@ public class ButtonImageWithIcon extends ButtonImage
         this.iconSrcH = dim.height();
     }
 
+    /**
+     * BlockUI's 1.21.1 hook takes only the graphics + mouse position — the background's geometry and texture
+     * arguments are gone. {@code ButtonImage#drawSelf} still blits its background at the pane's absolute
+     * {@code x}/{@code y}/{@code width}/{@code height} (the protected {@code Pane} fields) and calls this
+     * straight after with blend enabled and the hover tint already on the shader colour, so the overlay just
+     * reads that geometry off {@code this} instead of off parameters.
+     */
     @Override
-    public void postDrawBackground(
-      final PoseStack ms,
-      final ResourceLocation image,
-      final int x,
-      final int y,
-      final int width,
-      final int height,
-      final int u,
-      final int v,
-      final int w,
-      final int h,
-      final int mapWidth,
-      final int mapHeight)
+    public void postDrawBackground(final BOGuiGraphics target, final double mx, final double my)
     {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         // Whole icon (0,0..src) blitted into the inset rect; GPU does the single downscale.
-        blit(ms, icon, x + inset, y + inset, width - 2 * inset, height - 2 * inset,
+        UiRenderMacros.blit(target.pose(), icon,
+          x + inset, y + inset, width - 2 * inset, height - 2 * inset,
           0, 0, iconSrcW, iconSrcH, iconSrcW, iconSrcH);
     }
 }

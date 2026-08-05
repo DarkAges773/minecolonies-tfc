@@ -2,10 +2,21 @@
 
 All notable changes to this mod are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
-[Semantic Versioning](https://semver.org/). Releases are published as `1.20.1-<version>`
-(the Minecraft version prefixes the SemVer).
+[Semantic Versioning](https://semver.org/). Releases are published as `<mcversion>-<version>`
+(the Minecraft version prefixes the SemVer). **This branch targets Minecraft 1.21.1 on NeoForge**; the
+1.20.1-Forge releases below were cut from the `main` branch.
 
 ## [Unreleased]
+
+### Changed
+- **Now runs on Minecraft 1.21.1 with NeoForge** (the 1.20.1 Forge build continues on its own branch). Requires
+  NeoForge 21.1+, Structurize and — optionally, as before — MineColonies. Everything the mod does is unchanged;
+  this is a platform move.
+
+### Removed
+- **SlimColonies support is not available in the 1.21.1 build.** SlimColonies has no 1.21.1 release, so there is
+  nothing to integrate with; the 1.20.1 build keeps its SlimColonies support. It will come back if and when
+  SlimColonies updates.
 
 ## [0.4.67] - 2026-07-01
 

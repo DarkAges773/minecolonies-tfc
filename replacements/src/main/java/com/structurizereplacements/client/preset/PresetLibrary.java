@@ -9,8 +9,8 @@ import com.structurizereplacements.preset.Preset;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.fml.loading.FMLPaths;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -165,7 +165,7 @@ public final class PresetLibrary
             obj.addProperty("name", preset.displayName().getString());
             if (preset.icon() != null)
             {
-                final ResourceLocation iconId = ForgeRegistries.BLOCKS.getKey(preset.icon());
+                final ResourceLocation iconId = BuiltInRegistries.BLOCK.getKey(preset.icon());
                 if (iconId != null)
                 {
                     obj.addProperty("icon", iconId.toString());
@@ -173,8 +173,8 @@ public final class PresetLibrary
             }
             final JsonArray picks = new JsonArray();
             preset.picks().forEach((from, to) -> {
-                final ResourceLocation f = ForgeRegistries.BLOCKS.getKey(from);
-                final ResourceLocation t = ForgeRegistries.BLOCKS.getKey(to);
+                final ResourceLocation f = BuiltInRegistries.BLOCK.getKey(from);
+                final ResourceLocation t = BuiltInRegistries.BLOCK.getKey(to);
                 if (f != null && t != null)
                 {
                     final JsonObject entry = new JsonObject();
@@ -287,6 +287,6 @@ public final class PresetLibrary
     private static Block block(final String id)
     {
         final ResourceLocation key = ResourceLocation.tryParse(id);
-        return (key != null && ForgeRegistries.BLOCKS.containsKey(key)) ? ForgeRegistries.BLOCKS.getValue(key) : null;
+        return (key != null && BuiltInRegistries.BLOCK.containsKey(key)) ? BuiltInRegistries.BLOCK.get(key) : null;
     }
 }

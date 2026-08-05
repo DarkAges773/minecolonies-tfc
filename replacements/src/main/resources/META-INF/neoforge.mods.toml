@@ -1,0 +1,49 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="${mod_authors}"
+logoFile="logo.png"
+description='''${mod_description}'''
+
+# Mixin configs are registered HERE on NeoForge (the 1.20.1-Forge branch used the `MixinConfigs` jar-manifest
+# attribute instead). The MineColonies config is `required:false` inside its own JSON, so Mixin skips it when
+# the MineColonies target classes are absent — the standalone case.
+# NOTE: ${mod_id}.slimcolonies.mixins.json is deliberately NOT listed: SlimColonies has no 1.21.1 build, so
+# that integration is parked and excluded from the jar (see replacements/build.gradle).
+[[mixins]]
+config="${mod_id}.mixins.json"
+[[mixins]]
+config="${mod_id}.minecolonies.mixins.json"
+
+# We mixin into Structurize, so we must load AFTER it. MineColonies is an OPTIONAL dependency: when present,
+# the builder/Build-Options integration activates; when absent, the mod is a pure Structurize substitution
+# add-on. (NeoForge replaced Forge's `mandatory=true/false` with `type="required"/"optional"`.)
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="${neoforge_version_range}"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.${mod_id}]]
+    modId="structurize"
+    type="required"
+    versionRange="[1.0,)"
+    ordering="AFTER"
+    side="BOTH"
+[[dependencies.${mod_id}]]
+    modId="minecolonies"
+    type="optional"
+    versionRange="[1.0,)"
+    ordering="AFTER"
+    side="BOTH"

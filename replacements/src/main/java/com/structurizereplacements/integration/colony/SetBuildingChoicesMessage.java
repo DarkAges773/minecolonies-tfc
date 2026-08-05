@@ -3,17 +3,20 @@ package com.structurizereplacements.integration.colony;
 import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
+import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * Client → server: set the replacement choices for a single building (the Build Options "Replace" GUI, or
@@ -22,8 +25,15 @@ import java.util.function.Supplier;
  * matching map, and {@code markDirty()}s the building (persists to colony NBT + re-syncs the view).
  * Per-building only — does not touch the player's global session picks.
  */
-public class SetBuildingChoicesMessage
+public class SetBuildingChoicesMessage implements CustomPacketPayload
 {
+    public static final CustomPacketPayload.Type<SetBuildingChoicesMessage> TYPE =
+            new CustomPacketPayload.Type<>(
+                    ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, "set_building_choices"));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, SetBuildingChoicesMessage> STREAM_CODEC =
+            StreamCodec.ofMember(SetBuildingChoicesMessage::encode, SetBuildingChoicesMessage::new);
+
     private final BlockPos buildingPos;
     private final Map<Block, Block> choices;
     /** false → the hut-building palette ({@link PlacementChoiceHolder}); true → the mineshaft palette ({@link MineshaftChoiceHolder}). */
@@ -36,24 +46,30 @@ public class SetBuildingChoicesMessage
         this.mineshaft = mineshaft;
     }
 
-    public SetBuildingChoicesMessage(final FriendlyByteBuf buf)
+    public SetBuildingChoicesMessage(final RegistryFriendlyByteBuf buf)
     {
         this.buildingPos = buf.readBlockPos();
         this.mineshaft = buf.readBoolean();
         this.choices = ChoiceCodec.read(buf);
     }
 
-    public void encode(final FriendlyByteBuf buf)
+    public void encode(final RegistryFriendlyByteBuf buf)
     {
         buf.writeBlockPos(buildingPos);
         buf.writeBoolean(mineshaft);
         ChoiceCodec.write(buf, choices);
     }
 
-    public void handle(final Supplier<NetworkEvent.Context> ctx)
+    @Override
+    public CustomPacketPayload.Type<SetBuildingChoicesMessage> type()
     {
-        ctx.get().enqueueWork(() -> {
-            final ServerPlayer sender = ctx.get().getSender();
+        return TYPE;
+    }
+
+    public void handle(final IPayloadContext ctx)
+    {
+        ctx.enqueueWork(() -> {
+            final ServerPlayer sender = ctx.player() instanceof ServerPlayer player ? player : null;
             final ColonyBridge bridge = ColonyIntegration.bridge();
             if (sender == null || bridge == null || !bridge.canEdit(sender, buildingPos))
             {
@@ -96,6 +112,5 @@ public class SetBuildingChoicesMessage
             }
             bridge.markDirty(building);
         });
-        ctx.get().setPacketHandled(true);
     }
 }

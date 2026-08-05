@@ -5,17 +5,20 @@ import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.preset.BuiltinPresets;
 import com.structurizereplacements.preset.Preset;
 import io.netty.handler.codec.DecoderException;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * Server → client: the active read-only built-in presets ({@link BuiltinPresets}). Like the substitution
@@ -23,8 +26,15 @@ import java.util.function.Supplier;
  * so a dedicated server's clients need them pushed to populate the "Presets" picker. Sent on the same triggers
  * as the rule sync (player join and after {@code /reload}); the client just replaces its built-in preset set.
  */
-public class SyncBuiltinPresetsMessage
+public class SyncBuiltinPresetsMessage implements CustomPacketPayload
 {
+    public static final CustomPacketPayload.Type<SyncBuiltinPresetsMessage> TYPE =
+            new CustomPacketPayload.Type<>(
+                    ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, "builtin_presets"));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, SyncBuiltinPresetsMessage> STREAM_CODEC =
+            StreamCodec.ofMember(SyncBuiltinPresetsMessage::encode, SyncBuiltinPresetsMessage::new);
+
     /** Bounded so a hostile peer can't force a huge pre-size allocation from a tiny payload. */
     private static final int MAX_PRESETS = 4096;
 
@@ -35,7 +45,7 @@ public class SyncBuiltinPresetsMessage
         this.presets = presets;
     }
 
-    public SyncBuiltinPresetsMessage(final FriendlyByteBuf buf)
+    public SyncBuiltinPresetsMessage(final RegistryFriendlyByteBuf buf)
     {
         final int count = buf.readVarInt();
         if (count < 0 || count > MAX_PRESETS)
@@ -46,7 +56,9 @@ public class SyncBuiltinPresetsMessage
         for (int i = 0; i < count; i++)
         {
             final String id = buf.readUtf();
-            final var name = buf.readComponent();
+            // 1.20.5 removed FriendlyByteBuf#read/writeComponent — a Component now needs the registry-aware
+            // ComponentSerialization codec, which is exactly what the RegistryFriendlyByteBuf gives us.
+            final var name = ComponentSerialization.STREAM_CODEC.decode(buf);
             final String folder = buf.readUtf();
             final Block icon = readNullableBlock(buf);
             final Map<Block, Block> picks = ChoiceCodec.read(buf);
@@ -57,13 +69,13 @@ public class SyncBuiltinPresetsMessage
         }
     }
 
-    public void encode(final FriendlyByteBuf buf)
+    public void encode(final RegistryFriendlyByteBuf buf)
     {
         buf.writeVarInt(presets.size());
         for (final Preset preset : presets)
         {
             buf.writeUtf(preset.id());
-            buf.writeComponent(preset.displayName());
+            ComponentSerialization.STREAM_CODEC.encode(buf, preset.displayName());
             buf.writeUtf(preset.folder());
             writeNullableBlock(buf, preset.icon());
             ChoiceCodec.write(buf, preset.picks());
@@ -72,7 +84,7 @@ public class SyncBuiltinPresetsMessage
 
     private static void writeNullableBlock(final FriendlyByteBuf buf, @Nullable final Block block)
     {
-        final ResourceLocation id = block == null ? null : ForgeRegistries.BLOCKS.getKey(block);
+        final ResourceLocation id = block == null ? null : BuiltInRegistries.BLOCK.getKey(block);
         buf.writeBoolean(id != null);
         if (id != null)
         {
@@ -88,23 +100,27 @@ public class SyncBuiltinPresetsMessage
             return null;
         }
         final ResourceLocation id = buf.readResourceLocation();
-        return ForgeRegistries.BLOCKS.containsKey(id) ? ForgeRegistries.BLOCKS.getValue(id) : null;
+        return BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.get(id) : null;
     }
 
-    public void handle(final Supplier<NetworkEvent.Context> ctx)
+    @Override
+    public CustomPacketPayload.Type<SyncBuiltinPresetsMessage> type()
     {
-        final NetworkEvent.Context context = ctx.get();
-        context.enqueueWork(() -> {
+        return TYPE;
+    }
+
+    public void handle(final IPayloadContext ctx)
+    {
+        ctx.enqueueWork(() -> {
             // Single-player shares the integrated server's loaded presets (same-JVM statics); applying this sync
             // would at best be redundant and at worst clobber the live set. Ignore on a memory connection — the
             // same guard the rule sync uses. Dedicated servers (real connection) still apply it.
-            if (context.getNetworkManager() != null && context.getNetworkManager().isMemoryConnection())
+            if (ctx.connection() != null && ctx.connection().isMemoryConnection())
             {
                 return;
             }
             BuiltinPresets.set(presets);
             StructurizeReplacements.LOGGER.info("Synced {} built-in preset(s) from the server.", presets.size());
         });
-        context.setPacketHandled(true);
     }
 }

@@ -7,7 +7,9 @@ import com.ldtteam.structurize.storage.StructurePacks;
 import com.structurizereplacements.client.gui.ReplacementChoiceContext;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
@@ -160,7 +162,15 @@ public class BuildingChoiceContext implements ReplacementChoiceContext
         final String pack = updateMode ? targetPack : bridge.viewStructurePack(view);
         final String path = updateMode ? targetPath
                 : LevelPaths.pathForLevel(bridge.viewStructurePath(view), bridge.viewBuildingLevel(view));
-        final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(pack, path);
+        // 1.21 threads a HolderLookup.Provider through blueprint loading (block states/entities now resolve
+        // through registries rather than raw ids). This runs client-side from the GUI, so the connected level's
+        // registry access is the right one; without a level there is nothing to load against.
+        final Level level = Minecraft.getInstance().level;
+        if (level == null)
+        {
+            return;
+        }
+        final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(pack, path, level.registryAccess());
         ClientFutureProcessor.queueBlueprint(new ClientFutureProcessor.BlueprintProcessingData(future, this::onBlueprintLoaded));
     }
 

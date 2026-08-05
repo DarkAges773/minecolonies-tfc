@@ -3,21 +3,26 @@ package com.structurizereplacements.network;
 import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.preset.BuiltinPresets;
 import com.structurizereplacements.substitution.BlockSubstitutions;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Mod network channel. Carries the player's per-placement replacement choices from client to server
  * (so the server placement / {@code handleBlockPlacement} can apply them), and the active substitution
  * ruleset from server to client (so remote clients' preview/GUI work — rules load server-side only).
+ *
+ * <p>NeoForge replaced Forge's {@code SimpleChannel} with a payload registrar: each message is a
+ * {@link net.minecraft.network.protocol.common.custom.CustomPacketPayload} carrying its own {@code TYPE}
+ * (the channel id) and {@code STREAM_CODEC}, registered here per direction. The direction is enforced by
+ * the registrar — {@code playToServer}/{@code playToClient} — which is the discipline the old
+ * {@code NetworkDirection} argument gave us. {@code versioned} keeps the old protocol-version handshake:
+ * a client and server on different revisions refuse to connect rather than mis-decode.
  */
 public final class Network
 {
@@ -25,28 +30,21 @@ public final class Network
 
     private static final String PROTOCOL = "1";
 
-    public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(StructurizeReplacements.MODID, "main"),
-            () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
-
-    public static void register()
+    /** Called from the mod ctor: on NeoForge, payload registration is a mod-bus event, not an immediate call. */
+    public static void register(final IEventBus modBus)
     {
-        int id = 0;
-        CHANNEL.registerMessage(id++, SyncReplacementChoicesMessage.class,
-                SyncReplacementChoicesMessage::encode,
-                SyncReplacementChoicesMessage::new,
-                SyncReplacementChoicesMessage::handle,
-                Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        CHANNEL.registerMessage(id++, SyncSubstitutionRulesMessage.class,
-                SyncSubstitutionRulesMessage::encode,
-                SyncSubstitutionRulesMessage::new,
-                SyncSubstitutionRulesMessage::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(id++, SyncBuiltinPresetsMessage.class,
-                SyncBuiltinPresetsMessage::encode,
-                SyncBuiltinPresetsMessage::new,
-                SyncBuiltinPresetsMessage::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        modBus.addListener(Network::onRegisterPayloads);
+    }
+
+    private static void onRegisterPayloads(final RegisterPayloadHandlersEvent event)
+    {
+        final PayloadRegistrar registrar = event.registrar(StructurizeReplacements.MODID).versioned(PROTOCOL);
+        registrar.playToServer(SyncReplacementChoicesMessage.TYPE, SyncReplacementChoicesMessage.STREAM_CODEC,
+                SyncReplacementChoicesMessage::handle);
+        registrar.playToClient(SyncSubstitutionRulesMessage.TYPE, SyncSubstitutionRulesMessage.STREAM_CODEC,
+                SyncSubstitutionRulesMessage::handle);
+        registrar.playToClient(SyncBuiltinPresetsMessage.TYPE, SyncBuiltinPresetsMessage.STREAM_CODEC,
+                SyncBuiltinPresetsMessage::handle);
     }
 
     /** Server → client: push the active ruleset snapshot to one player (join) or, when null, to everyone (reload). */
@@ -56,11 +54,11 @@ public final class Network
                 new SyncSubstitutionRulesMessage(BlockSubstitutions.rules(), BlockSubstitutions.candidates());
         if (player != null)
         {
-            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
+            PacketDistributor.sendToPlayer(player, message);
         }
         else
         {
-            CHANNEL.send(PacketDistributor.ALL.noArg(), message);
+            PacketDistributor.sendToAllPlayers(message);
         }
     }
 
@@ -70,17 +68,17 @@ public final class Network
         final SyncBuiltinPresetsMessage message = new SyncBuiltinPresetsMessage(BuiltinPresets.all());
         if (player != null)
         {
-            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
+            PacketDistributor.sendToPlayer(player, message);
         }
         else
         {
-            CHANNEL.send(PacketDistributor.ALL.noArg(), message);
+            PacketDistributor.sendToAllPlayers(message);
         }
     }
 
     /** Client → server: send the current choice map (source block → chosen target). */
     public static void sendChoicesToServer(final Map<Block, Block> choices)
     {
-        CHANNEL.sendToServer(new SyncReplacementChoicesMessage(choices));
+        PacketDistributor.sendToServer(new SyncReplacementChoicesMessage(choices));
     }
 }

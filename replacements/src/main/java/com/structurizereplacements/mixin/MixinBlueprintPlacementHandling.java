@@ -6,7 +6,7 @@ import com.ldtteam.structurize.storage.BlueprintPlacementHandling;
 import com.structurizereplacements.placement.ServerPlacementChoices;
 import com.structurizereplacements.placement.StagedChoices;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

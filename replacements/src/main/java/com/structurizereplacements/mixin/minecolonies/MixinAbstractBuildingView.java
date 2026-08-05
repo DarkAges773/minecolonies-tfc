@@ -4,7 +4,7 @@ import com.minecolonies.core.colony.buildings.views.AbstractBuildingView;
 import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.level.block.Block;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -60,7 +60,7 @@ public class MixinAbstractBuildingView implements PlacementChoiceHolder, Minesha
      * (hut, then mineshaft).
      */
     @Inject(method = "deserialize", at = @At("TAIL"), remap = false)
-    private void structurizereplacements$readChoicesFromBuffer(final FriendlyByteBuf buf, final CallbackInfo ci)
+    private void structurizereplacements$readChoicesFromBuffer(final RegistryFriendlyByteBuf buf, final CallbackInfo ci)
     {
         final Map<Block, Block> hut = ChoiceCodec.read(buf);
         this.structurizereplacements$choices = hut.isEmpty() ? null : hut;

@@ -15,7 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -93,10 +93,14 @@ public final class DomumMaterialRewriter
     /**
      * Make a host display {@link ItemStack} material-aware: for a Domum Ornamentum materialized host, copy the
      * blueprint entry's {@code textureData} material map onto the (already-built) {@code stack} — which is
-     * exactly where DO's {@code BlockItem.getName} reads it ({@code getOrCreateTagElement("textureData")}), so
-     * the stack reports its real name (e.g. "Oak Panel", "Dynamic Framed Oak") and renders the textured item
-     * instead of the bare block's dynamic, unlocalized descriptionId. A no-op (returns {@code stack} unchanged)
-     * for non-DO or empty stacks — the caller supplies the base stack, including any item-less fallback.
+     * exactly where DO's {@code BlockItem.getName} reads it, so the stack reports its real name (e.g. "Oak
+     * Panel", "Dynamic Framed Oak") and renders the textured item instead of the bare block's dynamic,
+     * unlocalized descriptionId. A no-op (returns {@code stack} unchanged) for non-DO or empty stacks — the
+     * caller supplies the base stack, including any item-less fallback.
+     *
+     * <p>1.21 moved item NBT to data components, so we no longer poke {@code stack.getOrCreateTag()} directly;
+     * DO's own {@link MaterialTextureData#writeToItemStack} puts the material map wherever DO now reads it.
+     * The blueprint's <i>block-entity</i> data is still a plain {@link CompoundTag}, hence the deserialize step.
      */
     public static ItemStack withMaterialNbt(final ItemStack stack, @Nullable final Block host, @Nullable final CompoundTag tileEntityData)
     {
@@ -110,7 +114,7 @@ public final class DomumMaterialRewriter
         final CompoundTag textureData = tileEntityData.getCompound(TEXTURE_DATA_KEY);
         if (!textureData.isEmpty())
         {
-            stack.getOrCreateTag().put(TEXTURE_DATA_KEY, textureData.copy());
+            MaterialTextureData.deserializeFromNBT(textureData.copy()).writeToItemStack(stack);
         }
         return stack;
     }
@@ -378,15 +382,15 @@ public final class DomumMaterialRewriter
     private static Block block(final String id)
     {
         final ResourceLocation rl = ResourceLocation.tryParse(id);
-        if (rl == null || !ForgeRegistries.BLOCKS.containsKey(rl))
+        if (rl == null || !BuiltInRegistries.BLOCK.containsKey(rl))
         {
             return null;
         }
-        return ForgeRegistries.BLOCKS.getValue(rl);
+        return BuiltInRegistries.BLOCK.get(rl);
     }
 
     private static String idOf(final Block block)
     {
-        return ForgeRegistries.BLOCKS.getKey(block).toString();
+        return BuiltInRegistries.BLOCK.getKey(block).toString();
     }
 }

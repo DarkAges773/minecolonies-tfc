@@ -1,0 +1,71 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "replacements - Client",
+      "presentation": {
+        "group": "Mod Development - replacements",
+        "order": 0
+      },
+      "projectName": "replacements",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@D:\\mc-mods\\minecolonies-tfc\\replacements\\build\\moddev\\clientRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@D:\\mc-mods\\minecolonies-tfc\\replacements\\build\\moddev\\clientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dstructurizereplacements%%D:\\mc-mods\\minecolonies-tfc\\replacements\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\replacements\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "replacements - Data",
+      "presentation": {
+        "group": "Mod Development - replacements",
+        "order": 1
+      },
+      "projectName": "replacements",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@D:\\mc-mods\\minecolonies-tfc\\replacements\\build\\moddev\\dataRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@D:\\mc-mods\\minecolonies-tfc\\replacements\\build\\moddev\\dataRunVmArgs.txt",
+        "-Dfml.modFolders\u003dstructurizereplacements%%D:\\mc-mods\\minecolonies-tfc\\replacements\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\replacements\\run-data",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "replacements - Server",
+      "presentation": {
+        "group": "Mod Development - replacements",
+        "order": 2
+      },
+      "projectName": "replacements",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@D:\\mc-mods\\minecolonies-tfc\\replacements\\build\\moddev\\serverRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@D:\\mc-mods\\minecolonies-tfc\\replacements\\build\\moddev\\serverRunVmArgs.txt",
+        "-Dfml.modFolders\u003dstructurizereplacements%%D:\\mc-mods\\minecolonies-tfc\\replacements\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\replacements\\run-server",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    }
+  ]
+}

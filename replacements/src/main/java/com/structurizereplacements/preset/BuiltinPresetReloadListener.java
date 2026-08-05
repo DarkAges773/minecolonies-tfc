@@ -11,7 +11,7 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -102,6 +102,6 @@ public class BuiltinPresetReloadListener extends SimpleJsonResourceReloadListene
     private static Block block(final String id)
     {
         final ResourceLocation key = ResourceLocation.tryParse(id);
-        return (key != null && ForgeRegistries.BLOCKS.containsKey(key)) ? ForgeRegistries.BLOCKS.getValue(key) : null;
+        return (key != null && BuiltInRegistries.BLOCK.containsKey(key)) ? BuiltInRegistries.BLOCK.get(key) : null;
     }
 }

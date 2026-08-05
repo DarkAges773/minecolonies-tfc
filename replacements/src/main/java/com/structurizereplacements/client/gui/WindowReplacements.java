@@ -22,7 +22,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
      */
     public WindowReplacements(final ReplacementChoiceContext context, final BOWindow parent)
     {
-        super(new ResourceLocation(StructurizeReplacements.MODID, RESOURCE));
+        super(ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, RESOURCE));
         this.context = context;
         this.parent = parent;
         this.context.setReloader(this::reload);
@@ -429,7 +429,9 @@ public class WindowReplacements extends AbstractWindowSkeleton
         // (an air entry would be invisible and unpickable).
         final List<ItemStack> pool = new ArrayList<>();
         final Map<Item, Block> byDisplayItem = new HashMap<>();
-        ForgeRegistries.BLOCKS.tags().getTag(rule.toTag()).forEach(block -> {
+        // Forge's ITag<Block> iterated blocks directly; vanilla's registry tag view iterates Holder<Block>.
+        BuiltInRegistries.BLOCK.getTagOrEmpty(rule.toTag()).forEach(holder -> {
+            final Block block = holder.value();
             // Skip air and Domum Ornamentum materialized blocks: DO registers some (e.g. its door) into
             // vanilla tags like minecraft:wooden_doors, but a bare DO block has no chosen material — it
             // renders as a cycling preview and can't be meaningfully picked as a substitution target.

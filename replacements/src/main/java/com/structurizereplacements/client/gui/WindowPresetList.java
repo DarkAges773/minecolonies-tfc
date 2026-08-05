@@ -58,7 +58,7 @@ public class WindowPresetList extends AbstractWindowSkeleton
 
     public WindowPresetList(final ReplacementChoiceContext target, final BOWindow parent)
     {
-        super(new ResourceLocation(StructurizeReplacements.MODID, RESOURCE));
+        super(ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, RESOURCE));
         this.target = target;
         this.parent = parent;
         registerButton("done", this::returnToParent);

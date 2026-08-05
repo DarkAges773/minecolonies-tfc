@@ -43,13 +43,13 @@ public class MixinAbstractBlueprintManipulationWindow
         final int size = 16;
         // 2px frame visible on each side; the 32×32 icon fills the inner 12×12, overlaid at draw time.
         final ButtonImageWithIcon button = new ButtonImageWithIcon(
-                new ResourceLocation("structurizereplacements", "textures/gui/replace_button.png"), 2);
+                ResourceLocation.fromNamespaceAndPath("structurizereplacements", "textures/gui/replace_button.png"), 2);
         button.setID("structurizereplacements:open");
         button.setSize(size, size);
         // Top-right corner, relative to the window width (robust across the different windows).
         button.setPosition(window.getWidth() - size - 5, 5);
         // Structurize's own mini-button frame (MC-independent) as the light background; icon overlaid on it.
-        button.setImage(new ResourceLocation("structurize", "textures/gui/builderhut/builder_button_mini.png"), false);
+        button.setImage(ResourceLocation.fromNamespaceAndPath("structurize", "textures/gui/builderhut/builder_button_mini.png"));
         button.setHandler(b -> new WindowReplacements((BOWindow) (Object) this).open());
         window.addChild(button);
         // No label now, so a tooltip names it; reuse Structurize's own "Replace" translation. Built AFTER

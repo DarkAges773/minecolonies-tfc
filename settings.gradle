@@ -2,25 +2,24 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         maven {
-            name = 'MinecraftForge'
-            url = 'https://maven.minecraftforge.net/'
-        }
-        maven {
-            name = 'SpongePowered'
-            url = 'https://repo.spongepowered.org/repository/maven-public/'
+            name = 'NeoForged'
+            url = 'https://maven.neoforged.net/releases'
         }
     }
 }
 
 plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
 
 rootProject.name = 'minecolonies-tfc'
 
 // :replacements  - standalone Structurize block-substitution mod (no MineColonies/TFC dependency).
-// :firmavanilla  - standalone TFC-palette decorative blocks (vanilla building-block variants); TFC-only.
-// :compat        - MineColonies x TerraFirmaCraft bridge; depends on :replacements + :firmavanilla, ships TFC rules.
 include 'replacements'
-include 'firmavanilla'
-include 'compat'
+
+// PORT IN PROGRESS (1.21.1-NeoForge branch): :firmavanilla and :compat are still 1.20.1-Forge sources,
+// so they're held out of the project tree until ported — otherwise every Gradle invocation fails on
+// them. Re-include each as it lands; order is :replacements -> :firmavanilla -> :compat (see
+// docs/porting-1.21.1-neoforge.md).
+// include 'firmavanilla'
+// include 'compat'

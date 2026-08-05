@@ -12,7 +12,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -199,10 +199,10 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
     @Nullable
     private static Block block(@Nullable final ResourceLocation id)
     {
-        if (id == null || !ForgeRegistries.BLOCKS.containsKey(id))
+        if (id == null || !BuiltInRegistries.BLOCK.containsKey(id))
         {
             return null;
         }
-        return ForgeRegistries.BLOCKS.getValue(id);
+        return BuiltInRegistries.BLOCK.get(id);
     }
 }

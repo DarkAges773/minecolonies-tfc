@@ -256,7 +256,7 @@ public final class BlockSubstitutions
         }
         if (block instanceof FlowerPotBlock pot)
         {
-            final ItemStack content = new ItemStack(pot.getContent());
+            final ItemStack content = new ItemStack(pot.getPotted());
             if (!content.isEmpty())
             {
                 return content;
@@ -270,7 +270,7 @@ public final class BlockSubstitutions
     {
         for (final ItemStack existing : hosts)
         {
-            if (ItemStack.isSameItemSameTags(existing, stack))
+            if (ItemStack.isSameItemSameComponents(existing, stack))
             {
                 return;
             }

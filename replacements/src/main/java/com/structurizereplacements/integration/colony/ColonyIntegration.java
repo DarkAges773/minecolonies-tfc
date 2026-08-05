@@ -1,6 +1,7 @@
 package com.structurizereplacements.integration.colony;
 
 import com.structurizereplacements.placement.ChoiceResolver;
+import net.neoforged.bus.api.IEventBus;
 
 /**
  * Entry point and bridge holder for the colony-mod integration. The mod ctor (guarded by
@@ -16,11 +17,15 @@ public final class ColonyIntegration
 
     private static volatile ColonyBridge bridge;
 
-    public static void init(final ColonyBridge forkBridge)
+    /**
+     * @param modBus the mod event bus — NeoForge registers network payloads through a mod-bus event, so the
+     *               bus has to be threaded down here from the mod ctor (on Forge this was a direct call).
+     */
+    public static void init(final ColonyBridge forkBridge, final IEventBus modBus)
     {
         bridge = forkBridge;
         ChoiceResolver.set(ColonyChoiceResolver::resolve);
-        ColonyNetwork.register();
+        ColonyNetwork.register(modBus);
     }
 
     /** The installed fork bridge — null only when no colony mod is loaded (then nothing here is called). */

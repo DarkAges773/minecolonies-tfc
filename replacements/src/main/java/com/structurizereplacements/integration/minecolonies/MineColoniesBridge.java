@@ -30,9 +30,9 @@ import java.util.Map;
  */
 public final class MineColoniesBridge implements ColonyBridge
 {
-    public static void init()
+    public static void init(final net.neoforged.bus.api.IEventBus modBus)
     {
-        ColonyIntegration.init(new MineColoniesBridge());
+        ColonyIntegration.init(new MineColoniesBridge(), modBus);
     }
 
     @Override

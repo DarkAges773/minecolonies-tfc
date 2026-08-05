@@ -64,13 +64,13 @@ public abstract class MixinWindowBuildBuilding
         final int size = 16;
         // 2px frame visible on each side; the 32×32 icon fills the inner 12×12, overlaid at draw time.
         final ButtonImageWithIcon button = new ButtonImageWithIcon(
-                new ResourceLocation("structurizereplacements", "textures/gui/replace_button.png"), 2);
+                ResourceLocation.fromNamespaceAndPath("structurizereplacements", "textures/gui/replace_button.png"), 2);
         button.setID("structurizereplacements:replace");
         button.setSize(size, size);
         // Empty top-left corner, left of the style "<" arrow (which begins at x=40).
         button.setPosition(4, 1);
         // MineColonies' own mini-button frame as the (light) background; the icon is overlaid over it.
-        button.setImage(new ResourceLocation("minecolonies", "textures/gui/builderhut/builder_button_mini.png"), false);
+        button.setImage(ResourceLocation.fromNamespaceAndPath("minecolonies", "textures/gui/builderhut/builder_button_mini.png"));
         button.setHandler(b -> new WindowReplacements(
                 new BuildingChoiceContext(this.building, targetStructurePack(), targetStructurePath(), this::updateResources),
                 (BOWindow) (Object) this).open());

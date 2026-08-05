@@ -6,7 +6,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,8 +36,8 @@ public final class ChoiceCodec
         if (choices != null)
         {
             choices.forEach((from, to) -> {
-                final ResourceLocation f = ForgeRegistries.BLOCKS.getKey(from);
-                final ResourceLocation t = ForgeRegistries.BLOCKS.getKey(to);
+                final ResourceLocation f = BuiltInRegistries.BLOCK.getKey(from);
+                final ResourceLocation t = BuiltInRegistries.BLOCK.getKey(to);
                 if (f != null && t != null)
                 {
                     ids.put(f, t);
@@ -75,8 +75,8 @@ public final class ChoiceCodec
             {
                 final ResourceLocation fromId = buf.readResourceLocation();
                 final ResourceLocation toId = buf.readResourceLocation();
-                final Block from = ForgeRegistries.BLOCKS.containsKey(fromId) ? ForgeRegistries.BLOCKS.getValue(fromId) : null;
-                final Block to = ForgeRegistries.BLOCKS.containsKey(toId) ? ForgeRegistries.BLOCKS.getValue(toId) : null;
+                final Block from = BuiltInRegistries.BLOCK.containsKey(fromId) ? BuiltInRegistries.BLOCK.get(fromId) : null;
+                final Block to = BuiltInRegistries.BLOCK.containsKey(toId) ? BuiltInRegistries.BLOCK.get(toId) : null;
                 if (from != null && to != null)
                 {
                     map.put(from, to);
@@ -105,8 +105,8 @@ public final class ChoiceCodec
         }
         final ListTag list = new ListTag();
         choices.forEach((from, to) -> {
-            final ResourceLocation f = ForgeRegistries.BLOCKS.getKey(from);
-            final ResourceLocation t = ForgeRegistries.BLOCKS.getKey(to);
+            final ResourceLocation f = BuiltInRegistries.BLOCK.getKey(from);
+            final ResourceLocation t = BuiltInRegistries.BLOCK.getKey(to);
             if (f != null && t != null)
             {
                 final CompoundTag entry = new CompoundTag();
@@ -139,8 +139,8 @@ public final class ChoiceCodec
             final CompoundTag entry = list.getCompound(i);
             final ResourceLocation f = ResourceLocation.tryParse(entry.getString("from"));
             final ResourceLocation t = ResourceLocation.tryParse(entry.getString("to"));
-            final Block from = (f != null && ForgeRegistries.BLOCKS.containsKey(f)) ? ForgeRegistries.BLOCKS.getValue(f) : null;
-            final Block to = (t != null && ForgeRegistries.BLOCKS.containsKey(t)) ? ForgeRegistries.BLOCKS.getValue(t) : null;
+            final Block from = (f != null && BuiltInRegistries.BLOCK.containsKey(f)) ? BuiltInRegistries.BLOCK.get(f) : null;
+            final Block to = (t != null && BuiltInRegistries.BLOCK.containsKey(t)) ? BuiltInRegistries.BLOCK.get(t) : null;
             if (from != null && to != null)
             {
                 map.put(from, to);

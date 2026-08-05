@@ -24,7 +24,7 @@ public class WindowConfirm extends AbstractWindowSkeleton
     public WindowConfirm(final BOWindow parent, final Component title, final Component message,
                          final Component confirmLabel, final Runnable onConfirm)
     {
-        super(new ResourceLocation(StructurizeReplacements.MODID, RESOURCE));
+        super(ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, RESOURCE));
         this.parent = parent;
         this.onConfirm = onConfirm;
         findPaneOfTypeByID("title", Text.class).setText(title);

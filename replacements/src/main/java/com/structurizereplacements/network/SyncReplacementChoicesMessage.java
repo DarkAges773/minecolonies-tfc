@@ -1,25 +1,34 @@
 package com.structurizereplacements.network;
 
+import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.placement.ServerPlacementChoices;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import io.netty.handler.codec.DecoderException;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * Client → server: the player's current replacement choices, as block-id pairs. The server resolves
  * them to blocks and stores them per-player in {@link ServerPlacementChoices}.
  */
-public class SyncReplacementChoicesMessage
+public class SyncReplacementChoicesMessage implements CustomPacketPayload
 {
+    public static final CustomPacketPayload.Type<SyncReplacementChoicesMessage> TYPE =
+            new CustomPacketPayload.Type<>(
+                    ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, "replacement_choices"));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, SyncReplacementChoicesMessage> STREAM_CODEC =
+            StreamCodec.ofMember(SyncReplacementChoicesMessage::encode, SyncReplacementChoicesMessage::new);
+
     /** Decode cap — a blueprint holds at most a few hundred distinct blocks; reject anything absurd. */
     private static final int MAX_CHOICES = 4096;
 
@@ -29,8 +38,8 @@ public class SyncReplacementChoicesMessage
     {
         this.choices = new HashMap<>();
         blockChoices.forEach((from, to) -> {
-            final ResourceLocation fromId = ForgeRegistries.BLOCKS.getKey(from);
-            final ResourceLocation toId = ForgeRegistries.BLOCKS.getKey(to);
+            final ResourceLocation fromId = BuiltInRegistries.BLOCK.getKey(from);
+            final ResourceLocation toId = BuiltInRegistries.BLOCK.getKey(to);
             if (fromId != null && toId != null)
             {
                 this.choices.put(fromId, toId);
@@ -38,7 +47,7 @@ public class SyncReplacementChoicesMessage
         });
     }
 
-    public SyncReplacementChoicesMessage(final FriendlyByteBuf buf)
+    public SyncReplacementChoicesMessage(final RegistryFriendlyByteBuf buf)
     {
         final int size = buf.readVarInt();
         if (size < 0 || size > MAX_CHOICES)
@@ -52,7 +61,7 @@ public class SyncReplacementChoicesMessage
         }
     }
 
-    public void encode(final FriendlyByteBuf buf)
+    public void encode(final RegistryFriendlyByteBuf buf)
     {
         buf.writeVarInt(choices.size());
         choices.forEach((from, to) -> {
@@ -61,11 +70,21 @@ public class SyncReplacementChoicesMessage
         });
     }
 
-    public void handle(final Supplier<NetworkEvent.Context> ctx)
+    @Override
+    public CustomPacketPayload.Type<SyncReplacementChoicesMessage> type()
     {
-        ctx.get().enqueueWork(() -> {
-            final ServerPlayer sender = ctx.get().getSender();
-            if (sender == null)
+        return TYPE;
+    }
+
+    /**
+     * NeoForge hands the handler a context instead of a {@code Supplier<NetworkEvent.Context>}, and there is
+     * no {@code setPacketHandled} — a payload that returns normally counts as handled. {@code context.player()}
+     * is the sender on a server-bound payload (the registrar already guarantees the direction).
+     */
+    public void handle(final IPayloadContext ctx)
+    {
+        ctx.enqueueWork(() -> {
+            if (!(ctx.player() instanceof ServerPlayer sender))
             {
                 return;
             }
@@ -82,11 +101,10 @@ public class SyncReplacementChoicesMessage
             });
             ServerPlacementChoices.set(sender.getUUID(), resolved);
         });
-        ctx.get().setPacketHandled(true);
     }
 
     private static Block block(final ResourceLocation id)
     {
-        return ForgeRegistries.BLOCKS.containsKey(id) ? ForgeRegistries.BLOCKS.getValue(id) : null;
+        return BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.get(id) : null;
     }
 }

@@ -1,8 +1,10 @@
 // Root build for the multi-project. Heavy per-mod configuration lives in each subproject's
-// build.gradle (replacements/build.gradle, compat/build.gradle). The ForgeGradle plugin version
-// is declared here once and applied (without version) inside each subproject.
+// build.gradle. The ModDevGradle plugin version is declared here once and applied (without version)
+// inside each subproject. MDG replaces ForgeGradle on the NeoForge branch: it needs no decompile step
+// of ours, runs Mojang mappings in dev AND production (so no reobf, no mixin refmap), and generates
+// the run configs from a `neoForge { runs { } }` block.
 plugins {
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)' apply false
+    id 'net.neoforged.moddev' version '2.0.143' apply false
 }
 
 // Per-mod auto-rolling "build number" used as the PATCH of each mod's version (MAJOR.MINOR stay manual in

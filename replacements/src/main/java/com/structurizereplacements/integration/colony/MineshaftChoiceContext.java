@@ -8,7 +8,9 @@ import com.ldtteam.structurize.util.BlockInfo;
 import com.structurizereplacements.client.gui.ReplacementChoiceContext;
 import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.substitution.BlockSubstitutions;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
@@ -123,9 +125,17 @@ public class MineshaftChoiceContext implements ReplacementChoiceContext
     {
         final ColonyBridge bridge = ColonyIntegration.bridge();
         final String pack = bridge.viewStructurePack(view);
+        // 1.21 threads a HolderLookup.Provider through blueprint loading; client-side that's the connected
+        // level's registry access (see BuildingChoiceContext#loadBlueprintSources).
+        final Level level = Minecraft.getInstance().level;
+        if (level == null)
+        {
+            return;
+        }
         for (final String name : bridge.mineshaftSchematics())
         {
-            final CompletableFuture<Blueprint> future = StructurePacks.getBlueprintFuture(pack, name + ".blueprint");
+            final CompletableFuture<Blueprint> future =
+                    StructurePacks.getBlueprintFuture(pack, name + ".blueprint", level.registryAccess());
             ClientFutureProcessor.queueBlueprint(new ClientFutureProcessor.BlueprintProcessingData(future, this::foldBlueprint));
         }
     }

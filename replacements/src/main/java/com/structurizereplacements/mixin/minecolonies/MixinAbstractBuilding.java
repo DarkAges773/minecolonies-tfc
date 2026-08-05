@@ -4,8 +4,9 @@ import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.structurizereplacements.placement.ChoiceCodec;
 import com.structurizereplacements.placement.MineshaftChoiceHolder;
 import com.structurizereplacements.placement.PlacementChoiceHolder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.level.block.Block;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -24,8 +25,13 @@ import java.util.Map;
  * map is also synced to the client building view ({@code serializeToView} → {@code MixinAbstractBuildingView})
  * so the Build Options GUI can show/edit it. Part of the optional MineColonies integration.
  *
- * <p>{@code remap = false}: {@code serializeNBT}/{@code deserializeNBT} are Forge {@code INBTSerializable}
+ * <p>{@code remap = false}: {@code serializeNBT}/{@code deserializeNBT} are {@code INBTSerializable}
  * methods (stable names), {@code serializeToView} is MineColonies' own.
+ *
+ * <p><b>1.21 signatures.</b> All three targets moved: the NBT pair now threads a
+ * {@link HolderLookup.Provider} ({@code serializeNBT(Provider)} / {@code deserializeNBT(Provider, CompoundTag)})
+ * and the view buffer is a {@link RegistryFriendlyByteBuf}. The explicit descriptors below matter — the class
+ * carries {@code Tag}-returning bridge overloads of both NBT methods, so a bare method name is ambiguous.
  */
 @Mixin(AbstractBuilding.class)
 public class MixinAbstractBuilding implements PlacementChoiceHolder, MineshaftChoiceHolder
@@ -65,14 +71,16 @@ public class MixinAbstractBuilding implements PlacementChoiceHolder, MineshaftCh
      * stays aligned with whatever MineColonies wrote before us.
      */
     @Inject(method = "serializeToView", at = @At("TAIL"), remap = false)
-    private void structurizereplacements$writeChoicesToView(final FriendlyByteBuf buf, final boolean fullSync, final CallbackInfo ci)
+    private void structurizereplacements$writeChoicesToView(final RegistryFriendlyByteBuf buf, final boolean fullSync, final CallbackInfo ci)
     {
         ChoiceCodec.write(buf, structurizereplacements$choices);
         ChoiceCodec.write(buf, structurizereplacements$mineshaftChoices);
     }
 
-    @Inject(method = "serializeNBT()Lnet/minecraft/nbt/CompoundTag;", at = @At("RETURN"), remap = false)
-    private void structurizereplacements$writeChoices(final CallbackInfoReturnable<CompoundTag> cir)
+    @Inject(method = "serializeNBT(Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/nbt/CompoundTag;",
+            at = @At("RETURN"), remap = false)
+    private void structurizereplacements$writeChoices(final HolderLookup.Provider provider,
+                                                      final CallbackInfoReturnable<CompoundTag> cir)
     {
         // Both maps use the shared ChoiceCodec NBT shape (keyed, so order is irrelevant). Write them
         // independently — a building may have only one of them (e.g. the miner sets mineshaft picks but no
@@ -82,8 +90,10 @@ public class MixinAbstractBuilding implements PlacementChoiceHolder, MineshaftCh
         ChoiceCodec.writeNbt(tag, ChoiceCodec.MINESHAFT_CHOICES_KEY, structurizereplacements$mineshaftChoices);
     }
 
-    @Inject(method = "deserializeNBT(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"), remap = false)
-    private void structurizereplacements$readChoices(final CompoundTag tag, final CallbackInfo ci)
+    @Inject(method = "deserializeNBT(Lnet/minecraft/core/HolderLookup$Provider;Lnet/minecraft/nbt/CompoundTag;)V",
+            at = @At("TAIL"), remap = false)
+    private void structurizereplacements$readChoices(final HolderLookup.Provider provider, final CompoundTag tag,
+                                                     final CallbackInfo ci)
     {
         this.structurizereplacements$choices = ChoiceCodec.readNbt(tag, ChoiceCodec.CHOICES_KEY);
         this.structurizereplacements$mineshaftChoices = ChoiceCodec.readNbt(tag, ChoiceCodec.MINESHAFT_CHOICES_KEY);

@@ -1,21 +1,18 @@
 // Standalone Structurize block-substitution mod. Depends ONLY on Structurize — no MineColonies, no TFC.
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-    }
-    dependencies {
-        classpath 'org.spongepowered:mixingradle:0.7.+'
-    }
-}
-
+// NeoForge 1.21.1 build, driven by ModDevGradle (MDG). Differences from the 1.20.1-Forge branch worth
+// knowing before editing this file:
+//   * No MixinGradle, no refmap, no reobf. NeoForge runs Mojang mappings in dev AND production, so mixins
+//     reference the same names everywhere. Mixin configs are declared in neoforge.mods.toml ([[mixins]]),
+//     NOT in a `MixinConfigs` jar-manifest attribute.
+//   * Third-party mods ship Mojmap-mapped, so they're plain `implementation`/`compileOnly` dependencies —
+//     there is no `fg.deobf(...)` wrapper.
+//   * Run configs come from `neoForge { runs { } }`; the mods loaded into them from `neoForge { mods { } }`.
 plugins {
+    id 'java'
     id 'eclipse'
     id 'idea'
-    id 'net.minecraftforge.gradle'
+    id 'net.neoforged.moddev'
 }
-
-apply plugin: 'org.spongepowered.mixin'
 
 def mod_id = 'structurizereplacements'
 def mod_name = 'Palette Swap for MineColonies'
@@ -29,120 +26,123 @@ def mod_group_id = 'com.structurizereplacements'
 def mod_authors = 'DarkAges'
 def mod_description = 'Tag- and family-based block substitution for Structurize blueprints. Standalone; only requires Structurize.'
 
-// Released as <mcversion>-<semver> (e.g. 1.20.1-0.1.0), matching the MineColonies/Structurize ecosystem.
-// mod_version stays the plain SemVer; the MC prefix comes from the shared minecraft_version property and
-// continues across MC ports. Bump rules: PATCH=fixes, MINOR=back-compat features, MAJOR=rule-schema/NBT break.
+// Released as <mcversion>-<semver> (e.g. 1.21.1-0.4.0), matching the MineColonies/Structurize ecosystem.
+// mod_version stays the plain SemVer; the MC prefix comes from the shared minecraft_version property, so
+// this branch's jars are 1.21.1-* automatically. Bump rules: PATCH=fixes, MINOR=back-compat features,
+// MAJOR=rule-schema/NBT break.
 def full_version = "${minecraft_version}-${mod_version}".toString()
 version = full_version
 group = mod_group_id
 base { archivesName = mod_id }
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-minecraft {
-    mappings channel: mapping_channel, version: mapping_version
-    copyIdeResources = true
-    // Standalone runs: load ONLY this mod (+ Structurize/BlockUI from the deobf deps below).
-    // No MineColonies/TFC here - this proves the mod works independently and is faster to launch.
-    // The full stack (both our mods + MC/TFC) is run from :compat instead.
+// SlimColonies (a MineColonies fork) has NO 1.21.1 build — every published file is 1.20.1 — so we can't
+// compile against it here. Its integration is PARKED, not deleted: the sources stay on disk so the file
+// layout matches the 1.20.1 branch and cherry-picks apply cleanly, but they're excluded from the source
+// set and its mixin config is left out of the jar / unregistered in neoforge.mods.toml. To revive it if
+// SlimColonies ever ships 1.21.1: drop these excludes, restore the compileOnly/runtimeOnly coordinates,
+// re-add the [[mixins]] entry + the optional dependency in neoforge.mods.toml, and restore the
+// SlimColoniesBridge branch in StructurizeReplacements.
+sourceSets.main.java {
+    exclude 'com/structurizereplacements/integration/slimcolonies/**'
+    exclude 'com/structurizereplacements/mixin/slimcolonies/**'
+}
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+    exclude "${mod_id}.slimcolonies.mixins.json"
+}
+
+neoForge {
+    version = neoforge_version
+
+    // Which source sets are treated as this mod in dev runs (MDG's replacement for FG's `mods { source }`).
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+
+    // Standalone runs: load ONLY this mod (+ Structurize/BlockUI/Domum from the deps below). No TFC here —
+    // this proves the mod works independently and is faster to launch. The full stack is run from :compat
+    // once that subproject is ported.
     runs {
         configureEach {
-            workingDirectory project.file('run')
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
-            mods {
-                "${mod_id}" {
-                    source sourceSets.main
-                }
-            }
+            systemProperty 'neoforge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
         }
         client {
-            property 'forge.enabledGameTestNamespaces', mod_id
+            client()
+            gameDirectory = project.file('run')
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
         }
         server {
-            // Own working dir so client + server can run simultaneously (shared run/ collides on the
+            server()
+            // Own working dir so client + server can run simultaneously (a shared run/ collides on the
             // logs/latest.log file lock on Windows). run-server/eula.txt + server.properties
             // (online-mode=false for the offline Dev account) are pre-created, not generated.
-            workingDirectory project.file('run-server')
-            property 'forge.enabledGameTestNamespaces', mod_id
-            args '--nogui'
+            gameDirectory = project.file('run-server')
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            programArgument '--nogui'
         }
         data {
-            workingDirectory project.file('run-data')
-            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            data()
+            gameDirectory = project.file('run-data')
+            programArguments.addAll '--mod', mod_id, '--all',
+                    '--output', file('src/generated/resources/').absolutePath,
+                    '--existing', file('src/main/resources/').absolutePath
         }
     }
 }
 
-sourceSets.main.resources { srcDir 'src/generated/resources' }
-
 repositories {
+    mavenCentral()
     maven {
         name = 'LDTTeam - Modding'
         url = 'https://ldtteam.jfrog.io/ldtteam/modding/'
     }
-    maven {
-        name = 'CurseMaven'
-        url = 'https://cursemaven.com'
-        content { includeGroup 'curse.maven' }
-    }
-    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     // Structurize is the only mandatory mod dependency. BlockUI is Structurize's GUI library — needed at
     // compile time too since we build BlockUI windows / buttons.
-    implementation fg.deobf("com.ldtteam:structurize:${structurize_version}")
-    implementation fg.deobf("com.ldtteam:blockui:${blockui_version}")
+    implementation "com.ldtteam:structurize:${structurize_version}"
+    implementation "com.ldtteam:blockui:${blockui_version}"
 
-    // The colony mods are OPTIONAL dependencies (mods.toml: mandatory=false). The optional integration
-    // (shared logic in integration.colony + a per-fork bridge and mixin config) compiles against BOTH
-    // forks (compileOnly — never bundled); those classes/mixins only load when the matching mod is present.
-    compileOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
-    // SlimColonies: a MineColonies fork, repackaged to no.monopixel.slimcolonies.*.
-    compileOnly fg.deobf("curse.maven:slimcolonies-1353551:${slimcolonies_file_id}")
-    // The dev runClient loads exactly ONE colony mod (they can't coexist at runtime), selected via
-    //   gradlew :replacements:runClient -PcolonyMod=minecolonies|slim|none
+    // MineColonies is an OPTIONAL dependency (neoforge.mods.toml: type="optional"). The optional
+    // integration (shared logic in integration.colony + the per-fork bridge and mixin config) compiles
+    // against it but is never bundled; those classes/mixins only load when MineColonies is present.
+    compileOnly "com.ldtteam:minecolonies:${minecolonies_version}"
+    // The dev runClient loads MineColonies unless you opt out:
+    //   gradlew :replacements:runClient -PcolonyMod=minecolonies|none
     // default = minecolonies; 'none' dev-tests the colony-mod-absent (pure standalone) path.
-    // (Domum Ornamentum below stays in all cases — it's a mandatory dep of Structurize itself.)
+    // (No 'slim' option on this branch — SlimColonies has no 1.21.1 build; see the parking note above.)
+    // NOTE: Domum Ornamentum below stays in ALL cases — it's a mandatory dependency of Structurize itself,
+    // not just of MineColonies, so removing it crashes Structurize at load with a misleading
+    // "mixin config could not be read" error.
     def colonyMod = providers.gradleProperty('colonyMod').getOrElse('minecolonies')
-    if (colonyMod == 'slim' || colonyMod == 'slimcolonies') {
-        runtimeOnly fg.deobf("curse.maven:slimcolonies-1353551:${slimcolonies_file_id}")
-    } else if (colonyMod != 'none') {
-        runtimeOnly fg.deobf("com.ldtteam:minecolonies:${minecolonies_version}")
+    if (colonyMod != 'none') {
+        runtimeOnly "com.ldtteam:minecolonies:${minecolonies_version}"
     }
-    // NOTE: Domum Ornamentum is a MANDATORY dependency of Structurize itself (not just MineColonies), so it
-    // must stay even in a MineColonies-absent run — removing it crashes Structurize at load. (To dev-test
-    // the MineColonies-absent path, comment out only the runtimeOnly minecolonies line above.)
     // compileOnly too: DomumMaterialRewriter substitutes the material(s) stored in DO "materialized" blocks'
     // textureData NBT (panel/brick/framed/...). DO is always present at runtime, so no load guard is needed.
-    compileOnly fg.deobf("com.ldtteam:domum_ornamentum:${domum_ornamentum_version}")
-    runtimeOnly fg.deobf("com.ldtteam:domum_ornamentum:${domum_ornamentum_version}")
-    // Dev-run-only recipe viewer.
-    runtimeOnly fg.deobf("curse.maven:emi-580555:${emi_file_id}")
-}
+    // Artifact id is HYPHENATED on 1.21.1 (was domum_ornamentum with an underscore on 1.20.1).
+    compileOnly "com.ldtteam:domum-ornamentum:${domum_ornamentum_version}"
+    runtimeOnly "com.ldtteam:domum-ornamentum:${domum_ornamentum_version}"
 
-mixin {
-    add sourceSets.main, "${mod_id}.refmap.json"
-    config "${mod_id}.mixins.json"
-    // Optional MineColonies-integration mixins (config is required:false; Mixin skips them when the
-    // MineColonies target classes are absent).
-    config "${mod_id}.minecolonies.mixins.json"
-    // Same pattern for the SlimColonies fork (no.monopixel.slimcolonies.* targets).
-    config "${mod_id}.slimcolonies.mixins.json"
+    // MixinExtras (@WrapOperation/@ModifyExpressionValue/@Local/...) needs no declaration here: NeoForge
+    // depends on mixinextras-neoforge, so its annotations are already on the compile + runtime classpath.
 }
 
 tasks.named('processResources', ProcessResources).configure {
     var replaceProperties = [
             minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
-            forge_version: forge_version, forge_version_range: forge_version_range,
+            neoforge_version: neoforge_version, neoforge_version_range: neoforge_version_range,
             loader_version_range: loader_version_range,
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: full_version,
             mod_authors: mod_authors, mod_description: mod_description,
     ]
     inputs.properties replaceProperties
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+    filesMatching(['META-INF/neoforge.mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]
     }
 }
@@ -156,18 +156,18 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Title'  : project.name,
                 'Implementation-Version': project.jar.archiveVersion,
                 'Implementation-Vendor' : mod_authors,
-                'MixinConfigs'          : "${mod_id}.mixins.json,${mod_id}.minecolonies.mixins.json,${mod_id}.slimcolonies.mixins.json"
         ])
     }
-    finalizedBy 'reobfJar'
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    // PORT: javac stops listing after 100 errors by default, which hides the tail of a migration pass.
+    options.compilerArgs << '-Xmaxerrs' << '2000'
 }
 
 // Cut a release in CHANGELOG.md: rename the curated '## [Unreleased]' section to a dated section for the
-// current version (mod_version, e.g. 0.1.33) and leave a fresh empty '## [Unreleased]' on top. Run
+// current version (mod_version, e.g. 0.4.0) and leave a fresh empty '## [Unreleased]' on top. Run
 // intentionally at release time (`./gradlew :replacements:cutRelease`), then commit the changelog. Refuses
 // when [Unreleased] is empty so we never stamp an empty release.
 tasks.register('cutRelease') {

@@ -5,20 +5,22 @@ import com.structurizereplacements.substitution.BlockSubstitutions;
 import com.structurizereplacements.substitution.CandidateRule;
 import com.structurizereplacements.substitution.SubstitutionRule;
 import io.netty.handler.codec.DecoderException;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * Server → client: the full active substitution ruleset (fixed {@link SubstitutionRule}s + interactive
@@ -29,8 +31,15 @@ import java.util.function.Supplier;
  * replaces its ruleset with the snapshot. Tag-based matching works client-side because vanilla already syncs
  * tag contents on the same triggers.
  */
-public class SyncSubstitutionRulesMessage
+public class SyncSubstitutionRulesMessage implements CustomPacketPayload
 {
+    public static final CustomPacketPayload.Type<SyncSubstitutionRulesMessage> TYPE =
+            new CustomPacketPayload.Type<>(
+                    ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, "substitution_rules"));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, SyncSubstitutionRulesMessage> STREAM_CODEC =
+            StreamCodec.ofMember(SyncSubstitutionRulesMessage::encode, SyncSubstitutionRulesMessage::new);
+
     /** Decode caps — generous (a kitchen-sink pack stack is ~10–20k rules), but bounded so a hostile
      *  peer can't force a multi-GB pre-size allocation from a tiny payload. */
     private static final int MAX_RULES = 65536;
@@ -45,7 +54,7 @@ public class SyncSubstitutionRulesMessage
         this.candidates = candidates;
     }
 
-    public SyncSubstitutionRulesMessage(final FriendlyByteBuf buf)
+    public SyncSubstitutionRulesMessage(final RegistryFriendlyByteBuf buf)
     {
         final int ruleCount = readCount(buf, MAX_RULES, "Substitution-rule");
         this.rules = new ArrayList<>(ruleCount);
@@ -80,7 +89,7 @@ public class SyncSubstitutionRulesMessage
         }
     }
 
-    public void encode(final FriendlyByteBuf buf)
+    public void encode(final RegistryFriendlyByteBuf buf)
     {
         buf.writeVarInt(rules.size());
         for (final SubstitutionRule rule : rules)
@@ -105,15 +114,20 @@ public class SyncSubstitutionRulesMessage
         }
     }
 
-    public void handle(final Supplier<NetworkEvent.Context> ctx)
+    @Override
+    public CustomPacketPayload.Type<SyncSubstitutionRulesMessage> type()
     {
-        final NetworkEvent.Context context = ctx.get();
-        context.enqueueWork(() -> {
+        return TYPE;
+    }
+
+    public void handle(final IPayloadContext ctx)
+    {
+        ctx.enqueueWork(() -> {
             // Single-player: the client shares the integrated server's loaded ruleset (same-JVM statics), so
             // applying this sync is at best redundant and at worst clobbers the live rules with a stale/empty
             // snapshot. Ignore it on a memory connection — the same thing TFC does ("Ignored … sync from
             // logical server"). Dedicated servers (real connection) still apply it; that's the whole point.
-            if (context.getNetworkManager() != null && context.getNetworkManager().isMemoryConnection())
+            if (ctx.connection() != null && ctx.connection().isMemoryConnection())
             {
                 return;
             }
@@ -121,14 +135,15 @@ public class SyncSubstitutionRulesMessage
             StructurizeReplacements.LOGGER.info("Synced {} fixed rule(s), {} candidate rule(s) from the server.",
                     rules.size(), candidates.size());
         });
-        context.setPacketHandled(true);
     }
 
     // --- buf helpers ----------------------------------------------------------------------------------------
+    // These keep the wider FriendlyByteBuf parameter type: RegistryFriendlyByteBuf extends it, so the codec's
+    // buffer passes straight through and the helpers stay reusable.
 
     private static void writeNullableBlock(final FriendlyByteBuf buf, @Nullable final Block block)
     {
-        final ResourceLocation id = block == null ? null : ForgeRegistries.BLOCKS.getKey(block);
+        final ResourceLocation id = block == null ? null : BuiltInRegistries.BLOCK.getKey(block);
         buf.writeBoolean(id != null);
         if (id != null)
         {
@@ -144,7 +159,7 @@ public class SyncSubstitutionRulesMessage
             return null;
         }
         final ResourceLocation id = buf.readResourceLocation();
-        return ForgeRegistries.BLOCKS.containsKey(id) ? ForgeRegistries.BLOCKS.getValue(id) : null;
+        return BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.get(id) : null;
     }
 
     private static void writeNullableTag(final FriendlyByteBuf buf, @Nullable final TagKey<Block> tag)
